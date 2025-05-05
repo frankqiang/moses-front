@@ -1,0 +1,49 @@
+---
+description: 详细说明Mock数据系统的使用方法，包括创建模拟API、定义响应数据和集成到项目中。当需要开发新的API接口、测试数据流或模拟后端服务时请求此规则。
+globs: 
+alwaysApply: false
+---
+# Mock数据和API
+
+## Mock系统概述
+本项目使用MockJS模拟后端API，方便前端开发和测试。模拟数据位于 `mock` 目录。
+
+## 关键文件
+- [mock/index.js](mdc:mock/index.js) - Mock服务器入口
+- [mock/mock-server.js](mdc:mock/mock-server.js) - Mock服务器实现
+- [mock/user.js](mdc:mock/user.js) - 用户相关的模拟数据和API
+
+## 使用方法
+1. 在 `mock` 目录下创建对应模块的Mock文件
+2. 定义API接口和返回数据
+3. 在 `mock/index.js` 中引入新创建的Mock文件
+
+## Mock示例
+```js
+// 模拟API接口
+export default [
+  {
+    url: '/vue-admin-template/table/list',
+    type: 'get',
+    response: config => {
+      const items = data.items
+      return {
+        code: 20000,
+        data: {
+          total: items.length,
+          items: items
+        }
+      }
+    }
+  }
+]
+```
+
+## 关闭Mock
+在生产环境下，可以通过修改 `src/main.js` 中的相关代码来关闭Mock服务：
+```js
+if (process.env.NODE_ENV === 'production') {
+  const { mockXHR } = require('../mock')
+  mockXHR()
+}
+```

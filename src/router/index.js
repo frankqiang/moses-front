@@ -55,6 +55,27 @@ export const constantRoutes = [
     }]
   },
 
+  // 主数据管理模块
+  {
+    path: '/master-data',
+    component: Layout,
+    redirect: '/master-data/bin-specification',
+    name: 'MasterData',
+    meta: {
+      title: '主数据管理',
+      icon: 'el-icon-s-order'
+    },
+    children: [
+      {
+        path: 'bin-specification',
+        name: 'BinSpecification',
+        component: () => import('@/views/master-data/bin-specification/index'),
+        meta: { title: '料框规格管理' }
+      },
+      // 后续可以在这里添加其他主数据管理的子页面
+    ]
+  },
+
   {
     path: '/example',
     component: Layout,
@@ -62,7 +83,7 @@ export const constantRoutes = [
     name: 'Example',
     meta: { title: 'Example', icon: 'el-icon-s-help' },
     children: [
-      
+
     ]
   },
 
@@ -70,7 +91,7 @@ export const constantRoutes = [
     path: '/form',
     component: Layout,
     children: [
-     
+
     ]
   },
 
@@ -123,7 +144,7 @@ export const constantRoutes = [
             meta: { title: 'Menu1-3' }
           }
         ]
-      },
+      }
     ]
   },
 

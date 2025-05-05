@@ -1,0 +1,29 @@
+---
+description: 
+globs: src/components/**/*.vue,src/layout/**/*.vue,src/views/**/*.vue
+alwaysApply: false
+---
+# 布局与组件结构
+
+## 主布局结构
+项目使用了基于Element UI的布局系统，主要由侧边栏导航、顶部导航和主内容区组成。
+
+## 关键布局文件
+- [src/layout/index.vue](mdc:src/layout/index.vue) - 主布局容器
+- [src/layout/components/Sidebar](mdc:src/layout/components/Sidebar) - 侧边栏导航组件
+- [src/layout/components/Navbar.vue](mdc:src/layout/components/Navbar.vue) - 顶部导航组件
+
+## 组件系统
+项目组件分为两类：
+1. 通用组件 (`src/components`) - 可在多个页面复用的组件
+2. 视图组件 (`src/views`) - 特定页面的组件
+
+## 路由与视图
+- [src/router/index.js](mdc:src/router/index.js) - 定义路由与对应的视图组件
+- 路由配置中的 `meta` 属性用于定义图标、标题和权限等信息
+
+## 组件开发规范
+- 组件名称使用 PascalCase 命名
+- 页面组件放在 `views` 目录下
+- 可复用组件放在 `components` 目录下
+- 使用 `@/` 别名代替相对路径引用模块

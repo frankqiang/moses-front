@@ -1,0 +1,102 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 项目结构指南
+
+## 项目概述
+这是一个基于Vue.js 2.x的管理系统模板，集成了Element UI、axios、权限控制等功能。它为开发管理系统提供了一个完整的框架。
+
+## 核心文件
+- [src/main.js](mdc:src/main.js) - 应用的入口文件，初始化Vue实例和全局配置
+- [src/App.vue](mdc:src/App.vue) - 根组件
+- [src/permission.js](mdc:src/permission.js) - 权限控制逻辑
+
+## 目录结构
+- `src/api` - 包含与后端API交互的请求模块
+- `src/components` - 可复用组件
+- `src/layout` - 布局组件（包括侧边栏、头部等）
+- `src/router` - 路由配置
+- `src/store` - Vuex状态管理
+- `src/views` - 页面组件
+- `src/utils` - 工具函数
+- `src/styles` - 全局样式
+- `src/icons` - SVG图标
+
+## 构建和配置
+- [vue.config.js](mdc:vue.config.js) - Vue CLI配置文件
+- [package.json](mdc:package.json) - 项目依赖和脚本
+
+## 代码注释规范
+为了便于理解和维护代码，请遵循以下注释规范：
+
+### 文件头部注释
+每个文件顶部应有描述文件功能的注释：
+```js
+/**
+ * 文件名称
+ * 文件描述：简要说明该文件的功能和用途
+ * 创建日期：YYYY-MM-DD
+ */
+```
+
+### 组件注释
+Vue组件应在export default前添加组件说明：
+```js
+/**
+ * 组件名称
+ * 功能描述：详细说明组件的功能和用途
+ * 依赖项：列出主要依赖的组件、API或库
+ */
+export default {
+  // 组件定义
+}
+```
+
+### 方法注释
+关键方法应有详细注释：
+```js
+/**
+ * 方法名称
+ * 功能：方法的具体功能
+ * @param {类型} 参数名 - 参数说明
+ * @returns {类型} 返回值说明
+ */
+methodName(param) {
+  // 方法实现
+}
+```
+
+### 数据属性注释
+在data()返回的对象中，应为关键数据属性添加注释：
+```js
+data() {
+  return {
+    // 用户列表数据
+    userList: [],
+    // 分页配置
+    pagination: {
+      page: 1,
+      limit: 10
+    }
+  }
+}
+```
+
+### CSS样式注释
+CSS样式应分块添加注释：
+```css
+/* 头部导航样式 */
+.header-nav {
+  display: flex;
+  background-color: #fff;
+}
+
+/* 内容区域样式 */
+.content-area {
+  padding: 20px;
+}
+```
+
+遵循以上注释规范，将有助于更好地理解代码结构和功能，提高代码的可维护性。
