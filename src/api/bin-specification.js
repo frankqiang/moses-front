@@ -59,3 +59,54 @@ export function getProductTypeList() {
     method: 'get'
   })
 }
+
+// 批量删除料框规格
+export function batchDeleteBinSpec(ids) {
+  return request({
+    url: '/vue-admin-template/mes/bin-specification/batch-delete',
+    method: 'delete',
+    data: { ids }
+  })
+}
+
+// 批量更改料框规格状态
+export function batchChangeBinSpecStatus(ids, status) {
+  return request({
+    url: '/vue-admin-template/mes/bin-specification/batch-status',
+    method: 'put',
+    data: { ids, status }
+  })
+}
+
+// 导出料框规格数据
+export function exportBinSpec(query) {
+  return request({
+    url: '/vue-admin-template/mes/bin-specification/export',
+    method: 'get',
+    params: query,
+    responseType: 'blob'
+  })
+}
+
+// 下载导入模板
+export function downloadTemplate() {
+  return request({
+    url: '/vue-admin-template/mes/bin-specification/download-template',
+    method: 'get',
+    responseType: 'blob'
+  })
+}
+
+// 导入料框规格数据
+export function importBinSpec(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/vue-admin-template/mes/bin-specification/import',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

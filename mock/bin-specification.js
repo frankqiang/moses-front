@@ -45,36 +45,71 @@ const deepClone = array => {
 
 const items = deepClone(data.items)
 
+// Mock数据列表
+const mockItems = []
+for (let i = 0; i < 35; i++) {
+  mockItems.push({
+    id: `BIN${i + 1}`.padStart(6, '0'),
+    code: `LK${(i + 1).toString().padStart(3, '0')}`,
+    name: `标准料框${i + 1}`,
+    length: 100 + i % 5 * 10,
+    width: 80 + i % 5 * 5,
+    height: 80 + i % 3 * 5,
+    maxWeight: 1000 + i % 4 * 200,
+    material: ['铝合金', '不锈钢', '碳钢', '镀锌钢'][i % 4],
+    maxStackLayers: 1 + i % 5,
+    applicableProducts: [
+      { id: 'P001', name: '单零铝箔' },
+      { id: 'P002', name: '双零铝箔' },
+      { id: 'P003', name: '铝合金箔' },
+      { id: 'P004', name: '合金铝板' }
+    ].slice(0, 1 + i % 4),
+    supplier: ['苏州金属制品厂', '无锡工业容器有限公司', '常州金属制造厂', '上海金属容器制造'][i % 4],
+    status: i % 5 === 0 ? 0 : 1,
+    createTime: new Date(Date.now() - i * 86400000).toISOString()
+  })
+}
+
+// 提取物料框架可选产品类型列表
+const productTypes = [
+  { id: 'P001', name: '单零铝箔' },
+  { id: 'P002', name: '双零铝箔' },
+  { id: 'P003', name: '铝合金箔' },
+  { id: 'P004', name: '合金铝板' },
+  { id: 'P005', name: '高精度铝带' },
+  { id: 'P006', name: '彩涂铝卷' }
+]
+
 module.exports = [
   // 获取料框规格列表
   {
     url: '/vue-admin-template/mes/bin-specification/list',
     type: 'get',
     response: config => {
-      const { status, code, name, page = 1, limit = 10 } = config.query
+      const { code, name, status, page = 1, limit = 10 } = config.query
 
-      let mockList = deepClone(items)
-      
-      if (status !== undefined && status !== '') {
-        mockList = mockList.filter(item => item.status.toString() === status)
-      }
-      
+      // 过滤
+      let filteredItems = [...mockItems]
       if (code) {
-        mockList = mockList.filter(item => item.code.includes(code))
+        filteredItems = filteredItems.filter(item => item.code.includes(code))
       }
-      
       if (name) {
-        mockList = mockList.filter(item => item.name.includes(name))
+        filteredItems = filteredItems.filter(item => item.name.includes(name))
+      }
+      if (status !== undefined && status !== '') {
+        filteredItems = filteredItems.filter(item => item.status.toString() === status.toString())
       }
 
       // 分页
-      const pageList = mockList.filter((item, index) => index < limit * page && index >= limit * (page - 1))
+      const startIndex = (page - 1) * limit
+      const endIndex = startIndex + parseInt(limit)
+      const pageItems = filteredItems.slice(startIndex, endIndex)
 
       return {
         code: 20000,
         data: {
-          total: mockList.length,
-          items: pageList
+          total: filteredItems.length,
+          items: pageItems
         }
       }
     }
@@ -82,16 +117,15 @@ module.exports = [
 
   // 获取料框规格详情
   {
-    url: /\/vue-admin-template\/mes\/bin-specification\/detail\/\d+/,
+    url: /\/vue-admin-template\/mes\/bin-specification\/detail\/[\w\d]+/,
     type: 'get',
     response: config => {
-      const { url } = config
-      const id = url.match(/\/detail\/(\d+)/)[1]
-      const item = items.find(item => item.id.toString() === id)
+      const id = config.url.match(/\/detail\/(\w+)/)[1]
+      const item = mockItems.find(item => item.id === id)
       
       return {
         code: 20000,
-        data: item
+        data: item || null
       }
     }
   },
@@ -101,32 +135,19 @@ module.exports = [
     url: '/vue-admin-template/mes/bin-specification/create',
     type: 'post',
     response: config => {
-      const { code, name } = config.body
-
-      // 检查规格代码是否已存在
-      if (items.some(item => item.code === code)) {
-        return {
-          code: 50000,
-          message: '规格代码已存在'
-        }
-      }
-
+      const data = config.body
+      const newId = `BIN${mockItems.length + 1}`.padStart(6, '0')
       const newItem = {
-        id: Mock.mock('@increment'),
-        code,
-        name,
-        ...config.body,
-        status: 1,
-        createTime: Mock.mock('@now'),
-        updateTime: Mock.mock('@now')
+        ...data,
+        id: newId,
+        createTime: new Date().toISOString()
       }
-
-      items.push(newItem)
-
+      mockItems.unshift(newItem)
+      
       return {
         code: 20000,
         data: {
-          id: newItem.id
+          id: newId
         }
       }
     }
@@ -137,31 +158,20 @@ module.exports = [
     url: '/vue-admin-template/mes/bin-specification/update',
     type: 'put',
     response: config => {
-      const { id, code } = config.body
+      const data = config.body
+      const index = mockItems.findIndex(item => item.id === data.id)
       
-      // 检查更新的规格代码是否与其他记录冲突
-      const exists = items.some(item => item.code === code && item.id !== id)
-      if (exists) {
-        return {
-          code: 50000,
-          message: '规格代码已存在'
-        }
-      }
-
-      const index = items.findIndex(item => item.id === id)
-      if (index >= 0) {
-        items[index] = {
-          ...items[index],
-          ...config.body,
-          updateTime: Mock.mock('@now')
-        }
+      if (index > -1) {
+        mockItems[index] = { ...mockItems[index], ...data }
         return {
           code: 20000,
-          data: 'success'
+          data: {
+            id: data.id
+          }
         }
       } else {
         return {
-          code: 50000,
+          code: 50404,
           message: '料框规格不存在'
         }
       }
@@ -170,22 +180,23 @@ module.exports = [
 
   // 删除料框规格
   {
-    url: /\/vue-admin-template\/mes\/bin-specification\/delete\/\d+/,
+    url: /\/vue-admin-template\/mes\/bin-specification\/delete\/[\w\d]+/,
     type: 'delete',
     response: config => {
-      const { url } = config
-      const id = parseInt(url.match(/\/delete\/(\d+)/)[1])
+      const id = config.url.match(/\/delete\/(\w+)/)[1]
+      const index = mockItems.findIndex(item => item.id === id)
       
-      const index = items.findIndex(item => item.id === id)
-      if (index >= 0) {
-        items.splice(index, 1)
+      if (index > -1) {
+        mockItems.splice(index, 1)
         return {
           code: 20000,
-          data: 'success'
+          data: {
+            id
+          }
         }
       } else {
         return {
-          code: 50000,
+          code: 50404,
           message: '料框规格不存在'
         }
       }
@@ -198,17 +209,19 @@ module.exports = [
     type: 'put',
     response: config => {
       const { id, status } = config.body
+      const index = mockItems.findIndex(item => item.id === id)
       
-      const index = items.findIndex(item => item.id === id)
-      if (index >= 0) {
-        items[index].status = status
+      if (index > -1) {
+        mockItems[index].status = status
         return {
           code: 20000,
-          data: 'success'
+          data: {
+            id
+          }
         }
       } else {
         return {
-          code: 50000,
+          code: 50404,
           message: '料框规格不存在'
         }
       }
@@ -223,7 +236,118 @@ module.exports = [
       return {
         code: 20000,
         data: {
-          items: productTypeList.items
+          items: productTypes
+        }
+      }
+    }
+  },
+  
+  // 批量删除料框规格
+  {
+    url: '/vue-admin-template/mes/bin-specification/batch-delete',
+    type: 'delete',
+    response: config => {
+      const { ids } = config.body
+      
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return {
+          code: 50400,
+          message: '无效的请求参数'
+        }
+      }
+      
+      let deleteCount = 0
+      for (const id of ids) {
+        const index = mockItems.findIndex(item => item.id === id)
+        if (index > -1) {
+          mockItems.splice(index, 1)
+          deleteCount++
+        }
+      }
+      
+      return {
+        code: 20000,
+        data: {
+          count: deleteCount
+        }
+      }
+    }
+  },
+  
+  // 批量更改料框规格状态
+  {
+    url: '/vue-admin-template/mes/bin-specification/batch-status',
+    type: 'put',
+    response: config => {
+      const { ids, status } = config.body
+      
+      if (!ids || !Array.isArray(ids) || ids.length === 0 || status === undefined) {
+        return {
+          code: 50400,
+          message: '无效的请求参数'
+        }
+      }
+      
+      let updateCount = 0
+      for (const id of ids) {
+        const index = mockItems.findIndex(item => item.id === id)
+        if (index > -1) {
+          mockItems[index].status = status
+          updateCount++
+        }
+      }
+      
+      return {
+        code: 20000,
+        data: {
+          count: updateCount
+        }
+      }
+    }
+  },
+  
+  // 导出料框规格数据
+  {
+    url: '/vue-admin-template/mes/bin-specification/export',
+    type: 'get',
+    response: config => {
+      // 实际导出功能需要返回二进制数据，这里仅返回成功状态
+      return {
+        code: 20000,
+        data: 'export-success'
+      }
+    }
+  },
+  
+  // 下载导入模板
+  {
+    url: '/vue-admin-template/mes/bin-specification/download-template',
+    type: 'get',
+    response: () => {
+      // 实际导出功能需要返回二进制数据，这里仅返回成功状态
+      return {
+        code: 20000,
+        data: 'template-download-success'
+      }
+    }
+  },
+  
+  // 导入料框规格数据
+  {
+    url: '/vue-admin-template/mes/bin-specification/import',
+    type: 'post',
+    response: config => {
+      // 模拟导入结果
+      return {
+        code: 20000,
+        data: {
+          total: 10,
+          success: 8,
+          failed: 2,
+          failedItems: [
+            { row: 3, reason: '规格代码已存在' },
+            { row: 7, reason: '最大载重不能为空' }
+          ]
         }
       }
     }
