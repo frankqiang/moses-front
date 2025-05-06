@@ -4,11 +4,13 @@ const { param2Obj } = require('./utils')
 const user = require('./user')
 const table = require('./table')
 const binSpecification = require('./master-data/bin-specification')
+const productManagement = require('./master-data/product-management')
 
 const mocks = [
   ...user,
   ...table,
-  ...binSpecification
+  ...binSpecification,
+  ...productManagement
 ]
 
 // for front mock

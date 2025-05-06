@@ -72,6 +72,12 @@ export const constantRoutes = [
         component: () => import('@/views/master-data/bin-specification/index'),
         meta: { title: '料框规格管理' }
       },
+      {
+        path: 'product-management',
+        name: 'ProductManagement',
+        component: () => import('@/views/master-data/product-management/index'),
+        meta: { title: '铝箔产品管理' }
+      }
       // 后续可以在这里添加其他主数据管理的子页面
     ]
   },
