@@ -60,9 +60,16 @@ npm run build:stage
 ### 目录结构
 ```
 ├── mock/                     # 模拟数据
+│   ├── master-data/          # 主数据管理模块Mock数据
+│   │   ├── bin-specification.js  # 料框规格模拟数据
+│   ├── utils.js              # 工具函数
+│   ├── index.js              # 模拟服务器入口
+│   └── mock-server.js        # 模拟服务器实现
 ├── public/                   # 静态资源
 ├── src/                      # 源代码
 │   ├── api/                  # API请求
+│   │   ├── master-data/      # 主数据管理模块API
+│   │   │   ├── bin-specification.js  # 料框规格API
 │   ├── assets/               # 主题、字体等静态资源
 │   ├── components/           # 全局公用组件
 │   ├── layout/               # 全局布局
@@ -84,6 +91,25 @@ npm run build:stage
 ├── vue.config.js             # vue-cli配置
 └── package.json              # package.json
 ```
+
+### API和Mock目录结构规范
+
+为确保代码组织一致性和可维护性，本项目采用基于业务模块的目录结构组织方式：
+
+1. **API目录结构规范**
+   - 所有API请求文件必须放置在对应的业务模块目录下
+   - 例如：主数据管理模块的API应放在 `src/api/master-data/` 目录下
+   - 禁止在API根目录直接创建业务相关的API文件
+
+2. **Mock目录结构规范**
+   - Mock目录结构必须与API目录结构保持一致
+   - 例如：主数据管理模块的Mock数据应放在 `mock/master-data/` 目录下
+   - 文件命名应与对应的API文件保持一致
+
+3. **开发流程**
+   - 创建新模块时，先在mock和api目录下创建对应的模块目录
+   - 在相应目录下开发模块功能
+   - 确保导入路径正确引用了模块化的结构
 
 ## 组件化架构
 

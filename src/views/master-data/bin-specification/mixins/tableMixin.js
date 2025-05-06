@@ -2,7 +2,7 @@ import {
   changeBinSpecStatus, 
   batchDeleteBinSpec, 
   batchChangeBinSpecStatus 
-} from '@/api/bin-specification'
+} from '@/api/master-data/bin-specification'
 
 export default {
   data() {

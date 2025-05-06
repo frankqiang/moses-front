@@ -56,7 +56,7 @@ import {
   createBinSpec,
   updateBinSpec,
   getProductTypeList
-} from '@/api/bin-specification'
+} from '@/api/master-data/bin-specification'
 
 // 引入子组件
 import SearchForm from './components/SearchForm'

@@ -2,7 +2,7 @@ import {
   exportBinSpec, 
   downloadTemplate, 
   importBinSpec 
-} from '@/api/bin-specification'
+} from '@/api/master-data/bin-specification'
 
 export default {
   data() {

@@ -29,20 +29,74 @@ npm run build:stage
 3. 如果需要添加到侧边栏菜单，确保设置了正确的 `meta` 信息
 
 ## API请求
-- 使用 [src/utils/request.js](mdc:src/utils/request.js) 中封装的axios实例发送请求
-- 在 `src/api` 目录下为不同模块创建API请求文件
-- API请求示例：
+
+### 目录结构规范
+API目录必须按照业务模块组织，保持清晰的目录结构：
+
+```
+src/api/
+├── module-name-1/            # 业务模块1目录
+│   ├── feature-1.js          # 功能1的API
+│   └── feature-2.js          # 功能2的API
+├── module-name-2/            # 业务模块2目录
+│   └── feature-3.js          # 功能3的API
+└── user.js                   # 用户相关API（全局通用）
+```
+
+示例：主数据管理模块的API应放在 `src/api/master-data/` 目录下。
+
+### API文件编写规范
 ```js
+/**
+ * 模块名称/功能名称API
+ * 描述：该模块包含xxx功能的所有API请求
+ * 创建日期：YYYY-MM-DD
+ */
+
 import request from '@/utils/request'
 
-export function login(data) {
+/**
+ * 获取XX列表
+ * @param {Object} query - 查询参数
+ * @returns {Promise} 返回API响应
+ */
+export function getXXList(query) {
   return request({
-    url: '/vue-admin-template/user/login',
-    method: 'post',
-    data
+    url: '/vue-admin-template/module/feature/list',
+    method: 'get',
+    params: query
   })
 }
 ```
+
+### 基本使用
+- 使用 [src/utils/request.js](mdc:src/utils/request.js) 中封装的axios实例发送请求
+- API请求导入示例：
+```js
+import { getXXList } from '@/api/module-name/feature'
+
+// 在组件中使用
+methods: {
+  fetchData() {
+    getXXList({ page: 1, limit: 10 }).then(response => {
+      this.list = response.data.items
+    })
+  }
+}
+```
+
+### 添加新模块/功能流程
+1. 创建对应模块目录（若不存在）: `mkdir -p src/api/module-name`
+2. 在目录下创建功能对应的js文件
+3. 编写API请求函数并导出
+4. 在组件中导入并使用
+
+### 代码评审检查点
+- API文件是否放在正确的模块目录中
+- 文件命名是否使用kebab-case
+- 是否有适当的注释
+- 请求格式是否符合规范
+- 导入路径是否正确
 
 ## 状态管理
 - 全局状态使用Vuex管理，位于 `src/store` 目录

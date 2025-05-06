@@ -3,10 +3,28 @@ description: 详细说明Mock数据系统的使用方法，包括创建模拟API
 globs: 
 alwaysApply: false
 ---
-# Mock数据和API
+# Mock数据和API规范
 
 ## Mock系统概述
 本项目使用MockJS模拟后端API，方便前端开发和测试。模拟数据位于 `mock` 目录。
+
+## 目录结构规范
+Mock目录必须按照业务模块组织，与API目录结构保持一致：
+
+```
+mock/
+├── module-name-1/            # 业务模块1目录
+│   ├── feature-1.js          # 功能1的Mock数据
+│   └── feature-2.js          # 功能2的Mock数据
+├── module-name-2/            # 业务模块2目录
+│   └── feature-3.js          # 功能3的Mock数据
+├── user.js                   # 用户相关Mock数据（全局通用）
+├── utils.js                  # Mock工具函数
+├── index.js                  # Mock入口文件
+└── mock-server.js            # Mock服务器实现
+```
+
+示例：主数据管理模块的Mock数据应放在 `mock/master-data/` 目录下。
 
 ## 关键文件
 - [mock/index.js](mdc:mock/index.js) - Mock服务器入口
@@ -14,30 +32,69 @@ alwaysApply: false
 - [mock/user.js](mdc:mock/user.js) - 用户相关的模拟数据和API
 
 ## 使用方法
-1. 在 `mock` 目录下创建对应模块的Mock文件
+1. 在对应模块目录下创建Mock文件（如 `mock/module-name/feature.js`）
 2. 定义API接口和返回数据
 3. 在 `mock/index.js` 中引入新创建的Mock文件
 
-## Mock示例
+## Mock文件编写规范
 ```js
-// 模拟API接口
-export default [
+/**
+ * 模块名称/功能名称Mock数据
+ * 描述：模拟xxx功能的后端API响应
+ * 创建日期：YYYY-MM-DD
+ */
+
+const Mock = require('mockjs')
+
+// 生成随机数据
+const data = Mock.mock({
+  'items|10': [{
+    'id|+1': 1,
+    'name': '@cname',
+    // 其他字段...
+  }]
+})
+
+// 导出API定义
+module.exports = [
+  // 获取XX列表
   {
-    url: '/vue-admin-template/table/list',
+    url: '/vue-admin-template/module/feature/list',
     type: 'get',
     response: config => {
-      const items = data.items
+      const { query } = config
+      // 处理查询参数...
       return {
         code: 20000,
         data: {
-          total: items.length,
-          items: items
+          total: data.items.length,
+          items: data.items
         }
       }
     }
   }
 ]
 ```
+
+## 添加新模块/功能流程
+1. 创建对应模块目录（若不存在）: `mkdir -p mock/module-name`
+2. 在目录下创建功能对应的js文件
+3. 在index.js中引入：
+```js
+const moduleFeature = require('./module-name/feature')
+
+const mocks = [
+  ...moduleFeature,
+  // 其他模块...
+]
+```
+
+## 代码评审检查点
+- Mock文件是否放在正确的模块目录中
+- 文件命名是否使用kebab-case
+- 是否有适当的注释
+- 响应格式是否符合规范
+- 是否在index.js中正确引入
 
 ## 关闭Mock
 在生产环境下，可以通过修改 `src/main.js` 中的相关代码来关闭Mock服务：
