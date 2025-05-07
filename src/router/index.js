@@ -77,6 +77,12 @@ export const constantRoutes = [
         name: 'ProductManagement',
         component: () => import('@/views/master-data/product-management/index'),
         meta: { title: '铝箔产品管理' }
+      },
+      {
+        path: 'material-code',
+        name: 'MaterialCode',
+        component: () => import('@/views/master-data/material-code/index'),
+        meta: { title: '物料编码管理' }
       }
       // 后续可以在这里添加其他主数据管理的子页面
     ]
