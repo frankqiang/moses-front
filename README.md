@@ -120,11 +120,21 @@ npm run build:stage
    - Mock目录结构必须与API目录结构保持一致
    - 例如：主数据管理模块的Mock数据应放在 `mock/master-data/` 目录下
    - 文件命名应与对应的API文件保持一致
+   - **重要**: Mock文件必须使用CommonJS模块系统（require/module.exports），不可使用ES模块语法（import/export）
+   - 正确示例：
+     ```js
+     const Mock = require('mockjs')
+     // 导出为数组
+     module.exports = [
+       // API定义...
+     ]
+     ```
 
 3. **开发流程**
    - 创建新模块时，先在mock和api目录下创建对应的模块目录
    - 在相应目录下开发模块功能
    - 确保导入路径正确引用了模块化的结构
+   - 开发Mock数据文件时严格遵循CommonJS模块规范
 
 ## 组件化架构
 
