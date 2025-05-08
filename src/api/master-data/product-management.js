@@ -119,4 +119,12 @@ export function importProduct(file) {
       'Content-Type': 'multipart/form-data'
     }
   })
+}
+
+// 获取所有产品列表（不分页，用于下拉选择）
+export function getAllProductList() {
+  return request({
+    url: '/vue-admin-template/mes/product/all-list',
+    method: 'get'
+  })
 } 

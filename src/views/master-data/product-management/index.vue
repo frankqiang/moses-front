@@ -24,8 +24,7 @@
       :page="listQuery.page" 
       :limit="listQuery.limit" 
       @selection-change="handleSelectionChange" 
-      @size-change="handleSizeChange" 
-      @current-change="handleCurrentChange" 
+      @pagination="handlePagination" 
       @update="handleUpdate" 
       @status-change="handleStatusChange"
     />
@@ -77,6 +76,9 @@ import ImportDialog from './components/ImportDialog'
 // 引入混入
 import tableMixin from './mixins/tableMixin'
 import importExportMixin from './mixins/importExportMixin'
+
+// 引入滚动工具函数
+import { scrollTo } from '@/utils/scroll-to'
 
 /**
  * 铝箔产品管理
@@ -163,18 +165,6 @@ export default {
       this.getList()
     },
 
-    // 每页显示条数变化
-    handleSizeChange(val) {
-      this.listQuery.limit = val
-      this.getList()
-    },
-
-    // 当前页变化
-    handleCurrentChange(val) {
-      this.listQuery.page = val
-      this.getList()
-    },
-
     // 新增
     handleCreate() {
       this.dialogType = 'create'
@@ -246,6 +236,15 @@ export default {
     // 导入数据
     handleImport(file) {
       importProduct(file)
+    },
+
+    // 处理分页
+    handlePagination({ page, limit }) {
+      this.listQuery.page = page
+      this.listQuery.limit = limit
+      this.getList()
+      // 滚动到顶部
+      scrollTo(0, 800)
     }
   }
 }

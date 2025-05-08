@@ -24,8 +24,7 @@
       :page="listQuery.page" 
       :limit="listQuery.limit" 
       @selection-change="handleSelectionChange" 
-      @size-change="handleSizeChange" 
-      @current-change="handleCurrentChange" 
+      @pagination="handlePagination"
       @update="handleUpdate" 
       @status-change="handleStatusChange"
     />
@@ -68,6 +67,9 @@ import ImportDialog from './components/ImportDialog'
 // 引入混入
 import tableMixin from './mixins/tableMixin'
 import importExportMixin from './mixins/importExportMixin'
+
+// 引入滚动工具函数
+import { scrollTo } from '@/utils/scroll-to'
 
 export default {
   name: 'BinSpecification',
@@ -117,7 +119,16 @@ export default {
     // 获取产品类型选项
     getProductOptions() {
       getProductTypeList().then(response => {
-        this.productOptions = response.data.items
+        if (response && response.data && response.data.items) {
+          this.productOptions = response.data.items
+          console.log('从铝箔产品管理模块获取产品数据:', this.productOptions)
+        } else {
+          this.$message.error('获取产品类型列表失败：响应数据格式错误')
+          console.error('获取产品类型列表失败：响应数据格式错误', response)
+        }
+      }).catch(error => {
+        this.$message.error(`获取产品类型列表失败: ${error.message || '未知错误'}`)
+        console.error('获取产品类型列表失败:', error)
       })
     },
 
@@ -129,6 +140,8 @@ export default {
         ...params
       }
       this.getList()
+      // 滚动到顶部
+      scrollTo(0, 800)
     },
 
     // 重置搜索
@@ -139,18 +152,24 @@ export default {
         ...params
       }
       this.getList()
+      // 滚动到顶部
+      scrollTo(0, 800)
     },
 
     // 每页显示条数变化
     handleSizeChange(val) {
       this.listQuery.limit = val
       this.getList()
+      // 滚动到顶部
+      scrollTo(0, 800)
     },
 
     // 当前页变化
     handleCurrentChange(val) {
       this.listQuery.page = val
       this.getList()
+      // 滚动到顶部
+      scrollTo(0, 800)
     },
 
     // 新增
@@ -175,6 +194,8 @@ export default {
           this.$message.success('新增成功')
           this.dialogVisible = false
           this.getList()
+          // 滚动到顶部
+          scrollTo(0, 800)
         })
       } else {
         // 更新
@@ -182,8 +203,17 @@ export default {
           this.$message.success('更新成功')
           this.dialogVisible = false
           this.getList()
+          // 滚动到顶部
+          scrollTo(0, 800)
         })
       }
+    },
+
+    // 处理分页
+    handlePagination({ page, limit }) {
+      this.listQuery.page = page
+      this.listQuery.limit = limit
+      this.getList()
     }
   }
 }

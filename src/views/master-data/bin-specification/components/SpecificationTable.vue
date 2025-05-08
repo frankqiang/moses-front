@@ -1,5 +1,5 @@
 <template>
-  <el-card shadow="hover" class="table-card">
+  <div class="specification-table">
     <el-table
       v-loading="loading"
       :data="data"
@@ -60,25 +60,26 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
-    <div class="pagination-container">
-      <el-pagination
-        background
-        :current-page.sync="currentPage"
-        :page-sizes="[10, 20, 30, 50]"
-        :page-size.sync="pageSize"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
-  </el-card>
+    <!-- 使用全局分页组件 -->
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      :page.sync="currentPage"
+      :limit.sync="pageSize"
+      @pagination="handlePagination"
+    />
+  </div>
 </template>
 
 <script>
+import Pagination from '@/components/Pagination'
+import { scrollTo } from '@/utils/scroll-to'
+
 export default {
   name: 'SpecificationTable',
+  components: {
+    Pagination
+  },
   props: {
     // 表格数据
     data: {
@@ -128,37 +129,36 @@ export default {
       this.$emit('selection-change', selection)
     },
     
-    // 处理每页条数变化
-    handleSizeChange(val) {
-      this.$emit('size-change', val)
+    // 处理分页变化
+    handlePagination({ page, limit }) {
+      // 滚动到页面顶部
+      scrollTo(0, 800)
+      
+      // 直接发送pagination事件给父组件，让父组件处理分页变化
+      this.$emit('pagination', { page, limit })
     },
     
-    // 处理页码变化
-    handleCurrentChange(val) {
-      this.$emit('current-change', val)
+    // 返回顶部方法，供外部调用
+    backToTop() {
+      scrollTo(0, 800)
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.table-card {
+.specification-table {
   margin-bottom: 24px;
-  border-radius: 8px;
   
   .text-muted {
     color: #909399;
     font-style: italic;
   }
   
-  .pagination-container {
-    margin-top: 24px;
-    text-align: right;
-  }
-  
   ::v-deep .el-table {
     border-radius: 4px;
     overflow: hidden;
+    margin-bottom: 16px;
   }
 }
 </style> 

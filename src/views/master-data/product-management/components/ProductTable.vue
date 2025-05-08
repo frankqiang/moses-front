@@ -84,18 +84,14 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
-    <div class="pagination-container">
-      <el-pagination
-        :current-page="page"
-        :page-sizes="[10, 20, 50, 100]"
-        :page-size="limit"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
+    <!-- 使用全局分页组件 -->
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      :page.sync="currentPage"
+      :limit.sync="pageSize"
+      @pagination="handlePagination"
+    />
   </div>
 </template>
 
@@ -104,8 +100,14 @@
  * 产品表格组件
  * 功能描述：展示铝箔产品列表并提供操作功能
  */
+import Pagination from '@/components/Pagination'
+import { scrollTo } from '@/utils/scroll-to'
+
 export default {
   name: 'ProductTable',
+  components: {
+    Pagination
+  },
   props: {
     data: {
       type: Array,
@@ -128,20 +130,33 @@ export default {
       default: 10
     }
   },
+  data() {
+    return {
+      currentPage: this.page,
+      pageSize: this.limit
+    }
+  },
+  watch: {
+    page(val) {
+      this.currentPage = val
+    },
+    limit(val) {
+      this.pageSize = val
+    }
+  },
   methods: {
     // 处理选择行变化
     handleSelectionChange(selection) {
       this.$emit('selection-change', selection)
     },
     
-    // 处理页码变化
-    handleCurrentChange(currentPage) {
-      this.$emit('current-change', currentPage)
-    },
-    
-    // 处理每页条数变化
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
+    // 处理分页变化
+    handlePagination({ page, limit }) {
+      // 滚动到页面顶部
+      scrollTo(0, 800)
+      
+      // 直接发送pagination事件给父组件，让父组件处理分页变化
+      this.$emit('pagination', { page, limit })
     },
     
     // 处理下拉菜单命令
@@ -157,6 +172,11 @@ export default {
         'discontinued': 'info'
       }
       return types[status] || 'info'
+    },
+    
+    // 返回顶部方法，供外部调用
+    backToTop() {
+      scrollTo(0, 800)
     }
   }
 }
@@ -164,14 +184,12 @@ export default {
 
 <style lang="scss" scoped>
 .product-table {
-  background-color: #fff;
-  padding: 16px;
-  border-radius: 4px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
 
-  .pagination-container {
-    margin-top: 16px;
-    text-align: right;
+  ::v-deep .el-table {
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
   }
 }
 

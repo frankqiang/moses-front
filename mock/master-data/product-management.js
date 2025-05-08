@@ -356,7 +356,7 @@ module.exports = [
   {
     url: '/vue-admin-template/mes/process-template/list',
     type: 'get',
-    response: config => {
+    response: () => {
       return {
         code: 20000,
         data: {
@@ -409,6 +409,26 @@ module.exports = [
               message: '产品编码格式不符合要求'
             }
           ]
+        }
+      }
+    }
+  },
+
+  // 获取所有产品列表（不分页，用于下拉选择）
+  {
+    url: '/vue-admin-template/mes/product/all-list',
+    type: 'get',
+    response: () => {
+      return {
+        code: 20000,
+        data: {
+          items: items.map(item => ({
+            id: item.id,
+            name: item.name,
+            code: item.code,
+            alloy: item.alloy,
+            state: item.state
+          }))
         }
       }
     }

@@ -24,7 +24,7 @@ const warehouseList = []
 const baseWarehouses = [
   { id: 1, code: 'WH-RAW-001', name: '原材料仓库', type: 'RAW', address: '厂区东侧1号楼' },
   { id: 2, code: 'WH-FIN-001', name: '成品仓库', type: 'FINISHED', address: '厂区西侧2号楼' },
-  { id: 3, code: 'WH-SEMI-001', name: '半成品仓库', type: 'SEMI', address: '厂区中部3号楼' }
+  { id: 3, code: 'WH-SEMI-001', name: '半成品仓库', type: 'SEMI', address: '厂区中部3号楼' },
 ]
 
 // 添加预设仓库

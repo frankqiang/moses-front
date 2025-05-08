@@ -1,4 +1,14 @@
 const Mock = require('mockjs')
+// 导入仓库数据
+const warehouseModule = require('./warehouse')
+
+// 获取仓库列表数据
+// 从warehouse.js模块中提取仓库列表
+const warehouseListResponse = warehouseModule.find(api => api.url === '/mes/master-data/warehouse/list-all')
+const warehouseList = warehouseListResponse.response().data.items.map(item => ({
+  id: item.id,
+  name: item.name
+}))
 
 // 生成库位模拟数据
 const locationList = []
@@ -10,15 +20,10 @@ const locationTypeTextMap = {
   'STAGING': '暂存区',
   'QC': '质检区'
 }
-const warehouseList = [
-  { id: 1, name: '原材料仓库' },
-  { id: 2, name: '成品仓库' },
-  { id: 3, name: '半成品仓库' }
-]
 
 // 生成模拟数据
 for (let i = 1; i <= 50; i++) {
-  const warehouseIndex = Math.floor(Math.random() * 3)
+  const warehouseIndex = Math.floor(Math.random() * warehouseList.length)
   const warehouse = warehouseList[warehouseIndex]
   const locationType = locationTypes[Math.floor(Math.random() * locationTypes.length)]
   const capacity = Math.floor(Math.random() * 1500) + 500
@@ -351,20 +356,6 @@ module.exports = [
       // 这里只是模拟API调用成功
       return {
         code: 20000
-      }
-    }
-  },
-  
-  // 获取仓库列表
-  {
-    url: '/mes/master-data/warehouse/list-all',
-    type: 'get',
-    response: () => {
-      return {
-        code: 20000,
-        data: {
-          items: warehouseList
-        }
       }
     }
   }

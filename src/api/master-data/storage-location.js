@@ -146,15 +146,4 @@ export function downloadLocationTemplate() {
     method: 'get',
     responseType: 'blob'
   })
-}
-
-/**
- * 获取仓库列表（用于下拉选择）
- * @returns {Promise}
- */
-export function getWarehouseList() {
-  return request({
-    url: '/mes/master-data/warehouse/list-all',
-    method: 'get'
-  })
 } 

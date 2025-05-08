@@ -26,8 +26,7 @@
       :page="listQuery.page" 
       :limit="listQuery.limit" 
       @selection-change="handleSelectionChange" 
-      @size-change="handleSizeChange" 
-      @current-change="handleCurrentChange" 
+      @pagination="handlePagination" 
       @update="handleUpdate" 
       @status-change="handleStatusChange"
     />
@@ -64,13 +63,18 @@ import {
   createLocation,
   updateLocation,
   updateLocationStatus,
-  getWarehouseList,
   batchDeleteLocation,
   batchUpdateLocationStatus,
   importLocationData,
   exportLocationData,
   downloadLocationTemplate
 } from '@/api/master-data/storage-location'
+
+// 从仓库管理模块导入获取仓库列表的API
+import { getAllWarehouses } from '@/api/master-data/warehouse'
+
+// 导入滚动工具函数
+import { scrollTo } from '@/utils/scroll-to'
 
 // 引入子组件
 import SearchForm from './components/SearchForm'
@@ -133,11 +137,18 @@ export default {
 
     // 获取仓库选项
     getWarehouseOptions() {
-      getWarehouseList().then(response => {
-        this.warehouseOptions = response.data.items || []
-      }).catch(() => {
-        // 处理错误情况
-        this.$message.error('获取仓库列表失败')
+      getAllWarehouses().then(response => {
+        // 确保正确解析响应数据
+        if (response && response.data) {
+          this.warehouseOptions = response.data.items || []
+          console.log('从仓库管理模块获取仓库数据:', this.warehouseOptions)
+        } else {
+          this.$message.error('获取仓库列表失败：响应数据格式错误')
+        }
+      }).catch(error => {
+        // 详细记录错误信息
+        console.error('获取仓库列表失败:', error)
+        this.$message.error(`获取仓库列表失败: ${error.message || '未知错误'}`)
       })
     },
 
@@ -149,6 +160,8 @@ export default {
         ...params
       }
       this.getList()
+      // 滚动到顶部
+      scrollTo(0, 800)
     },
 
     // 重置搜索
@@ -159,18 +172,8 @@ export default {
         ...params
       }
       this.getList()
-    },
-
-    // 每页显示条数变化
-    handleSizeChange(val) {
-      this.listQuery.limit = val
-      this.getList()
-    },
-
-    // 当前页变化
-    handleCurrentChange(val) {
-      this.listQuery.page = val
-      this.getList()
+      // 滚动到顶部
+      scrollTo(0, 800)
     },
 
     // 新增
@@ -195,6 +198,8 @@ export default {
           this.$message.success('新增成功')
           this.dialogVisible = false
           this.getList()
+          // 滚动到顶部
+          scrollTo(0, 800)
         }).catch(error => {
           this.$message.error(`新增失败: ${error.message || '未知错误'}`)
         })
@@ -204,6 +209,8 @@ export default {
           this.$message.success('更新成功')
           this.dialogVisible = false
           this.getList()
+          // 滚动到顶部
+          scrollTo(0, 800)
         }).catch(error => {
           this.$message.error(`更新失败: ${error.message || '未知错误'}`)
         })
@@ -328,6 +335,15 @@ export default {
       }).catch(() => {
         this.$message.error('模板下载失败')
       })
+    },
+
+    // 处理分页
+    handlePagination({ page, limit }) {
+      this.listQuery.page = page
+      this.listQuery.limit = limit
+      this.getList()
+      // 滚动到顶部
+      scrollTo(0, 800)
     }
   }
 }

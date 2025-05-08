@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { getAllProductList } from './product-management'
 
 // 获取料框规格列表
 export function getBinSpecList(query) {
@@ -54,10 +55,7 @@ export function changeBinSpecStatus(id, status) {
 
 // 获取产品类型列表（用于选择适用产品类型）
 export function getProductTypeList() {
-  return request({
-    url: '/vue-admin-template/mes/product/type-list',
-    method: 'get'
-  })
+  return getAllProductList()
 }
 
 // 批量删除料框规格
