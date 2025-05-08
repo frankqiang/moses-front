@@ -73,6 +73,12 @@ export const constantRoutes = [
         meta: { title: '料框规格管理' }
       },
       {
+        path: 'warehouse',
+        name: 'Warehouse',
+        component: () => import('@/views/master-data/warehouse/index'),
+        meta: { title: '仓库管理' }
+      },
+      {
         path: 'storage-location',
         name: 'StorageLocation',
         component: () => import('@/views/master-data/storage-location/index'),

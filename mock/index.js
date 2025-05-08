@@ -7,6 +7,7 @@ const binSpecification = require('./master-data/bin-specification')
 const productManagement = require('./master-data/product-management')
 const materialCode = require('./master-data/material-code')
 const storageLocation = require('./master-data/storage-location')
+const warehouse = require('./master-data/warehouse')
 
 const mocks = [
   ...user,
@@ -14,7 +15,8 @@ const mocks = [
   ...binSpecification,
   ...productManagement,
   ...materialCode,
-  ...storageLocation
+  ...storageLocation,
+  ...warehouse
 ]
 
 // for front mock

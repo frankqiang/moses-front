@@ -1,5 +1,6 @@
 <template>
   <el-card shadow="hover" class="table-card">
+    <div></div>
     <el-table
       v-loading="loading"
       :data="data"
@@ -31,11 +32,31 @@
           {{ row.dimension || '未设置' }}
         </template>
       </el-table-column>
-      <el-table-column label="容量" width="220">
+      <el-table-column label="容量" width="280">
         <template slot-scope="{row}">
-          <el-progress :percentage="getCapacityPercentage(row)" :status="getCapacityStatus(row)">
-            <span>{{ row.occupiedCapacity }} / {{ row.capacity }}</span>
-          </el-progress>
+          <div class="capacity-info">
+            <el-progress 
+              :percentage="getCapacityPercentage(row)" 
+              :status="getCapacityStatus(row)"
+              :format="() => ''"
+              class="capacity-progress"
+            />
+            <div class="capacity-details">
+              <div class="capacity-row">
+                <span class="label">总容量：</span>
+                <span class="value">{{ row.capacity }}</span>
+              </div>
+              <div class="capacity-row">
+                <span class="label">已使用：</span>
+                <span class="value">{{ row.occupiedCapacity }}</span>
+                <span class="percentage">({{ getCapacityPercentage(row) }}%)</span>
+              </div>
+              <div class="capacity-row">
+                <span class="label">剩余：</span>
+                <span class="value">{{ row.capacity - row.occupiedCapacity }}</span>
+              </div>
+            </div>
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="maxWeight" label="最大承重(kg)" width="120" align="center" />
@@ -205,6 +226,46 @@ export default {
   ::v-deep .el-table {
     border-radius: 4px;
     overflow: hidden;
+  }
+}
+
+.capacity-info {
+  display: flex;
+  align-items: center;
+  
+  .capacity-progress {
+    width: 120px;
+    margin-right: 10px;
+  }
+  
+  .capacity-details {
+    flex: 1;
+    font-size: 12px;
+    
+    .capacity-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 2px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .label {
+        color: #606266;
+        width: 56px;
+      }
+      
+      .value {
+        color: #303133;
+        font-weight: 500;
+      }
+      
+      .percentage {
+        color: #909399;
+        margin-left: 4px;
+      }
+    }
   }
 }
 </style> 
