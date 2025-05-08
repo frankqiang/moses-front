@@ -3,6 +3,10 @@ description:
 globs: 
 alwaysApply: true
 ---
+# 规则类型：Auto Attached
+# 匹配模式：**/README.md, **/package.json, vue.config.js
+# 说明：这些是项目基础配置文件，需要自动附加项目结构规则
+
 # 项目结构指南
 
 ## 项目概述
@@ -28,75 +32,22 @@ alwaysApply: true
 - [vue.config.js](mdc:vue.config.js) - Vue CLI配置文件
 - [package.json](mdc:package.json) - 项目依赖和脚本
 
-## 代码注释规范
-为了便于理解和维护代码，请遵循以下注释规范：
+## 环境配置
+- `.env.development` - 开发环境配置
+- `.env.staging` - 测试环境配置
+- `.env.production` - 生产环境配置
 
-### 文件头部注释
-每个文件顶部应有描述文件功能的注释：
-```js
-/**
- * 文件名称
- * 文件描述：简要说明该文件的功能和用途
- * 创建日期：YYYY-MM-DD
- */
-```
+## 测试和构建
+- `tests/` - 单元测试和集成测试
+- `build/` - 构建相关配置和脚本
 
-### 组件注释
-Vue组件应在export default前添加组件说明：
-```js
-/**
- * 组件名称
- * 功能描述：详细说明组件的功能和用途
- * 依赖项：列出主要依赖的组件、API或库
- */
-export default {
-  // 组件定义
-}
-```
+## 静态资源
+- `public/` - 不需要webpack处理的静态资源
+- `src/assets/` - 需要webpack处理的静态资源
 
-### 方法注释
-关键方法应有详细注释：
-```js
-/**
- * 方法名称
- * 功能：方法的具体功能
- * @param {类型} 参数名 - 参数说明
- * @returns {类型} 返回值说明
- */
-methodName(param) {
-  // 方法实现
-}
-```
-
-### 数据属性注释
-在data()返回的对象中，应为关键数据属性添加注释：
-```js
-data() {
-  return {
-    // 用户列表数据
-    userList: [],
-    // 分页配置
-    pagination: {
-      page: 1,
-      limit: 10
-    }
-  }
-}
-```
-
-### CSS样式注释
-CSS样式应分块添加注释：
-```css
-/* 头部导航样式 */
-.header-nav {
-  display: flex;
-  background-color: #fff;
-}
-
-/* 内容区域样式 */
-.content-area {
-  padding: 20px;
-}
-```
-
-遵循以上注释规范，将有助于更好地理解代码结构和功能，提高代码的可维护性。
+## 模拟数据
+- `mock/` - 模拟数据和API定义
+  - `mock/master-data/` - 主数据管理模块Mock数据
+  - `mock/inventory/` - 库存管理模块Mock数据
+  - `mock/utils.js` - Mock工具函数
+  - `mock/index.js` - Mock服务器入口

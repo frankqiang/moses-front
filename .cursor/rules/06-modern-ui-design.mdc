@@ -1,6 +1,6 @@
 ---
-description: 
-globs: *.vue, *.scss, *.css, *.less, **/styles/**/*
+description: 当进行UI设计、样式开发或组件美化时请求此规则
+globs: 
 alwaysApply: false
 ---
 # 现代UI设计规范

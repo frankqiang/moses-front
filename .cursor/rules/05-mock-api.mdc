@@ -1,8 +1,11 @@
 ---
-description: 详细说明Mock数据系统的使用方法，包括创建模拟API、定义响应数据和集成到项目中。当需要开发新的API接口、测试数据流或模拟后端服务时请求此规则。
+description: 当需要开发新的API接口、测试数据流或模拟后端服务时请求此规则
 globs: 
 alwaysApply: false
 ---
+# 规则类型：Agent Requested
+# 说明：当需要开发新的API接口、测试数据流或模拟后端服务时请求此规则
+
 # Mock数据和API规范
 
 ## Mock系统概述
@@ -210,5 +213,183 @@ const mocks = [
 if (process.env.NODE_ENV === 'production') {
   const { mockXHR } = require('../mock')
   mockXHR()
+}
+```
+
+## Mock API 指南
+
+## 概述
+本指南详细说明了如何使用Mock数据系统进行前端开发和测试。Mock系统可以模拟后端API响应，使前端开发不依赖于后端服务。
+
+## Mock系统架构
+- 基于[mockjs](mdc:http:/mockjs.com)实现数据生成
+- 使用Express中间件处理请求
+- 支持动态路由和响应数据
+- 可配置响应延迟和错误情况
+
+## 目录结构
+```
+mock/
+├── master-data/           # 主数据管理模块
+│   ├── warehouse.js      # 仓库管理接口
+│   ├── bin.js           # 料框管理接口
+│   └── location.js      # 库位管理接口
+├── inventory/            # 库存管理模块
+│   ├── stock.js         # 库存接口
+│   └── movement.js      # 库存移动接口
+├── utils.js             # 工具函数
+└── index.js             # Mock服务器入口
+```
+
+## 创建Mock接口
+
+### 基本结构
+```javascript
+export default [
+  {
+    url: '/mes/api/warehouses',
+    type: 'get',
+    response: config => {
+      return {
+        code: 20000,
+        data: {
+          total: 100,
+          items: [/* 数据项 */]
+        }
+      }
+    }
+  }
+]
+```
+
+### 响应格式规范
+```javascript
+{
+  code: 20000,      // 状态码：20000成功，50000失败
+  data: {           // 响应数据
+    // ... 具体数据
+  },
+  message: 'success' // 状态信息
+}
+```
+
+### 数据生成
+使用Mock.js生成随机数据：
+```javascript
+import Mock from 'mockjs'
+
+const data = Mock.mock({
+  'items|10': [{
+    id: '@id',
+    name: '@name',
+    'status|1': ['enabled', 'disabled'],
+    createTime: '@datetime'
+  }]
+})
+```
+
+## 使用指南
+
+### 启用Mock
+1. 在`vue.config.js`中配置：
+```javascript
+module.exports = {
+  devServer: {
+    before: require('./mock/mock-server.js')
+  }
+}
+```
+
+2. 在`main.js`中根据环境启用：
+```javascript
+if (process.env.NODE_ENV === 'development') {
+  require('../mock')
+}
+```
+
+### 编写Mock接口
+1. 在对应模块目录创建接口文件
+2. 定义请求路径、方法和响应数据
+3. 在`mock/index.js`中注册接口
+
+### 处理请求参数
+```javascript
+export default {
+  url: '/mes/api/warehouses',
+  type: 'get',
+  response: config => {
+    const { page = 1, limit = 10 } = config.query
+    const items = data.filter((item, index) => {
+      return index < limit * page && index >= limit * (page - 1)
+    })
+    return {
+      code: 20000,
+      data: {
+        total: data.length,
+        items: items
+      }
+    }
+  }
+}
+```
+
+## 最佳实践
+
+### 数据一致性
+- 使用统一的数据结构
+- 保持与真实API相同的字段名
+- 模拟真实的业务逻辑
+
+### 错误处理
+- 模拟各种错误情况
+- 返回合适的错误码和信息
+- 测试前端错误处理逻辑
+
+### 性能模拟
+- 设置合理的响应延迟
+- 模拟大数据量场景
+- 测试加载状态和分页
+
+## 调试技巧
+
+### 控制台输出
+```javascript
+response: config => {
+  console.log('请求参数:', config.query)
+  return {
+    code: 20000,
+    data: {}
+  }
+}
+```
+
+### 动态修改响应
+```javascript
+const debug = true
+response: config => {
+  if (debug) {
+    return {
+      code: 50000,
+      message: '模拟错误'
+    }
+  }
+  return {
+    code: 20000,
+    data: {}
+  }
+}
+```
+
+### 延迟响应
+```javascript
+response: config => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({
+        code: 20000,
+        data: {}
+      })
+    }, 1000)
+  })
 }
 ```
