@@ -6,13 +6,15 @@ const table = require('./table')
 const binSpecification = require('./master-data/bin-specification')
 const productManagement = require('./master-data/product-management')
 const materialCode = require('./master-data/material-code')
+const storageLocation = require('./master-data/storage-location')
 
 const mocks = [
   ...user,
   ...table,
   ...binSpecification,
   ...productManagement,
-  ...materialCode
+  ...materialCode,
+  ...storageLocation
 ]
 
 // for front mock

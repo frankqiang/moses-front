@@ -30,6 +30,25 @@ npm run build:stage
 
 ## API请求
 
+### URL路径规范
+**重要**: 所有API路径必须遵循以下规则：
+1. 所有API路径必须以`/mes`作为前缀
+2. 路径应按照业务模块组织，例如：`/mes/master-data/xxx`、`/mes/production/xxx`
+3. 不要使用`/vue-admin-template`前缀
+
+#### 正确的URL示例：
+```
+/mes/master-data/product/list
+/mes/master-data/storage-location/create
+/mes/production/work-order/detail/123
+```
+
+#### 错误的URL示例：
+```
+/master-data/product/list        // ❌ 缺少/mes前缀
+/vue-admin-template/mes/xxx      // ❌ 不应使用/vue-admin-template前缀
+```
+
 ### 目录结构规范
 API目录必须按照业务模块组织，保持清晰的目录结构：
 
@@ -55,6 +74,9 @@ src/api/
 
 import request from '@/utils/request'
 
+// API基础路径
+const baseURL = '/mes/module-name/feature-name'
+
 /**
  * 获取XX列表
  * @param {Object} query - 查询参数
@@ -62,7 +84,7 @@ import request from '@/utils/request'
  */
 export function getXXList(query) {
   return request({
-    url: '/vue-admin-template/module/feature/list',
+    url: `${baseURL}/list`,
     method: 'get',
     params: query
   })
@@ -88,15 +110,23 @@ methods: {
 ### 添加新模块/功能流程
 1. 创建对应模块目录（若不存在）: `mkdir -p src/api/module-name`
 2. 在目录下创建功能对应的js文件
-3. 编写API请求函数并导出
-4. 在组件中导入并使用
+3. 定义API基础路径，遵循URL规范：`const baseURL = '/mes/module-name/feature-name'`
+4. 编写API请求函数并导出
+5. 在组件中导入并使用
 
 ### 代码评审检查点
 - API文件是否放在正确的模块目录中
 - 文件命名是否使用kebab-case
+- API路径是否遵循`/mes`前缀规范
 - 是否有适当的注释
 - 请求格式是否符合规范
 - 导入路径是否正确
+
+### 错误检查与排错指南
+如果遇到404错误：
+1. 检查API路径是否包含`/mes`前缀
+2. 确认前端API调用和Mock定义的路径是否一致
+3. 检查路径拼写是否正确
 
 ## 状态管理
 - 全局状态使用Vuex管理，位于 `src/store` 目录
