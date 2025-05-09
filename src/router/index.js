@@ -95,6 +95,12 @@ export const constantRoutes = [
         name: 'MaterialCode',
         component: () => import('@/views/master-data/material-code/index'),
         meta: { title: '物料编码管理' }
+      },
+      {
+        path: 'equipment',
+        name: 'Equipment',
+        component: () => import('@/views/master-data/equipment/index'),
+        meta: { title: '设备主数据管理' }
       }
       // 后续可以在这里添加其他主数据管理的子页面
     ]

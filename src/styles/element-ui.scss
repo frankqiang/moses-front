@@ -15,6 +15,27 @@
   display: none;
 }
 
+// 修改按钮间距
+.el-button + .el-button {
+  margin-left: 0;
+  margin: 0 10px;
+}
+
+// 优化抽屉组件样式，支持内容滚动和底部固定
+.el-drawer {
+  .el-drawer__body {
+    overflow: auto;
+    padding: 0;
+  }
+  
+  .el-drawer__header {
+    margin-bottom: 0;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e6e6e6;
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
 
 // to fixed https://github.com/ElemeFE/element/issues/2461
 .el-dialog {
