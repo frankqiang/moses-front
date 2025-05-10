@@ -1,0 +1,221 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 表格模块开发规范
+
+## 适用范围
+本规则适用于所有包含表格列表的功能模块开发，规定了统一的组件架构、全局组件使用和交互模式，所有新的表格模块和改造的旧模块都需遵循此规范。
+
+## 参考示例
+请参考`src/views/master-data/equipment`目录作为表格模块开发的标准示例。该模块展示了如何使用全局组件和配置化方式构建高复用、易维护的表格功能。
+
+## 目录结构规范
+每个表格模块必须遵循以下目录结构：
+```
+module-name/
+├── index.vue                  # 主页面（容器组件）
+├── README.md                  # 模块说明文档
+├── components/                # 子组件目录
+│   ├── SearchForm.vue         # 搜索表单组件（使用全局SearchForm）
+│   ├── DataTable.vue          # 数据表格组件（使用全局ActionButtons和StatusTag）
+│   ├── FormDrawer.vue         # 表单抽屉组件（使用全局DrawerForm）
+│   └── ImportExportBar.vue    # 导入导出组件（可选）
+└── api/                       # API目录（可选）
+    └── index.js               # API调用方法
+```
+
+## 全局组件使用规范
+
+### 1. SearchForm组件
+- **强制要求**：所有列表搜索表单必须使用全局SearchForm组件
+- 通过配置方式定义表单项，而不是手写表单元素
+- 支持展开/收起功能，将非主要搜索条件设为折叠项
+- 示例用法：
+
+```vue
+<search-form
+  ref="searchForm"
+  :items="formItems"
+  :value="formModel"
+  :loading="loading"
+  @search="handleSearch"
+  @reset="handleReset"
+>
+  <!-- 自定义插槽内容（如有需要） -->
+</search-form>
+```
+
+### 2. ActionButtons组件
+- **强制要求**：表格中的操作按钮必须使用全局ActionButtons组件
+- 使用预设按钮配置或自定义按钮配置
+- 支持文本模式和图标模式
+- 示例用法：
+
+```vue
+<action-buttons
+  :buttons="getActionButtons(row)"
+  mode="text"
+  :row="row"
+  @click="handleActionClick"
+/>
+```
+
+### 3. StatusTag组件
+- **强制要求**：所有状态展示必须使用全局StatusTag组件
+- 使用预设状态类型或自定义状态配置
+- 示例用法：
+
+```vue
+<status-tag
+  :status="row.status"
+  :text-map="statusTextMap"
+  :type-map="statusTypeMap"
+/>
+```
+
+### 4. DrawerForm组件
+- **强制要求**：所有表单抽屉必须使用全局DrawerForm组件
+- 通过`formSections`配置分段表单内容
+- 支持create/update/view三种模式
+- 示例用法：
+
+```vue
+<drawer-form
+  ref="drawerForm"
+  :visible.sync="drawerVisible"
+  :title="formTitle"
+  :mode="formMode"
+  :data="formData"
+  :rules="rules"
+  :form-sections="formSections"
+  @submit="handleFormSubmit"
+>
+  <!-- 自定义表单内容（如有需要） -->
+</drawer-form>
+```
+
+### 5. Pagination组件
+- **强制要求**：所有表格分页必须使用全局Pagination组件
+- 正确处理分页事件和同步属性
+- 示例用法：
+
+```vue
+<pagination
+  v-show="total > 0"
+  :total="total"
+  :page.sync="currentPage"
+  :limit.sync="pageSize"
+  @pagination="handlePagination"
+/>
+```
+
+## 交互规范
+
+### 表格操作
+- 表格行操作使用文本按钮，放置在最右侧固定列中
+- 批量操作放置在表格上方工具栏中
+- 操作按钮图标和文字统一，参照预设按钮配置
+
+### 表单抽屉
+- 表单在抽屉中打开，不使用弹窗
+- 表单按分类分段展示，每个分段有明确标题
+- 表单抽屉宽度统一为550px
+- 查看模式下表单项禁用，不显示保存按钮
+
+### 状态展示
+- 使用不同颜色和图标区分不同状态
+- 状态切换操作需要二次确认
+- 禁用状态的行整行显示为灰色
+
+## 配置化开发
+
+### 表单配置示例
+```javascript
+// 动态表单分段
+formSections() {
+  return [
+    {
+      title: '一、基础信息',
+      items: [
+        {
+          prop: 'name',
+          label: '名称',
+          type: 'input',
+          placeholder: '请输入名称',
+          maxlength: 50,
+          showWordLimit: true
+        },
+        {
+          prop: 'status',
+          label: '状态',
+          type: 'radio',
+          options: [
+            { label: '启用', value: 1 },
+            { label: '禁用', value: 0 }
+          ]
+        }
+        // 更多表单项...
+      ]
+    },
+    {
+      title: '二、详细信息',
+      items: [
+        // 分段表单项...
+      ]
+    }
+  ]
+}
+```
+
+### 表格列配置示例
+```javascript
+// 动态表格列配置
+columns() {
+  return [
+    { prop: 'id', label: 'ID', width: '80' },
+    { prop: 'name', label: '名称', width: '150' },
+    { 
+      prop: 'status', 
+      label: '状态', 
+      width: '100',
+      // 使用StatusTag渲染
+      renderType: 'status'
+    },
+    // 更多列配置...
+  ]
+}
+```
+
+## 最佳实践
+
+1. **使用计算属性**：将复杂的表单和表格配置放在计算属性中
+2. **模块化API**：将API调用封装在单独的文件中
+3. **配置预设**：使用预设配置简化常见操作
+4. **TypeScript支持**：为配置项添加TypeScript类型定义
+5. **文档完善**：在README.md中记录模块功能、组件说明和注意事项
+
+## 核心原则
+
+1. **统一性**：所有表格模块使用相同的组件结构和交互模式
+2. **配置化**：尽量通过配置而非硬编码实现功能
+3. **复用性**：充分利用全局组件和预设配置
+4. **可维护性**：清晰的结构和足够的文档
+5. **用户体验**：一致的交互模式和视觉样式
+
+## 质量检查清单
+
+开发完成后，请检查以下项目是否符合规范：
+
+- [ ] 使用了全局SearchForm组件实现搜索表单
+- [ ] 使用了全局ActionButtons组件实现操作按钮
+- [ ] 使用了全局StatusTag组件实现状态显示
+- [ ] 使用了全局DrawerForm组件实现表单抽屉
+- [ ] 使用了全局Pagination组件实现分页
+- [ ] 表单分段清晰，字段归类合理
+- [ ] 功能完整：查询、新增、编辑、查看、删除、状态切换
+- [ ] 代码符合ESLint规范
+- [ ] README.md文档完善
+
+
