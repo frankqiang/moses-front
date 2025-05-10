@@ -1,7 +1,9 @@
 /**
  * 设备表格组件（新版）
  * 功能描述：展示设备列表数据，提供分页、选择、操作功能，支持不同设备类型的动态列显示及持久化设置
+ * 功能增强：支持批量操作、导入导出等高级功能
  * 创建日期：2023-11-15
+ * 更新日期：2024-10-27
  */
 <template>
   <div class="equipment-table">
@@ -11,10 +13,28 @@
       :column-options="allColumns"
       :storage-key="currentStorageKey"
       :default-visible-columns="defaultVisibleColumns"
+      :enable-batch-actions="true"
+      :selected-rows="selectedRows"
+      :enable-import="true"
+      :import-api="importApiFunction"
+      :template-api="templateApiFunction"
+      :enable-export="true"
+      :export-api="exportApiFunction"
+      :export-params="exportParams"
+      :status-buttons-mode="'buttons'"
+      :status-confirm="false"
+      :delete-confirm="false"
+      :table-data="data"
       @refresh="handleRefresh"
       @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @import-success="handleImportSuccess"
+      @export-success="handleExportSuccess"
     >
       <template #toolbar-left>
+        <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增设备</el-button>
         <slot name="toolbar-left"></slot>
       </template>
       
@@ -44,7 +64,15 @@
           align="center"
         >
           <template slot-scope="scope">
-            <template v-if="col.formatter">
+            <!-- 使用StatusTag组件展示状态列 -->
+            <template v-if="col.prop === 'status'">
+              <status-tag
+                :status="scope.row.status"
+                :text-map="statusTextMap"
+                :type-map="statusTypeMap"
+              />
+            </template>
+            <template v-else-if="col.formatter">
               {{ col.formatter(scope.row[col.prop], scope.row) }}
             </template>
             <template v-else-if="scope.row[col.prop] !== undefined && scope.row[col.prop] !== null">
@@ -57,35 +85,15 @@
         </el-table-column>
       </template>
 
-      <el-table-column label="操作" width="120" align="center" fixed="right">
+      <el-table-column label="操作" width="150" align="center" fixed="right">
         <template slot-scope="scope">
-          <el-tooltip content="编辑" placement="top">
-            <el-button
-              size="mini"
-              type="text"
-              icon="el-icon-edit"
-              @click="handleUpdate(scope.row)"
-            />
-          </el-tooltip>
-          
-          <el-tooltip :content="scope.row.status === 1 ? '禁用' : '启用'" placement="top">
-            <el-button
-              size="mini"
-              type="text"
-              :icon="scope.row.status === 1 ? 'el-icon-close' : 'el-icon-check'"
-              :class="scope.row.status === 1 ? 'status-disable' : 'status-enable'"
-              @click="handleStatusChange(scope.row)"
-            />
-          </el-tooltip>
-          
-          <el-tooltip content="查看" placement="top">
-            <el-button
-              size="mini"
-              type="text"
-              icon="el-icon-view"
-              @click="handleView(scope.row)"
-            />
-          </el-tooltip>
+          <!-- 使用ActionButtons组件替代原来的按钮组 -->
+          <action-buttons
+            :buttons="getActionButtons(scope.row)"
+            mode="text"
+            :row="scope.row"
+            @click="handleActionClick"
+          />
         </template>
       </el-table-column>
     </el-table>
@@ -104,13 +112,20 @@
 <script>
 import Pagination from '@/components/Pagination'
 import TableToolbar from '@/components/TableToolbar'
+import ActionButtons from '@/components/ActionButtons'
+import StatusTag from '@/components/StatusTag'
+import { CommonButtons, generateTableButtons } from '@/components/ActionButtons/presets'
+import { enabledStatusMap } from '@/components/StatusTag/types'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
+import request from '@/utils/request'
 
 export default {
   name: 'EquipmentTable',
   components: {
     Pagination,
-    TableToolbar
+    TableToolbar,
+    ActionButtons,
+    StatusTag
   },
   mixins: [columnSettingsMixin],
   props: {
@@ -143,6 +158,21 @@ export default {
     equipmentType: {
       type: String,
       required: true
+    },
+    // 导入API
+    importApi: {
+      type: String,
+      default: '/api/equipment/import'
+    },
+    // 导入模板API
+    templateApi: {
+      type: String,
+      default: '/api/equipment/template'
+    },
+    // 导出API
+    exportApi: {
+      type: String,
+      default: '/api/equipment/export'
     }
   },
   data() {
@@ -152,13 +182,62 @@ export default {
       // 每页大小
       pageSize: 10,
       // 重写列设置存储键前缀
-      columnSettingsKeyPrefix: 'equipment_columns'
+      columnSettingsKeyPrefix: 'equipment_columns',
+      // 导出参数
+      exportParams: {},
+      // 选中的行
+      selectedRows: [],
+      // 状态文本映射
+      statusTextMap: enabledStatusMap.textMap,
+      // 状态类型映射
+      statusTypeMap: enabledStatusMap.typeMap
     }
   },
   computed: {
     // 重写列设置存储键
     currentStorageKey() {
       return `${this.columnSettingsKeyPrefix}_${this.equipmentType}`
+    },
+    
+    // 导入API函数
+    importApiFunction() {
+      return (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('equipmentType', this.equipmentType)
+        return request({
+          url: this.importApi,
+          method: 'post',
+          data: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+      }
+    },
+    
+    // 模板API函数
+    templateApiFunction() {
+      return () => {
+        return request({
+          url: this.templateApi,
+          method: 'get',
+          params: { equipmentType: this.equipmentType },
+          responseType: 'blob'
+        })
+      }
+    },
+    
+    // 导出API函数
+    exportApiFunction() {
+      return (params) => {
+        return request({
+          url: this.exportApi,
+          method: 'post',
+          data: { ...params, equipmentType: this.equipmentType },
+          responseType: 'blob'
+        })
+      }
     }
   },
   watch: {
@@ -180,11 +259,43 @@ export default {
     equipmentType: {
       handler() {
         this.initEquipmentColumns()
+        this.updateExportParams()
       },
       immediate: true
     }
   },
   methods: {
+    // 获取操作按钮配置
+    getActionButtons(row) {
+      // 创建自定义状态切换按钮
+      const statusToggleButton = {
+        text: row.status === 1 ? '禁用' : '启用',
+        action: 'statusToggle',
+        icon: row.status === 1 ? 'el-icon-close' : 'el-icon-check',
+        type: 'text',
+        class: row.status === 1 ? 'status-disable' : 'status-enable',
+        tooltip: row.status === 1 ? '禁用' : '启用'
+      }
+      
+      // 使用预设按钮生成操作按钮，并添加状态切换按钮
+      return generateTableButtons(['edit', 'view']).concat([statusToggleButton])
+    },
+    
+    // 处理按钮点击事件
+    handleActionClick({ action, row }) {
+      switch (action) {
+        case 'edit':
+          this.handleUpdate(row)
+          break
+        case 'view':
+          this.handleView(row)
+          break
+        case 'statusToggle':
+          this.handleStatusChange(row)
+          break
+      }
+    },
+    
     // 初始化设备列配置
     initEquipmentColumns() {
       // 通用列
@@ -338,8 +449,7 @@ export default {
         { 
           prop: 'status', 
           label: '状态', 
-          width: '80',
-          formatter: (value) => value === 1 ? '启用' : '禁用'
+          width: '80'
         },
         { 
           prop: 'updateTime', 
@@ -356,6 +466,14 @@ export default {
 
       // 合并所有列并初始化
       this.initColumns([...commonColumns, ...specificColumns, ...endColumns])
+    },
+
+    // 更新导出参数
+    updateExportParams() {
+      this.exportParams = {
+        equipmentType: this.equipmentType,
+        columns: this.internalVisibleColumns
+      }
     },
 
     // 格式化日期
@@ -384,7 +502,13 @@ export default {
     
     // 选择行变化
     handleSelectionChange(selection) {
+      this.selectedRows = selection
       this.$emit('selection-change', selection)
+    },
+    
+    // 新增按钮点击事件
+    handleAdd() {
+      this.$emit('add')
     },
     
     // 编辑按钮点击事件
@@ -411,6 +535,32 @@ export default {
     // 刷新表格
     handleRefresh() {
       this.$emit('current-change', this.currentPage)
+    },
+    
+    // 批量删除
+    handleBatchDelete(rows) {
+      this.$emit('batch-delete', rows || this.selectedRows)
+    },
+    
+    // 批量启用
+    handleBatchEnable(rows) {
+      this.$emit('batch-enable', rows || this.selectedRows)
+    },
+    
+    // 批量禁用
+    handleBatchDisable(rows) {
+      this.$emit('batch-disable', rows || this.selectedRows)
+    },
+    
+    // 导入成功
+    handleImportSuccess(result) {
+      this.$emit('import-success', result)
+      this.handleRefresh()
+    },
+    
+    // 导出成功
+    handleExportSuccess(result) {
+      this.$emit('export-success', result)
     }
   }
 }
@@ -447,16 +597,6 @@ export default {
   
   .status-disable {
     color: #f56c6c;
-  }
-  
-  .el-button--text {
-    padding: 2px 4px;
-  }
-
-  // 覆盖Element UI默认按钮间距
-  .el-button + .el-button {
-    margin-left: 0;
-    margin: 0 10px;
   }
 }
 </style> 

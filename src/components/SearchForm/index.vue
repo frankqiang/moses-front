@@ -231,8 +231,8 @@
       
       <!-- 表单操作按钮 -->
       <el-form-item class="search-buttons">
-        <el-button type="primary" @click="handleSubmit" :loading="loading">查询</el-button>
-        <el-button @click="handleReset">重置</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="loading" class="form-button">查询</el-button>
+        <el-button @click="handleReset" class="form-button">重置</el-button>
         
         <!-- 展开/收起按钮 -->
         <el-button
@@ -384,6 +384,15 @@ export default {
     .search-buttons {
       margin-right: 0;
       
+      .form-button {
+        min-width: 80px;
+        transition: all 0.3s ease;
+        
+        &:first-child {
+          margin-right: 10px;
+        }
+      }
+      
       .expand-button {
         margin-left: 10px;
       }
@@ -407,6 +416,21 @@ export default {
   ::v-deep .el-date-editor--date,
   ::v-deep .el-date-editor--datetime {
     width: 100%;
+  }
+  
+  /* 修复按钮loading状态时的样式问题 */
+  ::v-deep .el-button.is-loading {
+    padding-left: 20px;
+    padding-right: 20px;
+    
+    .el-icon-loading {
+      font-size: 14px;
+    }
+  }
+  
+  /* 平滑过渡 */
+  ::v-deep .el-button {
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   }
 }
 </style> 

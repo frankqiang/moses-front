@@ -2,6 +2,7 @@
  * 设备主数据管理页面
  * 功能描述：管理系统中的设备信息，包括不同类型设备（退火炉、行车、自动料车、备料台等）的基础信息和特性参数
  * 创建日期：2023-11-05
+ * 更新日期：2024-10-28
  */
 <template>
   <div class="app-container">
@@ -28,6 +29,7 @@
     <search-form 
       :init-query="listQuery" 
       :equipment-type="currentEquipmentType"
+      :loading="listLoading"
       @search="handleSearch" 
       @reset="handleReset"
     />
@@ -41,65 +43,22 @@
       :page="listQuery.page" 
       :limit="listQuery.limit" 
       :equipment-type="currentEquipmentType"
+      :import-api="apiBaseUrl + '/import'"
+      :template-api="apiBaseUrl + '/template'"
+      :export-api="apiBaseUrl + '/export'"
       @selection-change="handleSelectionChange" 
       @size-change="handleSizeChange" 
       @current-change="handleCurrentChange" 
       @update="handleUpdate" 
       @view="handleView"
       @status-change="handleStatusChange"
-    >
-      <!-- 工具栏左侧按钮 -->
-      <template #toolbar-left>
-        <div>
-          <el-button
-          type="primary"
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleCreate"
-        >
-          新增{{ getCurrentTypeLabel() }}
-        </el-button>
-        
-        <el-button
-          type="danger"
-          icon="el-icon-delete"
-          size="mini"
-          :disabled="selectedRows.length === 0"
-          @click="handleBatchDelete"
-        >
-          批量删除
-        </el-button>
-        
-        <el-dropdown
-          @command="handleBatchStatus"
-          :disabled="selectedRows.length === 0"
-        >
-          <el-button
-            type="info"
-            size="mini"
-            :disabled="selectedRows.length === 0"
-          >
-            批量操作<i class="el-icon-arrow-down el-icon--right"></i>
-          </el-button>
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item 
-              command="enable"
-              :disabled="!hasDisabledItems"
-            >
-              批量启用
-            </el-dropdown-item>
-            <el-dropdown-item 
-              command="disable"
-              :disabled="!hasEnabledItems"
-            >
-              批量禁用
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
-        </div>
-        
-      </template>
-    </equipment-table>
+      @add="handleCreate"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @import-success="handleImportSuccess"
+      @export-success="handleExportSuccess"
+    />
 
     <!-- 表单抽屉 -->
     <equipment-form-drawer
@@ -174,6 +133,24 @@ export default {
       drawerType: 'create',
       // 当前操作的设备数据
       currentEquipment: null
+    }
+  },
+  computed: {
+    // API基础URL
+    apiBaseUrl() {
+      return `/api/equipment/${this.currentEquipmentType.toLowerCase()}`
+    },
+    
+    // 是否有禁用的设备（用于批量启用按钮）
+    hasDisabledItems() {
+      return this.selectedRows && this.selectedRows.length > 0 && 
+             this.selectedRows.some(row => row.status === 0);
+    },
+    
+    // 是否有启用的设备（用于批量禁用按钮）
+    hasEnabledItems() {
+      return this.selectedRows && this.selectedRows.length > 0 && 
+             this.selectedRows.some(row => row.status === 1);
     }
   },
   created() {
@@ -359,8 +336,8 @@ export default {
     },
     
     // 批量删除
-    handleBatchDelete() {
-      if (!this.selectedRows || this.selectedRows.length === 0) {
+    handleBatchDelete(rows) {
+      if (!rows || rows.length === 0) {
         this.$message.warning('请至少选择一条记录')
         return
       }
@@ -373,7 +350,7 @@ export default {
         this.listLoading = true
         
         // 获取选中行的ID列表
-        const ids = this.selectedRows.map(row => row.id)
+        const ids = rows.map(row => row.id)
         console.log('批量删除设备IDs:', ids)
         
         batchDeleteEquipment(ids).then(response => {
@@ -395,20 +372,27 @@ export default {
       })
     },
     
+    // 批量启用
+    handleBatchEnable(rows) {
+      this.handleBatchStatus(rows, 1, '启用')
+    },
+    
+    // 批量禁用
+    handleBatchDisable(rows) {
+      this.handleBatchStatus(rows, 0, '禁用')
+    },
+    
     // 批量更改状态
-    handleBatchStatus(command) {
-      if (!this.selectedRows || this.selectedRows.length === 0) return
+    handleBatchStatus(rows, targetStatus, statusText) {
+      if (!rows || rows.length === 0) return
       
       // 只选择需要操作的行
-      const targetStatus = command === 'enable' ? 1 : 0;
-      const targetRows = this.selectedRows.filter(row => row.status !== targetStatus);
+      const targetRows = rows.filter(row => row.status !== targetStatus)
       
       if (targetRows.length === 0) {
-        this.$message.info(`所选记录已全部${command === 'enable' ? '启用' : '禁用'}，无需操作`);
-        return;
+        this.$message.info(`所选记录已全部${statusText}，无需操作`)
+        return
       }
-      
-      const statusText = command === 'enable' ? '启用' : '禁用'
       
       this.$confirm(`确认批量${statusText}选中的设备记录吗？`, '提示', {
         confirmButtonText: '确定',
@@ -436,19 +420,17 @@ export default {
         // 取消操作
         this.$message.info('操作已取消')
       })
-    }
-  },
-  computed: {
-    // 是否有禁用的设备（用于批量启用按钮）
-    hasDisabledItems() {
-      return this.selectedRows && this.selectedRows.length > 0 && 
-             this.selectedRows.some(row => row.status === 0);
     },
     
-    // 是否有启用的设备（用于批量禁用按钮）
-    hasEnabledItems() {
-      return this.selectedRows && this.selectedRows.length > 0 && 
-             this.selectedRows.some(row => row.status === 1);
+    // 导入成功处理
+    handleImportSuccess(result) {
+      this.$message.success(`导入成功：${result.successCount || 0}条数据`)
+      this.getList()
+    },
+    
+    // 导出成功处理
+    handleExportSuccess(result) {
+      this.$message.success(`导出成功：${result.filename || '文件已下载'}`)
     }
   }
 }

@@ -2,320 +2,40 @@
  * 设备表单抽屉组件
  * 功能描述：提供设备新增、编辑和查看功能的表单，使用抽屉方式展示
  * 创建日期：2023-11-05
+ * 更新日期：2024-10-28
  */
 <template>
-  <el-drawer
-    :title="getDrawerTitle()"
+  <drawer-form
+    ref="drawerForm"
     :visible.sync="drawerVisible"
-    :size="'550px'"
-    :direction="'rtl'"
-    :before-close="handleClose"
-    custom-class="equipment-form-drawer"
-    :wrapperClosable="false"
+    :title="getDrawerTitle()"
+    :mode="type"
+    :data="form"
+    :rules="rules"
+    :form-sections="formSections"
+    :loading="loading"
+    width="550px"
+    direction="rtl"
+    :wrapper-closable="false"
+    @submit="handleFormSubmit"
+    @close="handleClose"
   >
-    <div class="drawer-content" ref="drawerContent">
-      <el-form 
-        ref="equipmentForm"
-        :model="form"
-        :rules="rules"
-        label-width="120px"
-        size="small"
-        :disabled="type === 'view'"
-      >
-        <!-- 一、基础信息 -->
-        <div class="form-section">
-          <h3 class="section-title">一、基础信息</h3>
-          
-          <el-form-item label="设备ID" prop="equipmentId">
-            <el-input 
-              v-model="form.equipmentId" 
-              placeholder="输入或系统自动生成" 
-              :disabled="type === 'update'"
-            />
-          </el-form-item>
-          
-          <el-form-item label="设备名称" prop="name">
-            <el-input 
-              v-model="form.name" 
-              placeholder="请输入设备名称"
-              maxlength="50"
-              show-word-limit
-            />
-          </el-form-item>
-          
-          <el-form-item label="设备型号" prop="model">
-            <el-input 
-              v-model="form.model" 
-              placeholder="请输入设备型号"
-              maxlength="30"
-              show-word-limit
-            />
-          </el-form-item>
-          
-          <el-form-item label="安装日期" prop="installDate">
-            <el-date-picker
-              v-model="form.installDate"
-              type="date"
-              placeholder="选择安装日期"
-              value-format="yyyy-MM-dd"
-              style="width: 100%"
-            />
-          </el-form-item>
-          
-          <el-form-item label="设备状态" prop="status">
-            <el-radio-group v-model="form.status">
-              <el-radio :label="1">启用</el-radio>
-              <el-radio :label="0">禁用</el-radio>
-            </el-radio-group>
-          </el-form-item>
-        </div>
-        
-        <!-- 二、特定设备类型参数 -->
-        <div class="form-section">
-          <h3 class="section-title">二、{{ getTypeSpecificTitle() }}</h3>
-          
-          <!-- 退火炉参数 -->
-          <template v-if="equipmentType === 'FURNACE'">
-            <el-form-item label="规格(容量)" prop="capacity">
-              <el-input-number 
-                v-model="form.capacity"
-                :min="0"
-                :step="5"
-                :precision="0"
-                style="width: 100%"
-              />
-              <span class="unit-label">T</span>
-            </el-form-item>
-            
-            <el-form-item label="最大温度" prop="maxTemperature">
-              <el-input-number 
-                v-model="form.maxTemperature"
-                :min="0"
-                :max="2000"
-                :step="50"
-                :precision="0"
-                style="width: 100%"
-              />
-              <span class="unit-label">°C</span>
-            </el-form-item>
-            
-            <el-form-item label="额定功率" prop="ratedPower">
-              <el-input-number 
-                v-model="form.ratedPower"
-                :min="0"
-                :step="10"
-                :precision="0"
-                style="width: 100%"
-              />
-              <span class="unit-label">kW</span>
-            </el-form-item>
-            
-            <el-form-item label="PLC通讯地址" prop="plcAddress">
-              <el-input 
-                v-model="form.plcAddress" 
-                placeholder="例如：192.168.1.10:502"
-              />
-              <div class="form-tip">请确保格式正确，如：opc.tcp://address:port/server</div>
-            </el-form-item>
-            
-            <el-form-item label="维护周期" prop="maintenanceCycle">
-              <el-input-number 
-                v-model="form.maintenanceCycle"
-                :min="1"
-                :step="30"
-                :precision="0"
-                style="width: 100%"
-              />
-              <span class="unit-label">天</span>
-            </el-form-item>
-          </template>
-          
-          <!-- 行车参数 -->
-          <template v-else-if="equipmentType === 'CRANE'">
-            <el-form-item label="额定起重量" prop="liftCapacity">
-              <el-input-number 
-                v-model="form.liftCapacity"
-                :min="0"
-                :step="1"
-                :precision="1"
-                style="width: 100%"
-              />
-              <span class="unit-label">T</span>
-            </el-form-item>
-            
-            <el-form-item label="运行速度" prop="movingSpeed">
-              <el-input 
-                v-model="form.movingSpeed" 
-                placeholder="例如：主0-20 / 副0-60"
-              />
-              <span class="unit-label">m/min</span>
-            </el-form-item>
-            
-            <el-form-item label="服务范围" prop="serviceArea">
-              <el-select
-                v-model="form.serviceAreas"
-                multiple
-                filterable
-                allow-create
-                default-first-option
-                placeholder="请选择或输入服务范围"
-                style="width: 100%"
-              >
-                <el-option 
-                  v-for="item in serviceAreaOptions" 
-                  :key="item.value" 
-                  :label="item.label" 
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-            
-            <el-form-item label="控制系统接口" prop="controlInterface">
-              <el-input 
-                v-model="form.controlInterface" 
-                placeholder="例如：TCP:192.168.1.20:10001"
-              />
-              <div class="form-tip">请注明协议及地址端口</div>
-            </el-form-item>
-          </template>
-          
-          <!-- 自动料车参数 -->
-          <template v-else-if="equipmentType === 'AUTO_CART'">
-            <el-form-item label="载重能力" prop="loadCapacity">
-              <el-input-number 
-                v-model="form.loadCapacity"
-                :min="0"
-                :step="1"
-                :precision="1"
-                style="width: 100%"
-              />
-              <span class="unit-label">T</span>
-            </el-form-item>
-            
-            <el-form-item label="移动速度" prop="movingSpeed">
-              <el-input-number 
-                v-model="form.movingSpeed"
-                :min="0"
-                :step="5"
-                :precision="1"
-                style="width: 100%"
-              />
-              <span class="unit-label">m/min</span>
-            </el-form-item>
-            
-            <el-form-item label="导航方式" prop="navigationMode">
-              <el-select 
-                v-model="form.navigationMode"
-                placeholder="请选择导航方式"
-                style="width: 100%"
-              >
-                <el-option label="激光导航" value="LASER" />
-                <el-option label="磁导航" value="MAGNETIC" />
-                <el-option label="视觉导航" value="VISION" />
-                <el-option label="惯性导航" value="INERTIAL" />
-              </el-select>
-            </el-form-item>
-            
-            <el-form-item label="充电类型" prop="chargingType">
-              <el-select 
-                v-model="form.chargingType"
-                placeholder="请选择充电类型"
-                style="width: 100%"
-              >
-                <el-option label="自动充电" value="AUTO" />
-                <el-option label="手动充电" value="MANUAL" />
-                <el-option label="电池更换" value="BATTERY_SWAP" />
-              </el-select>
-            </el-form-item>
-          </template>
-          
-          <!-- 备料台参数 -->
-          <template v-else-if="equipmentType === 'STAGING_TABLE'">
-            <el-form-item label="承载能力" prop="bearingCapacity">
-              <el-input-number 
-                v-model="form.bearingCapacity"
-                :min="0"
-                :step="1"
-                :precision="1"
-                style="width: 100%"
-              />
-              <span class="unit-label">T</span>
-            </el-form-item>
-            
-            <el-form-item label="台面尺寸" prop="dimensions">
-              <el-input 
-                v-model="form.dimensions" 
-                placeholder="例如：3.5×2.0×0.8"
-              />
-              <span class="unit-label">m</span>
-            </el-form-item>
-            
-            <el-form-item label="台面材质" prop="surfaceMaterial">
-              <el-select 
-                v-model="form.surfaceMaterial"
-                placeholder="请选择台面材质"
-                style="width: 100%"
-              >
-                <el-option label="碳钢" value="CARBON_STEEL" />
-                <el-option label="不锈钢" value="STAINLESS_STEEL" />
-                <el-option label="合金钢" value="ALLOY_STEEL" />
-                <el-option label="其他" value="OTHER" />
-              </el-select>
-            </el-form-item>
-            
-            <el-form-item label="功能类型" prop="functionType">
-              <el-select 
-                v-model="form.functionType"
-                placeholder="请选择功能类型"
-                style="width: 100%"
-              >
-                <el-option label="固定式" value="FIXED" />
-                <el-option label="可移动式" value="MOVABLE" />
-                <el-option label="可调高度" value="ADJUSTABLE_HEIGHT" />
-                <el-option label="多功能" value="MULTI_FUNCTION" />
-              </el-select>
-            </el-form-item>
-          </template>
-        </div>
-        
-        <!-- 三、其他信息 -->
-        <div class="form-section">
-          <h3 class="section-title">三、其他信息</h3>
-          
-          <el-form-item label="供应商" prop="supplier">
-            <el-input 
-              v-model="form.supplier" 
-              placeholder="请输入供应商名称"
-              maxlength="50"
-              show-word-limit
-            />
-          </el-form-item>
-          
-          <el-form-item label="备注" prop="remarks">
-            <el-input 
-              v-model="form.remarks" 
-              type="textarea"
-              :rows="3"
-              placeholder="请输入备注信息"
-              maxlength="200"
-              show-word-limit
-            />
-          </el-form-item>
-        </div>
-      </el-form>
-    </div>
-    
-    <div class="drawer-footer">
+    <template #footer>
       <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
-      <el-button v-if="type === 'create'" type="primary" @click="handleSubmitAndContinue">保存并继续</el-button>
-      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
-    </div>
-  </el-drawer>
+      <el-button v-if="type === 'create'" type="primary" @click="handleSubmitAndContinue" :loading="loading">保存并继续</el-button>
+      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit" :loading="loading">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
+    </template>
+  </drawer-form>
 </template>
 
 <script>
+import DrawerForm from '@/components/DrawerForm'
+
 export default {
   name: 'EquipmentFormDrawer',
+  components: {
+    DrawerForm
+  },
   props: {
     // 抽屉可见性
     visible: {
@@ -345,8 +65,21 @@ export default {
       drawerVisible: false,
       // 表单数据
       form: this.initFormData(),
-      // 表单验证规则
-      rules: {
+      // 加载状态
+      loading: false,
+      // 服务区域选项（行车）
+      serviceAreaOptions: [
+        { label: 'A区1-5炉', value: 'A区1-5炉' },
+        { label: 'B区缓存位', value: 'B区缓存位' },
+        { label: 'C区装车位', value: 'C区装车位' },
+        { label: 'D区检查台', value: 'D区检查台' }
+      ]
+    }
+  },
+  computed: {
+    // 动态表单规则
+    rules() {
+      return {
         equipmentId: [
           { required: false, message: '请输入设备ID', trigger: 'blur' }
         ],
@@ -370,14 +103,259 @@ export default {
         controlInterface: [
           { required: this.equipmentType === 'CRANE', message: '请输入控制系统接口', trigger: 'blur' }
         ]
-      },
-      // 服务区域选项（行车）
-      serviceAreaOptions: [
-        { label: 'A区1-5炉', value: 'A区1-5炉' },
-        { label: 'B区缓存位', value: 'B区缓存位' },
-        { label: 'C区装车位', value: 'C区装车位' },
-        { label: 'D区检查台', value: 'D区检查台' }
-      ]
+      }
+    },
+    
+    // 动态表单分段
+    formSections() {
+      // 1. 基础信息段
+      const baseSection = {
+        title: '一、基础信息',
+        items: [
+          {
+            prop: 'equipmentId',
+            label: '设备ID',
+            type: 'input',
+            placeholder: '输入或系统自动生成',
+            disabled: this.type === 'update'
+          },
+          {
+            prop: 'name',
+            label: '设备名称',
+            type: 'input',
+            placeholder: '请输入设备名称',
+            maxlength: 50,
+            showWordLimit: true
+          },
+          {
+            prop: 'model',
+            label: '设备型号',
+            type: 'input',
+            placeholder: '请输入设备型号',
+            maxlength: 30,
+            showWordLimit: true
+          },
+          {
+            prop: 'installDate',
+            label: '安装日期',
+            type: 'date',
+            placeholder: '选择安装日期',
+            valueFormat: 'yyyy-MM-dd'
+          },
+          {
+            prop: 'status',
+            label: '设备状态',
+            type: 'radio',
+            options: [
+              { label: '启用', value: 1 },
+              { label: '禁用', value: 0 }
+            ]
+          }
+        ]
+      }
+      
+      // 2. 特定设备类型参数段
+      let specificSection = {
+        title: `二、${this.getTypeSpecificTitle()}`,
+        items: []
+      }
+      
+      if (this.equipmentType === 'FURNACE') {
+        specificSection.items = [
+          {
+            prop: 'capacity',
+            label: '规格(容量)',
+            type: 'number-with-unit',
+            min: 0,
+            step: 5,
+            precision: 0,
+            unit: 'T'
+          },
+          {
+            prop: 'maxTemperature',
+            label: '最大温度',
+            type: 'number-with-unit',
+            min: 0,
+            max: 2000,
+            step: 50,
+            precision: 0,
+            unit: '°C'
+          },
+          {
+            prop: 'ratedPower',
+            label: '额定功率',
+            type: 'number-with-unit',
+            min: 0,
+            step: 10,
+            precision: 0,
+            unit: 'kW'
+          },
+          {
+            prop: 'plcAddress',
+            label: 'PLC通讯地址',
+            type: 'input',
+            placeholder: '例如：192.168.1.10:502',
+            tip: '请确保格式正确，如：opc.tcp://address:port/server'
+          },
+          {
+            prop: 'maintenanceCycle',
+            label: '维护周期',
+            type: 'number-with-unit',
+            min: 1,
+            step: 30,
+            precision: 0,
+            unit: '天'
+          }
+        ]
+      } else if (this.equipmentType === 'CRANE') {
+        specificSection.items = [
+          {
+            prop: 'liftCapacity',
+            label: '额定起重量',
+            type: 'number-with-unit',
+            min: 0,
+            step: 1,
+            precision: 1,
+            unit: 'T'
+          },
+          {
+            prop: 'movingSpeed',
+            label: '运行速度',
+            type: 'input',
+            placeholder: '例如：主0-20 / 副0-60',
+            unit: 'm/min'
+          },
+          {
+            prop: 'serviceAreas',
+            label: '服务范围',
+            type: 'select',
+            multiple: true,
+            filterable: true,
+            placeholder: '请选择或输入服务范围',
+            options: this.serviceAreaOptions
+          },
+          {
+            prop: 'controlInterface',
+            label: '控制系统接口',
+            type: 'input',
+            placeholder: '例如：TCP:192.168.1.20:10001',
+            tip: '请注明协议及地址端口'
+          }
+        ]
+      } else if (this.equipmentType === 'AUTO_CART') {
+        specificSection.items = [
+          {
+            prop: 'loadCapacity',
+            label: '载重能力',
+            type: 'number-with-unit',
+            min: 0,
+            step: 1,
+            precision: 1,
+            unit: 'T'
+          },
+          {
+            prop: 'movingSpeed',
+            label: '移动速度',
+            type: 'number-with-unit',
+            min: 0,
+            step: 5,
+            precision: 1,
+            unit: 'm/min'
+          },
+          {
+            prop: 'navigationMode',
+            label: '导航方式',
+            type: 'select',
+            placeholder: '请选择导航方式',
+            options: [
+              { label: '激光导航', value: 'LASER' },
+              { label: '磁导航', value: 'MAGNETIC' },
+              { label: '视觉导航', value: 'VISION' },
+              { label: '惯性导航', value: 'INERTIAL' }
+            ]
+          },
+          {
+            prop: 'chargingType',
+            label: '充电类型',
+            type: 'select',
+            placeholder: '请选择充电类型',
+            options: [
+              { label: '自动充电', value: 'AUTO' },
+              { label: '手动充电', value: 'MANUAL' },
+              { label: '电池更换', value: 'BATTERY_SWAP' }
+            ]
+          }
+        ]
+      } else if (this.equipmentType === 'STAGING_TABLE') {
+        specificSection.items = [
+          {
+            prop: 'bearingCapacity',
+            label: '承载能力',
+            type: 'number-with-unit',
+            min: 0,
+            step: 1,
+            precision: 1,
+            unit: 'T'
+          },
+          {
+            prop: 'dimensions',
+            label: '台面尺寸',
+            type: 'input',
+            placeholder: '例如：3.5×2.0×0.8',
+            unit: 'm'
+          },
+          {
+            prop: 'surfaceMaterial',
+            label: '台面材质',
+            type: 'select',
+            placeholder: '请选择台面材质',
+            options: [
+              { label: '碳钢', value: 'CARBON_STEEL' },
+              { label: '不锈钢', value: 'STAINLESS_STEEL' },
+              { label: '合金钢', value: 'ALLOY_STEEL' },
+              { label: '其他', value: 'OTHER' }
+            ]
+          },
+          {
+            prop: 'functionType',
+            label: '功能类型',
+            type: 'select',
+            placeholder: '请选择功能类型',
+            options: [
+              { label: '固定式', value: 'FIXED' },
+              { label: '可移动式', value: 'MOVABLE' },
+              { label: '可调高度', value: 'ADJUSTABLE_HEIGHT' },
+              { label: '多功能', value: 'MULTI_FUNCTION' }
+            ]
+          }
+        ]
+      }
+      
+      // 3. 其他信息段
+      const otherSection = {
+        title: '三、其他信息',
+        items: [
+          {
+            prop: 'supplier',
+            label: '供应商',
+            type: 'input',
+            placeholder: '请输入供应商名称',
+            maxlength: 50,
+            showWordLimit: true
+          },
+          {
+            prop: 'remarks',
+            label: '备注',
+            type: 'textarea',
+            placeholder: '请输入备注信息',
+            maxlength: 200,
+            showWordLimit: true,
+            rows: 3
+          }
+        ]
+      }
+      
+      return [baseSection, specificSection, otherSection]
     }
   },
   watch: {
@@ -504,8 +482,7 @@ export default {
     
     // 表单重置
     resetForm() {
-      this.$refs.equipmentForm && this.$refs.equipmentForm.resetFields()
-      this.form = this.initFormData()
+      this.$refs.drawerForm && this.$refs.drawerForm.resetForm()
     },
     
     // 关闭抽屉
@@ -513,46 +490,54 @@ export default {
       this.drawerVisible = false
       this.$emit('close')
       setTimeout(() => {
-        this.resetForm()
+        this.form = this.initFormData()
       }, 300)
     },
     
     // 处理提交
     handleSubmit() {
-      this.$refs.equipmentForm.validate(valid => {
+      this.$refs.drawerForm.$refs.form.validate(valid => {
         if (valid) {
-          // 特殊处理字段
-          const formData = { ...this.form }
-          
-          if (this.equipmentType === 'CRANE' && Array.isArray(formData.serviceAreas)) {
-            formData.serviceArea = formData.serviceAreas.join(',')
-            delete formData.serviceAreas
-          }
-          
-          this.$emit('submit', formData, false)
-        } else {
-          return false
+          this.submitFormData(false)
         }
       })
     },
     
     // 保存并继续
     handleSubmitAndContinue() {
-      this.$refs.equipmentForm.validate(valid => {
+      this.$refs.drawerForm.$refs.form.validate(valid => {
         if (valid) {
-          // 特殊处理字段
-          const formData = { ...this.form }
-          
-          if (this.equipmentType === 'CRANE' && Array.isArray(formData.serviceAreas)) {
-            formData.serviceArea = formData.serviceAreas.join(',')
-            delete formData.serviceAreas
-          }
-          
-          this.$emit('submit', formData, true)
-        } else {
-          return false
+          this.submitFormData(true)
         }
       })
+    },
+    
+    // 表单提交处理
+    handleFormSubmit(formData, continueCreate) {
+      this.submitFormData(continueCreate)
+    },
+    
+    // 提交表单数据
+    submitFormData(continueCreate) {
+      // 特殊处理字段
+      const formData = { ...this.form }
+      
+      // 设置设备类型
+      formData.equipmentType = this.equipmentType
+      
+      if (this.equipmentType === 'CRANE' && Array.isArray(formData.serviceAreas)) {
+        formData.serviceArea = formData.serviceAreas.join(',')
+        delete formData.serviceAreas
+      }
+      
+      this.loading = true
+      this.$emit('submit', formData, continueCreate)
+      
+      // 由于提交是异步的，这里不能直接设置loading=false
+      // 父组件负责在提交完成后关闭抽屉或重置表单
+      setTimeout(() => {
+        this.loading = false
+      }, 1000)
     }
   }
 }
