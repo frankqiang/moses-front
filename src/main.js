@@ -15,6 +15,18 @@ import router from './router'
 import '@/icons' // icon
 import '@/permission' // permission control
 
+// 导入全局组件
+import StatusTag from '@/components/StatusTag'
+import ActionButtons from '@/components/ActionButtons'
+import SearchForm from '@/components/SearchForm'
+import DialogForm from '@/components/DialogForm'
+import Pagination from '@/components/Pagination'
+import BatchAction from '@/components/BatchAction'
+import PrintButton from '@/components/PrintButton'
+import RefreshButton from '@/components/RefreshButton'
+import ImportButton from '@/components/ImportButton'
+import ExportButton from '@/components/ExportButton'
+
 /**
  * If you don't want to use mock-server
  * you want to use MockJs for mock api
@@ -32,6 +44,18 @@ if (process.env.NODE_ENV === 'production') {
 Vue.use(ElementUI, { locale })
 // 如果想要中文版 element-ui，按如下方式声明
 // Vue.use(ElementUI)
+
+// 注册全局组件
+Vue.component('StatusTag', StatusTag)
+Vue.component('ActionButtons', ActionButtons)
+Vue.component('SearchForm', SearchForm)
+Vue.component('DialogForm', DialogForm)
+Vue.component('Pagination', Pagination)
+Vue.component('BatchAction', BatchAction)
+Vue.component('PrintButton', PrintButton)
+Vue.component('RefreshButton', RefreshButton)
+Vue.component('ImportButton', ImportButton)
+Vue.component('ExportButton', ExportButton)
 
 Vue.config.productionTip = false
 

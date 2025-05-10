@@ -106,6 +106,32 @@ export const constantRoutes = [
     ]
   },
 
+  // 组件演示路由
+  {
+    path: '/components',
+    component: Layout,
+    redirect: '/components/global',
+    name: 'Components',
+    meta: {
+      title: '组件演示',
+      icon: 'el-icon-s-grid'
+    },
+    children: [
+      {
+        path: 'global',
+        name: 'GlobalComponents',
+        component: () => import('@/views/global-components-demo/index'),
+        meta: { title: '全局组件演示' }
+      },
+      {
+        path: 'more',
+        name: 'MoreComponents',
+        component: () => import('@/views/components-examples/index'),
+        meta: { title: '更多组件示例' }
+      }
+    ]
+  },
+
   {
     path: '/example',
     component: Layout,

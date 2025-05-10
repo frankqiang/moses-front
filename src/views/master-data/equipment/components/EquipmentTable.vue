@@ -5,57 +5,23 @@
  */
 <template>
   <div class="equipment-table">
-    <!-- 表格工具栏 -->
-    <div class="table-toolbar">
-      <slot name="toolbar-left"></slot>
-      <div class="toolbar-right">
-        <el-button
-          size="mini"
-          icon="el-icon-refresh"
-          @click="handleRefresh"
-        >
-          刷新
-        </el-button>
-        <el-dropdown
-          trigger="click"
-          @command="handleColumnCommand"
-          ref="columnDropdown"
-        >
-          <el-button size="mini">
-            <i class="el-icon-s-operation"></i>
-            列设置
-            <i class="el-icon-arrow-down el-icon--right"></i>
-          </el-button>
-          <el-dropdown-menu slot="dropdown" class="column-dropdown">
-            <div class="column-dropdown-header">
-              <el-checkbox
-                v-model="tempCheckAll"
-                :indeterminate="tempIndeterminate"
-                @change="handleTempCheckAllChange"
-              >
-                全选
-              </el-checkbox>
-              <div class="column-dropdown-actions">
-                <el-button type="text" size="mini" @click="applyColumnSettings">应用</el-button>
-                <el-button type="text" size="mini" @click="resetColumnSettings">重置</el-button>
-              </div>
-            </div>
-            <el-dropdown-item divided></el-dropdown-item>
-            <div class="column-item"
-              v-for="col in allColumns" 
-              :key="col.prop"
-            >
-              <el-checkbox 
-                v-model="tempColumnVisibility[col.prop]"
-                @change="handleTempColumnChange"
-              >
-                {{ col.label }}
-              </el-checkbox>
-            </div>
-          </el-dropdown-menu>
-        </el-dropdown>
-      </div>
-    </div>
+    <!-- 使用全局表格工具栏组件 -->
+    <table-toolbar
+      :enable-column-settings="true"
+      :column-options="allColumns"
+      :storage-key="currentStorageKey"
+      :default-visible-columns="defaultVisibleColumns"
+      @refresh="handleRefresh"
+      @column-change="handleColumnChange"
+    >
+      <template #toolbar-left>
+        <slot name="toolbar-left"></slot>
+      </template>
+      
+      <template #toolbar-right>
+        <slot name="toolbar-right"></slot>
+      </template>
+    </table-toolbar>
 
     <el-table
       v-loading="loading"
@@ -137,12 +103,16 @@
 
 <script>
 import Pagination from '@/components/Pagination'
+import TableToolbar from '@/components/TableToolbar'
+import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 
 export default {
   name: 'EquipmentTable',
   components: {
-    Pagination
+    Pagination,
+    TableToolbar
   },
+  mixins: [columnSettingsMixin],
   props: {
     // 表格数据
     data: {
@@ -181,30 +151,14 @@ export default {
       currentPage: 1,
       // 每页大小
       pageSize: 10,
-      // 可见列
-      visibleColumns: [],
-      // 所有可用列
-      allColumns: [],
-      // 全选状态
-      checkAll: true,
-      // 临时列可见性状态 - 用于列设置下拉框
-      tempColumnVisibility: {},
-      // 临时全选状态 - 用于列设置下拉框
-      tempCheckAll: true,
-      // 临时半选状态 - 用于列设置下拉框
-      tempIndeterminate: false,
-      // 存储列设置的键名前缀
-      localStorageKeyPrefix: 'equipment_visible_columns'
+      // 重写列设置存储键前缀
+      columnSettingsKeyPrefix: 'equipment_columns'
     }
   },
   computed: {
-    // 表格列配置
-    tableColumns() {
-      return this.allColumns.filter(col => this.visibleColumns.includes(col.prop))
-    },
-    // 当前设备类型对应的存储键
+    // 重写列设置存储键
     currentStorageKey() {
-      return `${this.localStorageKeyPrefix}_${this.equipmentType}`
+      return `${this.columnSettingsKeyPrefix}_${this.equipmentType}`
     }
   },
   watch: {
@@ -225,14 +179,14 @@ export default {
     // 监听设备类型变化，重新初始化列配置
     equipmentType: {
       handler() {
-        this.initColumns()
+        this.initEquipmentColumns()
       },
       immediate: true
     }
   },
   methods: {
-    // 初始化列配置
-    initColumns() {
+    // 初始化设备列配置
+    initEquipmentColumns() {
       // 通用列
       const commonColumns = [
         { prop: 'equipmentId', label: '设备ID', width: '120' },
@@ -244,6 +198,7 @@ export default {
 
       // 特定设备类型的列
       let specificColumns = []
+      
       if (this.equipmentType === 'FURNACE') {
         specificColumns = [
           { 
@@ -399,49 +354,8 @@ export default {
         }
       ]
 
-      // 合并所有列
-      this.allColumns = [...commonColumns, ...specificColumns, ...endColumns]
-      
-      // 尝试从localStorage读取用户设置的可见列
-      const savedColumns = localStorage.getItem(this.currentStorageKey);
-      
-      if (savedColumns) {
-        try {
-          this.visibleColumns = JSON.parse(savedColumns);
-          this.checkAll = this.visibleColumns.length === this.allColumns.length;
-        } catch (e) {
-          console.error('解析保存的列设置失败:', e);
-          this.resetToDefaultColumns();
-        }
-      } else {
-        this.resetToDefaultColumns();
-      }
-
-      // 初始化临时列可见性状态
-      this.initTempColumnVisibility();
-    },
-
-    // 重置为默认列配置
-    resetToDefaultColumns() {
-      this.visibleColumns = this.allColumns.map(col => col.prop);
-      this.checkAll = true;
-    },
-
-    // 初始化临时列可见性状态
-    initTempColumnVisibility() {
-      const tempVisibility = {};
-      this.allColumns.forEach(col => {
-        tempVisibility[col.prop] = this.visibleColumns.includes(col.prop);
-      });
-      this.tempColumnVisibility = tempVisibility;
-      this.updateTempCheckAllState();
-    },
-
-    // 更新临时全选状态
-    updateTempCheckAllState() {
-      const selectedCount = Object.values(this.tempColumnVisibility).filter(v => v).length;
-      this.tempCheckAll = selectedCount === this.allColumns.length;
-      this.tempIndeterminate = selectedCount > 0 && selectedCount < this.allColumns.length;
+      // 合并所有列并初始化
+      this.initColumns([...commonColumns, ...specificColumns, ...endColumns])
     },
 
     // 格式化日期
@@ -497,58 +411,6 @@ export default {
     // 刷新表格
     handleRefresh() {
       this.$emit('current-change', this.currentPage)
-    },
-
-    // 列设置命令处理（预留，暂未使用）
-    handleColumnCommand(command) {
-      // 可以用于处理特殊列设置命令
-    },
-
-    // 临时列变化处理
-    handleTempColumnChange() {
-      this.updateTempCheckAllState();
-    },
-
-    // 临时全选变化处理
-    handleTempCheckAllChange(val) {
-      Object.keys(this.tempColumnVisibility).forEach(key => {
-        this.tempColumnVisibility[key] = val;
-      });
-      this.tempIndeterminate = false;
-    },
-
-    // 应用列设置
-    applyColumnSettings() {
-      // 根据临时可见性设置更新可见列
-      this.visibleColumns = this.allColumns
-        .filter(col => this.tempColumnVisibility[col.prop])
-        .map(col => col.prop);
-      
-      this.checkAll = this.visibleColumns.length === this.allColumns.length;
-      
-      // 保存设置到localStorage
-      localStorage.setItem(this.currentStorageKey, JSON.stringify(this.visibleColumns));
-      
-      // 提示用户
-      this.$message.success('列设置已应用');
-
-      // 关闭下拉菜单
-      this.$refs.columnDropdown.hide();
-    },
-
-    // 重置列设置
-    resetColumnSettings() {
-      this.resetToDefaultColumns();
-      this.initTempColumnVisibility();
-      
-      // 清除localStorage中保存的设置
-      localStorage.removeItem(this.currentStorageKey);
-      
-      // 提示用户
-      this.$message.success('列设置已重置为默认');
-
-      // 关闭下拉菜单
-      this.$refs.columnDropdown.hide();
     }
   }
 }
@@ -557,19 +419,6 @@ export default {
 <style lang="scss">
 .equipment-table {
   margin-bottom: 20px;
-  
-  .table-toolbar {
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-  }
   
   .disabled-row {
     background-color: #f9f9f9;
@@ -608,53 +457,6 @@ export default {
   .el-button + .el-button {
     margin-left: 0;
     margin: 0 10px;
-  }
-}
-
-// 列设置下拉菜单样式
-.el-dropdown-menu.column-dropdown {
-  min-width: 180px;
-  max-height: 800px;
-  // overflow-y: auto;
-
-  .column-dropdown-header {
-    padding: 12px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #ebeef5;
-    margin-bottom: 5px;
-    background-color: #f5f7fa;
-    
-    .column-dropdown-actions {
-      .el-button {
-        padding: 2px 5px;
-        margin-left: 8px;
-      }
-    }
-  }
-  
-  .column-item {
-    padding: 8px 16px;
-    line-height: 1.5;
-    cursor: pointer;
-    
-    .el-checkbox {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      margin-right: 0;
-    }
-
-    &:hover {
-      background-color: transparent;
-    }
-  }
-
-  .el-dropdown-menu__item.divided {
-    margin: 0;
-    padding: 0;
-    height: 1px;
   }
 }
 </style> 
