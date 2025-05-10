@@ -116,58 +116,6 @@
       </div>
     </div>
     
-    <el-divider content-position="left">5. 打印按钮 (PrintButton)</el-divider>
-    <div class="demo-section">
-      <h3>基本用法</h3>
-      <div class="demo-item">
-        <PrintButton 
-          printTitle="用户数据表格" 
-          printSelector="#printable-table"
-          @before-print="handleBeforePrint"
-          @after-print="handleAfterPrint"
-        />
-        <PrintButton 
-          text="打印JSON数据" 
-          type="success" 
-          :printType="'json'" 
-          :jsonData="tableData" 
-          :properties="jsonProperties"
-          printTitle="用户数据JSON"
-        />
-      </div>
-      
-      <h3>打印表格示例</h3>
-      <div id="printable-table" class="printable-content">
-        <el-table :data="tableData" border style="width: 100%">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="name" label="姓名" width="120" />
-          <el-table-column label="状态" width="100">
-            <template slot-scope="scope">
-              <StatusTag :status="scope.row.status" :textMap="{ 0: '禁用', 1: '启用' }" :typeMap="{ 0: 'info', 1: 'success' }" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="150" class="no-print">
-            <template slot-scope="scope">
-              <el-button 
-                size="mini" 
-                type="text" 
-                @click="handleView(scope.row)"
-              >查看</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      
-      <h3>自定义打印按钮</h3>
-      <div class="demo-item">
-        <PrintButton printSelector="#printable-table" printTitle="自定义打印按钮">
-          <el-button type="danger" icon="el-icon-printer">
-            自定义打印按钮
-          </el-button>
-        </PrintButton>
-      </div>
-    </div>
-    
     <el-divider content-position="left">6. 表格工具栏 (TableToolbar)</el-divider>
     <div class="demo-section">
       <h3>基本用法 - 集成批量操作、导入导出、打印和列设置</h3>
@@ -183,9 +131,8 @@
           :enable-export="true"
           :export-api="mockExportApi"
           :export-params="mockExportParams"
-          :enable-print="true"
-          :print-selector="'#demo-table'"
           :status-buttons-mode="'buttons'"
+          :table-data="demoTableData"
           @refresh="handleToolbarRefresh"
           @column-change="handleToolbarColumnChange"
           @batch-delete="handleToolbarBatchDelete"
@@ -205,20 +152,22 @@
           :data="demoTableData"
           border
           style="width: 100%"
+          :cell-style="{ textAlign: 'center' }"
+          :header-cell-style="{ backgroundColor: '#f5f7fa', textAlign: 'center' }"
           @selection-change="handleDemoTableSelectionChange"
         >
-          <el-table-column type="selection" width="55"></el-table-column>
-          <el-table-column v-if="tableColumns.includes('id')" prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column v-if="tableColumns.includes('name')" prop="name" label="名称" width="120"></el-table-column>
-          <el-table-column v-if="tableColumns.includes('code')" prop="code" label="编码" width="150"></el-table-column>
-          <el-table-column v-if="tableColumns.includes('type')" prop="type" label="类型" width="120"></el-table-column>
-          <el-table-column v-if="tableColumns.includes('status')" label="状态" width="100">
+          <el-table-column type="selection" width="55" fixed></el-table-column>
+          <el-table-column v-if="tableColumns.includes('id')" prop="id" label="ID" width="80" align="center"></el-table-column>
+          <el-table-column v-if="tableColumns.includes('name')" prop="name" label="名称" width="120" align="center"></el-table-column>
+          <el-table-column v-if="tableColumns.includes('code')" prop="code" label="编码" width="150" align="center"></el-table-column>
+          <el-table-column v-if="tableColumns.includes('type')" prop="type" label="类型" width="140" align="center"></el-table-column>
+          <el-table-column v-if="tableColumns.includes('status')" label="状态" width="100" align="center">
             <template slot-scope="scope">
               <StatusTag :status="scope.row.status" :textMap="{ 0: '禁用', 1: '启用' }" :typeMap="{ 0: 'info', 1: 'success' }" />
             </template>
           </el-table-column>
-          <el-table-column v-if="tableColumns.includes('createTime')" prop="createTime" label="创建时间" width="180"></el-table-column>
-          <el-table-column v-if="tableColumns.includes('operations')" label="操作" width="150">
+          <el-table-column v-if="tableColumns.includes('createTime')" prop="createTime" label="创建时间" width="180" align="center"></el-table-column>
+          <el-table-column v-if="tableColumns.includes('operations')" label="操作" width="170" align="center" fixed="right">
             <template slot-scope="scope">
               <ActionButtons 
                 :buttons="getRowButtons(scope.row)" 
@@ -256,14 +205,14 @@ export default {
       
       // ActionButtons示例数据
       textButtons: [
-        { text: '查看', icon: 'el-icon-view', action: 'view' },
-        { text: '编辑', icon: 'el-icon-edit', action: 'edit' },
-        { text: '删除', icon: 'el-icon-delete', action: 'delete', type: 'danger' }
+        { key: 'view', label: '查看', type: 'primary' },
+        { key: 'edit', label: '编辑', type: 'warning' },
+        { key: 'delete', label: '删除', type: 'danger' }
       ],
       normalButtons: [
-        { text: '新增', icon: 'el-icon-plus', action: 'add', type: 'primary' },
-        { text: '批量导入', icon: 'el-icon-upload2', action: 'import', type: 'success' },
-        { text: '批量导出', icon: 'el-icon-download', action: 'export', type: 'warning' }
+        { key: 'view', label: '查看', type: 'primary', icon: 'el-icon-view' },
+        { key: 'edit', label: '编辑', type: 'warning', icon: 'el-icon-edit' },
+        { key: 'delete', label: '删除', type: 'danger', icon: 'el-icon-delete' }
       ],
       tableData: [
         { id: 1, name: '张三', status: 1 },
@@ -272,123 +221,92 @@ export default {
       ],
       
       // SearchForm示例数据
+      searchItems: [
+        { type: 'input', label: '姓名', prop: 'name', placeholder: '请输入姓名' },
+        { type: 'select', label: '状态', prop: 'status', options: [
+          { label: '全部', value: '' },
+          { label: '启用', value: 1 },
+          { label: '禁用', value: 0 }
+        ] },
+        { type: 'date', label: '创建日期', prop: 'createDate' },
+        { type: 'daterange', label: '日期范围', prop: 'dateRange', startProp: 'startDate', endProp: 'endDate' }
+      ],
       searchForm: {
-        keyword: '',
+        name: '',
         status: '',
+        createDate: '',
         dateRange: []
       },
-      searchItems: [
-        { 
-          prop: 'keyword', 
-          label: '关键词', 
-          type: 'input',
-          placeholder: '请输入姓名/ID'
-        },
-        { 
-          prop: 'status', 
-          label: '状态', 
-          type: 'select',
-          placeholder: '请选择状态',
-          options: [
-            { label: '启用', value: 1 },
-            { label: '禁用', value: 0 }
-          ]
-        },
-        { 
-          prop: 'dateRange', 
-          label: '创建日期', 
-          type: 'date',
-          dateType: 'daterange',
-          startPlaceholder: '开始日期',
-          endPlaceholder: '结束日期',
-          valueFormat: 'yyyy-MM-dd'
-        },
-        { 
-          prop: 'category', 
-          label: '分类', 
-          type: 'select',
-          placeholder: '请选择分类',
-          options: [
-            { label: '电子产品', value: 'electronics' },
-            { label: '服装', value: 'clothing' },
-            { label: '食品', value: 'food' }
-          ]
-        },
-        { 
-          prop: 'price', 
-          label: '价格', 
-          type: 'number',
-          placeholder: '请输入价格',
-          min: 0
-        }
-      ],
       searchResult: null,
       
       // DialogForm示例数据
       dialogVisible: false,
       dialogMode: 'add',
       dialogTitle: '',
-      formData: {},
+      formData: {
+        name: '',
+        age: '',
+        gender: 'male',
+        email: '',
+        interests: []
+      },
       formRules: {
         name: [
           { required: true, message: '请输入姓名', trigger: 'blur' },
-          { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+          { min: 2, max: 5, message: '长度在 2 到 5 个字符', trigger: 'blur' }
         ],
-        gender: [
-          { required: true, message: '请选择性别', trigger: 'change' }
+        age: [
+          { required: true, message: '请输入年龄', trigger: 'blur' },
+          { type: 'number', message: '年龄必须为数字', trigger: 'blur' }
         ],
         email: [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+        ],
+        interests: [
+          { type: 'array', required: true, message: '请至少选择一个兴趣爱好', trigger: 'change' }
         ]
       },
       formItems: [
-        { prop: 'name', label: '姓名', type: 'input', placeholder: '请输入姓名' },
-        { 
-          prop: 'gender', 
-          label: '性别', 
-          type: 'radio',
-          options: [
-            { label: '男', value: 'male' },
-            { label: '女', value: 'female' }
-          ]
-        },
-        { prop: 'age', label: '年龄', type: 'number', min: 0, max: 120 },
-        { prop: 'email', label: '邮箱', type: 'input', placeholder: '请输入邮箱' },
-        { 
-          prop: 'status', 
-          label: '状态', 
-          type: 'switch',
-          activeText: '启用',
-          inactiveText: '禁用',
-          activeValue: 1,
-          inactiveValue: 0
-        },
-        { 
-          prop: 'description', 
-          label: '描述', 
-          type: 'textarea',
-          rows: 4,
-          placeholder: '请输入描述'
-        }
+        { type: 'input', label: '姓名', prop: 'name', placeholder: '请输入姓名' },
+        { type: 'input', label: '年龄', prop: 'age', placeholder: '请输入年龄', inputType: 'number' },
+        { type: 'radio', label: '性别', prop: 'gender', options: [
+          { label: '男', value: 'male' },
+          { label: '女', value: 'female' }
+        ] },
+        { type: 'input', label: '邮箱', prop: 'email', placeholder: '请输入邮箱' },
+        { type: 'checkbox', label: '兴趣爱好', prop: 'interests', options: [
+          { label: '阅读', value: 'reading' },
+          { label: '旅行', value: 'travel' },
+          { label: '运动', value: 'sports' },
+          { label: '音乐', value: 'music' }
+        ] }
       ],
       formResult: null,
-      
-      // PrintButton示例数据
-      jsonProperties: [
-        { field: 'id', displayName: 'ID' },
-        { field: 'name', displayName: '姓名' },
-        { field: 'status', displayName: '状态', callback: (value) => value === 1 ? '启用' : '禁用' }
-      ],
       
       // TableToolbar示例数据
       selectedTableRows: [],
       demoTableData: [
-        { id: 1, name: '产品A', code: 'PRD001', type: '电子', status: 1, createTime: '2024-01-15 10:30:45' },
-        { id: 2, name: '产品B', code: 'PRD002', type: '家具', status: 0, createTime: '2024-02-22 09:15:30' },
-        { id: 3, name: '产品C', code: 'PRD003', type: '电子', status: 1, createTime: '2024-03-10 14:25:18' },
-        { id: 4, name: '产品D', code: 'PRD004', type: '食品', status: 1, createTime: '2024-04-05 16:42:20' },
-        { id: 5, name: '产品E', code: 'PRD005', type: '家具', status: 0, createTime: '2024-05-12 11:38:55' }
+        { id: 1, name: '产品A', code: 'A001', type: '电子产品', status: 1, createTime: '2023-11-01 10:00:00' },
+        { id: 2, name: '产品B', code: 'B002', type: '家居用品', status: 0, createTime: '2023-11-02 11:20:00' },
+        { id: 3, name: '产品C', code: 'C003', type: '食品', status: 1, createTime: '2023-11-03 09:30:00' },
+        { id: 4, name: '产品D', code: 'D004', type: '电子产品', status: 1, createTime: '2023-11-04 14:15:00' },
+        { id: 5, name: '产品E', code: 'E005', type: '家居用品', status: 0, createTime: '2023-11-05 16:45:00' },
+        { id: 6, name: '产品F', code: 'F006', type: '食品', status: 1, createTime: '2023-11-06 08:30:00' },
+        { id: 7, name: '产品G', code: 'G007', type: '电子产品', status: 0, createTime: '2023-11-07 12:00:00' },
+        { id: 8, name: '产品H', code: 'H008', type: '家居用品', status: 1, createTime: '2023-11-08 10:30:00' },
+        { id: 9, name: '产品I', code: 'I009', type: '食品', status: 1, createTime: '2023-11-09 09:15:00' },
+        { id: 10, name: '产品J', code: 'J010', type: '电子产品', status: 0, createTime: '2023-11-10 11:20:00' },
+        { id: 11, name: '产品K', code: 'K011', type: '家居用品', status: 1, createTime: '2023-11-11 13:45:00' },
+        { id: 12, name: '产品L', code: 'L012', type: '食品', status: 0, createTime: '2023-11-12 15:30:00' },
+        { id: 13, name: '产品M', code: 'M013', type: '电子产品', status: 1, createTime: '2023-11-13 10:20:00' },
+        { id: 14, name: '产品N', code: 'N014', type: '家居用品', status: 1, createTime: '2023-11-14 09:40:00' },
+        { id: 15, name: '产品O', code: 'O015', type: '食品', status: 0, createTime: '2023-11-15 14:10:00' },
+        { id: 16, name: '产品P', code: 'P016', type: '电子产品', status: 1, createTime: '2023-11-16 16:30:00' },
+        { id: 17, name: '产品Q', code: 'Q017', type: '家居用品', status: 0, createTime: '2023-11-17 11:45:00' },
+        { id: 18, name: '产品R', code: 'R018', type: '食品', status: 1, createTime: '2023-11-18 08:20:00' },
+        { id: 19, name: '产品S', code: 'S019', type: '电子产品', status: 0, createTime: '2023-11-19 13:15:00' },
+        { id: 20, name: '产品T', code: 'T020', type: '家居用品', status: 1, createTime: '2023-11-20 10:50:00' }
       ],
       tableColumnOptions: [
         { prop: 'id', label: 'ID' },
@@ -399,13 +317,26 @@ export default {
         { prop: 'createTime', label: '创建时间' },
         { prop: 'operations', label: '操作' }
       ],
-      defaultColumns: ['id', 'name', 'type', 'status', 'operations'],
-      tableColumns: ['id', 'name', 'type', 'status', 'operations'],
-      mockExportParams: { includeDisabled: true },
+      defaultColumns: ['id', 'name', 'code', 'status', 'createTime', 'operations'],
+      tableColumns: ['id', 'name', 'code', 'status', 'createTime', 'operations'],
+      mockExportParams: {
+        includeHeaders: true,
+        fileName: '产品列表导出',
+        sheetName: '产品数据'
+      },
       toolbarResult: null
     }
   },
   methods: {
+    // 获取当前日期
+    getCurrentDate() {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    },
+    
     // ActionButtons相关方法
     handleButtonClick(data) {
       this.$message.success(`点击了按钮: ${data.action}`)
@@ -454,11 +385,10 @@ export default {
       this.dialogVisible = true
       this.formData = {
         name: '',
+        age: '',
         gender: 'male',
-        age: 30,
         email: '',
-        status: 1,
-        description: ''
+        interests: []
       }
     },
     
@@ -468,11 +398,10 @@ export default {
       this.dialogVisible = true
       this.formData = {
         name: '测试用户',
-        gender: 'female',
         age: 28,
+        gender: 'female',
         email: 'test@example.com',
-        status: 1,
-        description: '这是一个测试用户'
+        interests: ['reading', 'travel']
       }
     },
     
@@ -482,11 +411,10 @@ export default {
       this.dialogVisible = true
       this.formData = {
         name: '测试用户',
-        gender: 'female',
         age: 28,
+        gender: 'female',
         email: 'test@example.com',
-        status: 1,
-        description: '这是一个测试用户'
+        interests: ['reading', 'travel']
       }
     },
     
@@ -494,19 +422,6 @@ export default {
       this.formResult = JSON.stringify(formData, null, 2)
       this.$message.success(`表单提交成功: ${this.dialogMode}`)
       this.dialogVisible = false
-    },
-    
-    // PrintButton相关方法
-    handleBeforePrint() {
-      this.$message.info('开始打印')
-    },
-    
-    handleAfterPrint() {
-      this.$message.success('打印完成')
-    },
-    
-    handleView(row) {
-      this.$message.info(`查看用户: ${row.name}`)
     },
     
     // TableToolbar相关方法
@@ -644,17 +559,6 @@ export default {
     .el-table {
       margin-top: 15px;
     }
-    
-    .printable-content {
-      margin-top: 15px;
-      margin-bottom: 20px;
-    }
-  }
-}
-
-@media print {
-  .no-print {
-    display: none !important;
   }
 }
 

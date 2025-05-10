@@ -79,20 +79,6 @@
         @export-error="handleExportError"
       ></export-button>
       
-      <!-- 打印按钮 -->
-      <print-button
-        v-if="enablePrint"
-        :print-selector="printSelector"
-        :print-title="printTitle"
-        :text="printText"
-        :icon="printIcon"
-        :type="printType"
-        :size="size"
-        :disabled="printDisabled"
-        @before-print="handleBeforePrint"
-        @after-print="handleAfterPrint"
-      ></print-button>
-      
       <!-- 刷新按钮 -->
       <el-button
         size="mini"
@@ -152,15 +138,13 @@
 import BatchAction from '@/components/BatchAction'
 import ExportButton from '@/components/ExportButton'
 import ImportButton from '@/components/ImportButton'
-import PrintButton from '@/components/PrintButton'
 
 export default {
   name: 'TableToolbar',
   components: {
     BatchAction,
     ExportButton,
-    ImportButton,
-    PrintButton
+    ImportButton
   },
   props: {
     // 通用配置
@@ -183,6 +167,18 @@ export default {
       default: 'table_visible_columns'
     },
     defaultVisibleColumns: {
+      type: Array,
+      default: () => []
+    },
+    
+    // 表格数据
+    tableData: {
+      type: Array,
+      default: () => []
+    },
+    
+    // 可见列
+    visibleColumns: {
       type: Array,
       default: () => []
     },
@@ -339,36 +335,6 @@ export default {
     exportConfirm: {
       type: Boolean,
       default: true
-    },
-
-    // 打印按钮相关属性
-    enablePrint: {
-      type: Boolean,
-      default: false
-    },
-    printSelector: {
-      type: String,
-      default: ''
-    },
-    printTitle: {
-      type: String,
-      default: '打印文档'
-    },
-    printText: {
-      type: String,
-      default: '打印'
-    },
-    printIcon: {
-      type: String,
-      default: 'el-icon-printer'
-    },
-    printType: {
-      type: String,
-      default: 'default'
-    },
-    printDisabled: {
-      type: Boolean,
-      default: false
     }
   },
   data() {
@@ -383,7 +349,7 @@ export default {
   },
   computed: {
     // 当前可见列
-    visibleColumns() {
+    computedVisibleColumns() {
       return this.columnOptions
         .filter(col => this.tempColumnVisibility[col.prop])
         .map(col => col.prop)
@@ -453,10 +419,10 @@ export default {
     // 应用列设置
     applyColumnSettings() {
       // 保存设置到localStorage
-      localStorage.setItem(this.storageKey, JSON.stringify(this.visibleColumns))
+      localStorage.setItem(this.storageKey, JSON.stringify(this.computedVisibleColumns))
       
       // 发送列设置变更事件
-      this.$emit('column-change', this.visibleColumns)
+      this.$emit('column-change', this.computedVisibleColumns)
       
       // 提示用户
       this.$message.success('列设置已应用')
@@ -526,15 +492,6 @@ export default {
     
     handleExportError(error) {
       this.$emit('export-error', error)
-    },
-
-    // PrintButton 相关方法
-    handleBeforePrint() {
-      this.$emit('before-print')
-    },
-    
-    handleAfterPrint() {
-      this.$emit('after-print')
     }
   }
 }

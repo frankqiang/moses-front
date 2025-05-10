@@ -22,7 +22,6 @@ import SearchForm from '@/components/SearchForm'
 import DialogForm from '@/components/DialogForm'
 import Pagination from '@/components/Pagination'
 import BatchAction from '@/components/BatchAction'
-import PrintButton from '@/components/PrintButton'
 import RefreshButton from '@/components/RefreshButton'
 import ImportButton from '@/components/ImportButton'
 import ExportButton from '@/components/ExportButton'
@@ -52,7 +51,6 @@ Vue.component('SearchForm', SearchForm)
 Vue.component('DialogForm', DialogForm)
 Vue.component('Pagination', Pagination)
 Vue.component('BatchAction', BatchAction)
-Vue.component('PrintButton', PrintButton)
 Vue.component('RefreshButton', RefreshButton)
 Vue.component('ImportButton', ImportButton)
 Vue.component('ExportButton', ExportButton)

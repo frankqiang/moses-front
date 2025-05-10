@@ -7,8 +7,8 @@
 export default {
   data() {
     return {
-      // 可见列
-      visibleColumns: [],
+      // 可见列 - 内部存储
+      internalVisibleColumns: [],
       // 所有可用列
       allColumns: [],
       // 列设置存储键前缀
@@ -20,7 +20,7 @@ export default {
   computed: {
     // 表格列配置
     tableColumns() {
-      return this.allColumns.filter(col => this.visibleColumns.includes(col.prop))
+      return this.allColumns.filter(col => this.internalVisibleColumns.includes(col.prop))
     },
     // 列设置存储键
     columnSettingsKey() {
@@ -37,6 +37,10 @@ export default {
     // 选中行的ID数组
     selectedIds() {
       return this.selectedRows.map(row => row.id || row._id)
+    },
+    // 可见列 - 兼容属性
+    visibleColumns() {
+      return this.internalVisibleColumns
     }
   },
   created() {
@@ -59,7 +63,7 @@ export default {
       
       if (savedColumns) {
         try {
-          this.visibleColumns = JSON.parse(savedColumns)
+          this.internalVisibleColumns = JSON.parse(savedColumns)
         } catch (e) {
           console.error('解析保存的列设置失败:', e)
           this.resetToDefaultColumns()
@@ -71,12 +75,12 @@ export default {
     
     // 重置为默认列配置
     resetToDefaultColumns() {
-      this.visibleColumns = [...this.defaultVisibleColumns]
+      this.internalVisibleColumns = [...this.defaultVisibleColumns]
     },
     
     // 处理列设置变更
     handleColumnChange(columns) {
-      this.visibleColumns = columns
+      this.internalVisibleColumns = columns
     },
     
     // 处理多选变化
