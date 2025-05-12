@@ -48,6 +48,5 @@ alwaysApply: true
 ## 模拟数据
 - `mock/` - 模拟数据和API定义
   - `mock/master-data/` - 主数据管理模块Mock数据
-  - `mock/inventory/` - 库存管理模块Mock数据
   - `mock/utils.js` - Mock工具函数
   - `mock/index.js` - Mock服务器入口

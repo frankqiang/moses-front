@@ -3,7 +3,9 @@ description:
 globs: 
 alwaysApply: false
 ---
-# 表格模块开发规范
+# [已合并] 表格模块开发规范
+
+> **注意**：此规则内容已与 07-component-architecture.mdc 合并，请参考 [组件化架构与表格模块开发指南](.cursor/rules/07-component-architecture.mdc) 获取最新规范。
 
 ## 适用范围
 本规则适用于所有包含表格列表的功能模块开发，规定了统一的组件架构、全局组件使用和交互模式，所有新的表格模块和改造的旧模块都需遵循此规范。
@@ -19,7 +21,7 @@ module-name/
 ├── README.md                  # 模块说明文档
 ├── components/                # 子组件目录
 │   ├── SearchForm.vue         # 搜索表单组件（使用全局SearchForm）
-│   ├── DataTable.vue          # 数据表格组件（使用全局ActionButtons和StatusTag）
+│   ├── DataTable.vue          # 数据表格组件（使用全局TableToolbar、ActionButtons和StatusTag）
 │   ├── FormDrawer.vue         # 表单抽屉组件（使用全局DrawerForm）
 │   └── ImportExportBar.vue    # 导入导出组件（可选）
 └── api/                       # API目录（可选）
@@ -47,7 +49,45 @@ module-name/
 </search-form>
 ```
 
-### 2. ActionButtons组件
+### 2. TableToolbar组件
+- **强制要求**：所有表格上方的工具栏必须使用全局TableToolbar组件
+- 整合了批量操作、列设置、导入导出和自定义操作按钮
+- 支持左右两侧自定义内容插槽
+- 示例用法：
+
+```vue
+<table-toolbar
+  :enable-column-settings="true"
+  :column-options="allColumns"
+  :storage-key="columnSettingsKey"
+  :default-visible-columns="defaultVisibleColumns"
+  :enable-batch-actions="true"
+  :selected-rows="selectedRows"
+  :enable-import="true"
+  :import-api="importApiFunction"
+  :template-api="templateApiFunction"
+  :enable-export="true"
+  :export-api="exportApiFunction"
+  :export-params="exportParams"
+  @refresh="handleRefresh"
+  @column-change="handleColumnChange"
+  @batch-delete="handleBatchDelete"
+  @batch-enable="handleBatchEnable"
+  @batch-disable="handleBatchDisable"
+  @import-success="handleImportSuccess"
+  @export-success="handleExportSuccess"
+>
+  <template #toolbar-left>
+    <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增</el-button>
+  </template>
+  
+  <template #toolbar-right>
+    <!-- 可选的右侧自定义内容 -->
+  </template>
+</table-toolbar>
+```
+
+### 3. ActionButtons组件
 - **强制要求**：表格中的操作按钮必须使用全局ActionButtons组件
 - 使用预设按钮配置或自定义按钮配置
 - 支持文本模式和图标模式
@@ -62,7 +102,7 @@ module-name/
 />
 ```
 
-### 3. StatusTag组件
+### 4. StatusTag组件
 - **强制要求**：所有状态展示必须使用全局StatusTag组件
 - 使用预设状态类型或自定义状态配置
 - 示例用法：
@@ -75,7 +115,7 @@ module-name/
 />
 ```
 
-### 4. DrawerForm组件
+### 5. DrawerForm组件
 - **强制要求**：所有表单抽屉必须使用全局DrawerForm组件
 - 通过`formSections`配置分段表单内容
 - 支持create/update/view三种模式
@@ -96,7 +136,7 @@ module-name/
 </drawer-form>
 ```
 
-### 5. Pagination组件
+### 6. Pagination组件
 - **强制要求**：所有表格分页必须使用全局Pagination组件
 - 正确处理分页事件和同步属性
 - 示例用法：
@@ -109,6 +149,84 @@ module-name/
   :limit.sync="pageSize"
   @pagination="handlePagination"
 />
+```
+
+## 组件集成规范
+
+### DataTable组件集成
+- DataTable组件应集成TableToolbar、ActionButtons、StatusTag和Pagination
+- 必须实现columnSettingsMixin以支持列设置和本地存储
+- 应将表格操作逻辑封装在组件内部，对外提供事件接口
+
+```vue
+<!-- 集成TableToolbar的DataTable组件示例 -->
+<template>
+  <div class="data-table">
+    <table-toolbar
+      :enable-column-settings="true"
+      :column-options="allColumns"
+      :storage-key="currentStorageKey"
+      :default-visible-columns="defaultVisibleColumns"
+      :enable-batch-actions="true"
+      :selected-rows="selectedRows"
+      @refresh="handleRefresh"
+      @column-change="handleColumnChange"
+      @batch-delete="$emit('batch-delete', selectedRows)"
+    >
+      <template #toolbar-left>
+        <el-button type="primary" icon="el-icon-plus" size="mini" @click="$emit('add')">新增</el-button>
+      </template>
+    </table-toolbar>
+
+    <el-table
+      v-loading="loading"
+      :data="data"
+      @selection-change="handleSelectionChange"
+    >
+      <!-- 表格列配置 -->
+      <el-table-column type="selection" width="45" align="center" />
+      
+      <template v-for="col in tableColumns">
+        <el-table-column
+          :key="col.prop"
+          v-bind="col"
+        >
+          <template slot-scope="scope">
+            <!-- 使用StatusTag组件渲染状态列 -->
+            <template v-if="col.renderType === 'status'">
+              <status-tag
+                :status="scope.row[col.prop]"
+                :text-map="statusTextMap"
+                :type-map="statusTypeMap"
+              />
+            </template>
+            <!-- 其他列渲染逻辑 -->
+          </template>
+        </el-table-column>
+      </template>
+
+      <!-- 操作列 -->
+      <el-table-column label="操作" width="150" align="center" fixed="right">
+        <template slot-scope="scope">
+          <action-buttons
+            :buttons="getActionButtons(scope.row)"
+            mode="text"
+            :row="scope.row"
+            @click="handleActionClick"
+          />
+        </template>
+      </el-table-column>
+    </el-table>
+    
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      :page.sync="currentPage"
+      :limit.sync="pageSize"
+      @pagination="handlePagination"
+    />
+  </div>
+</template>
 ```
 
 ## 交互规范
@@ -130,6 +248,39 @@ module-name/
 - 禁用状态的行整行显示为灰色
 
 ## 配置化开发
+
+### TableToolbar配置示例
+```javascript
+// 列设置存储的键名
+columnSettingsKey() {
+  return `${this.equipmentType}_equipment_columns`
+},
+
+// 导出参数
+exportParams() {
+  return {
+    ...this.listQuery,
+    export: true
+  }
+},
+
+// 导入API函数
+importApiFunction(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('type', this.equipmentType)
+  return request({
+    url: this.importApi,
+    method: 'post',
+    data: formData
+  })
+},
+
+// 默认显示的列
+defaultVisibleColumns: [
+  'equipmentId', 'name', 'model', 'status', 'installDate'
+]
+```
 
 ### 表单配置示例
 ```javascript
@@ -188,6 +339,41 @@ columns() {
 }
 ```
 
+### ActionButtons配置示例
+```javascript
+// 获取操作按钮配置
+getActionButtons(row) {
+  // 使用预设按钮生成操作按钮
+  const buttons = generateTableButtons(['edit', 'view'])
+  
+  // 添加状态切换按钮
+  const statusButton = {
+    text: row.status === 1 ? '禁用' : '启用',
+    action: 'statusToggle',
+    icon: row.status === 1 ? 'el-icon-close' : 'el-icon-check',
+    type: 'text',
+    class: row.status === 1 ? 'status-disable' : 'status-enable'
+  }
+  
+  return buttons.concat([statusButton])
+}
+
+// 处理按钮点击事件
+handleActionClick({ action, row }) {
+  switch (action) {
+    case 'edit':
+      this.$emit('update', row)
+      break
+    case 'view':
+      this.$emit('view', row)
+      break
+    case 'statusToggle':
+      this.$emit('status-change', row)
+      break
+  }
+}
+```
+
 ## 最佳实践
 
 1. **使用计算属性**：将复杂的表单和表格配置放在计算属性中
@@ -209,6 +395,7 @@ columns() {
 开发完成后，请检查以下项目是否符合规范：
 
 - [ ] 使用了全局SearchForm组件实现搜索表单
+- [ ] 使用了全局TableToolbar组件实现表格工具栏
 - [ ] 使用了全局ActionButtons组件实现操作按钮
 - [ ] 使用了全局StatusTag组件实现状态显示
 - [ ] 使用了全局DrawerForm组件实现表单抽屉
@@ -216,6 +403,5 @@ columns() {
 - [ ] 表单分段清晰，字段归类合理
 - [ ] 功能完整：查询、新增、编辑、查看、删除、状态切换
 - [ ] 代码符合ESLint规范
-- [ ] README.md文档完善
 
 
