@@ -1,173 +1,24 @@
+/**
+ * 产品表单组件
+ * 功能描述：提供铝箔产品的新增和编辑表单
+ */
 <template>
-  <el-dialog 
-    :title="type === 'create' ? '新增铝箔产品' : '编辑铝箔产品'" 
-    :visible.sync="dialogVisible"
-    width="800px"
-    @close="$emit('update:visible', false)"
+  <drawer-form
+    ref="drawerForm"
+    :visible.sync="drawerVisible"
+    :title="formTitle"
+    :mode="type"
+    :data="formData"
+    :rules="rules"
+    :form-sections="formSections"
+    @submit="handleSubmitForm"
+    @close="handleClose"
   >
-    <el-form 
-      ref="form" 
-      :model="formData" 
-      :rules="rules" 
-      label-width="120px" 
-      label-position="right"
-      size="small"
-      class="product-form"
-    >
-      <el-divider content-position="left">基础信息</el-divider>
-
-      <el-row :gutter="20">
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="产品编码" prop="code" class="form-item-with-error">
-            <el-input v-model="formData.code" placeholder="如: AF-1100-H18-0.0060x1200" />
-            <div class="error-message-placeholder"></div>
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="产品名称" prop="name" class="form-item-with-error">
-            <el-input v-model="formData.name" placeholder="如: 1100合金H18态双零箔" />
-            <div class="error-message-placeholder"></div>
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-row :gutter="20">
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="原材料类型" prop="rawMaterialType" class="form-item-with-error">
-            <el-select v-model="formData.rawMaterialType" placeholder="请选择原材料类型" style="width: 100%">
-              <el-option label="原铝" value="原铝" />
-              <el-option label="再生铝" value="再生铝" />
-              <el-option label="混合铝" value="混合铝" />
-            </el-select>
-            <div class="error-message-placeholder"></div>
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="合金牌号" prop="alloy" class="form-item-with-error">
-            <el-select v-model="formData.alloy" placeholder="请选择合金牌号" style="width: 100%">
-              <el-option label="1100" value="1100" />
-              <el-option label="8011" value="8011" />
-              <el-option label="3003" value="3003" />
-              <el-option label="8021" value="8021" />
-            </el-select>
-            <div class="error-message-placeholder"></div>
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-row :gutter="20">
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="状态/硬度" prop="state" class="form-item-with-error">
-            <el-select v-model="formData.state" placeholder="请选择状态/硬度" style="width: 100%">
-              <el-option label="H18" value="H18" />
-              <el-option label="O" value="O" />
-              <el-option label="H22" value="H22" />
-              <el-option label="H24" value="H24" />
-            </el-select>
-            <div class="error-message-placeholder"></div>
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="产品生命周期" prop="lifecycleStatus" class="form-item-with-error">
-            <el-select v-model="formData.lifecycleStatus" placeholder="请选择产品生命周期状态" style="width: 100%">
-              <el-option label="试产" value="trial" />
-              <el-option label="量产" value="production" />
-              <el-option label="停产" value="discontinued" />
-            </el-select>
-            <div class="error-message-placeholder"></div>
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-divider content-position="left">规格参数</el-divider>
-
-      <el-row :gutter="20">
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="厚度(mm)" prop="thickness" class="form-item-with-error">
-            <el-input-number 
-              v-model="formData.thickness" 
-              :precision="4" 
-              :step="0.0001" 
-              :min="0.0001" 
-              :max="1" 
-              style="width: 100%" 
-            />
-            <div class="error-message-placeholder"></div>
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="宽度(mm)" prop="width" class="form-item-with-error">
-            <el-input-number 
-              v-model="formData.width" 
-              :precision="0" 
-              :step="10" 
-              :min="100" 
-              :max="2000" 
-              style="width: 100%" 
-            />
-            <div class="error-message-placeholder"></div>
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-form-item label="单位重量" prop="unitWeight" class="form-item-with-error">
-        <el-input-number 
-          v-model="formData.unitWeight" 
-          :precision="2" 
-          :step="0.1" 
-          :min="0.1" 
-          placeholder="kg/卷或kg/m²" 
-          style="width: 100%" 
-        />
-        <div class="error-message-placeholder"></div>
-      </el-form-item>
-
-      <el-divider content-position="left">关联信息</el-divider>
-
-      <el-form-item label="工艺模板" prop="processTemplates" class="form-item-with-error">
-        <el-select 
-          v-model="formData.processTemplates" 
-          multiple
-          filterable
-          value-key="id"
-          placeholder="请选择关联退火工艺模板"
-          style="width: 100%"
-        >
-          <el-option
-            v-for="item in processTemplateOptions"
-            :key="item.id"
-            :label="item.name"
-            :value="item"
-          />
-        </el-select>
-        <div class="error-message-placeholder"></div>
-      </el-form-item>
-
-      <el-form-item label="质量标准" prop="qualityStandards" class="form-item-with-error">
-        <el-select 
-          v-model="formData.qualityStandards" 
-          multiple
-          filterable
-          value-key="id"
-          placeholder="请选择关联质量标准"
-          style="width: 100%"
-        >
-          <el-option
-            v-for="item in qualityStandardOptions"
-            :key="item.id"
-            :label="item.name"
-            :value="item"
-          />
-        </el-select>
-        <div class="error-message-placeholder"></div>
-      </el-form-item>
-    </el-form>
-
-    <div slot="footer" class="dialog-footer">
-      <el-button @click="$emit('update:visible', false)">取 消</el-button>
-      <el-button type="primary" :loading="submitLoading" @click="submitForm">确 定</el-button>
-    </div>
-  </el-dialog>
+    <template #footer>
+      <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
+      <el-button v-if="type !== 'view'" type="primary" :loading="submitLoading" @click="submitForm">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
+    </template>
+  </drawer-form>
 </template>
 
 <script>
@@ -175,13 +26,18 @@
  * 产品表单组件
  * 功能描述：提供铝箔产品的新增和编辑表单
  */
+import DrawerForm from '@/components/DrawerForm'
+
 export default {
   name: 'ProductForm',
+  components: {
+    DrawerForm
+  },
   props: {
     type: {
       type: String,
-      default: 'create', // create或update
-      validator: value => ['create', 'update'].includes(value)
+      default: 'create', // create、update或view
+      validator: value => ['create', 'update', 'view'].includes(value)
     },
     visible: {
       type: Boolean,
@@ -212,7 +68,7 @@ export default {
     }
     
     return {
-      dialogVisible: false,
+      drawerVisible: false,
       submitLoading: false,
       formData: {
         code: '',
@@ -271,42 +127,207 @@ export default {
       }
     }
   },
+  computed: {
+    // 表单标题
+    formTitle() {
+      if (this.type === 'create') {
+        return '新增铝箔产品'
+      } else if (this.type === 'update') {
+        return '编辑铝箔产品'
+      } else {
+        return '查看铝箔产品'
+      }
+    },
+    
+    // 表单分段配置
+    formSections() {
+      return [
+        {
+          title: '基础信息',
+          items: [
+            {
+              prop: 'code',
+              label: '产品编码',
+              type: 'input',
+              placeholder: '如: AF-1100-H18-0.0060x1200',
+              maxlength: 50,
+              showWordLimit: true
+            },
+            {
+              prop: 'name',
+              label: '产品名称',
+              type: 'input',
+              placeholder: '如: 1100合金H18态双零箔',
+              maxlength: 50,
+              showWordLimit: true
+            },
+            {
+              prop: 'rawMaterialType',
+              label: '原材料类型',
+              type: 'select',
+              placeholder: '请选择原材料类型',
+              options: [
+                { label: '铝锭', value: '铝锭' },
+                { label: '铸轧卷', value: '铸轧卷' },
+                { label: '热轧卷', value: '热轧卷' }
+              ]
+            },
+            {
+              prop: 'alloy',
+              label: '合金牌号',
+              type: 'select',
+              placeholder: '请选择合金牌号',
+              options: [
+                { label: '1100', value: '1100' },
+                { label: '8011', value: '8011' },
+                { label: '3003', value: '3003' },
+                { label: '8021', value: '8021' }
+              ]
+            },
+            {
+              prop: 'state',
+              label: '状态/硬度',
+              type: 'select',
+              placeholder: '请选择状态/硬度',
+              options: [
+                { label: 'H18', value: 'H18' },
+                { label: 'O', value: 'O' },
+                { label: 'H22', value: 'H22' },
+                { label: 'H24', value: 'H24' }
+              ]
+            },
+            {
+              prop: 'lifecycleStatus',
+              label: '产品生命周期',
+              type: 'select',
+              placeholder: '请选择产品生命周期状态',
+              options: [
+                { label: '试产', value: 'trial' },
+                { label: '量产', value: 'production' },
+                { label: '停产', value: 'discontinued' }
+              ]
+            }
+          ]
+        },
+        {
+          title: '规格参数',
+          items: [
+            {
+              prop: 'thickness',
+              label: '厚度(mm)',
+              type: 'number',
+              precision: 4,
+              step: 0.0001,
+              min: 0.0001,
+              max: 1
+            },
+            {
+              prop: 'width',
+              label: '宽度(mm)',
+              type: 'number',
+              precision: 0,
+              step: 10,
+              min: 100,
+              max: 2000
+            },
+            {
+              prop: 'unitWeight',
+              label: '单位重量',
+              type: 'number',
+              precision: 2,
+              step: 0.1,
+              min: 0.1,
+              placeholder: 'kg/卷或kg/m²'
+            }
+          ]
+        },
+        {
+          title: '关联信息',
+          items: [
+            {
+              prop: 'processTemplates',
+              label: '工艺模板',
+              type: 'select',
+              placeholder: '请选择关联退火工艺模板',
+              multiple: true,
+              collapseTags: true,
+              options: this.processTemplateOptions.map(item => ({
+                label: item.name,
+                value: item.id
+              }))
+            },
+            {
+              prop: 'qualityStandards',
+              label: '质量标准',
+              type: 'select',
+              placeholder: '请选择关联质量标准',
+              multiple: true,
+              collapseTags: true,
+              options: this.qualityStandardOptions.map(item => ({
+                label: item.name,
+                value: item.id
+              }))
+            }
+          ]
+        }
+      ]
+    }
+  },
   watch: {
     visible(val) {
-      this.dialogVisible = val
-      if (val) {
-        // 对话框打开时，延迟一下再清除校验状态，确保表单已经被渲染
+      this.drawerVisible = val
+      if (val && this.type === 'create') {
+        // 如果是新增模式，确保表单被重置
         this.$nextTick(() => {
-          if (this.$refs.form) {
-            this.$refs.form.clearValidate()
-          }
+          this.resetForm()
         })
       }
     },
-    dialogVisible(val) {
+    drawerVisible(val) {
       if (!val) {
         this.$emit('update:visible', false)
-        // 对话框关闭时清除校验状态
-        if (this.$refs.form) {
-          this.$refs.form.clearValidate()
-        }
+      }
+    },
+    type(val) {
+      // 当类型变为create时，确保表单被重置
+      if (val === 'create') {
+        this.$nextTick(() => {
+          this.resetForm()
+        })
       }
     },
     editData: {
       handler(val) {
         if (val) {
-          this.formData = { ...val }
-          // 数据变化后，清除校验状态
-          this.$nextTick(() => {
-            if (this.$refs.form) {
-              this.$refs.form.clearValidate()
-            }
-          })
+          // 深拷贝编辑数据
+          this.formData = JSON.parse(JSON.stringify(val))
+          
+          // 处理关联对象的id转换
+          if (this.formData.processTemplates && Array.isArray(this.formData.processTemplates)) {
+            this.formData.processTemplates = this.formData.processTemplates.map(item => item.id)
+          }
+          
+          if (this.formData.qualityStandards && Array.isArray(this.formData.qualityStandards)) {
+            this.formData.qualityStandards = this.formData.qualityStandards.map(item => item.id)
+          }
         } else {
           this.resetForm()
         }
       },
       immediate: true
+    },
+    // 监听processTemplateOptions和qualityStandardOptions的变化，更新formSections
+    processTemplateOptions: {
+      handler() {
+        // 由于formSections是计算属性，它会自动更新
+      },
+      deep: true
+    },
+    qualityStandardOptions: {
+      handler() {
+        // 由于formSections是计算属性，它会自动更新
+      },
+      deep: true
     }
   },
   methods: {
@@ -326,20 +347,60 @@ export default {
         lifecycleStatus: 'trial'
       }
       
-      if (this.$refs.form) {
-        this.$refs.form.resetFields()
-        this.$refs.form.clearValidate()
-      }
+      // 延迟执行以确保表单已经被渲染
+      this.$nextTick(() => {
+        if (this.$refs.drawerForm && this.$refs.drawerForm.$refs.form) {
+          this.$refs.drawerForm.$refs.form.resetFields()
+          this.$refs.drawerForm.$refs.form.clearValidate()
+        }
+      })
+    },
+    
+    // 处理关闭
+    handleClose() {
+      this.drawerVisible = false
+      // 关闭时清除验证状态
+      this.$nextTick(() => {
+        this.resetForm()
+      })
+    },
+    
+    // 处理DrawerForm的submit事件
+    handleSubmitForm(formData) {
+      this.submitForm()
     },
     
     // 提交表单
     submitForm() {
-      this.$refs.form.validate(valid => {
+      if (this.type === 'view') {
+        this.drawerVisible = false
+        return
+      }
+      
+      this.$refs.drawerForm.$refs.form.validate(valid => {
         if (valid) {
           this.submitLoading = true
           
-          // 处理表单数据
-          const submitData = { ...this.formData }
+          // 获取当前表单数据
+          const currentFormData = this.$refs.drawerForm.formData
+          
+          // 创建提交数据对象
+          const submitData = JSON.parse(JSON.stringify(currentFormData))
+          
+          // 处理关联对象的id转换回对象
+          if (submitData.processTemplates && Array.isArray(submitData.processTemplates)) {
+            submitData.processTemplates = submitData.processTemplates.map(id => {
+              const template = this.processTemplateOptions.find(item => item.id === id)
+              return template || { id }
+            })
+          }
+          
+          if (submitData.qualityStandards && Array.isArray(submitData.qualityStandards)) {
+            submitData.qualityStandards = submitData.qualityStandards.map(id => {
+              const standard = this.qualityStandardOptions.find(item => item.id === id)
+              return standard || { id }
+            })
+          }
           
           // 触发提交事件
           this.$emit('submit', submitData)
@@ -359,32 +420,5 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.product-form {
-  .el-select {
-    width: 100%;
-  }
-
-  .form-item-with-error {
-    margin-bottom: 22px;
-    
-    .error-message-placeholder {
-      height: 18px;
-      margin-top: 2px;
-    }
-  }
-}
-
-/* 修复表单校验错误信息样式 */
-::v-deep .el-form-item__error {
-  position: static;
-  margin-top: 2px;
-  margin-bottom: 0;
-}
-
-/* 对于弹出框内的表单，增加内部滚动条，避免内容过多导致对话框超出屏幕 */
-::v-deep .el-dialog__body {
-  max-height: 65vh;
-  overflow-y: auto;
-  padding-bottom: 30px;
-}
+/* 抽屉表单样式已由全局DrawerForm组件提供 */
 </style> 
