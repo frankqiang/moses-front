@@ -274,7 +274,7 @@ export default {
     // 标签宽度
     labelWidth: {
       type: String,
-      default: '100px'
+      default: ''
     },
     // 是否可展开收起
     expandable: {

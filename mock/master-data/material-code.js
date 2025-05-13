@@ -73,10 +73,10 @@ const codeRules = [...mockCodeRules]
 module.exports = [
   // 获取物料编码规则列表
   {
-    url: '/vue-admin-template/mes/material-code/list',
+    url: '/mes/master-data/material-code/list',
     type: 'get',
     response: config => {
-      const { ruleName, ruleType } = config.query
+      const { ruleName, ruleType, page = 1, limit = 10 } = config.query
 
       // 过滤
       let filteredRules = [...codeRules]
@@ -87,10 +87,16 @@ module.exports = [
         filteredRules = filteredRules.filter(item => item.type === ruleType)
       }
 
+      // 分页
+      const startIndex = (page - 1) * limit
+      const endIndex = startIndex + parseInt(limit)
+      const pagedRules = filteredRules.slice(startIndex, endIndex)
+
       return {
         code: 20000,
         data: {
-          items: filteredRules
+          items: pagedRules,
+          total: filteredRules.length
         }
       }
     }
@@ -98,7 +104,7 @@ module.exports = [
 
   // 获取物料编码规则详情
   {
-    url: /\/vue-admin-template\/mes\/material-code\/detail\/\d+/,
+    url: /\/mes\/master-data\/material-code\/detail\/\d+/,
     type: 'get',
     response: config => {
       const id = parseInt(config.url.match(/\/detail\/(\d+)/)[1])
@@ -120,7 +126,7 @@ module.exports = [
 
   // 创建物料编码规则
   {
-    url: '/vue-admin-template/mes/material-code/create',
+    url: '/mes/master-data/material-code/create',
     type: 'post',
     response: config => {
       const data = config.body
@@ -153,7 +159,7 @@ module.exports = [
 
   // 更新物料编码规则
   {
-    url: '/vue-admin-template/mes/material-code/update',
+    url: '/mes/master-data/material-code/update',
     type: 'put',
     response: config => {
       const data = config.body
@@ -190,7 +196,7 @@ module.exports = [
 
   // 设置默认规则
   {
-    url: '/vue-admin-template/mes/material-code/set-default',
+    url: '/mes/master-data/material-code/set-default',
     type: 'put',
     response: config => {
       const { id } = config.body
@@ -231,7 +237,7 @@ module.exports = [
 
   // 生成预览编码
   {
-    url: '/vue-admin-template/mes/material-code/preview',
+    url: '/mes/master-data/material-code/preview',
     type: 'post',
     response: config => {
       const { type, prefix, sequenceLength, currentValue } = config.body
@@ -248,8 +254,96 @@ module.exports = [
       return {
         code: 20000,
         data: {
-          code: previewCode
+          previewCode
         }
+      }
+    }
+  },
+
+  // 批量删除规则
+  {
+    url: '/mes/master-data/material-code/batch-delete',
+    type: 'delete',
+    response: config => {
+      const { ids } = config.body
+      
+      if (!ids || !ids.length) {
+        return {
+          code: 50400,
+          message: '缺少必要的ID参数'
+        }
+      }
+
+      // 检查是否有默认规则在删除列表中
+      const hasDefault = codeRules.some(rule => rule.isDefault && ids.includes(rule.id))
+      if (hasDefault) {
+        return {
+          code: 50403,
+          message: '不能删除默认规则，请先设置其他规则为默认'
+        }
+      }
+      
+      // 删除规则
+      const initialLength = codeRules.length
+      for (let i = codeRules.length - 1; i >= 0; i--) {
+        if (ids.includes(codeRules[i].id)) {
+          codeRules.splice(i, 1)
+        }
+      }
+      
+      const deletedCount = initialLength - codeRules.length
+      
+      return {
+        code: 20000,
+        data: {
+          count: deletedCount
+        }
+      }
+    }
+  },
+
+  // 导出规则
+  {
+    url: '/mes/master-data/material-code/export',
+    type: 'post',
+    response: () => {
+      return {
+        code: 20000,
+        data: '导出成功'
+      }
+    }
+  },
+
+  // 导入规则
+  {
+    url: '/mes/master-data/material-code/import',
+    type: 'post',
+    response: () => {
+      // 模拟导入成功返回
+      return {
+        code: 20000,
+        data: {
+          successCount: 3,
+          failCount: 1,
+          failItems: [
+            {
+              rowIndex: 2,
+              reason: '名称已存在'
+            }
+          ]
+        }
+      }
+    }
+  },
+
+  // 获取导入模板
+  {
+    url: '/mes/master-data/material-code/template',
+    type: 'get',
+    response: () => {
+      return {
+        code: 20000,
+        data: '模板下载成功'
       }
     }
   }
