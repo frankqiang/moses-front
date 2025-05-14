@@ -61,9 +61,6 @@ import {
   batchChangeProductStatus,
   getProcessTemplateList,
   getQualityStandardList,
-  exportProduct,
-  downloadTemplate,
-  importProduct
 } from '@/api/master-data/product-management'
 
 // 引入子组件

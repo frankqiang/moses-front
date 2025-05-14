@@ -367,7 +367,32 @@ export default {
     
     // 处理DrawerForm的submit事件
     handleSubmitForm(formData) {
-      this.submitForm()
+      // 使用DrawerForm提供的表单数据
+      if (this.type === 'view') {
+        this.drawerVisible = false
+        return
+      }
+      
+      // 创建提交数据对象
+      const submitData = JSON.parse(JSON.stringify(formData))
+      
+      // 处理关联对象的id转换回对象
+      if (submitData.processTemplates && Array.isArray(submitData.processTemplates)) {
+        submitData.processTemplates = submitData.processTemplates.map(id => {
+          const template = this.processTemplateOptions.find(item => item.id === id)
+          return template || { id }
+        })
+      }
+      
+      if (submitData.qualityStandards && Array.isArray(submitData.qualityStandards)) {
+        submitData.qualityStandards = submitData.qualityStandards.map(id => {
+          const standard = this.qualityStandardOptions.find(item => item.id === id)
+          return standard || { id }
+        })
+      }
+      
+      // 触发提交事件
+      this.$emit('submit', submitData)
     },
     
     // 提交表单
@@ -384,26 +409,8 @@ export default {
           // 获取当前表单数据
           const currentFormData = this.$refs.drawerForm.formData
           
-          // 创建提交数据对象
-          const submitData = JSON.parse(JSON.stringify(currentFormData))
-          
           // 处理关联对象的id转换回对象
-          if (submitData.processTemplates && Array.isArray(submitData.processTemplates)) {
-            submitData.processTemplates = submitData.processTemplates.map(id => {
-              const template = this.processTemplateOptions.find(item => item.id === id)
-              return template || { id }
-            })
-          }
-          
-          if (submitData.qualityStandards && Array.isArray(submitData.qualityStandards)) {
-            submitData.qualityStandards = submitData.qualityStandards.map(id => {
-              const standard = this.qualityStandardOptions.find(item => item.id === id)
-              return standard || { id }
-            })
-          }
-          
-          // 触发提交事件
-          this.$emit('submit', submitData)
+          this.handleSubmitForm(currentFormData)
           
           // 模拟异步操作
           setTimeout(() => {

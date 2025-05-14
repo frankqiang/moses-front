@@ -315,37 +315,42 @@ export default {
           text: '设为试产',
           action: 'trial',
           type: 'text',
-          disabled: row.lifecycleStatus === 'trial'
+          disabled: row.lifecycleStatus === 'trial',
+          tooltip: '将产品生命周期设置为试产阶段'
         },
         {
           text: '设为量产',
           action: 'production',
           type: 'text',
-          disabled: row.lifecycleStatus === 'production'
+          disabled: row.lifecycleStatus === 'production',
+          tooltip: '将产品生命周期设置为量产阶段'
         },
         {
           text: '设为停产',
           action: 'discontinued',
           type: 'text',
-          disabled: row.lifecycleStatus === 'discontinued'
+          disabled: row.lifecycleStatus === 'discontinued',
+          tooltip: '将产品生命周期设置为停产阶段'
         }
       ]
       
       // 使用预设按钮生成操作按钮
       const buttons = [
         {
-          text: '编辑',
+          // text: '编辑',
           action: 'edit',
           type: 'text',
           icon: 'el-icon-edit',
-          tooltip: '编辑产品'
+          tooltip: '编辑产品',
+          showText: true
         },
         {
-          text: '查看',
+          // text: '查看',
           action: 'view',
           type: 'text',
           icon: 'el-icon-view',
-          tooltip: '查看产品详情'
+          tooltip: '查看产品详情',
+          showText: true
         }
       ]
       
@@ -355,14 +360,22 @@ export default {
         action: 'statusDropdown',
         type: 'text',
         children: statusButtons,
-        tooltip: '修改产品生命周期'
+        tooltip: '修改产品生命周期',
+        showText: true
       }
       
       return [...buttons, statusButton]
     },
     
     // 处理按钮点击事件
-    handleActionClick({ action, row }) {
+    handleActionClick({ action, row, parentAction }) {
+      // 如果是状态下拉菜单的子项点击
+      if (parentAction === 'statusDropdown') {
+        this.handleStatusChange(row, action)
+        return
+      }
+      
+      // 处理主要操作
       switch (action) {
         case 'edit':
           this.handleUpdate(row)

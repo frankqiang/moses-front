@@ -2,14 +2,54 @@
  * 操作按钮组组件
  * 功能描述：提供统一的表格操作按钮布局，支持自定义按钮和权限控制
  * 创建日期：2023-11-20
+ * 更新日期：2024-11-15
+ * 更新内容：添加对下拉菜单按钮（带有children属性的按钮）的支持
  */
 <template>
   <div class="action-buttons">
     <!-- 文本按钮模式 -->
     <template v-if="mode === 'text'">
       <template v-for="(button, index) in visibleButtons">
+        <!-- 下拉菜单按钮 -->
+        <el-dropdown 
+          v-if="button.children && button.children.length" 
+          :key="index"
+          @command="handleChildCommand"
+          trigger="click"
+        >
+          <el-tooltip
+            v-if="button.tooltip"
+            :content="button.tooltip"
+            :disabled="!button.tooltip"
+            placement="top"
+          >
+            <el-button
+              :type="button.type || 'text'"
+              :size="button.size || size"
+              :icon="button.icon"
+              :class="button.class"
+              :disabled="button.disabled"
+            >
+              {{ button.showText !== false ? button.text : '' }}<i v-if="button.showText !== false" class="el-icon-arrow-down el-icon--right"></i>
+            </el-button>
+          </el-tooltip>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item
+              v-for="(child, childIndex) in button.children"
+              :key="childIndex"
+              :command="{action: child.action, row: row, parentAction: button.action}"
+              :disabled="child.disabled"
+              :divided="child.divided"
+            >
+              <i v-if="child.icon" :class="child.icon"></i>
+              {{ child.text }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+
+        <!-- 普通按钮带tooltip -->
         <el-tooltip
-          v-if="button.tooltip"
+          v-else-if="button.tooltip"
           :key="index"
           :content="button.tooltip"
           :disabled="!button.tooltip"
@@ -23,9 +63,11 @@
             :disabled="button.disabled"
             @click="handleClick(button)"
           >
-            {{ button.showText ? button.text : '' }}
+            {{ button.showText !== false ? button.text : '' }}
           </el-button>
         </el-tooltip>
+        
+        <!-- 普通按钮不带tooltip -->
         <el-button
           v-else
           :key="index"
@@ -36,11 +78,11 @@
           :disabled="button.disabled"
           @click="handleClick(button)"
         >
-          {{ button.showText ? button.text : '' }}
+          {{ button.showText !== false ? button.text : '' }}
         </el-button>
       </template>
 
-      <!-- 下拉菜单按钮 -->
+      <!-- 更多按钮下拉菜单 -->
       <el-dropdown v-if="moreButtons.length" @command="handleCommand">
         <el-button type="text" size="mini">
           更多<i class="el-icon-arrow-down el-icon--right"></i>
@@ -62,8 +104,38 @@
 
     <!-- 普通按钮模式 -->
     <template v-else>
+      <!-- 普通按钮模式下的下拉菜单 -->
+      <el-dropdown 
+        v-for="(button, index) in visibleButtons.filter(btn => btn.children && btn.children.length)" 
+        :key="'dropdown-' + index"
+        @command="handleChildCommand"
+      >
+        <el-button
+          :type="button.type || 'primary'"
+          :size="button.size || size"
+          :icon="button.icon"
+          :class="button.class"
+          :disabled="button.disabled"
+        >
+          {{ button.text }}<i class="el-icon-arrow-down el-icon--right"></i>
+        </el-button>
+        <el-dropdown-menu slot="dropdown">
+          <el-dropdown-item
+            v-for="(child, childIndex) in button.children"
+            :key="childIndex"
+            :command="{action: child.action, row: row, parentAction: button.action}"
+            :disabled="child.disabled"
+            :divided="child.divided"
+          >
+            <i v-if="child.icon" :class="child.icon"></i>
+            {{ child.text }}
+          </el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
+
+      <!-- 普通按钮 -->
       <el-button
-        v-for="(button, index) in visibleButtons"
+        v-for="(button, index) in visibleButtons.filter(btn => !btn.children || !btn.children.length)"
         :key="index"
         :type="button.type || 'primary'"
         :size="button.size || size"
@@ -161,6 +233,14 @@ export default {
         })
       }
     },
+    // 处理子按钮命令
+    handleChildCommand(command) {
+      this.$emit('click', {
+        action: command.action,
+        row: command.row || this.row,
+        parentAction: command.parentAction
+      })
+    },
     // 过滤按钮（基于权限和条件）
     filterButtons(buttons) {
       return buttons.filter(button => {
@@ -204,6 +284,14 @@ export default {
   
   .el-button [class*="el-icon-"] + span {
     margin-left: 5px;
+  }
+
+  .el-dropdown {
+    margin-right: 8px;
+    
+    &:last-child {
+      margin-right: 0;
+    }
   }
 }
 </style> 
