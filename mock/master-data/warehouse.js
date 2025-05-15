@@ -171,13 +171,29 @@ module.exports = [
       data.createTime = new Date().toISOString()
       data.updateTime = new Date().toISOString()
       
+      // 添加到列表
       warehouseList.push(data)
+      
+      // 获取当前查询参数，确保返回最新的数据
+      const { page = 1, limit = 10 } = config.query || { page: 1, limit: 10 }
+      
+      // 返回最新的列表数据
+      const mockList = [...warehouseList]
+      
+      // 分页处理
+      const pageList = mockList.filter((item, index) => {
+        const start = (page - 1) * limit
+        const end = page * limit
+        return index >= start && index < end
+      })
       
       return {
         code: 20000,
         data: {
           id: newId,
-          message: '新增成功'
+          message: '新增成功',
+          total: mockList.length,
+          items: pageList
         }
       }
     }
@@ -209,10 +225,25 @@ module.exports = [
       // 更新数据
       warehouseList.splice(index, 1, {...warehouseList[index], ...data})
       
+      // 获取当前查询参数，确保返回最新的数据
+      const { page = 1, limit = 10 } = config.query || { page: 1, limit: 10 }
+      
+      // 返回最新的列表数据
+      const mockList = [...warehouseList]
+      
+      // 分页处理
+      const pageList = mockList.filter((item, index) => {
+        const start = (page - 1) * limit
+        const end = page * limit
+        return index >= start && index < end
+      })
+      
       return {
         code: 20000,
         data: {
-          message: '更新成功'
+          message: '更新成功',
+          total: mockList.length,
+          items: pageList
         }
       }
     }

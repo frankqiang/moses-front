@@ -1,177 +1,49 @@
+/**
+ * 仓库表单组件（新版）
+ * 功能描述：提供仓库新增、编辑、查看功能的表单
+ * 创建日期：2023-11-01
+ */
 <template>
-  <el-dialog
-    :title="type === 'create' ? '新增仓库' : '编辑仓库'"
-    :visible.sync="dialogVisible"
-    width="650px"
-    :close-on-click-modal="false"
-    @close="handleClose"
-  >
-    <el-form
-      ref="warehouseForm"
-      :model="form"
+  <div class="warehouse-form">
+    <drawer-form
+      ref="drawerForm"
+      :visible.sync="innerVisible"
+      :title="formTitle"
+      :mode="type"
+      :data="formData"
       :rules="rules"
-      label-width="100px"
-      size="small"
-    >
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="仓库编码" prop="code">
-            <el-input
-              v-model="form.code"
-              placeholder="请输入仓库编码"
-              maxlength="30"
-              show-word-limit
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="仓库名称" prop="name">
-            <el-input
-              v-model="form.name"
-              placeholder="请输入仓库名称"
-              maxlength="50"
-              show-word-limit
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
-      
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="仓库类型" prop="warehouseType">
-            <el-select
-              v-model="form.warehouseType"
-              placeholder="请选择仓库类型"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="item in warehouseTypeOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="状态" prop="status">
-            <el-radio-group v-model="form.status">
-              <el-radio :label="1">启用</el-radio>
-              <el-radio :label="0">禁用</el-radio>
-            </el-radio-group>
-          </el-form-item>
-        </el-col>
-      </el-row>
-      
-      <el-row :gutter="20">
-        <el-col :span="24">
-          <el-form-item label="仓库地址" prop="address">
-            <el-input
-              v-model="form.address"
-              placeholder="请输入仓库地址"
-              maxlength="100"
-              show-word-limit
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
-      
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="面积(㎡)" prop="area">
-            <el-input-number
-              v-model="form.area"
-              :min="0"
-              :precision="2"
-              :step="100"
-              style="width: 100%"
-              placeholder="请输入面积"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="最大容量" prop="maxCapacity">
-            <el-input-number
-              v-model="form.maxCapacity"
-              :min="0"
-              :precision="0"
-              :step="100"
-              style="width: 100%"
-              placeholder="请输入最大容量"
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
-      
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="负责人" prop="manager">
-            <el-input
-              v-model="form.manager"
-              placeholder="请输入负责人姓名"
-              maxlength="20"
-              show-word-limit
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="联系方式" prop="contact">
-            <el-input
-              v-model="form.contact"
-              placeholder="请输入联系方式"
-              maxlength="20"
-              show-word-limit
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
-      
-      <el-row :gutter="20">
-        <el-col :span="24">
-          <el-form-item label="描述" prop="description">
-            <el-input
-              v-model="form.description"
-              type="textarea"
-              placeholder="请输入仓库描述"
-              :rows="3"
-              maxlength="200"
-              show-word-limit
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
-    </el-form>
-    
-    <div slot="footer" class="dialog-footer">
-      <el-button @click="handleClose">取 消</el-button>
-      <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确 定</el-button>
-    </div>
-  </el-dialog>
+      :form-sections="formSections"
+      :width="'550px'"
+      @submit="handleSubmit"
+      @closed="handleClosed"
+    />
+  </div>
 </template>
 
 <script>
-/**
- * 仓库表单组件
- * 功能描述：提供仓库新增和编辑功能的表单
- * 创建日期：2023-11-01
- */
+import DrawerForm from '@/components/DrawerForm'
+
 export default {
   name: 'WarehouseForm',
+  components: {
+    DrawerForm
+  },
   props: {
-    // 对话框类型：create-新增，update-编辑
+    // 表单类型：create-新增，update-编辑，view-查看
     type: {
       type: String,
-      default: 'create'
+      default: 'create',
+      validator: value => ['create', 'update', 'view'].includes(value)
     },
     // 对话框可见性
     visible: {
       type: Boolean,
       default: false
     },
-    // 编辑时的数据
+    // 编辑时的仓库数据
     editData: {
       type: Object,
-      default: null
+      default: () => null
     },
     // 仓库类型选项
     warehouseTypeOptions: {
@@ -180,38 +52,29 @@ export default {
     }
   },
   data() {
-    // 手机号码验证
-    const validatePhone = (rule, value, callback) => {
-      if (value && !/^1[3-9]\d{9}$/.test(value)) {
-        callback(new Error('请输入正确的手机号码'))
-      } else {
-        callback()
-      }
-    }
-    
     return {
-      // 对话框可见性
-      dialogVisible: false,
+      // 内部可见性，用于sync
+      innerVisible: false,
       // 表单数据
-      form: {
+      formData: {
         id: undefined,
         code: '',
         name: '',
         warehouseType: '',
         address: '',
-        area: 0,
-        maxCapacity: 0,
-        currentUsage: 0,
+        area: undefined,
         manager: '',
         contact: '',
-        description: '',
-        status: 1
+        maxCapacity: undefined,
+        currentUsage: 0,
+        status: 1,
+        description: ''
       },
       // 表单验证规则
       rules: {
         code: [
           { required: true, message: '请输入仓库编码', trigger: 'blur' },
-          { min: 3, max: 30, message: '长度在 3 到 30 个字符', trigger: 'blur' }
+          { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
         ],
         name: [
           { required: true, message: '请输入仓库名称', trigger: 'blur' },
@@ -224,88 +87,215 @@ export default {
           { required: true, message: '请输入仓库地址', trigger: 'blur' }
         ],
         area: [
-          { required: true, message: '请输入面积', trigger: 'blur' }
-        ],
-        maxCapacity: [
-          { required: true, message: '请输入最大容量', trigger: 'blur' }
+          { required: true, message: '请输入仓库面积', trigger: 'blur' },
+          { type: 'number', message: '面积必须为数字', trigger: 'blur' }
         ],
         manager: [
           { required: true, message: '请输入负责人', trigger: 'blur' }
         ],
         contact: [
           { required: true, message: '请输入联系方式', trigger: 'blur' },
-          { validator: validatePhone, trigger: 'blur' }
+          { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+        ],
+        maxCapacity: [
+          { required: true, message: '请输入最大容量', trigger: 'blur' },
+          { type: 'number', message: '容量必须为数字', trigger: 'blur' }
         ]
-      },
-      // 提交按钮加载状态
-      submitLoading: false
+      }
+    }
+  },
+  computed: {
+    // 表单标题
+    formTitle() {
+      const titleMap = {
+        create: '新增仓库',
+        update: '编辑仓库',
+        view: '查看仓库'
+      }
+      return titleMap[this.type]
+    },
+    
+    // 表单分段配置
+    formSections() {
+      return [
+        {
+          title: '一、基础信息',
+          items: [
+            {
+              prop: 'code',
+              label: '仓库编码',
+              type: 'input',
+              placeholder: '请输入仓库编码',
+              maxlength: 20,
+              showWordLimit: true,
+              disabled: this.type === 'update'
+            },
+            {
+              prop: 'name',
+              label: '仓库名称',
+              type: 'input',
+              placeholder: '请输入仓库名称',
+              maxlength: 50,
+              showWordLimit: true
+            },
+            {
+              prop: 'warehouseType',
+              label: '仓库类型',
+              type: 'select',
+              placeholder: '请选择仓库类型',
+              options: this.warehouseTypeOptions
+            },
+            {
+              prop: 'status',
+              label: '状态',
+              type: 'radio',
+              options: [
+                { label: '启用', value: 1 },
+                { label: '禁用', value: 0 }
+              ]
+            }
+          ]
+        },
+        {
+          title: '二、位置与容量信息',
+          items: [
+            {
+              prop: 'address',
+              label: '仓库地址',
+              type: 'input',
+              placeholder: '请输入仓库地址',
+              maxlength: 200,
+              showWordLimit: true
+            },
+            {
+              prop: 'area',
+              label: '面积(㎡)',
+              type: 'number',
+              placeholder: '请输入仓库面积',
+              min: 0
+            },
+            {
+              prop: 'maxCapacity',
+              label: '最大容量',
+              type: 'number',
+              placeholder: '请输入最大容量',
+              min: 0
+            },
+            {
+              prop: 'currentUsage',
+              label: '当前使用量',
+              type: 'number',
+              placeholder: '请输入当前使用量',
+              min: 0,
+              disabled: true
+            }
+          ]
+        },
+        {
+          title: '三、联系人信息',
+          items: [
+            {
+              prop: 'manager',
+              label: '负责人',
+              type: 'input',
+              placeholder: '请输入负责人姓名',
+              maxlength: 20
+            },
+            {
+              prop: 'contact',
+              label: '联系方式',
+              type: 'input',
+              placeholder: '请输入联系方式',
+              maxlength: 20
+            }
+          ]
+        },
+        {
+          title: '四、其他信息',
+          items: [
+            {
+              prop: 'description',
+              label: '备注说明',
+              type: 'textarea',
+              placeholder: '请输入备注说明',
+              maxlength: 500,
+              showWordLimit: true,
+              rows: 4
+            }
+          ]
+        }
+      ]
     }
   },
   watch: {
-    // 监听对话框可见性变化
+    // 监听visible变化
     visible: {
       handler(val) {
-        this.dialogVisible = val
-        if (val && this.type === 'update' && this.editData) {
-          // 编辑模式，填充表单数据
-          this.form = {
-            ...this.editData
-          }
-        } else if (val && this.type === 'create') {
-          // 新增模式，重置表单
-          this.resetForm()
+        this.innerVisible = val
+        if (val) {
+          this.initFormData()
         }
       },
       immediate: true
+    },
+    // 监听innerVisible变化，当关闭时通知父组件
+    innerVisible(val) {
+      this.$emit('update:visible', val)
     }
   },
   methods: {
+    // 初始化表单数据
+    initFormData() {
+      if (this.type === 'create') {
+        // 新增时重置表单
+        this.resetForm()
+      } else if (this.editData) {
+        // 编辑或查看时填充数据
+        this.formData = {
+          ...this.formData,
+          ...this.editData
+        }
+      }
+    },
+    
     // 重置表单
     resetForm() {
-      if (this.$refs.warehouseForm) {
-        this.$refs.warehouseForm.resetFields()
-      }
-      
-      this.form = {
+      this.formData = {
         id: undefined,
         code: '',
         name: '',
         warehouseType: '',
         address: '',
-        area: 0,
-        maxCapacity: 0,
-        currentUsage: 0,
+        area: undefined,
         manager: '',
         contact: '',
-        description: '',
-        status: 1
+        maxCapacity: undefined,
+        currentUsage: 0,
+        status: 1,
+        description: ''
+      }
+      
+      // 如果表单实例存在，调用其 resetForm 方法
+      if (this.$refs.drawerForm) {
+        this.$refs.drawerForm.resetForm()
       }
     },
     
-    // 关闭对话框
-    handleClose() {
-      this.resetForm()
-      this.$emit('update:visible', false)
+    // 提交表单
+    handleSubmit(formData) {
+      this.$emit('submit', formData)
     },
     
-    // 提交表单
-    handleSubmit() {
-      this.$refs.warehouseForm.validate(valid => {
-        if (!valid) {
-          return
-        }
-        
-        this.submitLoading = true
-        
-        // 提交表单数据
-        this.$emit('submit', this.form)
-        
-        // 延迟关闭加载状态，避免闪烁
-        setTimeout(() => {
-          this.submitLoading = false
-        }, 300)
-      })
+    // 处理抽屉关闭事件
+    handleClosed() {
+      this.$emit('closed')
     }
   }
 }
-</script> 
+</script>
+
+<style lang="scss" scoped>
+.warehouse-form {
+  // 表单样式可以在此处添加
+}
+</style> 
