@@ -238,7 +238,7 @@ export default {
     // 发送批量启用事件
     emitBatchEnable() {
       this.$emit('batch-enable', this.selectedRows)
-      this.$emit('batch-status', this.selectedRows, 'enable')
+      this.$emit('batch-status', this.selectedRows, 1)
     },
     
     // 处理批量禁用
@@ -263,7 +263,7 @@ export default {
     // 发送批量禁用事件
     emitBatchDisable() {
       this.$emit('batch-disable', this.selectedRows)
-      this.$emit('batch-status', this.selectedRows, 'disable')
+      this.$emit('batch-status', this.selectedRows, 0)
     },
     
     // 检查自定义操作是否启用

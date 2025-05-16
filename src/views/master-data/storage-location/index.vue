@@ -1,52 +1,53 @@
+/**
+ * 库位主数据管理页面（新版）
+ * 功能描述：管理库房中的库位信息，包括库位编码、名称、类型、所属库房等信息
+ * 创建日期：2023-09-01
+ */
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
     <search-form 
+      ref="searchForm"
       :init-query="listQuery" 
       :warehouse-options="warehouseOptions"
+      :loading="listLoading"
       @search="handleSearch" 
       @reset="handleReset"
     />
 
-    <!-- 操作按钮 -->
-    <action-bar 
-      :selected-ids="selectedRows.map(row => row.id)" 
-      @create="handleCreate" 
-      @batch-delete="handleBatchDelete" 
-      @batch-status="handleBatchStatus" 
-      @import-export="handleImportExport"
-    />
-
-    <!-- 表格数据 -->
-    <location-table 
-      ref="locationTable"
+    <!-- 库位表格 -->
+    <location-table
+      ref="locationTable" 
       :data="list" 
       :total="total" 
       :loading="listLoading" 
       :page="listQuery.page" 
-      :limit="listQuery.limit" 
+      :limit="listQuery.limit"
+      :import-api="'/api/master-data/storage-location/import'"
+      :template-api="'/api/master-data/storage-location/template'"
+      :export-api="'/api/master-data/storage-location/export'" 
       @selection-change="handleSelectionChange" 
-      @pagination="handlePagination" 
-      @update="handleUpdate" 
+      @pagination="handlePagination"
+      @add="handleCreate"
+      @update="handleUpdate"
       @status-change="handleStatusChange"
+      @refresh="getList"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @import-success="handleImportSuccess"
+      @export-success="handleExportSuccess"
     />
 
     <!-- 编辑/新增对话框 -->
     <location-form 
+      ref="locationForm"
       :type="dialogType" 
       :visible.sync="dialogVisible" 
       :edit-data="currentRowData" 
       :warehouse-options="warehouseOptions" 
       @submit="submitForm"
-    />
-
-    <!-- 导入对话框 -->
-    <import-dialog 
-      :visible.sync="importDialogVisible" 
-      :loading="importLoading" 
-      :import-result="importResult" 
-      @import="handleImport" 
-      @reset="resetImport"
+      @closed="handleDrawerClosed"
     />
   </div>
 </template>
@@ -64,10 +65,7 @@ import {
   updateLocation,
   updateLocationStatus,
   batchDeleteLocation,
-  batchUpdateLocationStatus,
-  importLocationData,
-  exportLocationData,
-  downloadLocationTemplate
+  batchUpdateLocationStatus
 } from '@/api/master-data/storage-location'
 
 // 从仓库管理模块导入获取仓库列表的API
@@ -78,25 +76,16 @@ import { scrollTo } from '@/utils/scroll-to'
 
 // 引入子组件
 import SearchForm from './components/SearchForm'
-import ActionBar from './components/ActionBar'
 import LocationTable from './components/LocationTable'
 import LocationForm from './components/LocationForm'
-import ImportDialog from './components/ImportDialog'
-
-// 引入混入
-import tableMixin from './mixins/tableMixin'
-import importExportMixin from './mixins/importExportMixin'
 
 export default {
   name: 'StorageLocation',
   components: {
     SearchForm,
-    ActionBar,
     LocationTable,
-    LocationForm,
-    ImportDialog
+    LocationForm
   },
-  mixins: [tableMixin, importExportMixin],
   data() {
     return {
       list: [], // 列表数据
@@ -112,9 +101,10 @@ export default {
         status: undefined
       },
       dialogVisible: false, // 对话框可见性
-      dialogType: 'create', // 对话框类型：create-新增，update-编辑
+      dialogType: 'create', // 对话框类型：create-新增，update-编辑，view-查看
       currentRowData: null, // 当前编辑的行数据
-      warehouseOptions: [] // 仓库选项
+      warehouseOptions: [], // 仓库选项
+      selectedRows: [] // 选中的行数据
     }
   },
   created() {
@@ -141,7 +131,6 @@ export default {
         // 确保正确解析响应数据
         if (response && response.data) {
           this.warehouseOptions = response.data.items || []
-          console.log('从仓库管理模块获取仓库数据:', this.warehouseOptions)
         } else {
           this.$message.error('获取仓库列表失败：响应数据格式错误')
         }
@@ -155,31 +144,34 @@ export default {
     // 搜索
     handleSearch(params) {
       this.listQuery = {
-        ...this.listQuery,
         page: 1,
+        limit: this.listQuery.limit,
         ...params
       }
       this.getList()
-      // 滚动到顶部
-      scrollTo(0, 800)
     },
 
     // 重置搜索
-    handleReset(params) {
+    handleReset() {
       this.listQuery = {
-        ...this.listQuery,
         page: 1,
-        ...params
+        limit: 10
       }
       this.getList()
-      // 滚动到顶部
-      scrollTo(0, 800)
+    },
+
+    // 处理选择行变化
+    handleSelectionChange(selection) {
+      this.selectedRows = selection
     },
 
     // 新增
     handleCreate() {
       this.dialogType = 'create'
       this.currentRowData = null
+      
+      // 直接打开对话框，不需要手动重置表单
+      // DrawerForm 组件会在打开时自动处理表单数据
       this.dialogVisible = true
     },
 
@@ -190,29 +182,54 @@ export default {
       this.dialogVisible = true
     },
 
+    // 查看
+    handleView(row) {
+      this.dialogType = 'view'
+      this.currentRowData = row
+      this.dialogVisible = true
+    },
+
     // 提交表单
     submitForm(formData) {
       if (this.dialogType === 'create') {
         // 新增
-        createLocation(formData).then(() => {
-          this.$message.success('新增成功')
+        createLocation(formData).then(response => {
+          this.$message.success('新增库位成功')
           this.dialogVisible = false
-          this.getList()
+          
+          // 如果响应中包含最新列表数据，直接使用
+          if (response.data && response.data.items) {
+            this.list = response.data.items
+            this.total = response.data.total
+          } else {
+            // 否则重新请求列表数据
+            this.getList()
+          }
+          
           // 滚动到顶部
           scrollTo(0, 800)
-        }).catch(error => {
-          this.$message.error(`新增失败: ${error.message || '未知错误'}`)
+        }).catch(() => {
+          // 提交失败时不关闭表单
         })
       } else {
         // 更新
-        updateLocation(formData).then(() => {
-          this.$message.success('更新成功')
+        updateLocation(formData).then(response => {
+          this.$message.success('更新库位成功')
           this.dialogVisible = false
-          this.getList()
+          
+          // 如果响应中包含最新列表数据，直接使用
+          if (response.data && response.data.items) {
+            this.list = response.data.items
+            this.total = response.data.total
+          } else {
+            // 否则重新请求列表数据
+            this.getList()
+          }
+          
           // 滚动到顶部
           scrollTo(0, 800)
-        }).catch(error => {
-          this.$message.error(`更新失败: ${error.message || '未知错误'}`)
+        }).catch(() => {
+          // 提交失败时不关闭表单
         })
       }
     },
@@ -221,6 +238,7 @@ export default {
     handleStatusChange(row) {
       const newStatus = row.status === 1 ? 0 : 1
       const statusText = newStatus === 1 ? '启用' : '禁用'
+      
       this.$confirm(`确认${statusText}该库位吗?`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -228,7 +246,7 @@ export default {
       }).then(() => {
         updateLocationStatus(row.id, newStatus).then(() => {
           this.$message.success(`${statusText}成功`)
-          row.status = newStatus
+          this.getList()
         }).catch(error => {
           this.$message.error(`操作失败: ${error.message || '未知错误'}`)
         })
@@ -237,104 +255,100 @@ export default {
       })
     },
 
-    // API方法已在mixins中实现，这里进行重写覆盖模拟方法
-
     // 批量删除
-    handleBatchDelete(ids) {
-      if (!ids || ids.length === 0) return
+    handleBatchDelete(rows) {
+      const ids = rows.map(row => row.id)
+      if (ids.length === 0) {
+        this.$message.warning('请选择需要删除的记录')
+        return
+      }
       
-      this.listLoading = true
-      batchDeleteLocation(ids).then(() => {
-        this.$message.success('批量删除成功')
-        this.getList()
-      }).catch(error => {
-        this.$message.error(`批量删除失败: ${error.message || '未知错误'}`)
-      }).finally(() => {
-        this.listLoading = false
-      })
-    },
-    
-    // 批量更改状态
-    handleBatchStatus({ ids, status }) {
-      if (!ids || ids.length === 0) return
-      
-      const statusText = status === 1 ? '启用' : '禁用'
-      
-      this.listLoading = true
-      batchUpdateLocationStatus({ ids, status }).then(() => {
-        this.$message.success(`批量${statusText}成功`)
-        this.getList()
-      }).catch(error => {
-        this.$message.error(`批量${statusText}失败: ${error.message || '未知错误'}`)
-      }).finally(() => {
-        this.listLoading = false
-      })
-    },
-
-    // 处理导入
-    handleImport(formData) {
-      this.importLoading = true
-      
-      importLocationData(formData).then(response => {
-        this.importResult = response.data
-        if (this.importResult && this.importResult.success) {
-          // 如果导入成功，刷新列表数据
+      this.$confirm('确认删除选中的记录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        batchDeleteLocation(ids).then((response) => {
+          // 从响应中获取删除的记录数量
+          const deletedCount = response.data && response.data.count ? response.data.count : ids.length
+          this.$message.success(`成功删除${deletedCount}个库位`)
           this.getList()
-        }
-      }).catch(error => {
-        this.importResult = {
-          success: false,
-          message: '导入请求失败',
-          errors: [{ row: '-', field: '-', message: error.message || '网络错误' }]
-        }
-      }).finally(() => {
-        this.importLoading = false
+          this.selectedRows = []
+        }).catch(() => {
+          this.$message.error('批量删除失败')
+        })
+      }).catch(() => {
+        // 取消删除
       })
     },
     
-    // 导出数据
-    exportData() {
-      // 获取当前筛选条件
-      const params = { ...this.listQuery }
+    // 批量启用
+    handleBatchEnable(rows) {
+      const ids = rows.map(row => row.id)
+      if (ids.length === 0) {
+        this.$message.warning('请选择需要启用的记录')
+        return
+      }
       
-      // 删除分页参数
-      delete params.page
-      delete params.limit
-      
-      exportLocationData(params).then(response => {
-        // 创建下载链接
-        const blob = new Blob([response.data], { 
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      this.$confirm('确认启用选中的记录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        batchUpdateLocationStatus({ ids, status: 1 }).then((response) => {
+          // 从响应中获取更新的记录数量
+          const updatedCount = response.data && response.data.count ? response.data.count : ids.length
+          this.$message.success(`成功启用${updatedCount}个库位`)
+          this.getList()
+        }).catch((error) => {
+          console.error('批量启用失败:', error)
+          this.$message.error(`批量启用失败: ${error.message || '未知错误'}`)
         })
-        const link = document.createElement('a')
-        link.href = window.URL.createObjectURL(blob)
-        link.download = '库位数据_' + new Date().getTime() + '.xlsx'
-        link.click()
-        window.URL.revokeObjectURL(link.href)
-        
-        this.$message.success('导出成功')
       }).catch(() => {
-        this.$message.error('导出失败')
+        // 取消操作
       })
     },
     
-    // 下载导入模板
-    downloadTemplate() {
-      downloadLocationTemplate().then(response => {
-        // 创建下载链接
-        const blob = new Blob([response.data], { 
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    // 批量禁用
+    handleBatchDisable(rows) {
+      const ids = rows.map(row => row.id)
+      if (ids.length === 0) {
+        this.$message.warning('请选择需要禁用的记录')
+        return
+      }
+      
+      this.$confirm('确认禁用选中的记录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        batchUpdateLocationStatus({ ids, status: 0 }).then((response) => {
+          // 从响应中获取更新的记录数量
+          const updatedCount = response.data && response.data.count ? response.data.count : ids.length
+          this.$message.success(`成功禁用${updatedCount}个库位`)
+          this.getList()
+        }).catch((error) => {
+          console.error('批量禁用失败:', error)
+          this.$message.error(`批量禁用失败: ${error.message || '未知错误'}`)
         })
-        const link = document.createElement('a')
-        link.href = window.URL.createObjectURL(blob)
-        link.download = '库位导入模板.xlsx'
-        link.click()
-        window.URL.revokeObjectURL(link.href)
-        
-        this.$message.success('模板下载成功')
       }).catch(() => {
-        this.$message.error('模板下载失败')
+        // 取消操作
       })
+    },
+    
+    // 导入成功
+    handleImportSuccess(result) {
+      if (result.success === result.total) {
+        this.$message.success(`导入成功，共导入${result.success}条记录`)
+      } else {
+        this.$message.warning(`导入完成，成功${result.success}条，失败${result.fail}条`)
+      }
+      this.getList()
+    },
+    
+    // 导出成功
+    handleExportSuccess(result) {
+      this.$message.success('导出成功')
     },
 
     // 处理分页
@@ -342,8 +356,14 @@ export default {
       this.listQuery.page = page
       this.listQuery.limit = limit
       this.getList()
-      // 滚动到顶部
-      scrollTo(0, 800)
+    },
+
+    // 处理抽屉关闭
+    handleDrawerClosed() {
+      // 重置表单状态
+      if (this.$refs.locationForm) {
+        this.$refs.locationForm.resetForm()
+      }
     }
   }
 }
@@ -351,16 +371,6 @@ export default {
 
 <style lang="scss" scoped>
 .app-container {
-  padding: 24px;
-  
-  .text-danger {
-    color: #F56C6C;
-    font-weight: bold;
-  }
-
-  .text-primary {
-    color: #409EFF;
-    font-weight: bold;
-  }
+  padding: 20px;
 }
 </style> 

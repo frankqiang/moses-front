@@ -1,162 +1,49 @@
+/**
+ * 库位表单组件（新版）
+ * 功能描述：提供库位新增、编辑、查看功能的表单
+ * 创建日期：2023-09-01
+ */
 <template>
-  <el-dialog
-    :title="type === 'create' ? '新增库位' : '编辑库位'"
-    :visible="localVisible"
-    :width="dialogWidth"
-    :close-on-click-modal="false"
-    @closed="$refs.dataForm && $refs.dataForm.clearValidate()"
-    @close="handleClose"
-  >
-    <el-form
-      ref="dataForm"
-      :model="formData"
+  <div class="location-form">
+    <drawer-form
+      ref="drawerForm"
+      :visible.sync="innerVisible"
+      :title="formTitle"
+      :mode="type"
+      :data="formData"
       :rules="rules"
-      label-width="120px"
-      label-position="right"
-      class="form-container"
-    >
-      <el-row :gutter="16">
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="库位编码" prop="code">
-            <el-input v-model="formData.code" placeholder="请输入库位编码" />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="库位名称" prop="name">
-            <el-input v-model="formData.name" placeholder="请输入库位名称" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-divider content-position="left">位置信息</el-divider>
-
-      <el-row :gutter="16">
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="所属仓库" prop="warehouseId">
-            <el-select v-model="formData.warehouseId" placeholder="请选择所属仓库" style="width: 100%">
-              <el-option
-                v-for="item in warehouseOptions"
-                :key="item.id"
-                :label="item.name"
-                :value="item.id"
-              />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="库位类型" prop="locationType">
-            <el-select v-model="formData.locationType" placeholder="请选择库位类型" style="width: 100%">
-              <el-option label="存储区" value="STORAGE" />
-              <el-option label="收货区" value="RECEIVING" />
-              <el-option label="发货区" value="SHIPPING" />
-              <el-option label="暂存区" value="STAGING" />
-              <el-option label="质检区" value="QC" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-row :gutter="16">
-        <el-col :xs="24" :sm="24">
-          <el-form-item label="位置描述" prop="locationDesc">
-            <el-input v-model="formData.locationDesc" type="textarea" :rows="2" placeholder="请输入位置描述" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-divider content-position="left">容量信息</el-divider>
-
-      <el-row :gutter="16">
-        <el-col :xs="24" :sm="8">
-          <el-form-item label="长度(cm)" prop="length">
-            <el-input-number v-model="formData.length" :min="0" :precision="2" :step="10" style="width: 100%" @change="updateDimension" />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="8">
-          <el-form-item label="宽度(cm)" prop="width">
-            <el-input-number v-model="formData.width" :min="0" :precision="2" :step="10" style="width: 100%" @change="updateDimension" />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="8">
-          <el-form-item label="高度(cm)" prop="height">
-            <el-input-number v-model="formData.height" :min="0" :precision="2" :step="10" style="width: 100%" @change="updateDimension" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-row :gutter="16">
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="库位容量" prop="capacity">
-            <el-input-number v-model="formData.capacity" :min="0" :step="100" style="width: 100%" />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="最大承重(kg)" prop="maxWeight">
-            <el-input-number v-model="formData.maxWeight" :min="0" :step="100" style="width: 100%" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-divider content-position="left">其他信息</el-divider>
-
-      <el-row :gutter="16">
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="状态" prop="status">
-            <el-radio-group v-model="formData.status">
-              <el-radio :label="1">启用</el-radio>
-              <el-radio :label="0">禁用</el-radio>
-            </el-radio-group>
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item label="允许混放" prop="allowMixed">
-            <el-switch
-              v-model="formData.allowMixed"
-              active-text="允许"
-              inactive-text="不允许"
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-row :gutter="16">
-        <el-col :xs="24" :sm="24">
-          <el-form-item label="备注" prop="remarks">
-            <el-input v-model="formData.remarks" type="textarea" :rows="2" placeholder="请输入备注信息" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-    </el-form>
-    <div slot="footer" class="dialog-footer">
-      <el-button @click="handleCancel">取 消</el-button>
-      <el-button type="primary" @click="submitForm">确 定</el-button>
-    </div>
-  </el-dialog>
+      :form-sections="formSections"
+      :width="'550px'"
+      @submit="handleSubmit"
+      @closed="handleClosed"
+    />
+  </div>
 </template>
 
 <script>
-/**
- * 库位表单组件
- * 功能描述：提供新增和编辑库位的表单
- * 创建日期：2023-09-01
- */
+import DrawerForm from '@/components/DrawerForm'
+
 export default {
   name: 'LocationForm',
+  components: {
+    DrawerForm
+  },
   props: {
-    // 对话框类型：create-新增，update-编辑
+    // 表单类型：create-新增，update-编辑，view-查看
     type: {
       type: String,
-      default: 'create'
+      default: 'create',
+      validator: value => ['create', 'update', 'view'].includes(value)
     },
     // 对话框可见性
     visible: {
       type: Boolean,
       default: false
     },
-    // 编辑时的表单数据
+    // 编辑时的库位数据
     editData: {
       type: Object,
-      default: null
+      default: () => null
     },
     // 仓库选项
     warehouseOptions: {
@@ -166,9 +53,27 @@ export default {
   },
   data() {
     return {
-      localVisible: this.visible, // 本地可见性状态
+      // 内部可见性，用于sync
+      innerVisible: false,
       // 表单数据
-      formData: this.getDefaultFormData(),
+      formData: {
+        id: undefined,
+        code: '',
+        name: '',
+        warehouseId: '',
+        locationType: '',
+        locationDesc: '',
+        length: undefined,
+        width: undefined,
+        height: undefined,
+        dimension: '',
+        capacity: undefined,
+        occupiedCapacity: 0,
+        maxWeight: undefined,
+        allowMixed: false,
+        status: 1,
+        remarks: ''
+      },
       // 表单验证规则
       rules: {
         code: [
@@ -193,150 +98,276 @@ export default {
     }
   },
   computed: {
-    // 对话框宽度
-    dialogWidth() {
-      return window.innerWidth < 768 ? '90%' : (window.innerWidth < 992 ? '70%' : '50%')
+    // 表单标题
+    formTitle() {
+      const titleMap = {
+        create: '新增库位',
+        update: '编辑库位',
+        view: '查看库位'
+      }
+      return titleMap[this.type]
+    },
+    
+    // 表单分段配置
+    formSections() {
+      return [
+        {
+          title: '一、基础信息',
+          items: [
+            {
+              prop: 'code',
+              label: '库位编码',
+              type: 'input',
+              placeholder: '请输入库位编码',
+              maxlength: 20,
+              showWordLimit: true,
+              disabled: this.type === 'update'
+            },
+            {
+              prop: 'name',
+              label: '库位名称',
+              type: 'input',
+              placeholder: '请输入库位名称',
+              maxlength: 50,
+              showWordLimit: true
+            },
+            {
+              prop: 'warehouseId',
+              label: '所属仓库',
+              type: 'select',
+              placeholder: '请选择所属仓库',
+              options: this.warehouseOptions.map(item => ({
+                label: item.name,
+                value: item.id
+              }))
+            },
+            {
+              prop: 'locationType',
+              label: '库位类型',
+              type: 'select',
+              placeholder: '请选择库位类型',
+              options: [
+                { label: '存储区', value: 'STORAGE' },
+                { label: '收货区', value: 'RECEIVING' },
+                { label: '发货区', value: 'SHIPPING' },
+                { label: '暂存区', value: 'STAGING' },
+                { label: '质检区', value: 'QC' }
+              ]
+            },
+            {
+              prop: 'status',
+              label: '状态',
+              type: 'radio',
+              options: [
+                { label: '启用', value: 1 },
+                { label: '禁用', value: 0 }
+              ]
+            }
+          ]
+        },
+        {
+          title: '二、位置与尺寸信息',
+          items: [
+            {
+              prop: 'locationDesc',
+              label: '位置描述',
+              type: 'textarea',
+              placeholder: '请输入位置描述',
+              maxlength: 200,
+              showWordLimit: true,
+              rows: 2
+            },
+            {
+              prop: 'length',
+              label: '长度(cm)',
+              type: 'number',
+              placeholder: '请输入长度',
+              min: 0,
+              precision: 2,
+              step: 10,
+              change: this.updateDimension,
+              events: {
+                change: this.updateDimension
+              }
+            },
+            {
+              prop: 'width',
+              label: '宽度(cm)',
+              type: 'number',
+              placeholder: '请输入宽度',
+              min: 0,
+              precision: 2,
+              step: 10,
+              change: this.updateDimension,
+              events: {
+                change: this.updateDimension
+              }
+            },
+            {
+              prop: 'height',
+              label: '高度(cm)',
+              type: 'number',
+              placeholder: '请输入高度',
+              min: 0,
+              precision: 2,
+              step: 10,
+              change: this.updateDimension,
+              events: {
+                change: this.updateDimension
+              }
+            },
+            {
+              prop: 'dimension',
+              label: '尺寸展示',
+              type: 'input',
+              placeholder: '自动计算',
+              disabled: true
+            }
+          ]
+        },
+        {
+          title: '三、容量信息',
+          items: [
+            {
+              prop: 'capacity',
+              label: '库位容量',
+              type: 'number',
+              placeholder: '请输入库位容量',
+              min: 0,
+              step: 100
+            },
+            {
+              prop: 'occupiedCapacity',
+              label: '已用容量',
+              type: 'number',
+              placeholder: '已用容量',
+              min: 0,
+              disabled: true
+            },
+            {
+              prop: 'maxWeight',
+              label: '最大承重(kg)',
+              type: 'number',
+              placeholder: '请输入最大承重',
+              min: 0,
+              step: 100
+            },
+            {
+              prop: 'allowMixed',
+              label: '允许混放',
+              type: 'switch',
+              activeText: '允许',
+              inactiveText: '不允许'
+            }
+          ]
+        },
+        {
+          title: '四、其他信息',
+          items: [
+            {
+              prop: 'remarks',
+              label: '备注',
+              type: 'textarea',
+              placeholder: '请输入备注信息',
+              maxlength: 500,
+              showWordLimit: true,
+              rows: 3
+            }
+          ]
+        }
+      ]
     }
   },
   watch: {
-    // 监听可见性变化，初始化表单数据
-    visible(val) {
-      this.localVisible = val
-      if (val && this.type === 'update' && this.editData) {
-        this.initEditForm()
-      } else if (val && this.type === 'create') {
-        this.resetForm()
-      }
+    // 监听visible变化
+    visible: {
+      handler(val) {
+        this.innerVisible = val
+        if (val) {
+          this.initFormData()
+        }
+      },
+      immediate: true
+    },
+    // 监听innerVisible变化，当关闭时通知父组件
+    innerVisible(val) {
+      this.$emit('update:visible', val)
     }
   },
-  created() {
-    // 监听窗口大小变化
-    window.addEventListener('resize', this.handleResize)
-  },
-  beforeDestroy() {
-    // 移除窗口大小变化的监听
-    window.removeEventListener('resize', this.handleResize)
-  },
   methods: {
-    // 获取默认表单数据
-    getDefaultFormData() {
-      return {
-        id: undefined,
-        code: '',
-        name: '',
-        warehouseId: undefined,
-        warehouseName: '',
-        locationType: 'STORAGE',
-        locationDesc: '',
-        length: 100,
-        width: 80,
-        height: 120,
-        dimension: '100x80x120',
-        capacity: 1000,
-        occupiedCapacity: 0,
-        availableCapacity: 1000,
-        maxWeight: 500,
-        allowMixed: false,
-        remarks: '',
-        status: 1
+    // 初始化表单数据
+    initFormData() {
+      if (this.type === 'create') {
+        // 新增时重置表单
+        this.resetForm()
+      } else if (this.editData) {
+        // 编辑或查看时填充数据
+        this.formData = {
+          ...this.formData,
+          ...this.editData
+        }
+        // 确保尺寸展示字段正确计算
+        this.$nextTick(() => {
+          this.updateDimension()
+        })
       }
-    },
-    
-    // 更新尺寸字符串
-    updateDimension() {
-      this.formData.dimension = `${this.formData.length}x${this.formData.width}x${this.formData.height}`
     },
     
     // 重置表单
     resetForm() {
-      this.formData = this.getDefaultFormData()
-      this.$nextTick(() => {
-        this.$refs.dataForm && this.$refs.dataForm.clearValidate()
-      })
-    },
-    
-    // 初始化编辑表单
-    initEditForm() {
-      if (!this.editData) return
-      
-      // 深拷贝行数据，避免直接修改原始数据
-      const editData = JSON.parse(JSON.stringify(this.editData))
-      
-      // 如果维度信息是字符串，转换为数值
-      if (editData.dimension && typeof editData.dimension === 'string') {
-        const dimensions = editData.dimension.split('x')
-        if (dimensions.length === 3) {
-          editData.length = parseFloat(dimensions[0])
-          editData.width = parseFloat(dimensions[1])
-          editData.height = parseFloat(dimensions[2])
-        }
+      this.formData = {
+        id: undefined,
+        code: '',
+        name: '',
+        warehouseId: '',
+        locationType: '',
+        locationDesc: '',
+        length: undefined,
+        width: undefined,
+        height: undefined,
+        dimension: '',
+        capacity: undefined,
+        occupiedCapacity: 0,
+        maxWeight: undefined,
+        allowMixed: false,
+        status: 1,
+        remarks: ''
       }
       
-      this.formData = Object.assign({}, this.getDefaultFormData(), editData)
-      this.$nextTick(() => {
-        this.$refs.dataForm && this.$refs.dataForm.clearValidate()
-      })
-    },
-    
-    // 处理对话框关闭
-    handleClose() {
-      this.$emit('update:visible', false)
-    },
-    
-    // 处理取消
-    handleCancel() {
-      this.$emit('update:visible', false)
+      // 如果表单实例存在，调用其 resetForm 方法
+      if (this.$refs.drawerForm) {
+        this.$refs.drawerForm.resetForm()
+      }
     },
     
     // 提交表单
-    submitForm() {
-      this.$refs.dataForm.validate(valid => {
-        if (valid) {
-          // 发送提交事件
-          this.$emit('submit', this.formData)
-        } else {
-          return false
-        }
-      })
+    handleSubmit(formData) {
+      // 确保提交前尺寸展示字段已更新
+      if (formData.length && formData.width && formData.height) {
+        formData.dimension = `${formData.length} × ${formData.width} × ${formData.height}`
+      }
+      this.$emit('submit', formData)
     },
     
-    // 处理窗口大小变化
-    handleResize() {
-      // 不需要实现任何逻辑，只需要触发computed属性重新计算
+    // 处理抽屉关闭事件
+    handleClosed() {
+      this.$emit('closed')
+    },
+    
+    // 更新尺寸展示
+    updateDimension() {
+      if (this.formData.length && this.formData.width && this.formData.height) {
+        this.formData.dimension = `${this.formData.length} × ${this.formData.width} × ${this.formData.height}`
+      } else {
+        this.formData.dimension = ''
+      }
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.form-container {
-  max-height: 60vh;
-  overflow-y: auto;
-  padding-right: 10px;
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #c0c4cc;
-    border-radius: 3px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: #f5f7fa;
-  }
-}
-
-.el-divider {
-  margin: 16px 0;
-  
-  ::v-deep .el-divider__text {
-    background-color: #f5f7fa;
-    color: #606266;
-    font-weight: bold;
-    font-size: 14px;
-  }
+.location-form {
+  // 表单样式可以在此处添加
 }
 </style> 

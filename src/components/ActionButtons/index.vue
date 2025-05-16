@@ -18,7 +18,7 @@
           trigger="click"
         >
           <el-tooltip
-            v-if="button.tooltip"
+            v-if="button.tooltip && showTooltip"
             :content="button.tooltip"
             :disabled="!button.tooltip"
             placement="top"
@@ -49,7 +49,7 @@
 
         <!-- 普通按钮带tooltip -->
         <el-tooltip
-          v-else-if="button.tooltip"
+          v-else-if="button.tooltip && showTooltip"
           :key="index"
           :content="button.tooltip"
           :disabled="!button.tooltip"
@@ -198,6 +198,11 @@ export default {
     maxVisible: {
       type: Number,
       default: 3
+    },
+    // 是否显示tooltip
+    showTooltip: {
+      type: Boolean,
+      default: true
     }
   },
   computed: {

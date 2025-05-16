@@ -22,7 +22,8 @@ export default {
     // 状态值
     status: {
       type: [String, Number, Boolean],
-      required: true
+      required: true,
+      default: ''
     },
     // 状态文本映射 {状态值: 显示文本}
     textMap: {
@@ -68,6 +69,9 @@ export default {
   computed: {
     // 显示的文本
     displayText() {
+      if (this.status === null || this.status === undefined) {
+        return this.defaultText || '未知'
+      }
       if (this.textMap && this.textMap[this.status] !== undefined) {
         return this.textMap[this.status]
       }
@@ -75,6 +79,9 @@ export default {
     },
     // 标签类型
     tagType() {
+      if (this.status === null || this.status === undefined) {
+        return this.defaultType
+      }
       if (this.customColor) {
         return undefined // 使用自定义颜色时不指定type
       }
@@ -85,6 +92,9 @@ export default {
     },
     // 自定义颜色
     customColor() {
+      if (this.status === null || this.status === undefined) {
+        return undefined
+      }
       if (this.colorMap && this.colorMap[this.status] !== undefined) {
         return this.colorMap[this.status]
       }
