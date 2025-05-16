@@ -202,7 +202,7 @@ export default {
     // 是否显示tooltip
     showTooltip: {
       type: Boolean,
-      default: true
+      default: false
     }
   },
   computed: {

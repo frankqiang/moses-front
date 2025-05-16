@@ -94,7 +94,7 @@ export const constantRoutes = [
         path: 'material-code',
         name: 'MaterialCode',
         component: () => import('@/views/master-data/material-code/index'),
-        meta: { title: '物料编码管理' }
+        meta: { title: '料框编码管理' }
       },
       {
         path: 'equipment',
