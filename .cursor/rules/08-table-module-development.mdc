@@ -3,9 +3,7 @@ description:
 globs: 
 alwaysApply: false
 ---
-# [已合并] 表格模块开发规范
-
-> **注意**：此规则内容已与 07-component-architecture.mdc 合并，请参考 [组件化架构与表格模块开发指南](mdc:.cursor/rules/07-component-architecture.mdc) 获取最新规范。
+# 表格模块开发规范
 
 ## 适用范围
 本规则适用于所有包含表格列表的功能模块开发，规定了统一的组件架构、全局组件使用和交互模式，所有新的表格模块和改造的旧模块都需遵循此规范。
@@ -13,20 +11,78 @@ alwaysApply: false
 ## 参考示例
 请参考`src/views/master-data/equipment`目录作为表格模块开发的标准示例。该模块展示了如何使用全局组件和配置化方式构建高复用、易维护的表格功能。
 
+## 最佳实践和高级功能
+
+### 1. 类型化开发
+- 为表格数据和表单数据定义TypeScript接口
+- 使用类型注解提高代码可维护性和开发效率
+- 示例：
+
+```typescript
+// 设备数据接口
+interface Equipment {
+  id: number;
+  equipmentId: string;
+  name: string;
+  model: string;
+  equipmentType: string;
+  installDate: string;
+  status: number;
+  [key: string]: any;
+}
+
+// 表格列配置接口
+interface TableColumn {
+  prop: string;
+  label: string;
+  width?: string;
+  minWidth?: string;
+  align?: 'left' | 'center' | 'right';
+  sortable?: boolean | string;
+  renderType?: 'status' | 'date' | 'enum' | 'custom';
+  formatter?: (row: any, column: any, cellValue: any) => string;
+  [key: string]: any;
+}
+```
+
+### 2. 性能优化
+- 大数据量表格使用虚拟滚动
+- 复杂表单使用懒加载
+- 表格数据使用本地缓存减少请求
+- 列表页面添加防抖/节流优化搜索性能
+
+### 3. 高级搜索和过滤
+- 实现保存搜索条件功能
+- 支持高级筛选器和复杂查询条件
+- 筛选条件可视化构建器
+
+### 4. 用户体验增强
+- 操作引导和提示
+- 列设置拖拽排序
+- 自适应布局，支持不同屏幕分辨率
+- 表格行内编辑功能
+
 ## 目录结构规范
 每个表格模块必须遵循以下目录结构：
 ```
 module-name/
 ├── index.vue                  # 主页面（容器组件）
-├── README.md                  # 模块说明文档
 ├── components/                # 子组件目录
-│   ├── SearchForm.vue         # 搜索表单组件（使用全局SearchForm）
-│   ├── DataTable.vue          # 数据表格组件（使用全局TableToolbar、ActionButtons和StatusTag）
-│   ├── FormDrawer.vue         # 表单抽屉组件（使用全局DrawerForm）
-│   └── ImportExportBar.vue    # 导入导出组件（可选）
-└── api/                       # API目录（可选）
-    └── index.js               # API调用方法
+│   ├── SearchForm.vue         # 搜索表单组件
+│   ├── [Module]Table.vue      # 数据表格组件（如EquipmentTable.vue）
+│   ├── [Module]FormDrawer.vue # 表单抽屉组件（如EquipmentFormDrawer.vue）
+│   └── ActionBar.vue          # 操作栏组件（可选）
+├── docs/                      # 文档目录
+│   └── [模块名称]说明文档.md   # 模块详细说明文档（包含需求、接口、数据结构等）
+└── mixins/                    # 混入目录（可选）
+    └── [功能].js              # 特定功能的混入文件
 ```
+
+特别说明：
+1. 模块说明文档应放在`docs`目录中，而非根目录的README.md
+2. 组件命名应与模块相关，如设备模块的表格组件命名为EquipmentTable.vue
+3. 表单抽屉组件命名为[Module]FormDrawer.vue，以区别于旧版的表单组件
+4. API调用方法不再放在模块目录下，而是集中在`src/api`目录对应的业务模块中
 
 ## 全局组件使用规范
 
@@ -58,31 +114,27 @@ module-name/
 ```vue
 <table-toolbar
   :enable-column-settings="true"
-  :column-options="allColumns"
+  :column-options="columnOptions"
   :storage-key="columnSettingsKey"
   :default-visible-columns="defaultVisibleColumns"
   :enable-batch-actions="true"
   :selected-rows="selectedRows"
   :enable-import="true"
-  :import-api="importApiFunction"
-  :template-api="templateApiFunction"
+  :import-api="importApi"
+  :template-api="templateApi"
   :enable-export="true"
-  :export-api="exportApiFunction"
+  :export-api="exportApi"
   :export-params="exportParams"
-  @refresh="handleRefresh"
+  @refresh="$emit('refresh')"
   @column-change="handleColumnChange"
-  @batch-delete="handleBatchDelete"
-  @batch-enable="handleBatchEnable"
-  @batch-disable="handleBatchDisable"
-  @import-success="handleImportSuccess"
-  @export-success="handleExportSuccess"
+  @batch-delete="$emit('batch-delete', selectedRows)"
+  @batch-enable="$emit('batch-enable', selectedRows)"
+  @batch-disable="$emit('batch-disable', selectedRows)"
+  @import-success="$emit('import-success', $event)"
+  @export-success="$emit('export-success', $event)"
 >
   <template #toolbar-left>
-    <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增</el-button>
-  </template>
-  
-  <template #toolbar-right>
-    <!-- 可选的右侧自定义内容 -->
+    <el-button type="primary" icon="el-icon-plus" size="mini" @click="$emit('add')">新增</el-button>
   </template>
 </table-toolbar>
 ```
@@ -153,60 +205,91 @@ module-name/
 
 ## 组件集成规范
 
-### DataTable组件集成
-- DataTable组件应集成TableToolbar、ActionButtons、StatusTag和Pagination
-- 必须实现columnSettingsMixin以支持列设置和本地存储
-- 应将表格操作逻辑封装在组件内部，对外提供事件接口
+### [Module]Table 组件集成
+- 表格组件应集成 TableToolbar、ActionButtons、StatusTag 和 Pagination
+- 必须实现列设置功能，支持用户自定义显示列
+- 将表格操作逻辑封装在组件内部，通过事件向父组件传递操作
 
 ```vue
-<!-- 集成TableToolbar的DataTable组件示例 -->
+<!-- [Module]Table.vue 组件示例 -->
 <template>
-  <div class="data-table">
+  <div class="module-table">
+    <!-- 工具栏 -->
     <table-toolbar
       :enable-column-settings="true"
-      :column-options="allColumns"
-      :storage-key="currentStorageKey"
+      :column-options="columnOptions"
+      :storage-key="`${equipmentType}_table_columns`"
       :default-visible-columns="defaultVisibleColumns"
       :enable-batch-actions="true"
       :selected-rows="selectedRows"
-      @refresh="handleRefresh"
+      :enable-import="true"
+      :import-api="importApi"
+      :template-api="templateApi"
+      :enable-export="true"
+      :export-api="exportApi"
+      :export-params="exportParams"
+      @refresh="$emit('refresh')"
       @column-change="handleColumnChange"
       @batch-delete="$emit('batch-delete', selectedRows)"
+      @batch-enable="$emit('batch-enable', selectedRows)"
+      @batch-disable="$emit('batch-disable', selectedRows)"
+      @import-success="$emit('import-success', $event)"
+      @export-success="$emit('export-success', $event)"
     >
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="mini" @click="$emit('add')">新增</el-button>
       </template>
     </table-toolbar>
 
+    <!-- 数据表格 -->
     <el-table
       v-loading="loading"
       :data="data"
+      border
+      stripe
+      highlight-current-row
       @selection-change="handleSelectionChange"
+      @sort-change="handleSortChange"
     >
-      <!-- 表格列配置 -->
-      <el-table-column type="selection" width="45" align="center" />
+      <!-- 选择列 -->
+      <el-table-column type="selection" width="45" align="center" fixed="left" />
       
-      <template v-for="col in tableColumns">
+      <!-- 动态列 -->
+      <template v-for="column in visibleColumns">
         <el-table-column
-          :key="col.prop"
-          v-bind="col"
+          :key="column.prop"
+          :prop="column.prop"
+          :label="column.label"
+          :width="column.width"
+          :min-width="column.minWidth"
+          :align="column.align || 'left'"
+          :sortable="column.sortable"
         >
           <template slot-scope="scope">
-            <!-- 使用StatusTag组件渲染状态列 -->
-            <template v-if="col.renderType === 'status'">
-              <status-tag
-                :status="scope.row[col.prop]"
+            <!-- 状态列渲染 -->
+            <template v-if="column.renderType === 'status'">
+              <status-tag 
+                :status="scope.row[column.prop]" 
                 :text-map="statusTextMap"
                 :type-map="statusTypeMap"
               />
             </template>
-            <!-- 其他列渲染逻辑 -->
+            
+            <!-- 日期列渲染 -->
+            <template v-else-if="column.renderType === 'date'">
+              {{ formatDate(scope.row[column.prop]) }}
+            </template>
+            
+            <!-- 默认渲染 -->
+            <template v-else>
+              {{ scope.row[column.prop] }}
+            </template>
           </template>
         </el-table-column>
       </template>
-
+      
       <!-- 操作列 -->
-      <el-table-column label="操作" width="150" align="center" fixed="right">
+      <el-table-column label="操作" width="180" align="center" fixed="right">
         <template slot-scope="scope">
           <action-buttons
             :buttons="getActionButtons(scope.row)"
@@ -218,14 +301,44 @@ module-name/
       </el-table-column>
     </el-table>
     
+    <!-- 分页器 -->
     <pagination
-      v-show="total > 0"
+      v-if="total > 0"
       :total="total"
       :page.sync="currentPage"
-      :limit.sync="pageSize"
+      :limit.sync="currentLimit"
       @pagination="handlePagination"
     />
   </div>
+</template>
+```
+
+### [Module]FormDrawer 组件集成
+- 表单抽屉组件应使用全局 DrawerForm 组件
+- 根据不同的模式（create/update/view）展示不同的表单内容
+- 通过 formSections 配置表单分段内容
+
+```vue
+<!-- [Module]FormDrawer.vue 组件示例 -->
+<template>
+  <drawer-form
+    :visible.sync="visibleSync"
+    :title="drawerTitle"
+    :mode="type"
+    :data="formData"
+    :loading="loading"
+    :rules="formRules"
+    :form-sections="formSections"
+    :submit-button-text="submitButtonText"
+    :show-continue-create="type === 'create'"
+    @submit="handleSubmit"
+    @close="handleClose"
+  >
+    <!-- 可选的自定义内容 -->
+    <template v-slot:custom-field="{field, formData}">
+      <!-- 根据需要自定义表单项 -->
+    </template>
+  </drawer-form>
 </template>
 ```
 
@@ -246,6 +359,129 @@ module-name/
 - 使用不同颜色和图标区分不同状态
 - 状态切换操作需要二次确认
 - 禁用状态的行整行显示为灰色
+
+### 分类导航
+- 对于需要按类型区分的数据（如设备类型、产品类型等），应使用类型导航栏
+- 类型导航栏放置在搜索表单上方，支持快速切换不同类型数据
+- 每个类型显示其包含的记录数量
+
+```vue
+<!-- 类型导航示例 -->
+<div class="type-navigation">
+  <div 
+    v-for="type in typeOptions" 
+    :key="type.value"
+    :class="['type-item', currentType === type.value ? 'active' : '']"
+    @click="handleTypeChange(type.value)"
+  >
+    {{ type.label }} ({{ type.count || 0 }})
+  </div>
+</div>
+```
+
+## 批量操作规范
+
+### 批量操作消息提示
+- **强制要求**：所有批量操作成功后，必须使用统一格式的消息提示
+- 批量操作成功后，直接使用后端返回的消息，如果后端没有返回消息，则使用默认消息
+- 消息提示应使用以下格式：
+
+```javascript
+// 批量操作成功处理
+this.$message.success(response.data.message || '批量操作成功')
+```
+
+- 其中：
+  - `response.data.message`：从API响应中获取的成功消息
+  - 如果后端没有返回消息，则使用默认消息作为备选
+
+### 批量操作失败处理
+- 批量操作失败时，应提供明确的错误信息
+- 错误消息应包含API返回的错误信息，或使用默认错误提示
+
+```javascript
+// 批量操作失败处理
+this.$message.error(`批量${operationName}失败: ${error.message || '未知错误'}`)
+```
+
+### 示例实现
+```javascript
+// 批量删除示例
+handleBatchDelete(rows) {
+  if (!rows || rows.length === 0) {
+    this.$message.warning('请至少选择一条记录')
+    return
+  }
+  
+  this.$confirm('确认批量删除选中的记录吗？此操作不可恢复', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    this.listLoading = true
+    
+    // 获取选中行的ID列表
+    const ids = rows.map(row => row.id)
+    
+    batchDeleteXXX(ids).then(response => {
+      this.$message.success(response.data.message || '批量删除成功')
+      this.selectedRows = []
+      
+      // 延迟执行，确保后端处理完成
+      setTimeout(() => {
+        this.getList()
+      }, 300)
+    }).catch(error => {
+      console.error('批量删除错误:', error)
+      this.$message.error(`批量删除失败: ${error.message || '未知错误'}`)
+      this.listLoading = false
+    })
+  }).catch(() => {
+    // 取消操作
+    this.$message.info('已取消删除操作')
+  })
+}
+
+// 批量更改状态通用方法
+handleBatchStatus(rows, targetStatus, statusText) {
+  if (!rows || rows.length === 0) return
+  
+  // 只选择需要操作的行
+  const targetRows = rows.filter(row => row.status !== targetStatus)
+  
+  if (targetRows.length === 0) {
+    this.$message.info(`所选记录已全部${statusText}，无需操作`)
+    return
+  }
+  
+  this.$confirm(`确认批量${statusText}选中的记录吗？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    this.listLoading = true
+    batchUpdateStatus({
+      ids: targetRows.map(row => row.id),
+      status: targetStatus
+    }).then(response => {
+      this.$message.success(
+        `批量${statusText}成功：${targetRows.length}条记录已${statusText}`
+      )
+      // 延迟执行，确保后端处理完成
+      setTimeout(() => {
+        this.getList()
+      }, 300)
+    }).catch(error => {
+      console.error(`批量${statusText}错误:`, error)
+      this.$message.error(`批量${statusText}失败: ${error.message || '未知错误'}`)
+      this.listLoading = false
+    })
+  }).catch(() => {
+    // 取消操作
+    this.$message.info('操作已取消')
+  })
+}
+```
 
 ## 配置化开发
 
@@ -390,82 +626,31 @@ handleActionClick({ action, row }) {
 4. **可维护性**：清晰的结构和足够的文档
 5. **用户体验**：一致的交互模式和视觉样式
 
+### 设计模式应用
+- 使用工厂模式创建不同类型的表单配置
+- 使用策略模式处理不同的数据渲染逻辑
+- 使用适配器模式处理不同来源的数据格式
+- 使用装饰器模式扩展组件功能
+
 ## 质量检查清单
 
 开发完成后，请检查以下项目是否符合规范：
 
-- [ ] 使用了全局SearchForm组件实现搜索表单
-- [ ] 使用了全局TableToolbar组件实现表格工具栏
-- [ ] 使用了全局ActionButtons组件实现操作按钮
-- [ ] 使用了全局StatusTag组件实现状态显示
-- [ ] 使用了全局DrawerForm组件实现表单抽屉
-- [ ] 使用了全局Pagination组件实现分页
-- [ ] 表单分段清晰，字段归类合理
+- [ ] 目录结构符合规范
+- [ ] 模块说明文档完善，放在 docs 目录下
+- [ ] 组件命名符合规范，使用模块名+功能名方式
+- [ ] 使用全局组件实现核心功能
+- [ ] 搜索表单实现完整搜索和重置功能
+- [ ] 表格实现列设置功能和本地存储
+- [ ] 表单抽屉分段清晰，字段归类合理
+- [ ] 批量操作实现符合规范
+- [ ] 状态管理和切换功能完整
+- [ ] 导入导出功能正常工作
+- [ ] 代码注释完善，遵循注释规范
+- [ ] 代码符合 ESLint 规范
 - [ ] 功能完整：查询、新增、编辑、查看、删除、状态切换
-- [ ] 代码符合ESLint规范
-
-## 批量操作规范
-
-### 批量操作消息提示
-- **强制要求**：所有批量操作成功后，必须使用统一格式的消息提示
-- 批量操作成功后，直接使用后端返回的消息，如果后端没有返回消息，则使用默认消息
-- 消息提示应使用以下格式：
-
-```javascript
-// 批量操作成功处理
-this.$message.success(response.data.message || '批量操作成功')
-```
-
-- 其中：
-  - `response.data.message`：从API响应中获取的成功消息
-  - 如果后端没有返回消息，则使用默认消息作为备选
-
-### 批量操作失败处理
-- 批量操作失败时，应提供明确的错误信息
-- 错误消息应包含API返回的错误信息，或使用默认错误提示
-
-```javascript
-// 批量操作失败处理
-this.$message.error(`批量${operationName}失败: ${error.message || '未知错误'}`)
-```
-
-### 示例实现
-```javascript
-// 批量删除示例
-handleBatchDelete(rows) {
-  if (!rows || rows.length === 0) {
-    this.$message.warning('请选择需要删除的记录')
-    return
-  }
-  
-  this.$confirm('确认批量删除选中的记录吗？此操作不可恢复', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    this.listLoading = true
-    
-    // 获取选中行的ID列表
-    const ids = rows.map(row => row.id)
-    
-    batchDeleteXXX(ids).then(response => {
-      this.$message.success(response.data.message || '批量删除成功')
-      this.selectedRows = []
-      
-      // 延迟执行，确保后端处理完成
-      setTimeout(() => {
-        this.getList()
-      }, 300)
-    }).catch(error => {
-      console.error('批量删除错误:', error)
-      this.$message.error(`批量删除失败: ${error.message || '未知错误'}`)
-      this.listLoading = false
-    })
-  }).catch(() => {
-    // 取消操作
-    this.$message.info('已取消删除操作')
-  })
-}
-```
+- [ ] UI 风格统一，与系统整体风格一致
+- [ ] 错误处理完善，提供友好的错误提示
+- [ ] 添加了必要的加载状态指示
 
 

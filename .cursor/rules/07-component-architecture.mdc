@@ -3,10 +3,10 @@ description:
 globs: 
 alwaysApply: true
 ---
-# 组件化架构与表格模块开发指南
+# 组件化架构设计指南
 
 ## 适用范围
-本规则适用于所有Vue组件开发，特别是复杂业务功能模块的组件设计，推荐按照此规范组织代码。表格类模块是系统中最常见的功能模块，必须严格遵循本规范。
+本规则适用于所有Vue组件开发，规定了组件设计的基本原则、目录结构和通用规范。对于表格类模块的详细开发规范，请参考 [表格模块开发规范](mdc:.cursor/rules/08-table-module-development.mdc)。
 
 ## 主布局结构
 项目使用了基于Element UI的布局系统，主要由侧边栏导航、顶部导航和主内容区组成。
@@ -41,28 +41,25 @@ alwaysApply: true
 - **可维护性**：清晰的结构和足够的文档
 - **用户体验**：一致的交互模式和视觉样式
 
-## 目录结构规范
+## 通用目录结构规范
 每个功能模块应遵循以下目录结构：
 ```
 module-name/
 ├── index.vue                 # 主页面（容器组件）
-├── README.md                 # 模块说明文档
 ├── components/               # 子组件目录
-│   ├── SearchForm.vue        # 搜索表单组件（使用全局SearchForm）
-│   ├── DataTable.vue         # 数据表格组件（使用全局TableToolbar、ActionButtons和StatusTag）
-│   ├── FormDrawer.vue        # 表单抽屉组件（使用全局DrawerForm）
-│   └── ImportExportBar.vue   # 导入导出组件（可选）
-├── mixins/                   # 混入目录
-│   ├── tableMixin.js         # 表格操作相关混入
-│   ├── formMixin.js          # 表单处理相关混入
-│   └── importExportMixin.js  # 导入导出相关混入（如需要）
-└── api/                      # API目录（可选）
-    └── index.js              # API调用方法
+│   ├── ComponentA.vue        # 子组件A
+│   ├── ComponentB.vue        # 子组件B
+│   └── ComponentC.vue        # 子组件C
+├── mixins/                   # 混入目录（可选）
+│   ├── mixinA.js             # 混入A
+│   └── mixinB.js             # 混入B
+└── docs/                     # 文档目录（可选）
+    └── README.md             # 模块说明文档
 ```
 
 ## 参考示例
 - 请参考`src/views/master-data/bin-specification`目录作为组件化开发的标准示例
-- 请参考`src/views/master-data/equipment`目录作为表格模块开发的标准示例
+- 对于表格类模块，请参考`src/views/master-data/equipment`目录，并遵循[表格模块开发规范](mdc:.cursor/rules/08-table-module-development.mdc)
 
 ## 组件设计规范
 
@@ -72,160 +69,24 @@ module-name/
 - 包含数据加载和提交的核心方法
 - 引入必要的mixins
 
-### 搜索表单组件 (SearchForm.vue)
-- **强制要求**：必须使用全局SearchForm组件
-- 通过配置方式定义表单项，而不是手写表单元素
-- 支持展开/收起功能，将非主要搜索条件设为折叠项
-- 示例用法：
-
-```vue
-<search-form
-  ref="searchForm"
-  :items="formItems"
-  :value="formModel"
-  :loading="loading"
-  @search="handleSearch"
-  @reset="handleReset"
->
-  <!-- 自定义插槽内容（如有需要） -->
-</search-form>
-```
-
-### 数据表格组件 (DataTable.vue)
-- 负责数据展示、分页、排序等
-- 封装表格常用操作（选择、编辑、状态切换等）
+### 子组件设计
+- 专注于单一功能或UI区块
 - 通过props接收数据，通过events发送用户操作
-- **强制要求**：必须集成以下全局组件：
-  - TableToolbar
-  - ActionButtons
-  - StatusTag
-  - Pagination
-- 必须实现columnSettingsMixin以支持列设置和本地存储
-
-示例用法：
-```vue
-<!-- 集成TableToolbar的DataTable组件示例 -->
-<template>
-  <div class="data-table">
-    <table-toolbar
-      :enable-column-settings="true"
-      :column-options="allColumns"
-      :storage-key="currentStorageKey"
-      :default-visible-columns="defaultVisibleColumns"
-      :enable-batch-actions="true"
-      :selected-rows="selectedRows"
-      @refresh="handleRefresh"
-      @column-change="handleColumnChange"
-      @batch-delete="$emit('batch-delete', selectedRows)"
-    >
-      <template #toolbar-left>
-        <el-button type="primary" icon="el-icon-plus" size="mini" @click="$emit('add')">新增</el-button>
-      </template>
-    </table-toolbar>
-
-    <el-table
-      v-loading="loading"
-      :data="data"
-      @selection-change="handleSelectionChange"
-    >
-      <!-- 表格列配置 -->
-      <el-table-column type="selection" width="45" align="center" />
-      
-      <template v-for="col in tableColumns">
-        <el-table-column
-          :key="col.prop"
-          v-bind="col"
-        >
-          <template slot-scope="scope">
-            <!-- 使用StatusTag组件渲染状态列 -->
-            <template v-if="col.renderType === 'status'">
-              <status-tag
-                :status="scope.row[col.prop]"
-                :text-map="statusTextMap"
-                :type-map="statusTypeMap"
-              />
-            </template>
-            <!-- 其他列渲染逻辑 -->
-          </template>
-        </el-table-column>
-      </template>
-
-      <!-- 操作列 -->
-      <el-table-column label="操作" width="150" align="center" fixed="right">
-        <template slot-scope="scope">
-          <action-buttons
-            :buttons="getActionButtons(scope.row)"
-            mode="text"
-            :row="scope.row"
-            @click="handleActionClick"
-          />
-        </template>
-      </el-table-column>
-    </el-table>
-    
-    <pagination
-      v-show="total > 0"
-      :total="total"
-      :page.sync="currentPage"
-      :limit.sync="pageSize"
-      @pagination="handlePagination"
-    />
-  </div>
-</template>
-```
-
-### 表单组件 (FormDrawer.vue)
-- **强制要求**：必须使用全局DrawerForm组件
-- 通过`formSections`配置分段表单内容
-- 支持create/update/view三种模式
-- 示例用法：
-
-```vue
-<drawer-form
-  ref="drawerForm"
-  :visible.sync="drawerVisible"
-  :title="formTitle"
-  :mode="formMode"
-  :data="formData"
-  :rules="rules"
-  :form-sections="formSections"
-  @submit="handleFormSubmit"
->
-  <!-- 自定义表单内容（如有需要） -->
-</drawer-form>
-```
+- 避免直接调用API或修改全局状态
+- 保持组件的独立性和可复用性
 
 ## 全局组件使用规范
 
-### 1. SearchForm组件
-- **强制要求**：所有列表搜索表单必须使用全局SearchForm组件
-- 通过配置方式定义表单项，而不是手写表单元素
-- 支持展开/收起功能，将非主要搜索条件设为折叠项
+### 全局通用组件
+- **Icon组件**：使用全局Icon组件显示图标
+- **SvgIcon组件**：使用全局SvgIcon组件显示SVG图标
+- **Breadcrumb组件**：使用全局Breadcrumb组件显示面包屑导航
+- **Hamburger组件**：使用全局Hamburger组件显示折叠按钮
+- **Screenfull组件**：使用全局Screenfull组件实现全屏功能
+- **ErrorLog组件**：使用全局ErrorLog组件显示错误日志
+- **ThemePicker组件**：使用全局ThemePicker组件切换主题
 
-### 2. TableToolbar组件
-- **强制要求**：所有表格上方的工具栏必须使用全局TableToolbar组件
-- 整合了批量操作、列设置、导入导出和自定义操作按钮
-- 支持左右两侧自定义内容插槽
-
-### 3. ActionButtons组件
-- **强制要求**：表格中的操作按钮必须使用全局ActionButtons组件
-- 使用预设按钮配置或自定义按钮配置
-- 支持文本模式和图标模式
-
-### 4. StatusTag组件
-- **强制要求**：所有状态展示必须使用全局StatusTag组件
-- 使用预设状态类型或自定义状态配置
-
-### 5. DrawerForm组件
-- **强制要求**：所有表单抽屉必须使用全局DrawerForm组件
-- 通过`formSections`配置分段表单内容
-- 支持create/update/view三种模式
-
-### 6. Pagination组件
-- **强制要求**：所有列表页面必须使用全局Pagination组件
-- 在DataTable组件中集成Pagination组件
-
-### 7. 滚动动画使用规范
+### 滚动动画使用规范
 - **强制要求**：所有需要滚动功能的页面组件必须使用全局滚动动画工具函数
 - 在以下场景必须使用滚动动画：
   1. 分页切换后返回顶部
@@ -254,21 +115,17 @@ export default {
 
 ## Mixin设计规范
 
-### tableMixin
-- 封装表格通用逻辑（选择、批量操作、状态变更）
-- 不包含UI渲染逻辑
+### 通用Mixin设计原则
+- 一个mixin应专注于一个功能领域
+- 避免在mixin中定义过多的方法和属性
+- 使用命名前缀避免命名冲突
+- 在mixin中提供适当的注释和文档
 
-### columnSettingsMixin
-- 用于实现表格列设置和本地存储功能
-- 与TableToolbar组件配合使用
-
-### formMixin
-- 封装表单通用逻辑（验证、提交、重置）
-- 提供统一的表单处理方法
-
-### importExportMixin
-- 封装导入导出通用逻辑
-- 处理文件下载和上传的底层实现
+### 常用通用Mixin
+- **resizeMixin**：处理窗口大小变化
+- **i18nMixin**：处理国际化
+- **permissionMixin**：处理权限控制
+- **themeMixin**：处理主题切换
 
 ## 组件通信规范
 
@@ -289,148 +146,17 @@ export default {
 
 ## 交互规范
 
-### 表格操作
-- 表格行操作使用文本按钮，放置在最右侧固定列中
-- 批量操作放置在表格上方工具栏中
-- 操作按钮图标和文字统一，参照预设按钮配置
+### 通用交互模式
+- 表单提交后显示成功/失败提示
+- 危险操作需要二次确认
+- 长时间操作显示加载状态
+- 操作完成后给予明确的反馈
 
-### 表单抽屉
-- 表单在抽屉中打开，不使用弹窗
-- 表单按分类分段展示，每个分段有明确标题
-- 表单抽屉宽度统一为550px
-- 查看模式下表单项禁用，不显示保存按钮
-
-### 状态展示
-- 使用不同颜色和图标区分不同状态
-- 状态切换操作需要二次确认
-- 禁用状态的行整行显示为灰色
-
-## 配置化开发
-
-### TableToolbar配置示例
-```javascript
-// 列设置存储的键名
-columnSettingsKey() {
-  return `${this.equipmentType}_equipment_columns`
-},
-
-// 导出参数
-exportParams() {
-  return {
-    ...this.listQuery,
-    export: true
-  }
-},
-
-// 导入API函数
-importApiFunction(file) {
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('type', this.equipmentType)
-  return request({
-    url: this.importApi,
-    method: 'post',
-    data: formData
-  })
-},
-
-// 默认显示的列
-defaultVisibleColumns: [
-  'equipmentId', 'name', 'model', 'status', 'installDate'
-]
-```
-
-### 表格列配置示例
-```javascript
-// 动态表格列配置
-columns() {
-  return [
-    { prop: 'id', label: 'ID', width: '80' },
-    { prop: 'name', label: '名称', width: '150' },
-    { 
-      prop: 'status', 
-      label: '状态', 
-      width: '100',
-      // 使用StatusTag渲染
-      renderType: 'status'
-    },
-    // 更多列配置...
-  ]
-}
-```
-
-### ActionButtons配置示例
-```javascript
-// 获取操作按钮配置
-getActionButtons(row) {
-  // 使用预设按钮生成操作按钮
-  const buttons = generateTableButtons(['edit', 'view'])
-  
-  // 添加状态切换按钮
-  const statusButton = {
-    text: row.status === 1 ? '禁用' : '启用',
-    action: 'statusToggle',
-    icon: row.status === 1 ? 'el-icon-close' : 'el-icon-check',
-    type: 'text',
-    class: row.status === 1 ? 'status-disable' : 'status-enable'
-  }
-  
-  return buttons.concat([statusButton])
-}
-
-// 处理按钮点击事件
-handleActionClick({ action, row }) {
-  switch (action) {
-    case 'edit':
-      this.$emit('update', row)
-      break
-    case 'view':
-      this.$emit('view', row)
-      break
-    case 'statusToggle':
-      this.$emit('status-change', row)
-      break
-  }
-}
-```
-
-### 表单配置示例
-```javascript
-// 动态表单分段
-formSections() {
-  return [
-    {
-      title: '一、基础信息',
-      items: [
-        {
-          prop: 'name',
-          label: '名称',
-          type: 'input',
-          placeholder: '请输入名称',
-          maxlength: 50,
-          showWordLimit: true
-        },
-        {
-          prop: 'status',
-          label: '状态',
-          type: 'radio',
-          options: [
-            { label: '启用', value: 1 },
-            { label: '禁用', value: 0 }
-          ]
-        }
-        // 更多表单项...
-      ]
-    },
-    {
-      title: '二、详细信息',
-      items: [
-        // 分段表单项...
-      ]
-    }
-  ]
-}
-```
+### 弹窗和提示
+- 使用Element UI的Message组件显示操作结果
+- 使用MessageBox组件进行二次确认
+- 使用Notification组件显示重要通知
+- 使用Loading组件显示加载状态
 
 ## 代码质量规范
 
@@ -451,10 +177,10 @@ formSections() {
 
 ## 最佳实践
 
-1. **使用计算属性**：将复杂的表单和表格配置放在计算属性中
+1. **使用计算属性**：将复杂计算放在computed中
 2. **模块化API**：将API调用封装在单独的文件中
 3. **配置预设**：使用预设配置简化常见操作
-4. **TypeScript支持**：为配置项添加TypeScript类型定义
+4. **TypeScript支持**：为组件和配置项添加TypeScript类型定义
 5. **文档完善**：在README.md中记录模块功能、组件说明和注意事项
 
 ## 迁移策略
@@ -468,13 +194,12 @@ formSections() {
 
 开发完成后，请检查以下项目是否符合规范：
 
-- [ ] 使用了全局SearchForm组件实现搜索表单
-- [ ] 使用了全局TableToolbar组件实现表格工具栏
-- [ ] 使用了全局ActionButtons组件实现操作按钮
-- [ ] 使用了全局StatusTag组件实现状态显示
-- [ ] 使用了全局DrawerForm组件实现表单抽屉
-- [ ] 使用了全局Pagination组件实现分页
-- [ ] 表单分段清晰，字段归类合理
-- [ ] 功能完整：查询、新增、编辑、查看、删除、状态切换
+- [ ] 组件结构清晰，职责单一
+- [ ] 组件间通信方式合理
+- [ ] 使用了适当的全局组件
+- [ ] 代码注释完善
+- [ ] 性能优化措施到位
+- [ ] 交互体验符合规范
 - [ ] 代码符合ESLint规范
+- [ ] 组件大小控制在合理范围内
 
