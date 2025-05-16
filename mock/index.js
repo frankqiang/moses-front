@@ -3,22 +3,24 @@ const { param2Obj } = require('./utils')
 
 const user = require('./user')
 const table = require('./table')
+const materialCode = require('./master-data/material-code')
+const equipment = require('./master-data/equipment')
 const binSpecification = require('./master-data/bin-specification')
 const productManagement = require('./master-data/product-management')
-const materialCode = require('./master-data/material-code')
 const storageLocation = require('./master-data/storage-location')
 const warehouse = require('./master-data/warehouse')
-const equipment = require('./master-data/equipment')
+const processParameter = require('./master-data/process-parameter')
 
 const mocks = [
   ...user,
   ...table,
+  ...materialCode,
+  ...equipment,
   ...binSpecification,
   ...productManagement,
-  ...materialCode,
   ...storageLocation,
   ...warehouse,
-  ...equipment
+  ...processParameter
 ]
 
 // for front mock

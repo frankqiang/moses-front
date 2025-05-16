@@ -132,58 +132,221 @@ export const CommonButtons = {
 
 /**
  * 生成表格操作按钮配置
- * @param {Array} actions 需要的操作类型数组，例如 ['edit', 'delete']
- * @param {Object} customButtons 自定义按钮配置对象
+ * @param {Object} options 配置选项
  * @returns {Array} 按钮配置数组
  */
-export function generateTableButtons(actions = [], customButtons = {}) {
-  // 反向映射操作类型到预设按钮
-  const actionMap = {
-    'view': CommonButtons.VIEW,
-    'edit': CommonButtons.EDIT,
-    'delete': CommonButtons.DELETE,
-    'enable': CommonButtons.ENABLE,
-    'disable': CommonButtons.DISABLE,
-    'export': CommonButtons.EXPORT,
-    'import': CommonButtons.IMPORT,
-    'download': CommonButtons.DOWNLOAD,
-    'upload': CommonButtons.UPLOAD,
-    'print': CommonButtons.PRINT
+export function generateTableButtons(options = {}) {
+  const {
+    showView = true,
+    showEdit = true,
+    showDelete = true,
+    showEnable = false,
+    showDisable = false,
+    showMore = false,
+    moreButtons = [],
+    disabled = false,
+    viewDisabled = false,
+    editDisabled = false,
+    deleteDisabled = false,
+    enableDisabled = false,
+    disableDisabled = false
+  } = options
+
+  const buttons = []
+
+  // 查看按钮
+  if (showView) {
+    buttons.push({
+      text: '查看',
+      action: 'view',
+      icon: 'el-icon-view',
+      type: 'text',
+      disabled: disabled || viewDisabled,
+      tooltip: '查看详情'
+    })
   }
-  
-  // 合并自定义按钮
-  const mergedMap = { ...actionMap, ...customButtons }
-  
-  // 根据actions数组生成按钮配置
-  return actions.map(action => {
-    if (typeof action === 'string') {
-      return mergedMap[action] || null
-    } else if (typeof action === 'object') {
-      // 如果是对象，假设它是一个自定义按钮配置
-      return action
-    }
-    return null
-  }).filter(button => button !== null)
+
+  // 编辑按钮
+  if (showEdit) {
+    buttons.push({
+      text: '编辑',
+      action: 'edit',
+      icon: 'el-icon-edit',
+      type: 'text',
+      disabled: disabled || editDisabled,
+      tooltip: '编辑'
+    })
+  }
+
+  // 删除按钮
+  if (showDelete) {
+    buttons.push({
+      text: '删除',
+      action: 'delete',
+      icon: 'el-icon-delete',
+      type: 'text',
+      class: 'danger',
+      disabled: disabled || deleteDisabled,
+      tooltip: '删除'
+    })
+  }
+
+  // 启用按钮
+  if (showEnable) {
+    buttons.push({
+      text: '启用',
+      action: 'enable',
+      icon: 'el-icon-check',
+      type: 'text',
+      class: 'success',
+      disabled: disabled || enableDisabled,
+      tooltip: '启用'
+    })
+  }
+
+  // 禁用按钮
+  if (showDisable) {
+    buttons.push({
+      text: '禁用',
+      action: 'disable',
+      icon: 'el-icon-close',
+      type: 'text',
+      class: 'warning',
+      disabled: disabled || disableDisabled,
+      tooltip: '禁用'
+    })
+  }
+
+  // 更多按钮
+  if (showMore && moreButtons.length > 0) {
+    buttons.push(...moreButtons)
+  }
+
+  return buttons
 }
 
 /**
- * 创建状态切换按钮
- * @param {Function} conditionFn 按钮显示条件函数
- * @returns {Array} 包含启用和禁用按钮的数组
+ * 生成表单操作按钮
+ * @param {Object} options 配置选项
+ * @returns {Array} 按钮配置数组
  */
-export function createStatusButtons(conditionFn) {
-  if (!conditionFn) {
-    conditionFn = row => true
+export function generateFormButtons(options = {}) {
+  const {
+    showSubmit = true,
+    showCancel = true,
+    showReset = false,
+    submitText = '提交',
+    cancelText = '取消',
+    resetText = '重置',
+    disabled = false,
+    submitDisabled = false,
+    cancelDisabled = false,
+    resetDisabled = false
+  } = options
+
+  const buttons = []
+
+  // 提交按钮
+  if (showSubmit) {
+    buttons.push({
+      text: submitText,
+      action: 'submit',
+      icon: 'el-icon-check',
+      type: 'primary',
+      disabled: disabled || submitDisabled,
+      tooltip: '提交表单'
+    })
   }
-  
-  return [
-    {
-      ...CommonButtons.ENABLE,
-      condition: row => conditionFn(row) && (!row.status || row.status === 0 || row.status === false)
-    },
-    {
-      ...CommonButtons.DISABLE,
-      condition: row => conditionFn(row) && (row.status === 1 || row.status === true)
-    }
-  ]
+
+  // 取消按钮
+  if (showCancel) {
+    buttons.push({
+      text: cancelText,
+      action: 'cancel',
+      icon: 'el-icon-close',
+      type: 'default',
+      disabled: disabled || cancelDisabled,
+      tooltip: '取消操作'
+    })
+  }
+
+  // 重置按钮
+  if (showReset) {
+    buttons.push({
+      text: resetText,
+      action: 'reset',
+      icon: 'el-icon-refresh',
+      type: 'info',
+      disabled: disabled || resetDisabled,
+      tooltip: '重置表单'
+    })
+  }
+
+  return buttons
+}
+
+/**
+ * 生成审批操作按钮
+ * @param {Object} options 配置选项
+ * @returns {Array} 按钮配置数组
+ */
+export function generateApprovalButtons(options = {}) {
+  const {
+    showApprove = true,
+    showReject = true,
+    showCancel = true,
+    approveText = '批准',
+    rejectText = '驳回',
+    cancelText = '取消',
+    disabled = false,
+    approveDisabled = false,
+    rejectDisabled = false,
+    cancelDisabled = false
+  } = options
+
+  const buttons = []
+
+  // 批准按钮
+  if (showApprove) {
+    buttons.push({
+      text: approveText,
+      action: 'approve',
+      icon: 'el-icon-check',
+      type: 'success',
+      disabled: disabled || approveDisabled,
+      tooltip: '批准'
+    })
+  }
+
+  // 驳回按钮
+  if (showReject) {
+    buttons.push({
+      text: rejectText,
+      action: 'reject',
+      icon: 'el-icon-close',
+      type: 'danger',
+      disabled: disabled || rejectDisabled,
+      tooltip: '驳回'
+    })
+  }
+
+  // 取消按钮
+  if (showCancel) {
+    buttons.push({
+      text: cancelText,
+      action: 'cancel',
+      icon: 'el-icon-back',
+      type: 'info',
+      disabled: disabled || cancelDisabled,
+      tooltip: '取消审批'
+    })
+  }
+
+  return buttons
+}
+
+export default {
+  generateTableButtons,
+  generateFormButtons,
+  generateApprovalButtons
 } 

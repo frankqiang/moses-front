@@ -100,7 +100,13 @@ export const constantRoutes = [
         path: 'equipment',
         name: 'Equipment',
         component: () => import('@/views/master-data/equipment/index'),
-        meta: { title: '设备主数据管理' }
+        meta: { title: '设备管理' }
+      },
+      {
+        path: 'process-parameter',
+        component: () => import('@/views/master-data/process-parameter/index'),
+        name: 'ProcessParameter',
+        meta: { title: '工艺参数管理' }
       }
       // 后续可以在这里添加其他主数据管理的子页面
     ]

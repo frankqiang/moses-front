@@ -60,6 +60,8 @@ __tests__/
 .git/
 
 # 其他非代码文件
-*.json
-!package.json
-!tsconfig.json
+# *.json
+# !package.json
+# !tsconfig.json
+
+
