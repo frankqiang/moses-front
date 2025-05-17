@@ -13,7 +13,7 @@
     :rules="rules"
     :form-sections="formSections"
     :loading="loading"
-    width="800px"
+    width="1500px"
     direction="rtl"
     :wrapper-closable="false"
     @submit="handleFormSubmit"

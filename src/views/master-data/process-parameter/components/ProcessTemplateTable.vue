@@ -97,7 +97,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="220" align="center" fixed="right">
+      <el-table-column label="操作" width="250" align="center" fixed="right">
         <template slot-scope="scope">
           <!-- 使用ActionButtons组件替代原来的按钮组 -->
           <ActionButtons

@@ -64,7 +64,7 @@
       <!-- 目标温度 -->
       <el-table-column
         label="目标温度 (°C)"
-        width="120"
+        width="180"
         align="center"
       >
         <template slot-scope="scope">
@@ -81,8 +81,8 @@
       
       <!-- 持续时间 -->
       <el-table-column
-        label="持续时间 (分钟)"
-        width="120"
+        label="持续时间 (小时)"
+        width="180"
         align="center"
       >
         <template slot-scope="scope">
@@ -99,7 +99,7 @@
       
       <!-- 升/降温速率 -->
       <el-table-column
-        label="速率 (°C/分钟)"
+        label="速率 (°C/小时)"
         width="120"
         align="center"
       >
@@ -111,7 +111,7 @@
       <!-- 前区循环风机设定 -->
       <el-table-column
         label="前区循环风机 (Hz)"
-        width="150"
+        width="180"
         align="center"
         v-if="furnaceCapabilities.hasBackZone !== false"
       >
@@ -130,7 +130,7 @@
       <!-- 后区循环风机设定 -->
       <el-table-column
         label="后区循环风机 (Hz)"
-        width="150"
+        width="180"
         align="center"
         v-if="furnaceCapabilities.hasBackZone"
       >
@@ -149,7 +149,7 @@
       <!-- 负压风机设定 -->
       <el-table-column
         label="负压风机 (Hz)"
-        width="120"
+        width="180"
         align="center"
         v-if="furnaceCapabilities.hasNegativePressure"
       >
@@ -168,7 +168,7 @@
       <!-- 吹洗阀设定 -->
       <el-table-column
         label="吹洗阀"
-        width="120"
+        width="180"
         align="center"
         v-if="furnaceCapabilities.hasCoolingValve"
       >
@@ -296,7 +296,7 @@ export default {
         segmentNumber,
         segmentType: '升温',
         targetTemp: 300,
-        duration: 120,
+        duration: 5,
         vfQSet: 30,
         vfHSet: this.furnaceCapabilities.hasBackZone ? 30 : 0,
         vfFySet: this.furnaceCapabilities.hasNegativePressure ? 10 : 0,
