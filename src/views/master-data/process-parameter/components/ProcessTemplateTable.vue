@@ -73,16 +73,24 @@
           </template>
           <!-- 适用产品范围列 -->
           <template v-else-if="col.prop === 'applicableProducts'">
-            <el-tooltip
+            <el-popover
               v-if="scope.row.applicableProducts && scope.row.applicableProducts.length"
-              :content="getProductsTooltip(scope.row.applicableProducts)"
               placement="top"
+              width="300"
+              trigger="click"
+              popper-class="popover-product-list"
             >
-              <div class="products-cell">
-                {{ getProductsDisplay(scope.row.applicableProducts) }}
+              <div class="product-list">
+                <div class="product-list-header">适用产品范围</div>
+                <div v-for="(item, index) in scope.row.applicableProducts" :key="index" class="product-list-item">
+                  <span>{{ index + 1 }}. {{ item.name }} ({{ item.code }})</span>
+                </div>
               </div>
-            </el-tooltip>
-            <span v-else>-</span>
+              <el-tag slot="reference" type="primary" style="cursor: pointer">
+                {{ scope.row.applicableProducts[0].name }} <span v-if="scope.row.applicableProducts.length > 1">(+{{ scope.row.applicableProducts.length - 1 }})</span>
+              </el-tag>
+            </el-popover>
+            <span v-else>无</span>
           </template>
           <!-- 其他列的默认渲染 -->
           <template v-else-if="col.formatter">
@@ -213,15 +221,17 @@ export default {
         { prop: 'createdAt', label: '创建时间', width: '150', formatter: this.formatDateTime },
         { prop: 'updatedBy', label: '最后修改人', width: '120' },
         { prop: 'updatedAt', label: '最后修改时间', width: '150', formatter: this.formatDateTime }
-      ],
-      // 默认可见列
-      defaultVisibleColumns: ['templateId', 'templateName', 'version', 'status', 'furnaceTypeName', 'applicableProducts', 'createdAt']
+      ]
     }
   },
   computed: {
+    // 覆盖mixin中的默认可见列
+    defaultVisibleColumns() {
+      return ['templateId', 'templateName', 'version', 'status', 'furnaceTypeName', 'applicableProducts', 'createdAt']
+    },
     // 重写列设置存储键
     currentStorageKey() {
-      return `${this.columnSettingsKeyPrefix}`
+      return this.columnSettingsKeyPrefix
     },
     
     // 导入API函数
@@ -536,6 +546,25 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 180px;
+  }
+  
+  .product-list {
+    padding: 5px 0;
+    
+    &-header {
+      font-weight: bold;
+      padding: 0 0 10px 0;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 10px;
+    }
+    
+    &-item {
+      padding: 5px 0;
+      
+      &:not(:last-child) {
+        border-bottom: 1px dashed #f0f0f0;
+      }
+    }
   }
 }
 </style>

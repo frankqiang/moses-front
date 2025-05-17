@@ -36,85 +36,75 @@
             <div :key="sectionIndex" class="form-section">
               <h3 v-if="section.title" class="section-title">{{ section.title }}</h3>
               
-              <el-form-item
-                v-for="item in section.items"
-                :key="item.prop"
-                :label="item.label"
-                :prop="item.prop"
-              >
-                <!-- 输入框 -->
-                <el-input
-                  v-if="item.type === 'input'"
-                  v-model="formData[item.prop]"
-                  :placeholder="item.placeholder"
-                  :disabled="item.disabled || mode === 'view'"
-                  :maxlength="item.maxlength"
-                  :show-word-limit="item.showWordLimit"
-                  :clearable="item.clearable !== false"
-                />
-                
-                <!-- 选择器 -->
-                <el-select
-                  v-else-if="item.type === 'select'"
-                  v-model="formData[item.prop]"
-                  :placeholder="item.placeholder"
-                  :disabled="item.disabled || mode === 'view'"
-                  :clearable="item.clearable !== false"
-                  :multiple="item.multiple"
-                  :collapse-tags="item.collapseTags"
-                  style="width: 100%"
+              <div class="form-row">
+                <el-form-item
+                  v-for="item in section.items"
+                  :key="item.prop"
+                  :label="item.label"
+                  :prop="item.prop"
+                  :class="[item.rowClass]"
+                  :style="{ width: item.colSpan ? (item.colSpan / 24 * 100 + '%') : 'auto' }"
                 >
-                  <el-option
-                    v-for="opt in item.options"
-                    :key="opt.value"
-                    :label="opt.label"
-                    :value="opt.value"
-                    :disabled="opt.disabled"
+                  <!-- 输入框 -->
+                  <el-input
+                    v-if="item.type === 'input'"
+                    v-model="formData[item.prop]"
+                    :placeholder="item.placeholder"
+                    :disabled="item.disabled || mode === 'view'"
+                    :maxlength="item.maxlength"
+                    :show-word-limit="item.showWordLimit"
+                    :clearable="item.clearable !== false"
                   />
-                </el-select>
+                  
+                  <!-- 选择器 -->
+                  <el-select
+                    v-else-if="item.type === 'select'"
+                    v-model="formData[item.prop]"
+                    :placeholder="item.placeholder"
+                    :disabled="item.disabled || mode === 'view'"
+                    :clearable="item.clearable !== false"
+                    :multiple="item.multiple"
+                    :collapse-tags="item.collapseTags"
+                    style="width: 100%"
+                  >
+                    <el-option
+                      v-for="opt in item.options"
+                      :key="opt.value"
+                      :label="opt.label"
+                      :value="opt.value"
+                      :disabled="opt.disabled"
+                    />
+                  </el-select>
 
-                <!-- 文本域 -->
-                <el-input
-                  v-else-if="item.type === 'textarea'"
-                  v-model="formData[item.prop]"
-                  type="textarea"
-                  :placeholder="item.placeholder"
-                  :disabled="item.disabled || mode === 'view'"
-                  :maxlength="item.maxlength"
-                  :show-word-limit="item.showWordLimit"
-                  :rows="item.rows || 3"
-                  :clearable="item.clearable !== false"
-                />
-                
-                <!-- 日期选择器 -->
-                <el-date-picker
-                  v-else-if="item.type === 'date'"
-                  v-model="formData[item.prop]"
-                  :type="item.dateType || 'date'"
-                  :placeholder="item.placeholder"
-                  :disabled="item.disabled || mode === 'view'"
-                  :clearable="item.clearable !== false"
-                  :format="item.format"
-                  :value-format="item.valueFormat"
-                  style="width: 100%"
-                />
-                
-                <!-- 数字输入框 -->
-                <el-input-number
-                  v-else-if="item.type === 'number'"
-                  v-model="formData[item.prop]"
-                  :min="item.min"
-                  :max="item.max"
-                  :step="item.step"
-                  :precision="item.precision"
-                  :disabled="item.disabled || mode === 'view'"
-                  :controls="item.controls !== false"
-                  :placeholder="item.placeholder"
-                  style="width: 100%"
-                />
-                
-                <template v-else-if="item.type === 'number-with-unit'">
+                  <!-- 文本域 -->
+                  <el-input
+                    v-else-if="item.type === 'textarea'"
+                    v-model="formData[item.prop]"
+                    type="textarea"
+                    :placeholder="item.placeholder"
+                    :disabled="item.disabled || mode === 'view'"
+                    :maxlength="item.maxlength"
+                    :show-word-limit="item.showWordLimit"
+                    :rows="item.rows || 3"
+                    :clearable="item.clearable !== false"
+                  />
+                  
+                  <!-- 日期选择器 -->
+                  <el-date-picker
+                    v-else-if="item.type === 'date'"
+                    v-model="formData[item.prop]"
+                    :type="item.dateType || 'date'"
+                    :placeholder="item.placeholder"
+                    :disabled="item.disabled || mode === 'view'"
+                    :clearable="item.clearable !== false"
+                    :format="item.format"
+                    :value-format="item.valueFormat"
+                    style="width: 100%"
+                  />
+                  
+                  <!-- 数字输入框 -->
                   <el-input-number
+                    v-else-if="item.type === 'number'"
                     v-model="formData[item.prop]"
                     :min="item.min"
                     :max="item.max"
@@ -125,73 +115,87 @@
                     :placeholder="item.placeholder"
                     style="width: 100%"
                   />
-                  <span class="unit-label">{{ item.unit }}</span>
-                </template>
-                
-                <!-- 单选框组 -->
-                <el-radio-group
-                  v-else-if="item.type === 'radio'"
-                  v-model="formData[item.prop]"
-                  :disabled="item.disabled || mode === 'view'"
-                >
-                  <el-radio
-                    v-for="opt in item.options"
-                    :key="opt.value"
-                    :label="opt.value"
-                    :disabled="opt.disabled"
+                  
+                  <template v-else-if="item.type === 'number-with-unit'">
+                    <el-input-number
+                      v-model="formData[item.prop]"
+                      :min="item.min"
+                      :max="item.max"
+                      :step="item.step"
+                      :precision="item.precision"
+                      :disabled="item.disabled || mode === 'view'"
+                      :controls="item.controls !== false"
+                      :placeholder="item.placeholder"
+                      style="width: 100%"
+                    />
+                    <span class="unit-label">{{ item.unit }}</span>
+                  </template>
+                  
+                  <!-- 单选框组 -->
+                  <el-radio-group
+                    v-else-if="item.type === 'radio'"
+                    v-model="formData[item.prop]"
+                    :disabled="item.disabled || mode === 'view'"
                   >
-                    {{ opt.label }}
-                  </el-radio>
-                </el-radio-group>
-                
-                <!-- 复选框组 -->
-                <el-checkbox-group
-                  v-else-if="item.type === 'checkbox'"
-                  v-model="formData[item.prop]"
-                  :disabled="item.disabled || mode === 'view'"
-                >
-                  <el-checkbox
-                    v-for="opt in item.options"
-                    :key="opt.value"
-                    :label="opt.value"
-                    :disabled="opt.disabled"
+                    <el-radio
+                      v-for="opt in item.options"
+                      :key="opt.value"
+                      :label="opt.value"
+                      :disabled="opt.disabled"
+                    >
+                      {{ opt.label }}
+                    </el-radio>
+                  </el-radio-group>
+                  
+                  <!-- 复选框组 -->
+                  <el-checkbox-group
+                    v-else-if="item.type === 'checkbox'"
+                    v-model="formData[item.prop]"
+                    :disabled="item.disabled || mode === 'view'"
                   >
-                    {{ opt.label }}
-                  </el-checkbox>
-                </el-checkbox-group>
-                
-                <!-- 开关 -->
-                <el-switch
-                  v-else-if="item.type === 'switch'"
-                  v-model="formData[item.prop]"
-                  :disabled="item.disabled || mode === 'view'"
-                  :active-text="item.activeText"
-                  :inactive-text="item.inactiveText"
-                  :active-value="item.activeValue"
-                  :inactive-value="item.inactiveValue"
-                />
-                
-                <!-- 自定义插槽 -->
-                <slot
-                  v-else-if="item.type === 'slot'"
-                  :name="item.slotName || item.prop"
-                  :form="formData"
-                />
-                
-                <!-- 默认为输入框 -->
-                <el-input
-                  v-else
-                  v-model="formData[item.prop]"
-                  :placeholder="item.placeholder"
-                  :disabled="item.disabled || mode === 'view'"
-                  :maxlength="item.maxlength"
-                  :show-word-limit="item.showWordLimit"
-                  :clearable="item.clearable !== false"
-                />
-                
-                <!-- 表单提示 -->
-                <div v-if="item.tip" class="form-tip">{{ item.tip }}</div>
-              </el-form-item>
+                    <el-checkbox
+                      v-for="opt in item.options"
+                      :key="opt.value"
+                      :label="opt.value"
+                      :disabled="opt.disabled"
+                    >
+                      {{ opt.label }}
+                    </el-checkbox>
+                  </el-checkbox-group>
+                  
+                  <!-- 开关 -->
+                  <el-switch
+                    v-else-if="item.type === 'switch'"
+                    v-model="formData[item.prop]"
+                    :disabled="item.disabled || mode === 'view'"
+                    :active-text="item.activeText"
+                    :inactive-text="item.inactiveText"
+                    :active-value="item.activeValue"
+                    :inactive-value="item.inactiveValue"
+                  />
+                  
+                  <!-- 自定义插槽 -->
+                  <slot
+                    v-else-if="item.type === 'slot'"
+                    :name="item.slotName || item.prop"
+                    :form="formData"
+                  />
+                  
+                  <!-- 默认为输入框 -->
+                  <el-input
+                    v-else
+                    v-model="formData[item.prop]"
+                    :placeholder="item.placeholder"
+                    :disabled="item.disabled || mode === 'view'"
+                    :maxlength="item.maxlength"
+                    :show-word-limit="item.showWordLimit"
+                    :clearable="item.clearable !== false"
+                  />
+                  
+                  <!-- 表单提示 -->
+                  <div v-if="item.tip" class="form-tip">{{ item.tip }}</div>
+                </el-form-item>
+              </div>
             </div>
           </template>
         </template>
@@ -414,6 +418,7 @@ export default {
     height: calc(100% - 140px);
     overflow: hidden;
     padding: 0;
+    width: 100%;
   }
 }
 
@@ -422,6 +427,38 @@ export default {
   height: calc(100% - 80px); /* 减去footer高度 */
   overflow-y: auto;
   position: relative;
+  width: calc(100% - 40px);
+  box-sizing: border-box;
+  
+  :deep(.el-form) {
+    width: 100%;
+    
+    .el-form-item__content {
+      width: calc(100% - 100px);
+      box-sizing: border-box;
+    }
+    
+    // 确保插槽内容宽度正确
+    [class^="slot-"],
+    [slot],
+    .el-form-item {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -10px;
+  width: 100%;
+  
+  .el-form-item {
+    padding: 0 10px;
+    margin-bottom: 18px;
+    box-sizing: border-box;
+  }
 }
 
 .form-section {
@@ -473,5 +510,14 @@ export default {
   content: "*";
   color: #F56C6C;
   margin-right: 4px;
+}
+
+::v-deep .el-form-item__content {
+  width: calc(100% - 100px);
+  box-sizing: border-box;
+  
+  > * {
+    width: 100%;
+  }
 }
 </style> 

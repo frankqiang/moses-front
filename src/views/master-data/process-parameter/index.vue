@@ -139,9 +139,7 @@ export default {
       this.listQuery = {
         ...this.listQuery,
         page: 1,
-        keyword: formData.keyword,
-        status: formData.status,
-        furnaceTypeId: formData.furnaceTypeId
+        ...formData
       }
       this.getList()
     },
@@ -150,10 +148,7 @@ export default {
     handleReset() {
       this.listQuery = {
         page: 1,
-        limit: 10,
-        keyword: undefined,
-        status: undefined,
-        furnaceTypeId: undefined
+        limit: 10
       }
       this.getList()
     },

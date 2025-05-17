@@ -8,7 +8,7 @@
     <search-form
       ref="searchForm"
       :items="formItems"
-      :value="form"
+      v-model="form"
       :loading="loading"
       :collapse-rows="1"
       @search="handleSearch"

@@ -7,7 +7,7 @@
   <search-form
     ref="searchForm"
     :items="formItems"
-    :value="formModel"
+    v-model="formModel"
     :loading="loading"
     @search="handleSearch"
     @reset="handleReset"
@@ -95,23 +95,39 @@ export default {
     // 获取炉型列表
     getFurnaceTypes() {
       getFurnaceTypeList().then(response => {
-        const options = (response.data || []).map(item => ({
-          label: item.name,
-          value: item.id
-        }))
-        // 更新炉型选项
         const furnaceTypeItem = this.formItems.find(item => item.prop === 'furnaceTypeId')
         if (furnaceTypeItem) {
+          // 添加"全部"选项
+          const options = [{ label: '全部', value: '' }]
+          
+          // 添加从API获取的选项
+          if (response.data && Array.isArray(response.data)) {
+            const apiOptions = response.data.map(item => ({
+              label: item.name,
+              value: item.id
+            }))
+            options.push(...apiOptions)
+          }
+          
+          // 更新炉型选项
           furnaceTypeItem.options = options
         }
-      }).catch(() => {
+      }).catch((error) => {
+        console.error('获取炉型列表失败:', error)
         this.$message.error('获取炉型列表失败')
       })
     },
     
     // 搜索按钮点击事件
     handleSearch(formData) {
-      this.$emit('search', formData)
+      const searchParams = { ...formData }
+      // 移除空值字段
+      Object.keys(searchParams).forEach(key => {
+        if (searchParams[key] === undefined || searchParams[key] === null || searchParams[key] === '') {
+          delete searchParams[key]
+        }
+      })
+      this.$emit('search', searchParams)
     },
     
     // 重置按钮点击事件

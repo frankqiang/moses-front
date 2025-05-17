@@ -25,6 +25,7 @@
       border
       style="width: 100%"
       :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
+      fit
     >
       <!-- 段序号 -->
       <el-table-column
@@ -173,29 +174,26 @@
         v-if="furnaceCapabilities.hasCoolingValve"
       >
         <template slot-scope="scope">
-          <el-select
+          <el-input-number
             v-model="scope.row.cvSet"
-            placeholder="请选择"
+            :min="0"
+            :max="100"
+            :step="5"
             size="mini"
             :disabled="disabled"
             @change="handleValueChange"
           >
-            <el-option
-              v-for="item in cvSetOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
+            <template #suffix>%</template>
+          </el-input-number>
         </template>
       </el-table-column>
       
       <!-- 操作 -->
       <el-table-column
         label="操作"
-        width="80"
+        width="100"
         align="center"
-        fixed="right"
+  
       >
         <template slot-scope="scope">
           <el-button
@@ -263,8 +261,11 @@ export default {
       ],
       // 吹洗阀选项
       cvSetOptions: [
-        { value: 0, label: '关闭' },
-        { value: 1, label: '开启' }
+        { value: 0, label: '0%' },
+        { value: 25, label: '25%' },
+        { value: 50, label: '50%' },
+        { value: 75, label: '75%' },
+        { value: 100, label: '100%' }
       ]
     }
   },
@@ -362,9 +363,9 @@ export default {
           segment.targetTemp = 100 // 默认冷却到100度
         }
         
-        // 开启吹洗阀
+        // 设置吹洗阀开度为75%
         if (this.furnaceCapabilities.hasCoolingValve) {
-          segment.cvSet = 1
+          segment.cvSet = 75
         }
       }
       
@@ -416,12 +417,15 @@ export default {
 <style lang="scss" scoped>
 .process-segment-table {
   margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
   
   .table-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin: 10px 0;
     
     .header-title {
       font-size: 16px;
@@ -431,6 +435,21 @@ export default {
   
   .table-footer {
     margin-top: 10px;
+  }
+  
+  :deep(.el-table) {
+    width: 100% !important;
+    
+    .el-table__header-wrapper,
+    .el-table__body-wrapper {
+      width: 100% !important;
+    }
+    
+    .el-table__inner-wrapper,
+    .el-table__body,
+    .el-table__header {
+      width: 100% !important;
+    }
   }
 }
 </style>

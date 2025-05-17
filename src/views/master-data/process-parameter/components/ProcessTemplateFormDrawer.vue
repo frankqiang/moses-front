@@ -13,8 +13,9 @@
     :rules="rules"
     :form-sections="formSections"
     :loading="loading"
-    width="1500px"
+    width="1700px"
     direction="rtl"
+    label-width="100px"
     :wrapper-closable="false"
     @submit="handleFormSubmit"
     @close="handleClose"
@@ -166,7 +167,7 @@ export default {
           { required: true, message: '请选择关联炉型', trigger: 'change' }
         ],
         applicableProductIds: [
-          { type: 'array', required: true, message: '请选择适用产品范围', trigger: 'change' }
+          { type: 'array', required: true, message: '请选择适用产品范围', trigger: 'blur' }
         ],
         segments: [
           { type: 'array', required: true, message: '至少需要一个工艺段', trigger: 'change' }
@@ -185,7 +186,9 @@ export default {
             label: '模板ID',
             type: 'input',
             placeholder: '系统自动生成',
-            disabled: true
+            disabled: true,
+            rowClass: 'first-row',
+            colSpan: 6
           },
           {
             prop: 'templateName',
@@ -193,21 +196,27 @@ export default {
             type: 'input',
             placeholder: '请输入工艺模板名称',
             maxlength: 50,
-            showWordLimit: true
+            showWordLimit: true,
+            rowClass: 'first-row',
+            colSpan: 6
           },
           {
             prop: 'version',
             label: '版本号',
             type: 'input',
             placeholder: '系统自动生成',
-            disabled: true
+            disabled: true,
+            rowClass: 'first-row',
+            colSpan: 6
           },
           {
             prop: 'furnaceTypeId',
             label: '关联炉型',
             type: 'select',
             placeholder: '请选择关联炉型',
-            options: this.furnaceTypeOptions
+            options: this.furnaceTypeOptions,
+            rowClass: 'first-row',
+            colSpan: 6
           },
           {
             prop: 'description',
@@ -216,7 +225,9 @@ export default {
             placeholder: '请输入工艺模板描述',
             rows: 3,
             maxlength: 200,
-            showWordLimit: true
+            showWordLimit: true,
+            rowClass: 'second-row',
+            colSpan: 24
           }
         ]
       }
@@ -300,6 +311,16 @@ export default {
         if (val) {
           // 抽屉打开时初始化数据
           this.initData()
+        } else {
+          // 抽屉关闭时重置表单数据和校验状态
+          this.$nextTick(() => {
+            // 完全重置表单数据为初始状态
+            this.form = this.initFormData()
+            // 清除所有验证
+            if (this.$refs.drawerForm && this.$refs.drawerForm.$refs.form) {
+              this.$refs.drawerForm.$refs.form.clearValidate()
+            }
+          })
         }
       },
       immediate: true
@@ -338,9 +359,10 @@ export default {
     
     // 初始化数据
     initData() {
+      // 无论什么情况都先重置表单
+      this.form = this.initFormData()
+      
       if (this.type === 'create') {
-        // 新增模式
-        this.form = this.initFormData()
         // 创建一个默认工艺段
         this.form.segments = [
           {
@@ -354,6 +376,12 @@ export default {
             cvSet: 0
           }
         ]
+        // 清除可能的验证错误
+        this.$nextTick(() => {
+          if (this.$refs.drawerForm && this.$refs.drawerForm.$refs.form) {
+            this.$refs.drawerForm.$refs.form.clearValidate()
+          }
+        })
       } else if (this.templateData) {
         // 编辑或查看模式，复制传入的数据
         const data = JSON.parse(JSON.stringify(this.templateData))
@@ -382,10 +410,18 @@ export default {
             }
           ]
         }
-        
-        // 更新炉型能力配置
-        if (this.form.furnaceTypeId) {
-          this.updateFurnaceCapabilities(this.form.furnaceTypeId)
+      }
+      
+      // 更新炉型能力配置
+      if (this.form.furnaceTypeId) {
+        this.updateFurnaceCapabilities(this.form.furnaceTypeId)
+      } else {
+        // 设置默认炉型能力配置
+        this.furnaceCapabilities = {
+          hasBackZone: true,
+          hasNegativePressure: true,
+          hasCoolingValve: true,
+          maxSegments: 12
         }
       }
     },
@@ -406,14 +442,28 @@ export default {
     // 获取产品列表
     getProducts() {
       getAllProductList().then(response => {
-        const products = response.data || []
+        // 防止response.data.items不是数组
+        if (!response || !response.data || !response.data.items || !Array.isArray(response.data.items)) {
+          console.error('产品列表数据格式不正确', response)
+          this.$message.error('产品列表数据格式不正确')
+          this.productOptions = []
+          return
+        }
+        
+        const products = response.data.items
         this.productOptions = products.map(product => ({
           id: product.id,
           name: `${product.name} (${product.code})`,
           code: product.code
         }))
-      }).catch(() => {
-        this.$message.error('获取产品列表失败')
+      }).catch((error) => {
+        console.error('获取产品列表失败', error)
+        this.$message({
+          message: '获取产品列表失败',
+          type: 'error',
+          duration: 3000
+        })
+        this.productOptions = []
       })
     },
     
@@ -493,6 +543,12 @@ export default {
     handleClose() {
       this.$emit('close')
       this.$emit('update:visible', false)
+      // 重置表单校验状态和数据
+      if (this.$refs.drawerForm) {
+        this.$refs.drawerForm.$refs.form && this.$refs.drawerForm.$refs.form.clearValidate()
+      }
+      // 完全重置表单为初始状态
+      this.form = this.initFormData()
     },
     
     // 获取时间线项目类型
@@ -514,9 +570,32 @@ export default {
 }
 </script>
 
+<style lang="scss">
+/* 使用非scoped样式以确保覆盖Element UI默认样式 */
+.el-transfer-panel {
+  width: 500px !important;
+  min-width: 500px !important;
+  max-width: 500px !important;
+}
+</style>
+
 <style lang="scss" scoped>
 .segments-container {
   margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  
+  // 确保子组件能够撑满容器宽度
+  :deep(.process-curve-chart),
+  :deep(.process-segment-table) {
+    width: 100%;
+  }
+  
+  :deep(.chart-container) {
+    width: 100% !important;
+  }
 }
 
 .transfer-footer {
@@ -548,4 +627,11 @@ export default {
     }
   }
 }
+
+::v-deep(.el-transfer__panel) {  
+  width: 500px !important;
+  flex: none !important;
+}
 </style>
+
+
