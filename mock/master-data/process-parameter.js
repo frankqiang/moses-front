@@ -58,7 +58,9 @@ const furnaceTypes = [
       hasBackZone: true,
       hasNegativePressure: true,
       hasCoolingValve: true,
-      maxSegments: 12
+      maxSegments: 12,
+      maxTemperature: 800,
+      maxHeatingRate: 10
     }
   },
   {
@@ -68,7 +70,9 @@ const furnaceTypes = [
       hasBackZone: true,
       hasNegativePressure: true,
       hasCoolingValve: false,
-      maxSegments: 12
+      maxSegments: 12,
+      maxTemperature: 1200,
+      maxHeatingRate: 8
     }
   },
   {
@@ -78,7 +82,9 @@ const furnaceTypes = [
       hasBackZone: false,
       hasNegativePressure: true,
       hasCoolingValve: true,
-      maxSegments: 8
+      maxSegments: 8,
+      maxTemperature: 700,
+      maxHeatingRate: 15
     }
   },
   {
@@ -88,7 +94,9 @@ const furnaceTypes = [
       hasBackZone: true,
       hasNegativePressure: false,
       hasCoolingValve: true,
-      maxSegments: 10
+      maxSegments: 10,
+      maxTemperature: 900,
+      maxHeatingRate: 12
     }
   }
 ]
@@ -316,10 +324,10 @@ module.exports = [
     type: 'put',
     response: config => {
       const { ids, status } = config.body
-      let updateCount = 0
+      let count = 0
       
-      for (const id of ids) {
-        const index = items.findIndex(item => item.id === id || item.templateId === id)
+      ids.forEach(id => {
+        const index = items.findIndex(item => item.templateId === id || item.id.toString() === id)
         if (index > -1) {
           items[index].status = status
           
@@ -329,34 +337,23 @@ module.exports = [
             items[index].statusName = '待审批'
           } else if (status === 'effective') {
             items[index].statusName = '生效'
-          } else if (status === 'history') {
+          } else {
             items[index].statusName = '历史'
           }
           
-          updateCount++
+          count++
         }
-      }
+      })
       
       return {
         code: 20000,
         data: {
-          count: updateCount
+          count
         }
       }
     }
   },
 
-  // 获取炉型列表
-  {
-    url: '/mes/master-data/furnace-type/list',
-    type: 'get',
-    response: () => {
-      return {
-        code: 20000,
-        data: furnaceTypes
-      }
-    }
-  },
 
   // 提交工艺模板审批
   {

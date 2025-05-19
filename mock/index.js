@@ -10,6 +10,7 @@ const productManagement = require('./master-data/product-management')
 const storageLocation = require('./master-data/storage-location')
 const warehouse = require('./master-data/warehouse')
 const processParameter = require('./master-data/process-parameter')
+const furnaceType = require('./master-data/furnace-type')
 
 const mocks = [
   ...user,
@@ -20,7 +21,8 @@ const mocks = [
   ...productManagement,
   ...storageLocation,
   ...warehouse,
-  ...processParameter
+  ...processParameter,
+  ...furnaceType
 ]
 
 // for front mock

@@ -25,15 +25,28 @@
       <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit" :loading="loading">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
     </template>
     
+    <!-- 炉型选择器 -->
+    <template #furnaceType>
+      <furnace-type-selector
+        v-model="form.furnaceTypeId"
+        :disabled="type === 'view' || loading"
+        :rules="rules.furnaceTypeId"
+        @capabilities-change="handleFurnaceCapabilitiesChange"
+      />
+    </template>
+    
     <!-- 工艺段定义区域 -->
     <template #segments>
       <div class="segments-container">
         <!-- 工艺曲线图表 -->
         <process-curve-chart
+          ref="processCurveChart"
           :segments="form.segments"
-          height="300"
-          :interactive="false"
+          height="350"
           :initial-temp="25"
+          :interactive="type !== 'view'"
+          :downloadable="true"
+          :theme="'light'"
         />
         
         <!-- 工艺段表格 -->
@@ -106,6 +119,7 @@
 import DrawerForm from '@/components/DrawerForm'
 import ProcessCurveChart from './ProcessCurveChart'
 import ProcessSegmentTable from './ProcessSegmentTable'
+import FurnaceTypeSelector from './FurnaceTypeSelector'
 import { getFurnaceTypeList } from '@/api/master-data/process-parameter'
 import { getAllProductList } from '@/api/master-data/product-management'
 
@@ -114,7 +128,8 @@ export default {
   components: {
     DrawerForm,
     ProcessCurveChart,
-    ProcessSegmentTable
+    ProcessSegmentTable,
+    FurnaceTypeSelector
   },
   props: {
     // 抽屉可见性
@@ -212,9 +227,8 @@ export default {
           {
             prop: 'furnaceTypeId',
             label: '关联炉型',
-            type: 'select',
-            placeholder: '请选择关联炉型',
-            options: this.furnaceTypeOptions,
+            type: 'custom',
+            slotName: 'furnaceType',
             rowClass: 'first-row',
             colSpan: 6
           },
@@ -326,14 +340,7 @@ export default {
       immediate: true
     },
     
-    // 监听关联炉型变化
-    'form.furnaceTypeId': {
-      handler(val) {
-        if (val) {
-          this.updateFurnaceCapabilities(val)
-        }
-      }
-    }
+    // 不再需要监听furnaceTypeId变化，现在通过capabilities-change事件处理
   },
   created() {
     // 获取炉型列表
@@ -362,25 +369,39 @@ export default {
       // 无论什么情况都先重置表单
       this.form = this.initFormData()
       
+      // 初始化默认炉型能力配置
+      this.furnaceCapabilities = {
+        hasBackZone: true,
+        hasNegativePressure: true,
+        hasCoolingValve: true,
+        maxSegments: 12,
+        maxTemperature: 1000,
+        maxHeatingRate: 10
+      }
+      
+      // 如果是新增模式
       if (this.type === 'create') {
-        // 创建一个默认工艺段
-        this.form.segments = [
-          {
-            segmentNumber: 1,
-            segmentType: '升温',
-            targetTemp: 300,
-            duration: 120,
-            vfQSet: 30,
-            vfHSet: 30,
-            vfFySet: 10,
-            cvSet: 0
+        // 获取炉型列表并设置默认炉型
+        getFurnaceTypeList().then(response => {
+          const furnaceTypes = response.data || []
+          if (furnaceTypes && furnaceTypes.length > 0) {
+            // 设置默认选择第一个炉型
+            this.form.furnaceTypeId = furnaceTypes[0].id
+            
+            // 更新炉型能力配置
+            if (furnaceTypes[0].capabilities) {
+              this.furnaceCapabilities = furnaceTypes[0].capabilities
+            }
+            
+            // 创建默认工艺段
+            this.createInitialSegment()
+          } else {
+            // 即使没有炉型也创建默认工艺段
+            this.createInitialSegment()
           }
-        ]
-        // 清除可能的验证错误
-        this.$nextTick(() => {
-          if (this.$refs.drawerForm && this.$refs.drawerForm.$refs.form) {
-            this.$refs.drawerForm.$refs.form.clearValidate()
-          }
+        }).catch(() => {
+          // 获取失败也创建默认工艺段
+          this.createInitialSegment()
         })
       } else if (this.templateData) {
         // 编辑或查看模式，复制传入的数据
@@ -397,31 +418,20 @@ export default {
         
         // 如果没有工艺段数据，创建一个默认段
         if (!this.form.segments || !this.form.segments.length) {
-          this.form.segments = [
-            {
-              segmentNumber: 1,
-              segmentType: '升温',
-              targetTemp: 300,
-              duration: 120,
-              vfQSet: 30,
-              vfHSet: 30,
-              vfFySet: 10,
-              cvSet: 0
-            }
-          ]
+          this.createInitialSegment()
         }
-      }
-      
-      // 更新炉型能力配置
-      if (this.form.furnaceTypeId) {
-        this.updateFurnaceCapabilities(this.form.furnaceTypeId)
-      } else {
-        // 设置默认炉型能力配置
-        this.furnaceCapabilities = {
-          hasBackZone: true,
-          hasNegativePressure: true,
-          hasCoolingValve: true,
-          maxSegments: 12
+        
+        // 更新炉型能力配置
+        if (this.form.furnaceTypeId) {
+          getFurnaceTypeList().then(response => {
+            const furnaceTypes = response.data || []
+            const selectedType = furnaceTypes.find(type => type.id === this.form.furnaceTypeId)
+            if (selectedType && selectedType.capabilities) {
+              this.furnaceCapabilities = selectedType.capabilities
+            }
+          }).catch(() => {
+            // 使用默认配置
+          })
         }
       }
     },
@@ -468,35 +478,16 @@ export default {
     },
     
     // 更新炉型能力配置
-    updateFurnaceCapabilities(furnaceTypeId) {
-      const furnaceType = this.furnaceTypeOptions.find(option => option.value === furnaceTypeId)
-      if (!furnaceType) return
-      
-      // 查找完整的炉型数据
-      getFurnaceTypeList().then(response => {
-        const furnaceTypes = response.data || []
-        const selectedType = furnaceTypes.find(type => type.id === furnaceTypeId)
-        
-        if (selectedType && selectedType.capabilities) {
-          this.furnaceCapabilities = selectedType.capabilities
-        } else {
-          // 默认配置
-          this.furnaceCapabilities = {
-            hasBackZone: true,
-            hasNegativePressure: true,
-            hasCoolingValve: true,
-            maxSegments: 12
-          }
-        }
-      }).catch(() => {
-        // 出错时使用默认配置
-        this.furnaceCapabilities = {
-          hasBackZone: true,
-          hasNegativePressure: true,
-          hasCoolingValve: true,
-          maxSegments: 12
-        }
-      })
+    handleFurnaceCapabilitiesChange(capabilities) {
+      // 更新炉型能力配置
+      this.furnaceCapabilities = capabilities || {
+        hasBackZone: true,
+        hasNegativePressure: true,
+        hasCoolingValve: true,
+        maxSegments: 12,
+        maxTemperature: 1000,
+        maxHeatingRate: 10
+      }
     },
     
     // 获取抽屉标题
@@ -513,6 +504,14 @@ export default {
     // 处理工艺段变化
     handleSegmentsChange(segments) {
       this.form.segments = segments
+      // 确保图表更新
+      this.$nextTick(() => {
+        if (this.$refs.processCurveChart) {
+          // 强制更新图表
+          this.$refs.processCurveChart.updateChartData()
+          this.$refs.processCurveChart.updateChart()
+        }
+      })
     },
     
     // 处理表单提交
@@ -565,6 +564,27 @@ export default {
       if (action === '批准') return 'el-icon-check'
       if (action === '驳回') return 'el-icon-close'
       return 'el-icon-more'
+    },
+    
+    // 创建初始工艺段
+    createInitialSegment() {
+      this.form.segments = [{
+        segmentNumber: 1,
+        segmentType: '升温',
+        targetTemp: 300,
+        duration: 1, // 默认使用1小时作为持续时间单位
+        vfQSet: this.furnaceCapabilities.hasBackZone !== false ? 30 : 0,
+        vfHSet: this.furnaceCapabilities.hasBackZone ? 30 : 0,
+        vfFySet: this.furnaceCapabilities.hasNegativePressure ? 10 : 0,
+        cvSet: this.furnaceCapabilities.hasCoolingValve ? 0 : 0 // 确保吹洗阀被设置为0而不是undefined
+      }]
+      
+      // 清除可能的验证错误
+      this.$nextTick(() => {
+        if (this.$refs.drawerForm && this.$refs.drawerForm.$refs.form) {
+          this.$refs.drawerForm.$refs.form.clearValidate()
+        }
+      })
     }
   }
 }
@@ -576,6 +596,13 @@ export default {
   width: 500px !important;
   min-width: 500px !important;
   max-width: 500px !important;
+}
+
+.el-drawer__wrapper {
+  .el-drawer__body {
+    height: calc(100% - 55px);
+    overflow-y: auto;
+  }
 }
 </style>
 

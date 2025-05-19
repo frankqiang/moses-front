@@ -20,6 +20,8 @@ import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import SearchForm from '@/components/SearchForm'
 import DialogForm from '@/components/DialogForm'
+import DrawerForm from '@/components/DrawerForm'
+import TableToolbar from '@/components/TableToolbar'
 import Pagination from '@/components/Pagination'
 import BatchAction from '@/components/BatchAction'
 import RefreshButton from '@/components/RefreshButton'
@@ -49,6 +51,8 @@ Vue.component('StatusTag', StatusTag)
 Vue.component('ActionButtons', ActionButtons)
 Vue.component('SearchForm', SearchForm)
 Vue.component('DialogForm', DialogForm)
+Vue.component('DrawerForm', DrawerForm)
+Vue.component('TableToolbar', TableToolbar)
 Vue.component('Pagination', Pagination)
 Vue.component('BatchAction', BatchAction)
 Vue.component('RefreshButton', RefreshButton)

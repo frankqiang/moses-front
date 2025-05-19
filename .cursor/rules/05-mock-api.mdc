@@ -393,3 +393,68 @@ response: config => {
   })
 }
 ```
+
+# Mock API开发规范
+
+## 接口路径管理和冲突避免
+
+在开发Mock服务时，必须严格遵循以下规则，避免API路径冲突：
+
+### 1. 接口唯一性原则
+- **每个API路径必须且只能在一个Mock文件中定义**
+- 不允许在多个文件中定义相同的API路径，这会导致接口被覆盖
+- 使用[check-mock-api-duplicates.js](mdc:scripts/check-mock-api-duplicates.js)检查API重复问题
+
+### 2. 模块化组织
+- Mock文件按业务模块组织，例如：
+  - [furnace-type.js](mdc:mock/master-data/furnace-type.js) - 炉型管理
+  - [process-parameter.js](mdc:mock/master-data/process-parameter.js) - 工艺参数
+
+### 3. 正确的跨模块引用
+```javascript
+// 正确做法：导入其他模块的数据
+const { someData } = require('./other-module')
+
+// 错误做法：重复定义API
+// {
+//   url: '/api/already-defined-elsewhere',
+//   type: 'get', 
+//   response: () => {...}
+// }
+```
+
+## 数据结构管理
+
+### 1. 保持一致性
+- Mock返回的数据结构必须与前端组件期望的结构完全一致
+- 字段命名应遵循统一规范，避免前后端字段名不一致
+- 必要时添加数据适配层进行转换
+
+### 2. 数据规范
+- 提供合理的默认值和初始数据
+- 模拟真实后端可能的各种响应状态
+- 实现适当的错误处理和消息提示
+
+## 代码质量和维护
+
+### 1. 详细注释
+- 为每个API接口添加清晰的注释
+- 说明接口的用途、参数和返回值
+- 记录修改历史和重要变更
+
+### 2. 测试和调试
+- 使用日志记录关键处理流程
+- 实现合理的错误处理和边界情况
+- 定期审查和更新Mock数据
+
+## 检查清单
+
+开发Mock服务时请确认：
+- [ ] API路径没有在多个文件中重复定义
+- [ ] 数据结构符合前端组件期望格式
+- [ ] 提供了合理的测试数据和错误情况
+- [ ] 添加了充分的注释说明
+- [ ] 运行`npm run check-mock`验证无API冲突
+
+## 完整规范
+完整的Mock服务开发规范请参考[mock-development-rules.md](mdc:mock/mock-development-rules.md)

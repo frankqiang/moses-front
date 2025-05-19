@@ -5,7 +5,100 @@
  */
 <template>
   <div class="process-curve-chart">
+    <div class="chart-header">
+      <div class="chart-title">工艺温度曲线</div>
+      <div class="chart-actions">
+        <el-tooltip content="图表设置" placement="top">
+          <el-button 
+            type="text" 
+            icon="el-icon-setting" 
+            @click="showChartSettings = true"
+          />
+        </el-tooltip>
+        <el-tooltip content="显示/隐藏区域标记" placement="top">
+          <el-button 
+            :type="showAreas ? 'primary' : 'info'"
+            size="mini"
+            icon="el-icon-view" 
+            @click="toggleAreas"
+          >
+            {{ showAreas ? '隐藏区域' : '显示区域' }}
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="显示/隐藏点标记" placement="top">
+          <el-button 
+            :type="showPoints ? 'primary' : 'info'"
+            size="mini"
+            icon="el-icon-view" 
+            @click="togglePoints"
+          >
+            {{ showPoints ? '隐藏标记点' : '显示标记点' }}
+          </el-button>
+        </el-tooltip>
+        <el-button v-if="downloadable" type="text" icon="el-icon-download" @click="downloadChart" title="下载图表"></el-button>
+      </div>
+    </div>
+    
     <div ref="chartContainer" class="chart-container"></div>
+    
+    <!-- 图表设置抽屉 -->
+    <el-drawer
+      title="图表设置"
+      :visible.sync="showChartSettings"
+      direction="rtl"
+      size="300px"
+      :modal="false"
+      :modal-append-to-body="false"
+      :before-close="() => showChartSettings = false"
+    >
+      <div class="settings-container">
+        <div class="settings-section">
+          <h4>显示设置</h4>
+          <el-form label-position="left" label-width="100px" size="mini">
+            <el-form-item label="曲线平滑">
+              <el-switch v-model="smoothCurve" @change="updateChart" />
+            </el-form-item>
+            <el-form-item label="显示标记点">
+              <el-switch v-model="showPoints" @change="updateChart" />
+            </el-form-item>
+            <el-form-item label="显示区域">
+              <el-switch v-model="showAreas" @change="updateChart" />
+            </el-form-item>
+            <el-form-item label="曲线颜色">
+              <el-color-picker 
+                v-model="lineColor" 
+                size="mini" 
+                :predefine="[
+                  '#409EFF', 
+                  '#67C23A', 
+                  '#E6A23C', 
+                  '#F56C6C', 
+                  '#909399', 
+                  '#9B59B6', 
+                  '#2980B9'
+                ]"
+                @change="handleColorChange" 
+              />
+            </el-form-item>
+          </el-form>
+        </div>
+        
+        <div class="settings-section">
+          <h4>坐标轴设置</h4>
+          <el-form label-position="left" label-width="100px" size="mini">
+            <el-form-item label="X轴单位">
+              <el-select v-model="xAxisUnit" placeholder="选择单位" @change="updateChart">
+                <el-option label="分钟" value="分钟" />
+                <el-option label="小时" value="小时" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="Y轴最大值">
+              <el-input-number v-model="yAxisMax" :min="100" :max="2000" :step="100" @change="updateChart" />
+            </el-form-item>
+          </el-form>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -34,12 +127,42 @@ export default {
     interactive: {
       type: Boolean,
       default: false
+    },
+    // 是否允许下载
+    downloadable: {
+      type: Boolean,
+      default: true
+    },
+    // 起始温度（通常为环境温度）
+    initialTemp: {
+      type: Number,
+      default: 25
+    },
+    // 主题
+    theme: {
+      type: String,
+      default: 'light' // 'light' 或 'dark'
     }
   },
   data() {
     return {
       chart: null,
-      resizeObserver: null
+      resizeObserver: null,
+      // 图表设置
+      showChartSettings: false,
+      smoothCurve: true,
+      showPoints: true,
+      showAreas: true,
+      lineColor: '#409EFF',
+      xAxisUnit: '小时', // 默认使用小时作为单位
+      yAxisMax: 1200,
+      // 图表数据
+      currentData: {
+        xAxis: [],
+        yAxis: [],
+        markPoints: [],
+        markAreas: []
+      }
     }
   },
   computed: {
@@ -61,12 +184,10 @@ export default {
     
     // 计算Y轴数据（温度点）
     yAxisData() {
-      if (!this.segments || !this.segments.length) return [0];
+      if (!this.segments || !this.segments.length) return [this.initialTemp];
       
-      // 检查第一个段是否存在
-      if (!this.segments[0]) return [0];
-      
-      const tempPoints = [this.segments[0].targetTemp || 0] // 起始点设为第一段的目标温度
+      // 起始点为初始温度
+      const tempPoints = [this.initialTemp]
       
       this.segments.forEach(segment => {
         if (!segment) return;
@@ -83,21 +204,46 @@ export default {
       const points = []
       let accumulatedTime = 0
       
+      // 添加起始点
+      points.push({
+        name: `起始点`,
+        coord: [0, this.initialTemp],
+        value: this.initialTemp,
+        symbol: 'circle',
+        symbolSize: 8,
+        itemStyle: {
+          color: '#67C23A'
+        },
+        label: {
+          formatter: `起始\n${this.initialTemp}°C`,
+          position: 'top'
+        }
+      })
+      
       this.segments.forEach((segment, index) => {
         if (!segment) return;
         
         // 每段的结束点
         accumulatedTime += segment.duration || 0
+        
+        // 根据段类型确定标记颜色
+        const color = this.getSegmentColor(segment.segmentType)
+        
         points.push({
           name: `${segment.segmentType || '未知'}-${index + 1}`,
           coord: [accumulatedTime, segment.targetTemp || 0],
           value: segment.targetTemp || 0,
+          symbol: 'circle',
+          symbolSize: 8,
           itemStyle: {
-            color: this.getSegmentColor(segment.segmentType)
+            color
           },
           label: {
             formatter: `${segment.segmentType || '未知'}\n${segment.targetTemp || 0}°C`,
-            position: 'top'
+            position: 'top',
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            padding: [3, 5],
+            borderRadius: 2
           }
         })
       })
@@ -120,16 +266,23 @@ export default {
         areas.push({
           name: `段${index + 1}: ${segment.segmentType || '未知'}`,
           itemStyle: {
-            color: this.getSegmentColor(segment.segmentType, 0.1)
+            color: this.getSegmentColor(segment.segmentType, 0.15), // 增加透明度使区域更明显
+            borderColor: this.getSegmentColor(segment.segmentType, 0.5),
+            borderWidth: 1
           },
           label: {
             show: true,
             position: 'insideTop',
-            formatter: `段${index + 1}`
+            formatter: `段${index + 1}: ${segment.segmentType}`,
+            fontSize: 12,
+            color: '#606266',
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            padding: [2, 4],
+            borderRadius: 2
           },
           coord: [
             [startTime, 0],
-            [endTime, 1000] // 使用一个足够大的值覆盖整个Y轴
+            [endTime, this.yAxisMax] // 覆盖整个Y轴
           ]
         })
         
@@ -137,15 +290,22 @@ export default {
       })
       
       return areas
+    },
+    
+    // X轴名称
+    xAxisName() {
+      return `时间 (${this.xAxisUnit})`
     }
   },
   watch: {
     // 监听工艺段数据变化，重新绘制图表
     segments: {
       handler() {
+        this.updateChartData()
         this.updateChart()
       },
-      deep: true
+      deep: true,
+      immediate: true
     },
     // 监听尺寸变化，重新绘制图表
     height() {
@@ -153,6 +313,15 @@ export default {
     },
     width() {
       this.resizeChart()
+    },
+    // 监听主题变化
+    theme() {
+      this.updateChart()
+    },
+    // 监听初始温度变化
+    initialTemp() {
+      this.updateChartData()
+      this.updateChart()
     }
   },
   mounted() {
@@ -217,6 +386,9 @@ export default {
         // 初始化ECharts实例
         this.chart = echarts.init(this.$refs.chartContainer);
         
+        // 更新图表数据
+        this.updateChartData();
+        
         // 绘制图表
         this.updateChart();
         
@@ -228,6 +400,16 @@ export default {
         // 初始化后强制重新调整大小
         this.chart.resize();
       });
+    },
+    
+    // 更新图表数据
+    updateChartData() {
+      this.currentData = {
+        xAxis: this.xAxisData,
+        yAxis: this.yAxisData,
+        markPoints: this.markPoints,
+        markAreas: this.markAreas
+      }
     },
     
     // 更新图表
@@ -242,77 +424,242 @@ export default {
             text: '工艺温度曲线 (无数据)',
             left: 'center'
           },
-          xAxis: { type: 'value', name: '时间 (分钟)' },
+          xAxis: { type: 'value', name: this.xAxisName },
           yAxis: { type: 'value', name: '温度 (°C)' },
           series: [{ type: 'line', data: [] }]
         });
         return;
       }
       
+      // 如果需要转换为小时显示
+      let xAxisData = [...this.currentData.xAxis]
+      let xAxisFormatter = '{value}'
+      
+      if (this.xAxisUnit === '分钟') {
+        // 如果显示分钟，将小时乘以60
+        xAxisData = xAxisData.map(val => val * 60)
+      }
+      
+      // 计算温度最大值和最小值以适应Y轴刻度
+      const maxTemp = Math.max(...this.currentData.yAxis, this.initialTemp)
+      const minTemp = Math.min(...this.currentData.yAxis, this.initialTemp)
+      const yAxisMin = Math.max(0, Math.floor(minTemp / 100) * 100)
+      const yAxisMax = Math.min(this.yAxisMax, Math.ceil(maxTemp / 100) * 100 + 100)
+      
       // 图表配置项
       const option = {
-        title: {
-          text: '工艺温度曲线',
-          left: 'center'
+        backgroundColor: this.theme === 'dark' ? '#1f2d3d' : '#ffffff',
+        grid: {
+          left: '5%',
+          right: '5%',
+          bottom: '15%',
+          top: '15%',
+          containLabel: true
         },
         tooltip: {
           trigger: 'axis',
           formatter: (params) => {
             const timeValue = params[0].axisValue;
-            const tempValue = params[0].data;
-            return `时间: ${timeValue} 分钟<br>温度: ${tempValue} °C`;
+            const tempValue = params[0].data[1]; // 访问Y值
+            return `${this.xAxisName}: ${timeValue}<br>温度: ${tempValue} °C`;
+          },
+          axisPointer: {
+            animation: false,
+            type: 'cross',
+            lineStyle: {
+              color: '#999',
+              width: 1,
+              type: 'dashed'
+            }
+          },
+          backgroundColor: 'rgba(50,50,50,0.8)',
+          borderColor: 'rgba(255,255,255,0.3)',
+          borderWidth: 1,
+          padding: [8, 12],
+          textStyle: {
+            color: '#fff',
+            fontSize: 12
           }
         },
         legend: {
           data: ['温度曲线'],
-          bottom: 10
+          bottom: 10,
+          selectedMode: false,
+          textStyle: {
+            color: this.theme === 'dark' ? '#e6e6e6' : '#333',
+            fontSize: 12,
+            fontWeight: 'bold'
+          },
+          icon: 'roundRect',
+          itemWidth: 24,
+          itemHeight: 12,
+          itemGap: 20
         },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '15%',
-          top: '15%',
-          containLabel: true
+        toolbox: {
+          feature: {
+            dataZoom: {
+              yAxisIndex: 'none'
+            },
+            restore: {},
+            saveAsImage: {
+              pixelRatio: 2
+            }
+          },
+          right: 15,
+          show: this.downloadable,
+          iconStyle: {
+            borderColor: this.theme === 'dark' ? '#aaa' : '#666'
+          },
+          emphasis: {
+            iconStyle: {
+              borderColor: this.theme === 'dark' ? '#fff' : '#333'
+            }
+          }
         },
+        dataZoom: [
+          {
+            type: 'inside',
+            start: 0,
+            end: 100,
+            xAxisIndex: [0],
+            moveOnMouseWheel: true,
+            zoomOnMouseWheel: true,
+            filterMode: 'filter'
+          },
+          {
+            type: 'slider',
+            show: true,
+            xAxisIndex: [0],
+            handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+            handleSize: '80%',
+            height: 25,
+            bottom: '3%',
+            left: 'center',
+            width: '60%'
+          }
+        ],
         xAxis: {
           type: 'value',
-          name: '时间 (分钟)',
+          name: this.xAxisName,
           nameLocation: 'middle',
           nameGap: 30,
+          nameTextStyle: {
+            fontSize: 12,
+            color: this.theme === 'dark' ? '#ccc' : '#333',
+            fontWeight: 'bold'
+          },
           axisLabel: {
-            formatter: '{value}'
+            formatter: xAxisFormatter,
+            color: this.theme === 'dark' ? '#e6e6e6' : '#333',
+            fontSize: 11
+          },
+          axisLine: {
+            lineStyle: {
+              color: this.theme === 'dark' ? '#555' : '#ccc',
+              width: 2
+            }
+          },
+          splitLine: {
+            lineStyle: {
+              color: this.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+              type: 'dashed'
+            }
           }
         },
         yAxis: {
           type: 'value',
           name: '温度 (°C)',
           nameLocation: 'middle',
-          nameGap: 30,
+          nameGap: 40,
+          nameTextStyle: {
+            fontSize: 12,
+            color: this.theme === 'dark' ? '#ccc' : '#333',
+            fontWeight: 'bold'
+          },
+          min: yAxisMin,
+          max: yAxisMax,
           axisLabel: {
-            formatter: '{value}'
+            formatter: '{value}',
+            color: this.theme === 'dark' ? '#e6e6e6' : '#333',
+            fontSize: 11
+          },
+          axisLine: {
+            lineStyle: {
+              color: this.theme === 'dark' ? '#555' : '#ccc',
+              width: 2
+            }
+          },
+          splitLine: {
+            lineStyle: {
+              color: this.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+              type: 'dashed'
+            }
           }
         },
         series: [
           {
             name: '温度曲线',
             type: 'line',
-            data: this.yAxisData,
+            data: this.combineXY(xAxisData, this.currentData.yAxis),
             markPoint: {
-              data: this.markPoints
+              data: this.showPoints ? this.currentData.markPoints : [],
+              symbol: 'pin',
+              symbolSize: 40
             },
             markArea: {
-              data: this.markAreas
+              data: this.showAreas ? this.currentData.markAreas : [],
+              silent: true
             },
             lineStyle: {
-              width: 3,
+              width: 4,
               shadowColor: 'rgba(0,0,0,0.3)',
               shadowBlur: 10,
-              shadowOffsetY: 8
+              shadowOffsetY: 8,
+              color: this.lineColor
             },
             itemStyle: {
-              color: '#409EFF'
+              color: this.lineColor,
+              borderWidth: 2,
+              borderColor: '#fff',
+              shadowColor: 'rgba(0,0,0,0.3)',
+              shadowBlur: 4
             },
-            smooth: true
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [{
+                  offset: 0,
+                  color: this.adjustColorAlpha(this.lineColor, 0.3)
+                }, {
+                  offset: 1,
+                  color: this.adjustColorAlpha(this.lineColor, 0)
+                }]
+              }
+            },
+            smooth: this.smoothCurve,
+            emphasis: {
+              focus: 'series',
+              blurScope: 'coordinateSystem',
+              lineStyle: {
+                width: 6,
+                shadowBlur: 15
+              },
+              itemStyle: {
+                borderWidth: 3,
+                borderColor: '#fff',
+                shadowBlur: 10
+              }
+            },
+            symbol: 'circle',
+            symbolSize: 8,
+            connectNulls: true,
+            animation: true,
+            animationDuration: 1000,
+            animationEasing: 'cubicOut'
           }
         ]
       };
@@ -355,6 +702,35 @@ export default {
       this.$emit('chart-click', params)
     },
     
+    // 切换区域显示
+    toggleAreas() {
+      this.showAreas = !this.showAreas
+      this.updateChart()
+    },
+    
+    // 切换点标记显示
+    togglePoints() {
+      this.showPoints = !this.showPoints
+      this.updateChart()
+    },
+    
+    // 下载图表
+    downloadChart() {
+      if (!this.chart) return
+      
+      // 获取图片base64数据
+      const imgData = this.chart.getDataURL({
+        pixelRatio: 2,
+        backgroundColor: '#fff'
+      })
+      
+      // 创建下载链接
+      const a = document.createElement('a')
+      a.href = imgData
+      a.download = `工艺温度曲线_${new Date().toISOString().slice(0, 10)}.png`
+      a.click()
+    },
+    
     // 根据段类型获取颜色
     getSegmentColor(segmentType, alpha = 1) {
       const colorMap = {
@@ -365,6 +741,48 @@ export default {
       }
       
       return colorMap[segmentType] || `rgba(158, 158, 158, ${alpha})`
+    },
+    
+    // 将X和Y轴数据转换为坐标点数组
+    combineXY(xData, yData) {
+      if (!xData || !xData.length || !yData || !yData.length) return []
+      
+      return xData.map((x, index) => {
+        return [x, yData[index]]
+      })
+    },
+    
+    // 设置色彩透明度的辅助方法
+    adjustColorAlpha(color, alpha) {
+      // 如果已经是rgba格式
+      if (color.startsWith('rgba')) {
+        return color.replace(/rgba\((.+?),\s*[\d\.]+\)/, `rgba($1, ${alpha})`);
+      }
+      
+      // 如果是十六进制格式，先转成rgb
+      if (color.startsWith('#')) {
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+      
+      // 如果是rgb格式
+      if (color.startsWith('rgb')) {
+        return color.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
+      }
+      
+      // 默认返回
+      return `rgba(0, 0, 0, ${alpha})`;
+    },
+    
+    // 处理颜色变化
+    handleColorChange(color) {
+      this.lineColor = color
+      // 强制更新图表
+      this.$nextTick(() => {
+        this.updateChart()
+      })
     }
   }
 }
@@ -375,14 +793,58 @@ export default {
   padding: 10px;
   background-color: #fff;
   border-radius: 4px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
   
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    
+    .chart-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #303133;
+    }
+    
+    .chart-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .el-button {
+        margin-left: 10px;
+        padding: 6px;
+      }
+    }
+  }
+  
   .chart-container {
     width: 100% !important;
     min-height: 300px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #fafafa;
+    border: 1px solid #ebeef5;
+  }
+}
+
+.settings-container {
+  padding: 20px;
+  
+  .settings-section {
+    margin-bottom: 20px;
+    
+    h4 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #303133;
+      font-size: 16px;
+      font-weight: bold;
+    }
   }
 }
 </style>
