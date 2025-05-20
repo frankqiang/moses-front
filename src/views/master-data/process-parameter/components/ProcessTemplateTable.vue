@@ -73,24 +73,16 @@
           </template>
           <!-- 适用产品范围列 -->
           <template v-else-if="col.prop === 'applicableProducts'">
-            <el-popover
-              v-if="scope.row.applicableProducts && scope.row.applicableProducts.length"
-              placement="top"
-              width="300"
-              trigger="click"
-              popper-class="popover-product-list"
+            <overflow-tags-popover
+              :data="scope.row.applicableProducts"
+              :max-show="1"
+              label-key="name"
+              title="适用产品范围"
             >
-              <div class="product-list">
-                <div class="product-list-header">适用产品范围</div>
-                <div v-for="(item, index) in scope.row.applicableProducts" :key="index" class="product-list-item">
-                  <span>{{ index + 1 }}. {{ item.name }} ({{ item.code }})</span>
-                </div>
-              </div>
-              <el-tag slot="reference" type="primary" style="cursor: pointer">
-                {{ scope.row.applicableProducts[0].name }} <span v-if="scope.row.applicableProducts.length > 1">(+{{ scope.row.applicableProducts.length - 1 }})</span>
-              </el-tag>
-            </el-popover>
-            <span v-else>无</span>
+              <template #popover-item="{ item, index }">
+                <span>{{ index + 1 }}. {{ item.name }} ({{ item.code }})</span>
+              </template>
+            </overflow-tags-popover>
           </template>
           <!-- 其他列的默认渲染 -->
           <template v-else-if="col.formatter">
@@ -134,11 +126,13 @@
 import TableToolbar from '@/components/TableToolbar'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import request from '@/utils/request'
+import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 
 export default {
   name: 'ProcessTemplateTable',
   components: {
-    TableToolbar
+    TableToolbar,
+    OverflowTagsPopover
   },
   mixins: [columnSettingsMixin],
   props: {

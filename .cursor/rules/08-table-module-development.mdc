@@ -203,6 +203,34 @@ module-name/
 />
 ```
 
+### 7. OverflowTagsPopover组件
+- **推荐使用**：表格中需要显示多个标签或对象数组时，使用OverflowTagsPopover组件
+- 支持设置最大显示数量，超出部分以弹出框形式展示
+- 支持字符串数组和对象数组两种数据格式
+- 提供多个插槽自定义内容展示
+- 示例用法：
+
+```vue
+<!-- 简单字符串数组 -->
+<overflow-tags-popover
+  :data="row.tags"
+  :max-show="2"
+  title="标签列表"
+/>
+
+<!-- 对象数组 -->
+<overflow-tags-popover
+  :data="row.applicableProducts"
+  :max-show="1"
+  label-key="name"
+  title="适用产品范围"
+>
+  <template #popover-item="{ item, index }">
+    <span>{{ index + 1 }}. {{ item.name }} ({{ item.code }})</span>
+  </template>
+</overflow-tags-popover>
+```
+
 ## 组件集成规范
 
 ### [Module]Table 组件集成
@@ -278,6 +306,16 @@ module-name/
             <!-- 日期列渲染 -->
             <template v-else-if="column.renderType === 'date'">
               {{ formatDate(scope.row[column.prop]) }}
+            </template>
+            
+            <!-- 标签数组渲染 -->
+            <template v-else-if="column.renderType === 'tags'">
+              <overflow-tags-popover
+                :data="scope.row[column.prop]"
+                :max-show="column.maxShow || 2"
+                :label-key="column.labelKey"
+                :title="column.popoverTitle || column.label"
+              />
             </template>
             
             <!-- 默认渲染 -->
@@ -548,6 +586,25 @@ columns() {
       width: '100',
       // 使用StatusTag渲染
       renderType: 'status'
+    },
+    { 
+      prop: 'tags', 
+      label: '标签', 
+      width: '150',
+      // 使用OverflowTagsPopover渲染
+      renderType: 'tags',
+      maxShow: 2,
+      popoverTitle: '所有标签'
+    },
+    { 
+      prop: 'applicableProducts', 
+      label: '适用产品', 
+      width: '180',
+      // 使用OverflowTagsPopover渲染对象数组
+      renderType: 'tags',
+      maxShow: 1,
+      labelKey: 'name',
+      popoverTitle: '适用产品列表'
     },
     // 更多列配置...
   ]

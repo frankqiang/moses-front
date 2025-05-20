@@ -27,6 +27,7 @@ import BatchAction from '@/components/BatchAction'
 import RefreshButton from '@/components/RefreshButton'
 import ImportButton from '@/components/ImportButton'
 import ExportButton from '@/components/ExportButton'
+import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 
 /**
  * If you don't want to use mock-server
@@ -58,6 +59,7 @@ Vue.component('BatchAction', BatchAction)
 Vue.component('RefreshButton', RefreshButton)
 Vue.component('ImportButton', ImportButton)
 Vue.component('ExportButton', ExportButton)
+Vue.component('OverflowTagsPopover', OverflowTagsPopover)
 
 Vue.config.productionTip = false
 

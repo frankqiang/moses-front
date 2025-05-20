@@ -127,17 +127,11 @@
           </template>
           
           <template v-else-if="col.prop === 'supported_atmosphere_types'">
-            <div v-if="scope.row.supported_atmosphere_types && scope.row.supported_atmosphere_types.length">
-              <el-tag 
-                v-for="(type, index) in scope.row.supported_atmosphere_types" 
-                :key="index" 
-                size="mini" 
-                style="margin-right: 4px; margin-bottom: 4px"
-              >
-                {{ type }}
-              </el-tag>
-            </div>
-            <span v-else>-</span>
+            <overflow-tags-popover
+              :data="scope.row.supported_atmosphere_types"
+              :max-show="1"
+              title="支持的气氛类型"
+            />
           </template>
           
           <!-- 关联设备和工艺模板数 -->
@@ -295,6 +289,7 @@ import TableToolbar from '@/components/TableToolbar'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import Pagination from '@/components/Pagination'
 import request from '@/utils/request'
+import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 
 export default {
   name: 'FurnaceTypeTable',
@@ -302,7 +297,8 @@ export default {
     StatusTag,
     ActionButtons,
     TableToolbar,
-    Pagination
+    Pagination,
+    OverflowTagsPopover
   },
   mixins: [columnSettingsMixin],
   props: {
@@ -792,6 +788,24 @@ export default {
     .related-items-content {
       max-height: 150px;
       overflow-y: auto;
+    }
+  }
+  
+  .atmosphere-list {
+    .atmosphere-list-header {
+      font-weight: bold;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #ebeef5;
+    }
+    
+    .atmosphere-list-item {
+      padding: 4px 0;
+      border-bottom: 1px dashed #ebeef5;
+      
+      &:last-child {
+        border-bottom: none;
+      }
     }
   }
 }
