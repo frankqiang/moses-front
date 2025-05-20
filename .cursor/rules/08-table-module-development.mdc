@@ -317,11 +317,13 @@ module-name/
 - 表单抽屉组件应使用全局 DrawerForm 组件
 - 根据不同的模式（create/update/view）展示不同的表单内容
 - 通过 formSections 配置表单分段内容
+- **必须实现"保存并继续"功能**，允许用户在新增模式下连续添加多条记录
 
 ```vue
 <!-- [Module]FormDrawer.vue 组件示例 -->
 <template>
   <drawer-form
+    ref="drawerForm"
     :visible.sync="visibleSync"
     :title="drawerTitle"
     :mode="type"
@@ -330,16 +332,54 @@ module-name/
     :rules="formRules"
     :form-sections="formSections"
     :submit-button-text="submitButtonText"
-    :show-continue-create="type === 'create'"
     @submit="handleSubmit"
     @close="handleClose"
   >
+    <!-- 自定义底部按钮，包含保存并继续功能 -->
+    <template #footer>
+      <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
+      <el-button v-if="type === 'create'" type="primary" @click="handleSubmitAndContinue" :loading="loading">保存并继续</el-button>
+      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit" :loading="loading">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
+    </template>
+    
     <!-- 可选的自定义内容 -->
     <template v-slot:custom-field="{field, formData}">
       <!-- 根据需要自定义表单项 -->
     </template>
   </drawer-form>
 </template>
+
+<script>
+export default {
+  // ... 其他代码
+
+  methods: {
+    // 处理表单提交
+    handleSubmit() {
+      this.$refs.drawerForm.$refs.form.validate((valid) => {
+        if (valid) {
+          // 获取用户实际输入的值
+          const formData = { ...this.$refs.drawerForm.formData }
+          this.$emit('submit', formData, false)
+        }
+      })
+    },
+    
+    // 处理保存并继续
+    handleSubmitAndContinue() {
+      this.$refs.drawerForm.$refs.form.validate((valid) => {
+        if (valid) {
+          // 获取用户实际输入的值
+          const formData = { ...this.$refs.drawerForm.formData }
+          this.$emit('submit', formData, true) // 传递第二个参数表示保存并继续
+        }
+      })
+    },
+    
+    // ... 其他方法
+  }
+}
+</script>
 ```
 
 ## 交互规范
@@ -582,6 +622,7 @@ handleActionClick({ action, row }) {
 - [ ] 搜索表单实现完整搜索和重置功能
 - [ ] 表格实现列设置功能和本地存储
 - [ ] 表单抽屉分段清晰，字段归类合理
+- [ ] **确保实现"保存并继续"功能**，可以连续添加多条记录
 - [ ] 批量操作实现符合规范
 - [ ] 状态管理和切换功能完整
 - [ ] 导入导出功能正常工作
