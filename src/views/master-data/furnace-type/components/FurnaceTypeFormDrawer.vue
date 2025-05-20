@@ -454,14 +454,21 @@ export default {
     
     // 处理表单提交
     handleSubmit() {
-      this.$refs.drawerForm.submitForm()
+      this.$refs.drawerForm.$refs.form.validate((valid) => {
+        if (valid) {
+          // 使用drawerForm组件中的formData获取用户实际输入的值
+          const formData = { ...this.$refs.drawerForm.formData }
+          this.$emit('submit', formData, false)
+        }
+      })
     },
     
     // 处理保存并继续
     handleSubmitAndContinue() {
       this.$refs.drawerForm.$refs.form.validate((valid) => {
         if (valid) {
-          const formData = { ...this.form }
+          // 直接使用this.$refs.drawerForm.formData获取表单中用户输入的实际值
+          const formData = { ...this.$refs.drawerForm.formData }
           this.$emit('submit', formData, true) // 传递第二个参数表示保存并继续
         }
       })

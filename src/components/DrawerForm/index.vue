@@ -415,17 +415,15 @@ export default {
   }
   
   :deep(.el-drawer__body) {
-    height: calc(100% - 140px);
-    overflow: hidden;
+    height: calc(100% - 60px);
+    overflow-y: auto;
     padding: 0;
     width: 100%;
   }
 }
 
 .drawer-content {
-  padding: 20px;
-  height: calc(100% - 80px); /* 减去footer高度 */
-  overflow-y: auto;
+  padding: 20px 20px 80px 20px; /* 添加底部padding，防止底部内容被footer遮挡 */
   position: relative;
   width: calc(100% - 40px);
   box-sizing: border-box;
