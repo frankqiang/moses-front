@@ -526,7 +526,20 @@ export default {
     
     // 处理批量删除事件
     handleBatchDelete(rows) {
-      this.$emit('batch-delete', rows)
+      if (!rows || rows.length === 0) {
+        this.$message.warning('请至少选择一条记录')
+        return
+      }
+      
+      this.$confirm('确认批量删除选中的记录吗？此操作不可恢复', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.$emit('batch-delete', rows)
+      }).catch(() => {
+        this.$message.info('已取消删除操作')
+      })
     },
     
     // 处理批量启用事件
@@ -555,8 +568,6 @@ export default {
         console.warn('行数据为空，无法生成操作按钮');
         return [];
       }
-      
-
       
       const buttons = []
       

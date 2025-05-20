@@ -350,48 +350,6 @@ export default {
         sections.push(relatedSection)
       }
       
-      // 4. 创建和更新信息段（仅编辑和查看时显示）
-      if (this.innerType !== 'create' && this.form.furnace_type_code) {
-        const infoSection = {
-          title: '四、其他信息',
-          items: [
-            {
-              prop: 'createdBy',
-              label: '创建人',
-              type: 'input',
-              disabled: true,
-              rowClass: 'first-row',
-              colSpan: 12
-            },
-            {
-              prop: 'createdAt',
-              label: '创建时间',
-              type: 'input',
-              disabled: true,
-              rowClass: 'first-row',
-              colSpan: 12
-            },
-            {
-              prop: 'updatedBy',
-              label: '最后修改人',
-              type: 'input',
-              disabled: true,
-              rowClass: 'second-row',
-              colSpan: 12
-            },
-            {
-              prop: 'updatedAt',
-              label: '最后修改时间',
-              type: 'input',
-              disabled: true,
-              rowClass: 'second-row',
-              colSpan: 12
-            }
-          ]
-        }
-        sections.push(infoSection)
-      }
-      
       return sections
     }
   },
@@ -501,7 +459,7 @@ export default {
     
     // 处理保存并继续
     handleSubmitAndContinue() {
-      this.$refs.drawerForm.validate((valid) => {
+      this.$refs.drawerForm.$refs.form.validate((valid) => {
         if (valid) {
           const formData = { ...this.form }
           this.$emit('submit', formData, true) // 传递第二个参数表示保存并继续

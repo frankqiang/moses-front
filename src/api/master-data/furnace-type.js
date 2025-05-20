@@ -46,8 +46,9 @@ export function updateFurnaceType(data) {
 // 删除炉型
 export function deleteFurnaceType(id) {
   return request({
-    url: `${baseURL}/delete/${id}`,
-    method: 'delete'
+    url: `${baseURL}/batch-delete`,
+    method: 'delete',
+    data: { ids: [id] }
   })
 }
 
