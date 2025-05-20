@@ -224,10 +224,13 @@ export default {
         })
         this.getList()
       }).catch((error) => {
-        this.$message({
-          type: 'error',
-          message: error.response?.data?.message || '删除失败'
-        })
+        // 处理业务错误
+        if (error && error.code) {
+          this.$message({
+            type: 'error',
+            message: error.message || '删除失败'
+          })
+        }
       })
     },
     
@@ -240,10 +243,13 @@ export default {
         })
         this.getList()
       }).catch((error) => {
+        // 处理业务错误
+        if (error && error.code) {
         this.$message({
           type: 'error',
-          message: error.response?.data?.message || '启用失败'
-        })
+            message: error.message || '启用失败'
+          })
+        }
       })
     },
     
@@ -256,10 +262,13 @@ export default {
         })
         this.getList()
       }).catch((error) => {
-        this.$message({
-          type: 'error',
-          message: error.response?.data?.message || '禁用失败'
+        // 处理业务错误
+        if (error && error.code) {
+          this.$message({
+            type: 'error',
+            message: error.message || '禁用失败'
         })
+        }
       })
     },
     
@@ -297,10 +306,13 @@ export default {
           // 刷新列表
           this.getList()
         }).catch(error => {
+          // 处理业务错误
+          if (error && error.code) {
           this.$message({
             type: 'error',
             message: error.message || '创建失败'
           })
+          }
         })
       } else if (this.drawerType === 'update') {
         // 更新
@@ -326,10 +338,13 @@ export default {
           this.$refs.formDrawer.handleClose()
           this.getList()
         }).catch(error => {
+          // 处理业务错误
+          if (error && error.code) {
           this.$message({
             type: 'error',
             message: error.message || '更新失败'
           })
+          }
         })
       }
     },
@@ -345,16 +360,18 @@ export default {
       const ids = rows.map(row => row.furnace_type_code)
       batchDeleteFurnaceType(ids).then(response => {
         this.$message({
-          type: 'success', 
+          type: 'success',
           message: `成功删除 ${response.data.count || ids.length} 条记录!`
         })
         this.getList()
       }).catch((error) => {
-        // 只显示一次错误消息，优先使用后端返回的错误信息
+        // 处理业务错误，直接使用后端返回的错误信息
+        if (error && error.code) {
         this.$message({
           type: 'error',
-          message: error.response?.data?.message || '批量删除失败'
+            message: error.message || '批量删除失败'
         })
+        }
       })
     },
     
@@ -368,10 +385,13 @@ export default {
         })
         this.getList()
       }).catch((error) => {
+        // 处理业务错误
+        if (error && error.code) {
         this.$message({
           type: 'error',
-          message: error.response?.data?.message || '批量启用失败'
+            message: error.message || '批量启用失败'
         })
+        }
       })
     },
     
@@ -385,10 +405,13 @@ export default {
         })
         this.getList()
       }).catch((error) => {
+        // 处理业务错误
+        if (error && error.code) {
         this.$message({
           type: 'error',
-          message: error.response?.data?.message || '批量禁用失败'
+            message: error.message || '批量禁用失败'
         })
+        }
       })
     },
     

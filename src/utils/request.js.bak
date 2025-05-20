@@ -47,15 +47,14 @@ service.interceptors.response.use(
 
     // if the custom code is not 20000, it is judged as an error.
     if (res.code !== 20000) {
-      // 只处理认证相关的全局错误，业务错误交给业务组件处理
+      Message({
+        message: res.message || 'Error',
+        type: 'error',
+        duration: 5 * 1000
+      })
+
       // 50008: Illegal token; 50012: Other clients logged in; 50014: Token expired;
       if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
-        Message({
-          message: res.message || 'Error',
-          type: 'error',
-          duration: 5 * 1000
-        })
-        
         // to re-login
         MessageBox.confirm('You have been logged out, you can cancel to stay on this page, or log in again', 'Confirm logout', {
           confirmButtonText: 'Re-Login',
@@ -67,18 +66,15 @@ service.interceptors.response.use(
           })
         })
       }
-      
-      // 直接返回错误对象而不是创建新的Error
-      return Promise.reject(res)
+      return Promise.reject(new Error(res.message || 'Error'))
     } else {
       return res
     }
   },
   error => {
     console.log('err' + error) // for debug
-    // 只处理网络级别错误
     Message({
-      message: '网络请求失败，请稍后重试',
+      message: error.message,
       type: 'error',
       duration: 5 * 1000
     })

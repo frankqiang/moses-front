@@ -381,32 +381,16 @@ module-name/
 
 ## 批量操作规范
 
-### 批量操作消息提示
-- **强制要求**：所有批量操作成功后，必须使用统一格式的消息提示
-- 批量操作成功后，直接使用后端返回的消息，如果后端没有返回消息，则使用默认消息
-- 消息提示应使用以下格式：
+> **注意**：详细的消息提示规范已移至[组件架构设计指南](mdc:.cursor/rules/07-component-architecture.mdc#通用消息提示规范)的"通用消息提示规范"章节。本节仅针对表格模块的批量操作提供特定指南。
+
+### 批量操作实现规范
+- 批量操作前应检查是否有选中的行，如无则提示用户
+- 危险操作（如删除）必须进行二次确认
+- 批量操作应向用户展示操作进度或加载状态
+- 操作完成后必须刷新数据列表
 
 ```javascript
-// 批量操作成功处理
-this.$message.success(response.data.message || '批量操作成功')
-```
-
-- 其中：
-  - `response.data.message`：从API响应中获取的成功消息
-  - 如果后端没有返回消息，则使用默认消息作为备选
-
-### 批量操作失败处理
-- 批量操作失败时，应提供明确的错误信息
-- 错误消息应包含API返回的错误信息，或使用默认错误提示
-
-```javascript
-// 批量操作失败处理
-this.$message.error(`批量${operationName}失败: ${error.message || '未知错误'}`)
-```
-
-### 示例实现
-```javascript
-// 批量删除示例
+// 批量删除示例实现
 handleBatchDelete(rows) {
   if (!rows || rows.length === 0) {
     this.$message.warning('请至少选择一条记录')
@@ -419,66 +403,21 @@ handleBatchDelete(rows) {
     type: 'warning'
   }).then(() => {
     this.listLoading = true
-    
-    // 获取选中行的ID列表
     const ids = rows.map(row => row.id)
     
-    batchDeleteXXX(ids).then(response => {
-      this.$message.success(response.data.message || '批量删除成功')
-      this.selectedRows = []
-      
-      // 延迟执行，确保后端处理完成
-      setTimeout(() => {
-        this.getList()
-      }, 300)
+    batchDeleteAPI(ids).then(response => {
+      this.$message.success(response.data.message || `成功删除 ${response.data.count || ids.length} 条记录`)
+      this.refreshList()
     }).catch(error => {
-      console.error('批量删除错误:', error)
-      this.$message.error(`批量删除失败: ${error.message || '未知错误'}`)
+      // 处理业务错误
+      if (error && error.code) {
+        this.$message.error(error.message || '批量删除失败')
+      }
       this.listLoading = false
     })
   }).catch(() => {
     // 取消操作
     this.$message.info('已取消删除操作')
-  })
-}
-
-// 批量更改状态通用方法
-handleBatchStatus(rows, targetStatus, statusText) {
-  if (!rows || rows.length === 0) return
-  
-  // 只选择需要操作的行
-  const targetRows = rows.filter(row => row.status !== targetStatus)
-  
-  if (targetRows.length === 0) {
-    this.$message.info(`所选记录已全部${statusText}，无需操作`)
-    return
-  }
-  
-  this.$confirm(`确认批量${statusText}选中的记录吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    this.listLoading = true
-    batchUpdateStatus({
-      ids: targetRows.map(row => row.id),
-      status: targetStatus
-    }).then(response => {
-      this.$message.success(
-        `批量${statusText}成功：${targetRows.length}条记录已${statusText}`
-      )
-      // 延迟执行，确保后端处理完成
-      setTimeout(() => {
-        this.getList()
-      }, 300)
-    }).catch(error => {
-      console.error(`批量${statusText}错误:`, error)
-      this.$message.error(`批量${statusText}失败: ${error.message || '未知错误'}`)
-      this.listLoading = false
-    })
-  }).catch(() => {
-    // 取消操作
-    this.$message.info('操作已取消')
   })
 }
 ```

@@ -146,6 +146,178 @@ export default {
 
 ## 交互规范
 
+### 通用消息提示规范
+
+#### 基本原则
+- **一致性**: 全系统保持统一的消息提示方式
+- **精确性**: 消息内容应准确传达操作结果
+- **层次性**: 区分不同级别的消息（成功、警告、错误等）
+- **简洁性**: 消息内容应简明扼要
+
+#### 消息类型与使用场景
+1. **成功消息(`success`)**:
+   - 数据创建/更新/删除成功
+   - 批量操作成功完成
+   - 用户操作达到预期效果
+
+2. **警告消息(`warning`)**:
+   - 操作可能导致不可恢复的结果时
+   - 用户输入不完整但不影响继续
+   - 提醒用户注意但不阻止操作
+
+3. **错误消息(`error`)**:
+   - API请求返回错误
+   - 表单验证失败
+   - 操作未能完成
+
+4. **信息消息(`info`)**:
+   - 操作取消通知
+   - 中性提示信息
+   - 系统通知
+
+#### 消息提示实现规范
+
+##### API响应消息处理
+- **成功消息**:
+  - 在业务组件中处理，因为它们与具体业务操作相关
+  - 优先使用API返回的成功消息，如果没有则使用默认消息
+
+```javascript
+// 单个操作成功消息处理
+this.$message({
+  type: 'success',
+  message: response.data.message || '操作成功'
+})
+
+// 批量操作成功消息处理
+this.$message({
+  type: 'success',
+  message: `成功${operationName} ${response.data.count || items.length} 条记录`
+})
+```
+
+- **错误消息**:
+  - 业务错误应在业务组件中处理
+  - 认证错误和网络错误由全局拦截器处理
+  - 错误消息应包含具体错误原因
+
+```javascript
+// 业务错误处理 - 在业务组件中
+.catch(error => {
+  // 处理业务错误
+  if (error && error.code) {
+    this.$message({
+      type: 'error',
+      message: error.message || `${operationName}失败`
+    })
+  }
+})
+```
+
+##### 表单操作消息提示
+```javascript
+// 表单提交成功消息
+submitForm() {
+  this.form.validate(valid => {
+    if (valid) {
+      createResource(this.form).then(response => {
+        this.$message.success('创建成功')
+        this.dialogVisible = false
+        this.refreshList()
+      }).catch(error => {
+        if (error && error.code) {
+          this.$message.error(error.message || '创建失败')
+        }
+      })
+    }
+  })
+}
+```
+
+##### 批量操作消息提示
+```javascript
+// 批量删除示例
+handleBatchDelete(rows) {
+  if (!rows || rows.length === 0) {
+    this.$message.warning('请至少选择一条记录')
+    return
+  }
+  
+  this.$confirm('确认批量删除选中的记录吗？此操作不可恢复', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    const ids = rows.map(row => row.id)
+    
+    batchDeleteAPI(ids).then(response => {
+      this.$message.success(response.data.message || `成功删除 ${response.data.count || ids.length} 条记录`)
+      this.refreshList()
+    }).catch(error => {
+      // 处理业务错误
+      if (error && error.code) {
+        this.$message.error(error.message || '批量删除失败')
+      }
+    })
+  }).catch(() => {
+    this.$message.info('已取消删除操作')
+  })
+}
+```
+
+##### 状态变更消息提示
+```javascript
+// 启用/禁用等状态变更操作
+handleStatusChange(row, newStatus, statusText) {
+  changeStatus(row.id, newStatus).then(() => {
+    this.$message.success(`${statusText}成功`)
+    this.refreshList()
+  }).catch(error => {
+    if (error && error.code) {
+      this.$message.error(error.message || `${statusText}失败`)
+    }
+  })
+}
+```
+
+#### 全局错误处理配置
+项目中的API请求拦截器应配置为：
+- 全局处理认证错误和网络错误
+- 将业务错误直接传递给业务组件处理
+
+```javascript
+// 响应拦截器配置 (src/utils/request.js)
+service.interceptors.response.use(
+  response => {
+    const res = response.data
+
+    if (res.code !== 20000) {
+      // 只在全局处理认证相关错误
+      if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
+        Message.error(res.message || 'Authentication Error')
+        // 处理登出逻辑...
+      }
+      
+      // 其他业务错误直接返回给业务组件处理
+      return Promise.reject(res)
+    } else {
+      return res
+    }
+  },
+  error => {
+    // 只处理网络级别错误
+    Message.error('网络请求失败，请稍后重试')
+    return Promise.reject(error)
+  }
+)
+```
+
+#### 消息显示时长指南
+- 成功消息: 3000ms
+- 警告消息: 4000ms
+- 错误消息: 5000ms
+- 信息消息: 3000ms
+
 ### 通用交互模式
 - 表单提交后显示成功/失败提示
 - 危险操作需要二次确认
