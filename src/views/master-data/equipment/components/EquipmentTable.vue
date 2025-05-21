@@ -85,7 +85,7 @@
         </el-table-column>
       </template>
 
-      <el-table-column label="操作" width="150" align="center" fixed="right">
+      <el-table-column label="操作" width="230" align="center" fixed="right">
         <template slot-scope="scope">
           <!-- 使用ActionButtons组件替代原来的按钮组 -->
           <action-buttons
@@ -278,7 +278,7 @@ export default {
       }
       
       // 使用预设按钮生成操作按钮，并添加状态切换按钮
-      return generateTableButtons(['edit', 'view']).concat([statusToggleButton])
+      return [statusToggleButton].concat(generateTableButtons(['edit', 'view']))
     },
     
     // 处理按钮点击事件
@@ -312,6 +312,19 @@ export default {
       
       if (this.equipmentType === 'FURNACE') {
         specificColumns = [
+          {
+            prop: 'furnaceTypeCode',
+            label: '所属炉型',
+            width: '120',
+            formatter: (value, row) => {
+              if (row.furnaceTypeName) {
+                return row.furnaceTypeCode 
+                  ? `${row.furnaceTypeName} (${row.furnaceTypeCode})`
+                  : row.furnaceTypeName;
+              }
+              return value || '-';
+            }
+          },
           { 
             prop: 'capacity', 
             label: '规格(容量)', 
@@ -449,7 +462,11 @@ export default {
         { 
           prop: 'status', 
           label: '状态', 
-          width: '80'
+          width: '80',
+          formatter: (value) => {
+            const status = parseInt(value);
+            return status === 1 ? '启用' : '禁用';
+          }
         },
         { 
           prop: 'updateTime', 

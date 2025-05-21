@@ -217,7 +217,7 @@ export default {
     
     // 删除
     handleDelete(row) {
-      deleteFurnaceType(row.furnace_type_code).then(() => {
+      deleteFurnaceType(row.furnaceTypeCode).then(() => {
         this.$message({
           type: 'success',
           message: '删除成功!'
@@ -236,7 +236,7 @@ export default {
     
     // 启用
     handleEnable(row) {
-      changeFurnaceTypeStatus(row.furnace_type_code, 'enabled').then(() => {
+      changeFurnaceTypeStatus(row.furnaceTypeCode, 'enabled').then(() => {
         this.$message({
           type: 'success',
           message: '启用成功!'
@@ -255,7 +255,7 @@ export default {
     
     // 禁用
     handleDisable(row) {
-      changeFurnaceTypeStatus(row.furnace_type_code, 'disabled').then(() => {
+      changeFurnaceTypeStatus(row.furnaceTypeCode, 'disabled').then(() => {
         this.$message({
           type: 'success',
           message: '禁用成功!'
@@ -277,18 +277,18 @@ export default {
       if (this.drawerType === 'create') {
         // 创建
         createFurnaceType({
-          furnace_type_code: formData.furnace_type_code,
-          furnace_type_name: formData.furnace_type_name,
+          furnaceTypeCode: formData.furnaceTypeCode,
+          furnaceTypeName: formData.furnaceTypeName,
           status: formData.status,
           description: formData.description,
-          max_segments: formData.max_segments,
-          has_rear_circulation_fan: formData.has_rear_circulation_fan,
-          has_vacuum_fan: formData.has_vacuum_fan,
-          has_purge_valve: formData.has_purge_valve,
-          has_cooling_fan: formData.has_cooling_fan,
-          supported_atmosphere_types: formData.supported_atmosphere_types,
-          max_temperature_limit: formData.max_temperature_limit,
-          has_pressure_control: formData.has_pressure_control
+          maxSegments: formData.maxSegments,
+          hasRearCirculationFan: formData.hasRearCirculationFan,
+          hasVacuumFan: formData.hasVacuumFan,
+          hasPurgeValve: formData.hasPurgeValve,
+          hasCoolingFan: formData.hasCoolingFan,
+          supportedAtmosphereTypes: formData.supportedAtmosphereTypes,
+          maxTemperatureLimit: formData.maxTemperatureLimit,
+          hasPressureControl: formData.hasPressureControl
         }).then(response => {
           this.$message({
             type: 'success',
@@ -317,19 +317,19 @@ export default {
       } else if (this.drawerType === 'update') {
         // 更新
         updateFurnaceType({
-          id: formData.furnace_type_code, // 使用furnace_type_code作为id
-          furnace_type_code: formData.furnace_type_code,
-          furnace_type_name: formData.furnace_type_name,
+          id: formData.furnaceTypeCode, // 使用furnaceTypeCode作为id
+          furnaceTypeCode: formData.furnaceTypeCode,
+          furnaceTypeName: formData.furnaceTypeName,
           status: formData.status,
           description: formData.description,
-          max_segments: formData.max_segments,
-          has_rear_circulation_fan: formData.has_rear_circulation_fan,
-          has_vacuum_fan: formData.has_vacuum_fan,
-          has_purge_valve: formData.has_purge_valve,
-          has_cooling_fan: formData.has_cooling_fan,
-          supported_atmosphere_types: formData.supported_atmosphere_types,
-          max_temperature_limit: formData.max_temperature_limit,
-          has_pressure_control: formData.has_pressure_control
+          maxSegments: formData.maxSegments,
+          hasRearCirculationFan: formData.hasRearCirculationFan,
+          hasVacuumFan: formData.hasVacuumFan,
+          hasPurgeValve: formData.hasPurgeValve,
+          hasCoolingFan: formData.hasCoolingFan,
+          supportedAtmosphereTypes: formData.supportedAtmosphereTypes,
+          maxTemperatureLimit: formData.maxTemperatureLimit,
+          hasPressureControl: formData.hasPressureControl
         }).then(response => {
           this.$message({
             type: 'success',
@@ -357,7 +357,7 @@ export default {
     
     // 批量删除
     handleBatchDelete(rows) {
-      const ids = rows.map(row => row.furnace_type_code)
+      const ids = rows.map(row => row.furnaceTypeCode)
       batchDeleteFurnaceType(ids).then(response => {
         this.$message({
           type: 'success',
@@ -377,7 +377,7 @@ export default {
     
     // 批量启用
     handleBatchEnable(rows) {
-      const ids = rows.map(row => row.furnace_type_code)
+      const ids = rows.map(row => row.furnaceTypeCode)
       batchChangeFurnaceTypeStatus(ids, 'enabled').then(response => {
         this.$message({
           type: 'success',
@@ -397,7 +397,7 @@ export default {
     
     // 批量禁用
     handleBatchDisable(rows) {
-      const ids = rows.map(row => row.furnace_type_code)
+      const ids = rows.map(row => row.furnaceTypeCode)
       batchChangeFurnaceTypeStatus(ids, 'disabled').then(response => {
         this.$message({
           type: 'success',

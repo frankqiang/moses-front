@@ -126,4 +126,13 @@ export function getRelatedTemplates(furnaceTypeId) {
     url: `${baseURL}/related-templates/${furnaceTypeId}`,
     method: 'get'
   })
+}
+
+// 获取所有可用炉型（用于下拉列表选择）
+export function getAllFurnaceTypes() {
+  return request({
+    url: `${baseURL}/list`,
+    method: 'get',
+    params: { status: 'enabled', limit: 999 } // 使用已有的list接口获取所有启用状态的炉型
+  })
 } 

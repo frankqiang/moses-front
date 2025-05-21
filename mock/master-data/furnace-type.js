@@ -5,18 +5,18 @@ const generateFurnaceTypes = () => {
   const types = [
     {
       id: 1,
-      furnace_type_code: 'FT-STANDARD',
-      furnace_type_name: '标准双区退火炉',
+      furnaceTypeCode: 'FT-STANDARD',
+      furnaceTypeName: '标准双区退火炉',
       status: 'enabled',
       description: '标准双区退火炉，支持完整工艺控制',
-      max_segments: 12,
-      has_rear_circulation_fan: true,
-      has_vacuum_fan: true,
-      has_purge_valve: true,
-      has_cooling_fan: true,
-      supported_atmosphere_types: ['纯氮气', '氢氮混合气'],
-      max_temperature_limit: 1000,
-      has_pressure_control: true,
+      maxSegments: 12,
+      hasRearCirculationFan: true,
+      hasVacuumFan: true,
+      hasPurgeValve: true,
+      hasCoolingFan: true,
+      supportedAtmosphereTypes: ['纯氮气', '氢氮混合气'],
+      maxTemperatureLimit: 1000,
+      hasPressureControl: true,
       equipmentCount: 5,
       templateCount: 8,
       createdBy: 'admin',
@@ -26,18 +26,18 @@ const generateFurnaceTypes = () => {
     },
     {
       id: 2,
-      furnace_type_code: 'FT-SINGLE',
-      furnace_type_name: '单区退火炉',
+      furnaceTypeCode: 'FT-SINGLE',
+      furnaceTypeName: '单区退火炉',
       status: 'enabled',
       description: '单区退火炉，适用于简单工艺',
-      max_segments: 8,
-      has_rear_circulation_fan: false,
-      has_vacuum_fan: true,
-      has_purge_valve: true,
-      has_cooling_fan: false,
-      supported_atmosphere_types: ['纯氮气'],
-      max_temperature_limit: 800,
-      has_pressure_control: false,
+      maxSegments: 8,
+      hasRearCirculationFan: false,
+      hasVacuumFan: true,
+      hasPurgeValve: true,
+      hasCoolingFan: false,
+      supportedAtmosphereTypes: ['纯氮气'],
+      maxTemperatureLimit: 800,
+      hasPressureControl: false,
       equipmentCount: 3,
       templateCount: 5,
       createdBy: 'admin',
@@ -47,18 +47,18 @@ const generateFurnaceTypes = () => {
     },
     {
       id: 3,
-      furnace_type_code: 'FT-RAPID',
-      furnace_type_name: '快速退火炉',
+      furnaceTypeCode: 'FT-RAPID',
+      furnaceTypeName: '快速退火炉',
       status: 'enabled',
       description: '快速退火炉，支持高温和快速升温',
-      max_segments: 12,
-      has_rear_circulation_fan: true,
-      has_vacuum_fan: true,
-      has_purge_valve: true,
-      has_cooling_fan: true,
-      supported_atmosphere_types: ['纯氮气', '氢氮混合气', '真空'],
-      max_temperature_limit: 1200,
-      has_pressure_control: true,
+      maxSegments: 12,
+      hasRearCirculationFan: true,
+      hasVacuumFan: true,
+      hasPurgeValve: true,
+      hasCoolingFan: true,
+      supportedAtmosphereTypes: ['纯氮气', '氢氮混合气', '真空'],
+      maxTemperatureLimit: 1200,
+      hasPressureControl: true,
       equipmentCount: 2,
       templateCount: 4,
       createdBy: 'admin',
@@ -68,18 +68,18 @@ const generateFurnaceTypes = () => {
     },
     {
       id: 4,
-      furnace_type_code: 'FT-BASIC',
-      furnace_type_name: '基础型退火炉',
+      furnaceTypeCode: 'FT-BASIC',
+      furnaceTypeName: '基础型退火炉',
       status: 'disabled',
       description: '基础型退火炉，功能较为简单，适用于简单工艺和培训',
-      max_segments: 5,
-      has_rear_circulation_fan: false,
-      has_vacuum_fan: false,
-      has_purge_valve: false,
-      has_cooling_fan: false,
-      supported_atmosphere_types: ['纯氮气'],
-      max_temperature_limit: 600,
-      has_pressure_control: false,
+      maxSegments: 5,
+      hasRearCirculationFan: false,
+      hasVacuumFan: false,
+      hasPurgeValve: false,
+      hasCoolingFan: false,
+      supportedAtmosphereTypes: ['纯氮气'],
+      maxTemperatureLimit: 600,
+      hasPressureControl: false,
       equipmentCount: 0,
       templateCount: 1,
       createdBy: 'admin',
@@ -89,18 +89,18 @@ const generateFurnaceTypes = () => {
     },
     {
       id: 5,
-      furnace_type_code: 'FT-HIGH-TEMP',
-      furnace_type_name: '高温退火炉',
+      furnaceTypeCode: 'FT-HIGH-TEMP',
+      furnaceTypeName: '高温退火炉',
       status: 'enabled',
       description: '高温退火炉，支持1500°C极高温工艺',
-      max_segments: 15,
-      has_rear_circulation_fan: true,
-      has_vacuum_fan: true,
-      has_purge_valve: true,
-      has_cooling_fan: true,
-      supported_atmosphere_types: ['纯氮气', '氢氮混合气', '真空', '氦气'],
-      max_temperature_limit: 1500,
-      has_pressure_control: true,
+      maxSegments: 15,
+      hasRearCirculationFan: true,
+      hasVacuumFan: true,
+      hasPurgeValve: true,
+      hasCoolingFan: true,
+      supportedAtmosphereTypes: ['纯氮气', '氢氮混合气', '真空', '氦气'],
+      maxTemperatureLimit: 1500,
+      hasPressureControl: true,
       equipmentCount: 1,
       templateCount: 3,
       createdBy: 'admin',
@@ -114,16 +114,16 @@ const generateFurnaceTypes = () => {
   const randomTypes = Mock.mock({
     'items|20': [{
       'id|+1': 6,
-      'furnace_type_code': () => `FT-${Mock.Random.string('upper', 3, 5)}-${Mock.Random.integer(100, 999)}`,
-      'furnace_type_name': () => `${Mock.Random.ctitle(2, 4)}退火炉`,
+      'furnaceTypeCode': () => `FT-${Mock.Random.string('upper', 3, 5)}-${Mock.Random.integer(100, 999)}`,
+      'furnaceTypeName': () => `${Mock.Random.ctitle(2, 4)}退火炉`,
       'status|1': ['enabled', 'disabled'],
       'description': '@csentence(10, 20)',
-      'max_segments|5-20': 10,
-      'has_rear_circulation_fan|1': [true, false],
-      'has_vacuum_fan|1': [true, false],
-      'has_purge_valve|1': [true, false],
-      'has_cooling_fan|1': [true, false],
-      'supported_atmosphere_types': () => {
+      'maxSegments|5-20': 10,
+      'hasRearCirculationFan|1': [true, false],
+      'hasVacuumFan|1': [true, false],
+      'hasPurgeValve|1': [true, false],
+      'hasCoolingFan|1': [true, false],
+      'supportedAtmosphereTypes': () => {
         const options = ['纯氮气', '氢氮混合气', '真空', '氦气'];
         const count = Mock.Random.integer(1, 4);
         const selected = [];
@@ -135,8 +135,8 @@ const generateFurnaceTypes = () => {
         }
         return selected;
       },
-      'max_temperature_limit|600-1500': 1000,
-      'has_pressure_control|1': [true, false],
+      'maxTemperatureLimit|600-1500': 1000,
+      'hasPressureControl|1': [true, false],
       'equipmentCount|0-5': 0,
       'templateCount|0-8': 0,
       'createdBy': '@cname',
@@ -217,8 +217,8 @@ module.exports = [
       if (keyword) {
         const lowerKeyword = keyword.toLowerCase()
         filteredData = filteredData.filter(
-          item => (item.furnace_type_code && item.furnace_type_code.toLowerCase().includes(lowerKeyword)) || 
-                 (item.furnace_type_name && item.furnace_type_name.toLowerCase().includes(lowerKeyword))
+          item => (item.furnaceTypeCode && item.furnaceTypeCode.toLowerCase().includes(lowerKeyword)) || 
+                 (item.furnaceTypeName && item.furnaceTypeName.toLowerCase().includes(lowerKeyword))
         )
       }
 
@@ -248,7 +248,7 @@ module.exports = [
     type: 'get',
     response: config => {
       const { id } = config.params
-      const furnaceType = furnaceTypes.find(item => item.furnace_type_code === id)
+      const furnaceType = furnaceTypes.find(item => item.furnaceTypeCode === id)
 
       if (!furnaceType) {
         return {
@@ -269,10 +269,10 @@ module.exports = [
     url: '/mes/master-data/furnace-type/create',
     type: 'post',
     response: config => {
-      const { furnace_type_code } = config.body
+      const { furnaceTypeCode } = config.body
 
       // 检查编码是否重复
-      if (furnaceTypes.some(item => item.furnace_type_code === furnace_type_code)) {
+      if (furnaceTypes.some(item => item.furnaceTypeCode === furnaceTypeCode)) {
         return {
           code: 40001,
           message: '炉型编码已存在'
@@ -299,7 +299,7 @@ module.exports = [
       return {
         code: 20000,
         data: {
-          id: furnace_type_code,
+          id: furnaceTypeCode,
           message: '创建成功'
         }
       }
@@ -311,8 +311,8 @@ module.exports = [
     url: '/mes/master-data/furnace-type/update',
     type: 'put',
     response: config => {
-      const { id, furnace_type_code } = config.body
-      const index = furnaceTypes.findIndex(item => item.furnace_type_code === id)
+      const { id, furnaceTypeCode } = config.body
+      const index = furnaceTypes.findIndex(item => item.furnaceTypeCode === id)
 
       if (index === -1) {
         return {
@@ -322,8 +322,8 @@ module.exports = [
       }
 
       // 检查编码是否与其他记录重复
-      if (furnace_type_code !== id && 
-          furnaceTypes.some(item => item.furnace_type_code === furnace_type_code)) {
+      if (furnaceTypeCode !== id && 
+          furnaceTypes.some(item => item.furnaceTypeCode === furnaceTypeCode)) {
         return {
           code: 40001,
           message: '炉型编码已存在'
@@ -366,7 +366,7 @@ module.exports = [
       const pathId = config.url.split('/').pop()
       const furnaceTypeId = id || pathId
       
-      const index = furnaceTypes.findIndex(item => item.furnace_type_code === furnaceTypeId)
+      const index = furnaceTypes.findIndex(item => item.furnaceTypeCode === furnaceTypeId)
 
       if (index === -1) {
         return {
@@ -401,7 +401,7 @@ module.exports = [
     type: 'put',
     response: config => {
       const { id, status } = config.body
-      const index = furnaceTypes.findIndex(item => item.furnace_type_code === id)
+      const index = furnaceTypes.findIndex(item => item.furnaceTypeCode === id)
 
       if (index === -1) {
         return {
@@ -440,7 +440,7 @@ module.exports = [
 
       // 检查是否有关联设备或模板
       const hasRelations = furnaceTypes.some(item => 
-        ids.includes(item.furnace_type_code) && (item.equipmentCount > 0 || item.templateCount > 0)
+        ids.includes(item.furnaceTypeCode) && (item.equipmentCount > 0 || item.templateCount > 0)
       )
 
       if (hasRelations) {
@@ -455,7 +455,7 @@ module.exports = [
 
       // 删除炉型
       for (let i = furnaceTypes.length - 1; i >= 0; i--) {
-        if (ids.includes(furnaceTypes[i].furnace_type_code)) {
+        if (ids.includes(furnaceTypes[i].furnaceTypeCode)) {
           furnaceTypes.splice(i, 1)
         }
       }
@@ -492,7 +492,7 @@ module.exports = [
       let count = 0
       
       furnaceTypes.forEach(item => {
-        if (ids.includes(item.furnace_type_code)) {
+        if (ids.includes(item.furnaceTypeCode)) {
           item.status = status
           item.updatedBy = 'admin'
           item.updatedAt = formattedTime
@@ -565,7 +565,7 @@ module.exports = [
       const { id } = config.params
 
       // 检查炉型是否存在
-      const furnaceType = furnaceTypes.find(item => item.furnace_type_code === id)
+      const furnaceType = furnaceTypes.find(item => item.furnaceTypeCode === id)
       if (!furnaceType) {
         return {
           code: 40004,
@@ -601,7 +601,7 @@ module.exports = [
       const { id } = config.params
 
       // 检查炉型是否存在
-      const furnaceType = furnaceTypes.find(item => item.furnace_type_code === id)
+      const furnaceType = furnaceTypes.find(item => item.furnaceTypeCode === id)
       if (!furnaceType) {
         return {
           code: 40004,

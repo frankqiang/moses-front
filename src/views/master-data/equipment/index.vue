@@ -265,47 +265,95 @@ export default {
     
     // 表单提交
     handleFormSubmit(formData, continueCreate) {
-      // 设置设备类型
-      formData.equipmentType = this.currentEquipmentType
+      this.listLoading = true
       
-      console.log('提交表单数据:', formData)
+      // 打印详细表单数据以便诊断
+      console.log('父组件接收到的表单数据:', JSON.stringify(formData, null, 2))
+      
+      // 增加记录，查看表单字段是否被修改
+      const fieldsWithValues = Object.entries(formData)
+        .filter(([key, value]) => {
+          // 检查字段是否有值（非空字符串、非undefined、非null）
+          if (typeof value === 'string') {
+            return value.trim() !== ''
+          }
+          return value !== undefined && value !== null
+        })
+        .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+      
+      console.log('表单中有效字段:', fieldsWithValues.join(', '))
+      
+      // 确保数据完整性
+      if (!formData || !formData.name || formData.name.trim() === '') {
+        this.$message.warning('设备名称不能为空，提交中止')
+        this.listLoading = false
+        return
+      }
+      
+      // 设备类型特定校验
+      if (formData.equipmentType === 'FURNACE' && (!formData.plcAddress || formData.plcAddress.trim() === '')) {
+        this.$message.warning('PLC通讯地址不能为空，提交中止')
+        this.listLoading = false
+        return
+      }
+      
+      if (formData.equipmentType === 'CRANE' && (!formData.controlInterface || formData.controlInterface.trim() === '')) {
+        this.$message.warning('控制系统接口不能为空，提交中止')
+        this.listLoading = false
+        return
+      }
+      
+      // 确保必须字段存在
+      if (!formData.equipmentType) {
+        formData.equipmentType = this.currentEquipmentType
+      }
+      
+      // 确保status是数字类型
+      formData.status = Number(formData.status)
+      
+      // 打印最终处理后的数据
+      console.log('处理后的表单数据:', JSON.stringify(formData, null, 2))
       
       if (this.drawerType === 'create') {
         // 新增
-        createEquipment(formData).then(response => {
-          this.$message.success('新增设备成功')
-          
-          if (continueCreate) {
-            // 保存并继续
-            this.currentEquipment = null
-            this.$refs.formDrawer.resetForm()
-          } else {
-            // 关闭抽屉
-            this.drawerVisible = false
-          }
-          
-          // 强制重新获取列表
-          setTimeout(() => {
+        createEquipment(formData)
+          .then(response => {
+            this.listLoading = false
+            this.$message.success('新增设备成功')
+            
+            if (continueCreate) {
+              // 保存并继续，重置表单
+              this.currentEquipment = null
+              this.$refs.formDrawer.resetForm()
+            } else {
+              // 关闭抽屉
+              this.drawerVisible = false
+            }
+            
+            // 刷新列表
             this.getList()
-          }, 300)
-        }).catch(error => {
-          console.error('新增设备错误:', error)
-          this.$message.error(`新增失败: ${error.message || '未知错误'}`)
-        })
+          })
+          .catch(error => {
+            this.listLoading = false
+            console.error('新增设备错误:', error)
+            this.$message.error(error.message || '新增设备失败，请重试')
+          })
       } else if (this.drawerType === 'update') {
         // 更新
-        updateEquipment(formData).then(response => {
-          this.$message.success('更新设备成功')
-          this.drawerVisible = false
-          
-          // 强制重新获取列表
-          setTimeout(() => {
+        updateEquipment(formData)
+          .then(response => {
+            this.listLoading = false
+            this.$message.success('更新设备成功')
+            this.drawerVisible = false
+            
+            // 刷新列表
             this.getList()
-          }, 300)
-        }).catch(error => {
-          console.error('更新设备错误:', error)
-          this.$message.error(`更新失败: ${error.message || '未知错误'}`)
-        })
+          })
+          .catch(error => {
+            this.listLoading = false
+            console.error('更新设备错误:', error)
+            this.$message.error(error.message || '更新设备失败，请重试')
+          })
       }
     },
     

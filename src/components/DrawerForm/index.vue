@@ -19,7 +19,7 @@
     <div class="drawer-content" ref="drawerContent">
       <el-form
         ref="form"
-        :model="formData"
+        :model="computedFormData"
         :rules="rules"
         :label-width="labelWidth"
         :size="size"
@@ -27,7 +27,7 @@
         @submit.native.prevent="submitForm"
       >
         <!-- 表单内容插槽 -->
-        <slot :form="formData"></slot>
+        <slot :form="computedFormData"></slot>
         
         <!-- 默认表单项，如果没有提供自定义插槽 -->
         <template v-if="!$slots.default">
@@ -48,24 +48,32 @@
                   <!-- 输入框 -->
                   <el-input
                     v-if="item.type === 'input'"
-                    v-model="formData[item.prop]"
+                    v-model="computedFormData[item.prop]"
                     :placeholder="item.placeholder"
                     :disabled="item.disabled || mode === 'view'"
                     :maxlength="item.maxlength"
                     :show-word-limit="item.showWordLimit"
                     :clearable="item.clearable !== false"
+                    @input="val => updateFormField(item.prop, val)"
                   />
                   
                   <!-- 选择器 -->
                   <el-select
                     v-else-if="item.type === 'select'"
-                    v-model="formData[item.prop]"
+                    v-model="computedFormData[item.prop]"
                     :placeholder="item.placeholder"
                     :disabled="item.disabled || mode === 'view'"
                     :clearable="item.clearable !== false"
                     :multiple="item.multiple"
                     :collapse-tags="item.collapseTags"
                     style="width: 100%"
+                    @change="val => { 
+                      updateFormField(item.prop, val);
+                      // 如果有自定义事件处理器，先调用它
+                      if (item.events && typeof item.events.change === 'function') {
+                        item.events.change(val);
+                      }
+                    }"
                   >
                     <el-option
                       v-for="opt in item.options"
@@ -79,7 +87,7 @@
                   <!-- 文本域 -->
                   <el-input
                     v-else-if="item.type === 'textarea'"
-                    v-model="formData[item.prop]"
+                    v-model="computedFormData[item.prop]"
                     type="textarea"
                     :placeholder="item.placeholder"
                     :disabled="item.disabled || mode === 'view'"
@@ -87,12 +95,13 @@
                     :show-word-limit="item.showWordLimit"
                     :rows="item.rows || 3"
                     :clearable="item.clearable !== false"
+                    @input="val => updateFormField(item.prop, val)"
                   />
                   
                   <!-- 日期选择器 -->
                   <el-date-picker
                     v-else-if="item.type === 'date'"
-                    v-model="formData[item.prop]"
+                    v-model="computedFormData[item.prop]"
                     :type="item.dateType || 'date'"
                     :placeholder="item.placeholder"
                     :disabled="item.disabled || mode === 'view'"
@@ -100,12 +109,13 @@
                     :format="item.format"
                     :value-format="item.valueFormat"
                     style="width: 100%"
+                    @change="val => updateFormField(item.prop, val)"
                   />
                   
                   <!-- 数字输入框 -->
                   <el-input-number
                     v-else-if="item.type === 'number'"
-                    v-model="formData[item.prop]"
+                    v-model="computedFormData[item.prop]"
                     :min="item.min"
                     :max="item.max"
                     :step="item.step"
@@ -114,11 +124,12 @@
                     :controls="item.controls !== false"
                     :placeholder="item.placeholder"
                     style="width: 100%"
+                    @change="val => updateFormField(item.prop, val)"
                   />
                   
                   <template v-else-if="item.type === 'number-with-unit'">
                     <el-input-number
-                      v-model="formData[item.prop]"
+                      v-model="computedFormData[item.prop]"
                       :min="item.min"
                       :max="item.max"
                       :step="item.step"
@@ -127,6 +138,7 @@
                       :controls="item.controls !== false"
                       :placeholder="item.placeholder"
                       style="width: 100%"
+                      @change="val => updateFormField(item.prop, val)"
                     />
                     <span class="unit-label">{{ item.unit }}</span>
                   </template>
@@ -134,8 +146,9 @@
                   <!-- 单选框组 -->
                   <el-radio-group
                     v-else-if="item.type === 'radio'"
-                    v-model="formData[item.prop]"
+                    v-model="computedFormData[item.prop]"
                     :disabled="item.disabled || mode === 'view'"
+                    @change="val => updateFormField(item.prop, val)"
                   >
                     <el-radio
                       v-for="opt in item.options"
@@ -150,8 +163,9 @@
                   <!-- 复选框组 -->
                   <el-checkbox-group
                     v-else-if="item.type === 'checkbox'"
-                    v-model="formData[item.prop]"
+                    v-model="computedFormData[item.prop]"
                     :disabled="item.disabled || mode === 'view'"
+                    @change="val => updateFormField(item.prop, val)"
                   >
                     <el-checkbox
                       v-for="opt in item.options"
@@ -166,30 +180,32 @@
                   <!-- 开关 -->
                   <el-switch
                     v-else-if="item.type === 'switch'"
-                    v-model="formData[item.prop]"
+                    v-model="computedFormData[item.prop]"
                     :disabled="item.disabled || mode === 'view'"
                     :active-text="item.activeText"
                     :inactive-text="item.inactiveText"
                     :active-value="item.activeValue"
                     :inactive-value="item.inactiveValue"
+                    @change="val => updateFormField(item.prop, val)"
                   />
                   
                   <!-- 自定义插槽 -->
                   <slot
                     v-else-if="item.type === 'slot'"
                     :name="item.slotName || item.prop"
-                    :form="formData"
+                    :form="computedFormData"
                   />
                   
                   <!-- 默认为输入框 -->
                   <el-input
                     v-else
-                    v-model="formData[item.prop]"
+                    v-model="computedFormData[item.prop]"
                     :placeholder="item.placeholder"
                     :disabled="item.disabled || mode === 'view'"
                     :maxlength="item.maxlength"
                     :show-word-limit="item.showWordLimit"
                     :clearable="item.clearable !== false"
+                    @input="val => updateFormField(item.prop, val)"
                   />
                   
                   <!-- 表单提示 -->
@@ -307,6 +323,18 @@ export default {
     }
   },
   computed: {
+    // 计算属性：实时获取表单数据
+    computedFormData: {
+      get() {
+        return this.formData
+      },
+      set(val) {
+        this.formData = val
+        // 重要: 每次更改时立即通知父组件
+        this.$emit('form-change', cloneDeep(val))
+      }
+    },
+    
     // 表单标题
     formTitle() {
       if (this.title) return this.title
@@ -341,6 +369,16 @@ export default {
         }
       },
       deep: true
+    },
+    // 监听内部formData变化，双向同步
+    formData: {
+      handler(val) {
+        if (this.drawerVisible && val && Object.keys(val).length > 0) {
+          // 向父组件发送表单数据更新事件
+          this.$emit('form-change', cloneDeep(val))
+        }
+      },
+      deep: true
     }
   },
   methods: {
@@ -351,10 +389,17 @@ export default {
         return
       }
       
+      console.log('DrawerForm准备提交的数据:', JSON.stringify(this.computedFormData, null, 2))
+      
       this.$refs.form.validate(valid => {
         if (valid) {
-          this.$emit('submit', cloneDeep(this.formData), false)
+          // 在提交前确保所有表单项都被同步到formData
+          this.$nextTick(() => {
+            console.log('验证通过，最终提交的表单数据:', JSON.stringify(this.computedFormData, null, 2))
+            this.$emit('submit', cloneDeep(this.computedFormData), false)
+          })
         } else {
+          console.log('表单验证未通过')
           return false
         }
       })
@@ -364,7 +409,7 @@ export default {
     handleSubmitAndContinue() {
       this.$refs.form.validate(valid => {
         if (valid) {
-          this.$emit('submit', cloneDeep(this.formData), true)
+          this.$emit('submit', cloneDeep(this.computedFormData), true)
         } else {
           return false
         }
@@ -383,10 +428,18 @@ export default {
       done()
     },
     
-    // 抽屉打开时
+    // 抽屉打开时获取最新数据
     handleOpen() {
       this.formData = cloneDeep(this.data)
       this.originFormData = cloneDeep(this.data)
+      
+      // 关键：确保表单数据被正确初始化
+      this.$nextTick(() => {
+        // console.log('表单数据已初始化:', this.computedFormData)
+        // 强制将从父组件传入的数据更新到表单模型
+        this.$emit('form-change', cloneDeep(this.computedFormData))
+      })
+      
       this.$emit('open')
     },
     
@@ -400,7 +453,18 @@ export default {
     // 重置表单
     resetForm() {
       this.$refs.form && this.$refs.form.resetFields()
-      this.formData = cloneDeep(this.originFormData)
+      this.computedFormData = cloneDeep(this.originFormData)
+    },
+    
+    // 监听用户输入并实时更新表单数据
+    updateFormField(field, value) {
+      if (this.computedFormData) {
+        console.log(`表单字段更新: ${field} = `, value)
+        // 使用计算属性的setter，它会自动触发通知
+        const newData = {...this.computedFormData}
+        newData[field] = value
+        this.computedFormData = newData
+      }
     }
   }
 }

@@ -19,6 +19,8 @@
     :wrapper-closable="false"
     @submit="handleFormSubmit"
     @close="handleClose"
+    @open="handleDrawerOpen"
+    @form-change="handleFormChange"
   >
     <template #footer>
       <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
@@ -30,6 +32,7 @@
 
 <script>
 import DrawerForm from '@/components/DrawerForm'
+import { getAllFurnaceTypes } from '@/api/master-data/furnace-type'
 
 export default {
   name: 'EquipmentFormDrawer',
@@ -73,7 +76,11 @@ export default {
         { label: 'B区缓存位', value: 'B区缓存位' },
         { label: 'C区装车位', value: 'C区装车位' },
         { label: 'D区检查台', value: 'D区检查台' }
-      ]
+      ],
+      // 炉型列表选项
+      furnaceTypeOptions: [],
+      // 炉型列表加载状态
+      furnaceTypesLoading: false
     }
   },
   computed: {
@@ -90,6 +97,9 @@ export default {
           { required: true, message: '请选择设备状态', trigger: 'change' }
         ],
         // 退火炉特有字段验证
+        furnaceTypeCode: [
+          { required: this.equipmentType === 'FURNACE', message: '请选择所属炉型', trigger: 'change' }
+        ],
         capacity: [
           { required: this.equipmentType === 'FURNACE', message: '请输入规格容量', trigger: 'blur' }
         ],
@@ -162,6 +172,20 @@ export default {
       
       if (this.equipmentType === 'FURNACE') {
         specificSection.items = [
+          {
+            prop: 'furnaceTypeCode',
+            label: '所属炉型',
+            type: 'select',
+            placeholder: '请选择炉型',
+            options: this.furnaceTypeOptions,
+            loading: this.furnaceTypesLoading,
+            filterable: true,
+            clearable: true,
+            tip: '选择退火炉所属的炉型，关联炉型能力参数',
+            events: {
+              change: this.handleFurnaceTypeChange
+            }
+          },
           {
             prop: 'capacity',
             label: '规格(容量)',
@@ -363,10 +387,16 @@ export default {
     visible: {
       handler(val) {
         this.drawerVisible = val
-        if (val && this.type !== 'create') {
-          this.setFormData()
-        } else if (val && this.type === 'create') {
-          this.form = this.initFormData()
+        if (val) {
+          if (this.type === 'create') {
+            // 初始化表单数据
+            this.form = this.initFormData()
+            console.log('可见性变化，初始化数据:', this.form)
+          } else if (this.equipmentData) {
+            // 设置表单数据
+            this.setFormData()
+            console.log('可见性变化，设置数据:', this.form)
+          }
         }
       },
       immediate: true
@@ -375,11 +405,36 @@ export default {
     drawerVisible(val) {
       this.$emit('update:visible', val)
     },
-    // 监听设备类型变化，重置表单
-    equipmentType() {
-      if (this.type === 'create') {
-        this.form = this.initFormData()
-      }
+    // 监听设备类型变化，如果是退火炉，加载炉型列表
+    equipmentType: {
+      handler(newVal) {
+        if (newVal === 'FURNACE' && this.furnaceTypeOptions.length === 0) {
+          this.loadFurnaceTypes()
+        }
+        
+        // 如果类型变化，重新初始化表单
+        if (this.type === 'create' && this.drawerVisible) {
+          this.form = this.initFormData()
+          console.log('设备类型变化，重新初始化数据:', this.form)
+        }
+      },
+      immediate: true
+    },
+    // 监听equipmentData变化
+    equipmentData: {
+      handler(newVal) {
+        if (this.type !== 'create' && newVal && this.drawerVisible) {
+          this.setFormData()
+          console.log('设备数据变化，更新表单:', this.form)
+        }
+      },
+      deep: true
+    }
+  },
+  created() {
+    // 如果是FURNACE类型，加载炉型选项
+    if (this.equipmentType === 'FURNACE') {
+      this.loadFurnaceTypes()
     }
   },
   methods: {
@@ -413,6 +468,61 @@ export default {
       return typeMap[this.equipmentType] || '设备特性参数'
     },
     
+    // 加载炉型列表
+    loadFurnaceTypes() {
+      this.furnaceTypesLoading = true
+      getAllFurnaceTypes()
+        .then(response => {
+          // 根据API返回格式处理数据
+          let furnaceTypes = [];
+          
+          // 处理不同的API返回结构
+          if (response.data && Array.isArray(response.data.items)) {
+            // 标准分页格式的返回
+            furnaceTypes = response.data.items;
+          } else if (Array.isArray(response.data)) {
+            // 直接返回数组的情况
+            furnaceTypes = response.data;
+          } else {
+            console.error('无法识别的炉型数据格式:', response.data);
+            furnaceTypes = [];
+          }
+          
+          // 转换为下拉选项格式
+          this.furnaceTypeOptions = furnaceTypes
+            .filter(item => item.status === 'enabled' || item.status === 1) // 只显示启用的炉型
+            .map(item => ({
+              label: item.furnaceTypeName 
+                ? `${item.furnaceTypeName} (${item.furnaceTypeCode})`
+                : item.furnaceTypeCode,
+              value: item.furnaceTypeCode
+            }));
+            
+          // 如果当前表单已有炉型编码，但不在可选列表中（可能是已禁用的炉型）
+          if (this.form.furnaceTypeCode && 
+              !this.furnaceTypeOptions.some(option => option.value === this.form.furnaceTypeCode)) {
+            // 找到对应的炉型数据
+            const disabledType = furnaceTypes.find(item => item.furnaceTypeCode === this.form.furnaceTypeCode);
+            if (disabledType) {
+              // 添加此禁用的炉型到选项列表
+              this.furnaceTypeOptions.push({
+                label: disabledType.furnaceTypeName 
+                  ? `${disabledType.furnaceTypeName} (${disabledType.furnaceTypeCode}) [已禁用]`
+                  : `${disabledType.furnaceTypeCode} [已禁用]`,
+                value: disabledType.furnaceTypeCode
+              });
+            }
+          }
+          
+          this.furnaceTypesLoading = false
+        })
+        .catch(error => {
+          console.error('加载炉型列表失败:', error)
+          this.furnaceTypesLoading = false
+          this.$message.error('获取炉型列表失败，请检查网络或联系管理员')
+        });
+    },
+    
     // 初始化表单数据
     initFormData() {
       // 通用字段
@@ -436,7 +546,8 @@ export default {
           maxTemperature: 1150,
           ratedPower: 350,
           plcAddress: '',
-          maintenanceCycle: 90
+          maintenanceCycle: 90,
+          furnaceTypeCode: '' // 新增炉型代码字段
         }
       } else if (this.equipmentType === 'CRANE') {
         specificFields = {
@@ -468,15 +579,82 @@ export default {
     setFormData() {
       if (!this.equipmentData) return
       
-      // 浅拷贝设备数据
-      Object.assign(this.form, this.equipmentData)
+      // 深拷贝设备数据，避免直接修改源数据
+      this.form = JSON.parse(JSON.stringify(this.initFormData()))
       
-      // 特殊处理字段
-      if (this.equipmentType === 'CRANE' && this.equipmentData.serviceArea) {
-        // 如果serviceArea是字符串，转换为数组
-        this.form.serviceAreas = typeof this.equipmentData.serviceArea === 'string' 
-          ? this.equipmentData.serviceArea.split(',') 
-          : this.equipmentData.serviceArea
+      // 复制通用字段
+      const commonFields = ['id', 'equipmentId', 'name', 'model', 'installDate', 'status', 'supplier', 'remarks']
+      commonFields.forEach(field => {
+        if (this.equipmentData[field] !== undefined) {
+          this.form[field] = this.equipmentData[field]
+        }
+      })
+      
+      // 根据设备类型复制特定字段
+      if (this.equipmentType === 'FURNACE') {
+        const furnaceFields = ['capacity', 'maxTemperature', 'ratedPower', 'plcAddress', 'maintenanceCycle']
+        furnaceFields.forEach(field => {
+          if (this.equipmentData[field] !== undefined) {
+            this.form[field] = this.equipmentData[field]
+          }
+        })
+        
+        // 特殊处理炉型字段
+        if (this.equipmentData.furnaceTypeCode) {
+          this.form.furnaceTypeCode = this.equipmentData.furnaceTypeCode
+        }
+        
+        // 确保对数值型字段进行转换
+        this.form.capacity = Number(this.form.capacity)
+        this.form.maxTemperature = Number(this.form.maxTemperature)
+        this.form.ratedPower = Number(this.form.ratedPower)
+        this.form.maintenanceCycle = Number(this.form.maintenanceCycle)
+        
+      } else if (this.equipmentType === 'CRANE') {
+        const craneFields = ['liftCapacity', 'movingSpeed', 'controlInterface']
+        craneFields.forEach(field => {
+          if (this.equipmentData[field] !== undefined) {
+            this.form[field] = this.equipmentData[field]
+          }
+        })
+        
+        // 特殊处理服务区域字段，确保是数组类型
+        if (this.equipmentData.serviceArea) {
+          this.form.serviceAreas = typeof this.equipmentData.serviceArea === 'string' 
+            ? this.equipmentData.serviceArea.split(',') 
+            : this.equipmentData.serviceArea
+        }
+        
+        // 确保对数值型字段进行转换
+        this.form.liftCapacity = Number(this.form.liftCapacity)
+        
+      } else if (this.equipmentType === 'AUTO_CART') {
+        const cartFields = ['loadCapacity', 'movingSpeed', 'navigationMode', 'chargingType']
+        cartFields.forEach(field => {
+          if (this.equipmentData[field] !== undefined) {
+            this.form[field] = this.equipmentData[field]
+          }
+        })
+        
+        // 确保对数值型字段进行转换
+        this.form.loadCapacity = Number(this.form.loadCapacity)
+        this.form.movingSpeed = Number(this.form.movingSpeed)
+        
+      } else if (this.equipmentType === 'STAGING_TABLE') {
+        const tableFields = ['bearingCapacity', 'dimensions', 'surfaceMaterial', 'functionType']
+        tableFields.forEach(field => {
+          if (this.equipmentData[field] !== undefined) {
+            this.form[field] = this.equipmentData[field]
+          }
+        })
+        
+        // 确保对数值型字段进行转换
+        this.form.bearingCapacity = Number(this.form.bearingCapacity)
+      }
+      
+      // 如果是退火炉并且有炉型代码，但炉型选项列表为空，则加载炉型列表
+      if (this.equipmentType === 'FURNACE' && this.form.furnaceTypeCode && this.furnaceTypeOptions.length === 0) {
+        this.loadFurnaceTypes()
       }
     },
     
@@ -486,19 +664,25 @@ export default {
     },
     
     // 关闭抽屉
-    handleClose() {
+    handleClose() {         
+      // 先清除表单验证信息，特别是炉型字段的校验信息
+      if (this.$refs.drawerForm && this.$refs.drawerForm.$refs.form) {
+        this.$refs.drawerForm.$refs.form.clearValidate()
+      }
       this.drawerVisible = false
       this.$emit('close')
-      setTimeout(() => {
-        this.form = this.initFormData()
-      }, 300)
     },
     
     // 处理提交
     handleSubmit() {
       this.$refs.drawerForm.$refs.form.validate(valid => {
         if (valid) {
+          // 在提交前确保表单数据已同步
+          console.log('提交数据验证通过，提交的表单数据:', this.form)
           this.submitFormData(false)
+        } else {
+          this.$message.warning('表单填写有误，请检查')
+          return false
         }
       })
     },
@@ -507,37 +691,193 @@ export default {
     handleSubmitAndContinue() {
       this.$refs.drawerForm.$refs.form.validate(valid => {
         if (valid) {
+          // 在提交前确保表单数据已同步
+          console.log('提交并继续验证通过，提交的表单数据:', this.form)
           this.submitFormData(true)
+        } else {
+          this.$message.warning('表单填写有误，请检查')
+          return false
         }
       })
     },
     
     // 表单提交处理
     handleFormSubmit(formData, continueCreate) {
-      this.submitFormData(continueCreate)
+      // 关键：在这里我们需要确保使用的是本地form数据，而不是传入的formData
+      console.log('DrawerForm提交的原始数据:', JSON.stringify(formData, null, 2));
+      console.log('本地表单数据:', JSON.stringify(this.form, null, 2));
+      
+      // 合并数据，确保同时获取到两边的数据
+      const mergedData = { ...formData, ...this.form };
+      console.log('合并后的表单数据:', JSON.stringify(mergedData, null, 2));
+      
+      // 使用合并后的数据继续提交
+      this.submitFormData(continueCreate, mergedData);
+    },
+    
+    // 处理表单变化
+    handleFormChange(changedFields) {
+      // 更新本地表单数据
+      if (changedFields && Object.keys(changedFields).length > 0) {
+        console.log('表单数据更新(来自DrawerForm):', JSON.stringify(changedFields, null, 2))
+        
+        // 比较新旧数据，检查是否有实际变化
+        let hasChanged = false
+        Object.keys(changedFields).forEach(key => {
+          if (JSON.stringify(this.form[key]) !== JSON.stringify(changedFields[key])) {
+            this.form[key] = changedFields[key]
+            hasChanged = true
+          }
+        })
+        
+        if (hasChanged) {
+          console.log('表单数据已实际更新，当前form数据:', JSON.stringify(this.form, null, 2))
+        }
+      }
     },
     
     // 提交表单数据
-    submitFormData(continueCreate) {
-      // 特殊处理字段
-      const formData = { ...this.form }
+    submitFormData(continueCreate, customFormData = null) {
+      // 确保表单验证通过
+      this.$refs.drawerForm.$refs.form.validate(valid => {
+        if (!valid) {
+          this.$message.warning('表单填写有误，请检查')
+          return false
+        }
+        
+        // 在提交前打印表单数据，确认是否包含用户输入
+        const formToSubmit = customFormData || this.form;
+        console.log('准备提交的最终表单数据:', JSON.stringify(formToSubmit, null, 2))
+        
+        // 深拷贝表单数据，避免操作原数据
+        const formData = JSON.parse(JSON.stringify(formToSubmit))
+        
+        // 设置设备类型
+        formData.equipmentType = this.equipmentType
+        
+        // 根据设备类型处理数据格式
+        if (this.equipmentType === 'FURNACE') {
+          // 对炉型字段进行特殊处理 
+          if (formData.furnaceTypeCode) {
+            // 如果之前没有通过handleFurnaceTypeChange设置炉型名称，则在这里设置
+            if (!formData.furnaceTypeName) {
+              const selectedOption = this.furnaceTypeOptions.find(
+                option => option.value === formData.furnaceTypeCode
+              )
+              
+              if (selectedOption) {
+                // 从选项的label中提取炉型名称 (格式: "炉型名称 (炉型编码)")
+                formData.furnaceTypeName = selectedOption.label.split(' (')[0]
+                console.log('提交前更新炉型名称:', formData.furnaceTypeName)
+              }
+            }
+          } else {
+            // 如果未选择炉型，确保清空炉型名称
+            formData.furnaceTypeName = ''
+          }
+          
+          // 确保数值型字段为数字类型
+          formData.capacity = Number(formData.capacity)
+          formData.maxTemperature = Number(formData.maxTemperature)
+          formData.ratedPower = Number(formData.ratedPower)
+          formData.maintenanceCycle = Number(formData.maintenanceCycle)
+          
+        } else if (this.equipmentType === 'CRANE') {
+          // 特殊处理服务区域字段
+          if (Array.isArray(formData.serviceAreas)) {
+            formData.serviceArea = formData.serviceAreas.join(',')
+            delete formData.serviceAreas
+          }
+          
+          // 确保数值型字段为数字类型
+          formData.liftCapacity = Number(formData.liftCapacity)
+          
+        } else if (this.equipmentType === 'AUTO_CART') {
+          // 确保数值型字段为数字类型
+          formData.loadCapacity = Number(formData.loadCapacity)
+          formData.movingSpeed = Number(formData.movingSpeed)
+          
+        } else if (this.equipmentType === 'STAGING_TABLE') {
+          // 确保数值型字段为数字类型
+          formData.bearingCapacity = Number(formData.bearingCapacity)
+        }
+        
+        // 确保状态字段为数字类型
+        formData.status = Number(formData.status)
+        
+        // 设置加载状态
+        this.loading = true
+        
+        // 发送数据到父组件
+        this.$emit('submit', formData, continueCreate)
+        
+        // 延迟重置loading状态
+        setTimeout(() => {
+          this.loading = false
+        }, 1000)
+      })
+    },
+
+    // 处理抽屉打开
+    handleDrawerOpen() {
+      console.log('抽屉打开，初始化表单数据')
       
-      // 设置设备类型
-      formData.equipmentType = this.equipmentType
-      
-      if (this.equipmentType === 'CRANE' && Array.isArray(formData.serviceAreas)) {
-        formData.serviceArea = formData.serviceAreas.join(',')
-        delete formData.serviceAreas
+      // 确保表单有初始数据
+      if (this.type === 'create') {
+        // 重新初始化表单数据，确保数据是新的
+        this.form = this.initFormData()
+        console.log('新建表单，初始化数据:', this.form)
+      } else if (this.equipmentData) {
+        // 编辑或查看模式，重新设置表单数据
+        this.setFormData()
+        console.log('编辑/查看表单，设置数据:', this.form)
       }
       
-      this.loading = true
-      this.$emit('submit', formData, continueCreate)
+      // 为表单绑定自定义事件触发器
+      this.$nextTick(() => {
+        // 获取抽屉表单内的实际内容
+        const drawerContent = this.$refs.drawerForm && this.$refs.drawerForm.$el;
+        if (!drawerContent) return;
+        
+        // 监听表单中的所有输入元素
+        const handleInput = (e) => {
+          // 获取输入的字段名和值
+          const fieldName = e.target.dataset.prop || e.target.name;
+          const fieldValue = e.target.value;
+          
+          if (fieldName && this.form.hasOwnProperty(fieldName)) {
+            console.log(`字段 ${fieldName} 变更为: ${fieldValue}`);
+            this.form[fieldName] = fieldValue;
+          }
+        };
+        
+        // 添加事件委托，捕获表单中所有输入类元素的变化
+        drawerContent.addEventListener('input', handleInput, true);
+        drawerContent.addEventListener('change', handleInput, true);
+      });
+    },
+
+    // 专门处理炉型选择变化的方法
+    handleFurnaceTypeChange(value) {
+      console.log('炉型选择变化:', value)
+      this.form.furnaceTypeCode = value
       
-      // 由于提交是异步的，这里不能直接设置loading=false
-      // 父组件负责在提交完成后关闭抽屉或重置表单
-      setTimeout(() => {
-        this.loading = false
-      }, 1000)
+      // 如果有选中的炉型，更新炉型名称
+      if (value) {
+        const selectedOption = this.furnaceTypeOptions.find(
+          option => option.value === value
+        )
+        
+        if (selectedOption) {
+          // 从选项的label中提取炉型名称 (格式: "炉型名称 (炉型编码)")
+          const furnaceTypeName = selectedOption.label.split(' (')[0]
+          console.log('更新炉型名称:', furnaceTypeName)
+          this.form.furnaceTypeName = furnaceTypeName
+        }
+      } else {
+        // 如果未选择炉型，清空炉型名称
+        this.form.furnaceTypeName = ''
+      }
     }
   }
 }

@@ -73,8 +73,8 @@
           </template>
           
           <!-- 炉型能力参数显示 -->
-          <template v-else-if="col.prop === 'has_rear_circulation_fan'">
-            <el-tag v-if="scope.row.has_rear_circulation_fan" type="success">
+          <template v-else-if="col.prop === 'hasRearCirculationFan'">
+            <el-tag v-if="scope.row.hasRearCirculationFan" type="success">
               支持
             </el-tag>
             <el-tag v-else type="info">
@@ -82,8 +82,8 @@
             </el-tag>
           </template>
           
-          <template v-else-if="col.prop === 'has_vacuum_fan'">
-            <el-tag v-if="scope.row.has_vacuum_fan" type="success">
+          <template v-else-if="col.prop === 'hasVacuumFan'">
+            <el-tag v-if="scope.row.hasVacuumFan" type="success">
               支持
             </el-tag>
             <el-tag v-else type="info">
@@ -91,8 +91,8 @@
             </el-tag>
           </template>
           
-          <template v-else-if="col.prop === 'has_purge_valve'">
-            <el-tag v-if="scope.row.has_purge_valve" type="success">
+          <template v-else-if="col.prop === 'hasPurgeValve'">
+            <el-tag v-if="scope.row.hasPurgeValve" type="success">
               支持
             </el-tag>
             <el-tag v-else type="info">
@@ -100,8 +100,8 @@
             </el-tag>
           </template>
           
-          <template v-else-if="col.prop === 'has_cooling_fan'">
-            <el-tag v-if="scope.row.has_cooling_fan" type="success">
+          <template v-else-if="col.prop === 'hasCoolingFan'">
+            <el-tag v-if="scope.row.hasCoolingFan" type="success">
               支持
             </el-tag>
             <el-tag v-else type="info">
@@ -109,8 +109,8 @@
             </el-tag>
           </template>
 
-          <template v-else-if="col.prop === 'has_pressure_control'">
-            <el-tag v-if="scope.row.has_pressure_control" type="success">
+          <template v-else-if="col.prop === 'hasPressureControl'">
+            <el-tag v-if="scope.row.hasPressureControl" type="success">
               支持
             </el-tag>
             <el-tag v-else type="info">
@@ -118,17 +118,17 @@
             </el-tag>
           </template>
           
-          <template v-else-if="col.prop === 'max_segments'">
-            <span>{{ scope.row.max_segments || '-' }}</span>
+          <template v-else-if="col.prop === 'maxSegments'">
+            <span>{{ scope.row.maxSegments || '-' }}</span>
           </template>
           
-          <template v-else-if="col.prop === 'max_temperature_limit'">
-            <span>{{ scope.row.max_temperature_limit || '-' }}°C</span>
+          <template v-else-if="col.prop === 'maxTemperatureLimit'">
+            <span>{{ scope.row.maxTemperatureLimit || '-' }}°C</span>
           </template>
           
-          <template v-else-if="col.prop === 'supported_atmosphere_types'">
+          <template v-else-if="col.prop === 'supportedAtmosphereTypes'">
             <overflow-tags-popover
-              :data="scope.row.supported_atmosphere_types"
+              :data="scope.row.supportedAtmosphereTypes"
               :max-show="1"
               title="支持的气氛类型"
             />
@@ -409,17 +409,17 @@ export default {
     // 所有可用列
     columnOptions() {
       return [
-        { prop: 'furnace_type_code', label: '炉型代码', width: '150' },
-        { prop: 'furnace_type_name', label: '炉型名称', width: '150' },
+        { prop: 'furnaceTypeCode', label: '炉型代码', width: '150' },
+        { prop: 'furnaceTypeName', label: '炉型名称', width: '150' },
         { prop: 'status', label: '状态', width: '80' },
-        { prop: 'has_rear_circulation_fan', label: '后区循环风机', width: '110' },
-        { prop: 'has_vacuum_fan', label: '负压风机', width: '100' },
-        { prop: 'has_purge_valve', label: '吹洗阀', width: '100' },
-        { prop: 'has_cooling_fan', label: '冷却风机', width: '100' },
-        { prop: 'has_pressure_control', label: '压力控制', width: '100' },
-        { prop: 'max_segments', label: '最大工艺段数', width: '120' },
-        { prop: 'max_temperature_limit', label: '温度上限(°C)', width: '120' },
-        { prop: 'supported_atmosphere_types', label: '支持的气氛类型', width: '150' },
+        { prop: 'hasRearCirculationFan', label: '后区循环风机', width: '110' },
+        { prop: 'hasVacuumFan', label: '负压风机', width: '100' },
+        { prop: 'hasPurgeValve', label: '吹洗阀', width: '100' },
+        { prop: 'hasCoolingFan', label: '冷却风机', width: '100' },
+        { prop: 'hasPressureControl', label: '压力控制', width: '100' },
+        { prop: 'maxSegments', label: '最大工艺段数', width: '120' },
+        { prop: 'maxTemperatureLimit', label: '温度上限(°C)', width: '120' },
+        { prop: 'supportedAtmosphereTypes', label: '支持的气氛类型', width: '150' },
         { prop: 'equipmentCount', label: '关联设备数', width: '100' },
         { prop: 'templateCount', label: '关联模板数', width: '100' },
         { prop: 'description', label: '描述', width: '200' },
@@ -431,7 +431,7 @@ export default {
     },
     // 覆盖mixin中的默认可见列
     defaultVisibleColumns() {
-      return ['furnace_type_code', 'furnace_type_name', 'status', 'has_rear_circulation_fan', 'has_vacuum_fan', 'has_purge_valve', 'has_cooling_fan', 'max_segments', 'max_temperature_limit', 'equipmentCount', 'templateCount']
+      return ['furnaceTypeCode', 'furnaceTypeName', 'status', 'hasRearCirculationFan', 'hasVacuumFan', 'hasPurgeValve', 'hasCoolingFan', 'maxSegments', 'maxTemperatureLimit', 'equipmentCount', 'templateCount']
     },
     // 重写列设置存储键
     currentStorageKey() {
@@ -688,7 +688,7 @@ export default {
       this.relatedItemsLoading = true
       this.relatedEquipmentDialogVisible = true
       
-      getRelatedEquipment(row.furnace_type_code).then(response => {
+      getRelatedEquipment(row.furnaceTypeCode).then(response => {
         this.relatedEquipment = response.data || []
         this.relatedItemsLoading = false
       }).catch(() => {
@@ -702,7 +702,7 @@ export default {
       this.relatedItemsLoading = true
       this.relatedTemplatesDialogVisible = true
       
-      getRelatedTemplates(row.furnace_type_code).then(response => {
+      getRelatedTemplates(row.furnaceTypeCode).then(response => {
         this.relatedTemplates = response.data || []
         this.relatedItemsLoading = false
       }).catch(() => {

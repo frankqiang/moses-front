@@ -31,7 +31,7 @@
       <div class="related-list" v-loading="relatedItemsLoading">
         <div class="related-list-header">关联设备列表</div>
         <el-table
-          v-if="form.furnace_type_code && relatedEquipment.length > 0"
+          v-if="form.furnaceTypeCode && relatedEquipment.length > 0"
           :data="relatedEquipment"
           border
           style="width: 100%"
@@ -62,7 +62,7 @@
       <div class="related-list" v-loading="relatedItemsLoading">
         <div class="related-list-header">关联工艺模板列表</div>
         <el-table
-          v-if="form.furnace_type_code && relatedTemplates.length > 0"
+          v-if="form.furnaceTypeCode && relatedTemplates.length > 0"
           :data="relatedTemplates"
           border
           style="width: 100%"
@@ -167,20 +167,20 @@ export default {
     // 动态表单规则
     rules() {
       return {
-        furnace_type_code: [
+        furnaceTypeCode: [
           { required: true, message: '请输入炉型代码', trigger: 'blur' },
           { max: 30, message: '长度不能超过30个字符', trigger: 'blur' },
           { pattern: /^[A-Za-z0-9-_]+$/, message: '只能包含字母、数字、中划线和下划线', trigger: 'blur' }
         ],
-        furnace_type_name: [
+        furnaceTypeName: [
           { required: true, message: '请输入炉型名称', trigger: 'blur' },
           { max: 50, message: '长度不能超过50个字符', trigger: 'blur' }
         ],
-        max_segments: [
+        maxSegments: [
           { required: true, message: '请输入最大工艺段数', trigger: 'blur' },
           { type: 'number', min: 1, max: 30, message: '最大工艺段数必须在1到30之间', trigger: 'blur' }
         ],
-        max_temperature_limit: [
+        maxTemperatureLimit: [
           { required: true, message: '请输入温度上限', trigger: 'blur' },
           { type: 'number', min: 100, max: 2000, message: '温度上限必须在100到2000°C之间', trigger: 'blur' }
         ],
@@ -197,7 +197,7 @@ export default {
         title: '一、基本信息',
         items: [
           {
-            prop: 'furnace_type_code',
+            prop: 'furnaceTypeCode',
             label: '炉型代码',
             type: 'input',
             placeholder: '请输入炉型代码',
@@ -207,7 +207,7 @@ export default {
             colSpan: 12
           },
           {
-            prop: 'furnace_type_name',
+            prop: 'furnaceTypeName',
             label: '炉型名称',
             type: 'input',
             placeholder: '请输入炉型名称',
@@ -246,7 +246,7 @@ export default {
         title: '二、能力参数配置',
         items: [
           {
-            prop: 'has_rear_circulation_fan',
+            prop: 'hasRearCirculationFan',
             label: '后区循环风机',
             type: 'switch',
             rowClass: 'capability-row',
@@ -255,7 +255,7 @@ export default {
             inactiveText: '不支持'
           },
           {
-            prop: 'has_vacuum_fan',
+            prop: 'hasVacuumFan',
             label: '负压风机',
             type: 'switch',
             rowClass: 'capability-row',
@@ -264,7 +264,7 @@ export default {
             inactiveText: '不支持'
           },
           {
-            prop: 'has_purge_valve',
+            prop: 'hasPurgeValve',
             label: '吹洗阀',
             type: 'switch',
             rowClass: 'capability-row',
@@ -273,7 +273,7 @@ export default {
             inactiveText: '不支持'
           },
           {
-            prop: 'has_cooling_fan',
+            prop: 'hasCoolingFan',
             label: '冷却风机',
             type: 'switch',
             rowClass: 'capability-row',
@@ -282,7 +282,7 @@ export default {
             inactiveText: '不支持'
           },
           {
-            prop: 'has_pressure_control',
+            prop: 'hasPressureControl',
             label: '压力控制能力',
             type: 'switch',
             rowClass: 'capability-row',
@@ -291,7 +291,7 @@ export default {
             inactiveText: '不支持'
           },
           {
-            prop: 'max_segments',
+            prop: 'maxSegments',
             label: '最大工艺段数',
             type: 'number',
             min: 1,
@@ -300,7 +300,7 @@ export default {
             colSpan: 12
           },
           {
-            prop: 'max_temperature_limit',
+            prop: 'maxTemperatureLimit',
             label: '温度上限(°C)',
             type: 'number',
             min: 100,
@@ -309,7 +309,7 @@ export default {
             colSpan: 12
           },
           {
-            prop: 'supported_atmosphere_types',
+            prop: 'supportedAtmosphereTypes',
             label: '支持的气氛类型',
             type: 'select',
             multiple: true,
@@ -329,7 +329,7 @@ export default {
       // 3. 关联信息段（仅编辑和查看时显示）
       const sections = [baseSection, capabilitiesSection]
       
-      if (this.innerType !== 'create' && this.form.furnace_type_code) {
+      if (this.innerType !== 'create' && this.form.furnaceTypeCode) {
         const relatedSection = {
           title: '三、关联信息',
           items: [
@@ -365,7 +365,7 @@ export default {
     },
     
     // 监听form.id变化，用于加载关联信息
-    'form.furnace_type_code': {
+    'form.furnaceTypeCode': {
       handler(val) {
         if (val && (this.innerType === 'update' || this.innerType === 'view')) {
           this.loadRelatedData(val)
@@ -379,19 +379,19 @@ export default {
     initFormData() {
       return {
         id: '',
-        furnace_type_code: '',
+        furnaceTypeCode: '',
         code: '',
-        furnace_type_name: '',
+        furnaceTypeName: '',
         status: 'enabled',
         description: '',
-        max_segments: 10,
-        has_rear_circulation_fan: false,
-        has_vacuum_fan: false,
-        has_purge_valve: false,
-        has_cooling_fan: false,
-        supported_atmosphere_types: [],
-        max_temperature_limit: 1000,
-        has_pressure_control: false
+        maxSegments: 10,
+        hasRearCirculationFan: false,
+        hasVacuumFan: false,
+        hasPurgeValve: false,
+        hasCoolingFan: false,
+        supportedAtmosphereTypes: [],
+        maxTemperatureLimit: 1000,
+        hasPressureControl: false
       }
     },
     
@@ -407,8 +407,8 @@ export default {
       }
       
       // 加载关联数据（如果有ID）
-      if (this.form.furnace_type_code && (this.innerType === 'update' || this.innerType === 'view')) {
-        this.loadRelatedData(this.form.furnace_type_code)
+      if (this.form.furnaceTypeCode && (this.innerType === 'update' || this.innerType === 'view')) {
+        this.loadRelatedData(this.form.furnaceTypeCode)
       }
     },
     
@@ -446,9 +446,9 @@ export default {
       if (this.innerType === 'create') {
         return '新增炉型'
       } else if (this.innerType === 'update') {
-        return `编辑炉型: ${this.form.furnace_type_code || ''}`
+        return `编辑炉型: ${this.form.furnaceTypeCode || ''}`
       } else {
-        return `查看炉型: ${this.form.furnace_type_code || ''}`
+        return `查看炉型: ${this.form.furnaceTypeCode || ''}`
       }
     },
     
@@ -481,8 +481,8 @@ export default {
         ...formData
       }
       
-      // 炉型代码字段统一使用furnace_type_code
-      if (!submitData.furnace_type_code) {
+      // 炉型代码字段统一使用furnaceTypeCode
+      if (!submitData.furnaceTypeCode) {
         this.$message.error('炉型代码不能为空')
         return
       }
@@ -514,23 +514,23 @@ export default {
       if (data && (type === 'update' || type === 'view')) {
         this.form = {
           id: data.id,
-          furnace_type_code: data.furnace_type_code,
-          furnace_type_name: data.furnace_type_name,
+          furnaceTypeCode: data.furnaceTypeCode,
+          furnaceTypeName: data.furnaceTypeName,
           status: data.status,
           description: data.description,
-          max_segments: data.max_segments,
-          has_rear_circulation_fan: data.has_rear_circulation_fan,
-          has_vacuum_fan: data.has_vacuum_fan,
-          has_purge_valve: data.has_purge_valve,
-          has_cooling_fan: data.has_cooling_fan,
-          supported_atmosphere_types: data.supported_atmosphere_types || [],
-          max_temperature_limit: data.max_temperature_limit,
-          has_pressure_control: data.has_pressure_control
+          maxSegments: data.maxSegments,
+          hasRearCirculationFan: data.hasRearCirculationFan,
+          hasVacuumFan: data.hasVacuumFan,
+          hasPurgeValve: data.hasPurgeValve,
+          hasCoolingFan: data.hasCoolingFan,
+          supportedAtmosphereTypes: data.supportedAtmosphereTypes || [],
+          maxTemperatureLimit: data.maxTemperatureLimit,
+          hasPressureControl: data.hasPressureControl
         }
         
         // 查看模式下加载关联数据
-        if (type === 'view' && data.furnace_type_code) {
-          this.loadRelatedData(data.furnace_type_code)
+        if (type === 'view' && data.furnaceTypeCode) {
+          this.loadRelatedData(data.furnaceTypeCode)
         }
       }
       

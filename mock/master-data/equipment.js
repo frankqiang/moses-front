@@ -21,6 +21,13 @@ const furnaceData = Mock.mock({
       const models = ['HX-T40A', 'HX-T35B', 'HX-T50C', 'HX-T30D']
       return models[this.id % models.length]
     },
+    furnaceTypeCode: function() {
+      return ['FT-STANDARD', 'FT-SINGLE', 'FT-RAPID', 'FT-BASIC'][this.id % 4]
+    },
+    furnaceTypeName: function() {
+      const names = ['标准双区退火炉', '单区退火炉', '快速退火炉', '基础型退火炉']
+      return names[this.id % 4]
+    },
     capacity: function() {
       return [35, 40, 45, 50][this.id % 4]
     },
@@ -229,7 +236,8 @@ function getEquipmentDetail(config) {
     ...stagingTableData.items
   ]
   
-  const equipment = allData.find(item => item.id === parseInt(id))
+  // 将ID转换为数字进行比较
+  const equipment = allData.find(item => item.id == id)
   
   if (!equipment) {
     return {
@@ -248,6 +256,8 @@ function getEquipmentDetail(config) {
 function createEquipment(config) {
   const { body } = config
   
+  console.log('创建设备请求体:', body)
+  
   // 根据设备类型，确定ID起始值和数据数组
   let startId = 1;
   let targetData;
@@ -255,6 +265,7 @@ function createEquipment(config) {
   if (body.equipmentType === 'FURNACE') {
     startId = 1;
     targetData = furnaceData.items;
+    
   } else if (body.equipmentType === 'CRANE') {
     startId = 100;
     targetData = craneData.items;
@@ -305,6 +316,8 @@ function createEquipment(config) {
 function updateEquipment(config) {
   const { body } = config
   
+  console.log('更新设备请求体:', body)
+  
   // 所有设备数据
   const allData = [
     ...furnaceData.items,
@@ -313,7 +326,8 @@ function updateEquipment(config) {
     ...stagingTableData.items
   ]
   
-  const equipment = allData.find(item => item.id === body.id)
+  // 使用非严格相等来比较ID
+  const equipment = allData.find(item => item.id == body.id)
   
   if (!equipment) {
     return {
@@ -325,8 +339,12 @@ function updateEquipment(config) {
   // 更新时间
   body.updateTime = new Date().toISOString()
   
+
+  
   // 更新数据
   Object.assign(equipment, body)
+  
+  console.log('设备更新后:', equipment)
   
   return {
     code: 20000,
@@ -347,7 +365,8 @@ function updateEquipmentStatus(config) {
     ...stagingTableData.items
   ]
   
-  const equipment = allData.find(item => item.id === parseInt(id))
+  // 使用非严格相等来比较ID
+  const equipment = allData.find(item => item.id == id)
   
   if (!equipment) {
     return {
