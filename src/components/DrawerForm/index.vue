@@ -430,14 +430,20 @@ export default {
     
     // 抽屉打开时获取最新数据
     handleOpen() {
+      console.log('DrawerForm打开，接收到的表单数据:', this.data)
       this.formData = cloneDeep(this.data)
       this.originFormData = cloneDeep(this.data)
       
       // 关键：确保表单数据被正确初始化
       this.$nextTick(() => {
-        // console.log('表单数据已初始化:', this.computedFormData)
+        console.log('表单数据已初始化:', this.computedFormData)
         // 强制将从父组件传入的数据更新到表单模型
         this.$emit('form-change', cloneDeep(this.computedFormData))
+        
+        // 打开时清除验证信息，防止初始就显示错误
+        if (this.$refs.form) {
+          this.$refs.form.clearValidate()
+        }
       })
       
       this.$emit('open')

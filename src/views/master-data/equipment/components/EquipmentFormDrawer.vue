@@ -80,12 +80,39 @@ export default {
       // 炉型列表选项
       furnaceTypeOptions: [],
       // 炉型列表加载状态
-      furnaceTypesLoading: false
+      furnaceTypesLoading: false,
+      // 用户交互标志
+      userInteracted: false
     }
   },
   computed: {
     // 动态表单规则
     rules() {
+      const furnaceRules = {
+        furnaceTypeCode: [
+          { 
+            required: this.equipmentType === 'FURNACE', 
+            message: '请选择所属炉型', 
+            trigger: 'change',
+            // 添加验证器，只在用户手动触发时才显示错误
+            validator: (rule, value, callback) => {
+              // 如果是第一次加载且用户还未交互，不显示错误
+              if (this.type === 'create' && !this.userInteracted) {
+                callback()
+                return
+              }
+              
+              // 常规验证逻辑
+              if (rule.required && (!value || value === '')) {
+                callback(new Error(rule.message))
+              } else {
+                callback()
+              }
+            }
+          }
+        ]
+      }
+      
       return {
         equipmentId: [
           { required: false, message: '请输入设备ID', trigger: 'blur' }
@@ -97,9 +124,7 @@ export default {
           { required: true, message: '请选择设备状态', trigger: 'change' }
         ],
         // 退火炉特有字段验证
-        furnaceTypeCode: [
-          { required: this.equipmentType === 'FURNACE', message: '请选择所属炉型', trigger: 'change' }
-        ],
+        ...furnaceRules,
         capacity: [
           { required: this.equipmentType === 'FURNACE', message: '请输入规格容量', trigger: 'blur' }
         ],
@@ -675,6 +700,9 @@ export default {
     
     // 处理提交
     handleSubmit() {
+      // 标记用户已交互，以便触发完整验证
+      this.userInteracted = true
+      
       this.$refs.drawerForm.$refs.form.validate(valid => {
         if (valid) {
           // 在提交前确保表单数据已同步
@@ -689,6 +717,9 @@ export default {
     
     // 保存并继续
     handleSubmitAndContinue() {
+      // 标记用户已交互，以便触发完整验证
+      this.userInteracted = true
+      
       this.$refs.drawerForm.$refs.form.validate(valid => {
         if (valid) {
           // 在提交前确保表单数据已同步
@@ -822,6 +853,9 @@ export default {
     handleDrawerOpen() {
       console.log('抽屉打开，初始化表单数据')
       
+      // 重置用户交互状态
+      this.userInteracted = false
+      
       // 确保表单有初始数据
       if (this.type === 'create') {
         // 重新初始化表单数据，确保数据是新的
@@ -830,6 +864,8 @@ export default {
       } else if (this.equipmentData) {
         // 编辑或查看模式，重新设置表单数据
         this.setFormData()
+        // 编辑模式下认为用户已交互
+        this.userInteracted = true
         console.log('编辑/查看表单，设置数据:', this.form)
       }
       
@@ -861,6 +897,7 @@ export default {
     handleFurnaceTypeChange(value) {
       console.log('炉型选择变化:', value)
       this.form.furnaceTypeCode = value
+      this.userInteracted = true // 标记用户已交互
       
       // 如果有选中的炉型，更新炉型名称
       if (value) {
