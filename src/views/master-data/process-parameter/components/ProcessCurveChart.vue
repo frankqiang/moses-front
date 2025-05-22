@@ -112,49 +112,53 @@ export default {
       const points = []
       let accumulatedTime = 0
       
-      // 添加起始点
-      points.push({
-        name: `起始点`,
-        coord: [0, this.initialTemp],
-        value: this.initialTemp,
-        symbol: 'circle',
-        symbolSize: 8,
-        itemStyle: {
-          color: '#67C23A'
-        },
-        label: {
-          formatter: `起始\n${this.initialTemp}°C`,
-          position: 'top'
-        }
-      })
-      
-      this.segments.forEach((segment, index) => {
-        if (!segment) return;
-        
-        // 每段的结束点
-        accumulatedTime += segment.duration || 0
-        
-        // 根据段类型确定标记颜色
-        const color = this.getSegmentColor(segment.segmentType)
-        
+      try {
+        // 添加起始点
         points.push({
-          name: `${segment.segmentType || '未知'}-${index + 1}`,
-          coord: [accumulatedTime, segment.targetTemp || 0],
-          value: segment.targetTemp || 0,
+          name: `起始点`,
+          coord: [0, this.initialTemp],
+          value: this.initialTemp,
           symbol: 'circle',
           symbolSize: 8,
           itemStyle: {
-            color
+            color: '#67C23A'
           },
           label: {
-            formatter: `${segment.segmentType || '未知'}\n${segment.targetTemp || 0}°C`,
-            position: 'top',
-            backgroundColor: 'rgba(255,255,255,0.7)',
-            padding: [3, 5],
-            borderRadius: 2
+            formatter: `起始\n${this.initialTemp}°C`,
+            position: 'top'
           }
         })
-      })
+        
+        this.segments.forEach((segment, index) => {
+          if (!segment) return;
+          
+          // 每段的结束点
+          accumulatedTime += segment.duration || 0
+          
+          // 根据段类型确定标记颜色
+          const color = this.getSegmentColor(segment.segmentType)
+          
+          points.push({
+            name: `${segment.segmentType || '未知'}-${index + 1}`,
+            coord: [accumulatedTime, segment.targetTemp || 0],
+            value: segment.targetTemp || 0,
+            symbol: 'circle',
+            symbolSize: 8,
+            itemStyle: {
+              color
+            },
+            label: {
+              formatter: `${segment.segmentType || '未知'}\n${segment.targetTemp || 0}°C`,
+              position: 'top',
+              backgroundColor: 'rgba(255,255,255,0.7)',
+              padding: [3, 5],
+              borderRadius: 2
+            }
+          })
+        })
+      } catch (error) {
+        console.error('生成标记点时出错:', error)
+      }
       
       return points
     },
@@ -166,36 +170,40 @@ export default {
       const areas = []
       let startTime = 0
       
-      this.segments.forEach((segment, index) => {
-        if (!segment) return;
-        
-        const endTime = startTime + (segment.duration || 0)
-        
-        areas.push({
-          name: `段${index + 1}: ${segment.segmentType || '未知'}`,
-          itemStyle: {
-            color: this.getSegmentColor(segment.segmentType, 0.15), // 增加透明度使区域更明显
-            borderColor: this.getSegmentColor(segment.segmentType, 0.5),
-            borderWidth: 1
-          },
-          label: {
-            show: true,
-            position: 'insideTop',
-            formatter: `段${index + 1}: ${segment.segmentType}`,
-            fontSize: 12,
-            color: '#606266',
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            padding: [2, 4],
-            borderRadius: 2
-          },
-          coord: [
-            [startTime, 0],
-            [endTime, this.yAxisMax] // 覆盖整个Y轴
-          ]
+      try {
+        this.segments.forEach((segment, index) => {
+          if (!segment) return;
+          
+          const endTime = startTime + (segment.duration || 0)
+          
+          areas.push({
+            name: `段${index + 1}: ${segment.segmentType || '未知'}`,
+            itemStyle: {
+              color: this.getSegmentColor(segment.segmentType, 0.15), // 增加透明度使区域更明显
+              borderColor: this.getSegmentColor(segment.segmentType, 0.5),
+              borderWidth: 1
+            },
+            label: {
+              show: true,
+              position: 'insideTop',
+              formatter: `段${index + 1}: ${segment.segmentType}`,
+              fontSize: 12,
+              color: '#606266',
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              padding: [2, 4],
+              borderRadius: 2
+            },
+            coord: [
+              [startTime, 0],
+              [endTime, this.yAxisMax] // 覆盖整个Y轴
+            ]
+          })
+          
+          startTime = endTime
         })
-        
-        startTime = endTime
-      })
+      } catch (error) {
+        console.error('生成标记区域时出错:', error)
+      }
       
       return areas
     },
@@ -209,6 +217,7 @@ export default {
     // 监听工艺段数据变化，重新绘制图表
     segments: {
       handler() {
+        console.log('ProcessCurveChart: segments changed, updating chart', this.segments)
         this.updateChartData()
         this.updateChart()
       },
@@ -283,13 +292,27 @@ export default {
     initChart() {
       // 延迟初始化，确保DOM已经渲染完成
       this.$nextTick(() => {
-        // 获取父容器的宽度
-        const parentWidth = this.$el.parentNode.clientWidth || 800;
-        
         // 设置容器高度和宽度
         const chartHeight = typeof this.height === 'number' ? this.height : parseInt(this.height);
         this.$refs.chartContainer.style.height = `${chartHeight}px`;
-        this.$refs.chartContainer.style.width = `${parentWidth}px`;
+        
+        // 设置宽度 - 修改这部分逻辑
+        let chartWidth;
+        if (typeof this.width === 'number') {
+          chartWidth = this.width;
+        } else if (this.width.endsWith('%')) {
+          // 如果是百分比，使用父容器宽度计算
+          const parentWidth = this.$el.parentNode.clientWidth;
+          const percentage = parseInt(this.width) / 100;
+          chartWidth = parentWidth * percentage;
+        } else {
+          // 如果是具体数值，直接使用
+          chartWidth = parseInt(this.width);
+        }
+        
+        // 确保宽度有效
+        chartWidth = chartWidth || this.$el.parentNode.clientWidth || 800;
+        this.$refs.chartContainer.style.width = `${chartWidth}px`;
         
         // 初始化ECharts实例
         this.chart = echarts.init(this.$refs.chartContainer);
@@ -307,231 +330,405 @@ export default {
         
         // 初始化后强制重新调整大小
         this.chart.resize();
+        
+        // 添加额外的延迟resize，确保在所有DOM更新后正确渲染
+        setTimeout(() => {
+          if (this.chart) {
+            this.chart.resize();
+          }
+        }, 300);
       });
     },
     
     // 更新图表数据
     updateChartData() {
-      this.currentData = {
-        xAxis: this.xAxisData,
-        yAxis: this.yAxisData,
-        markPoints: this.markPoints,
-        markAreas: this.markAreas
+      console.log('ProcessCurveChart: updateChartData called')
+      
+      try {
+        // 确保xAxis和yAxis数据有效
+        const xAxisData = this.xAxisData || []
+        const yAxisData = this.yAxisData || []
+        
+        // 简化处理，不使用markPoints和markAreas
+        this.currentData = {
+          xAxis: xAxisData,
+          yAxis: yAxisData,
+          markPoints: [], // 暂时不使用标记点
+          markAreas: []   // 暂时不使用标记区域
+        }
+        
+        console.log('ProcessCurveChart: 更新后的数据', this.currentData)
+      } catch (error) {
+        console.error('更新图表数据时出错:', error)
+        this.currentData = {
+          xAxis: [],
+          yAxis: [],
+          markPoints: [],
+          markAreas: []
+        }
       }
     },
     
     // 更新图表
     updateChart() {
-      if (!this.chart) return;
-      
-      // 检查数据是否有效
-      if (!this.segments || !this.segments.length) {
-        // 设置空图表
-        this.chart.setOption({
-          title: {
-            text: '工艺温度曲线 (无数据)',
-            left: 'center'
-          },
-          xAxis: { type: 'value', name: this.xAxisName },
-          yAxis: { type: 'value', name: '温度 (°C)' },
-          series: [{ type: 'line', data: [] }]
-        });
-        return;
+      if (!this.chart) {
+        console.log('ProcessCurveChart: chart not initialized')
+        return
       }
       
-      // 计算温度最大值和最小值以适应Y轴刻度
-      const maxTemp = Math.max(...this.currentData.yAxis, this.initialTemp)
-      const minTemp = Math.min(...this.currentData.yAxis, this.initialTemp)
-      const yAxisMin = Math.max(0, Math.floor(minTemp / 100) * 100)
-      const yAxisMax = Math.min(this.yAxisMax, Math.ceil(maxTemp / 100) * 100 + 100)
+      console.log('ProcessCurveChart: updateChart called')
       
-      // 图表配置项
-      const option = {
-        backgroundColor: this.theme === 'dark' ? '#1f2d3d' : '#ffffff',
-        grid: {
-          left: '5%',
-          right: '5%',
-          bottom: '15%',
-          top: '15%',
-          containLabel: true
-        },
-        tooltip: {
-          trigger: 'axis',
-          formatter: (params) => {
-            const timeValue = params[0].axisValue;
-            const tempValue = params[0].data[1]; // 访问Y值
-            return `${this.xAxisName}: ${timeValue}<br>温度: ${tempValue} °C`;
-          },
-          axisPointer: {
-            animation: false,
-            type: 'cross',
-            lineStyle: {
-              color: '#999',
-              width: 1,
-              type: 'dashed'
-            }
-          },
-          backgroundColor: 'rgba(50,50,50,0.8)',
-          borderColor: 'rgba(255,255,255,0.3)',
-          borderWidth: 1,
-          padding: [8, 12],
-          textStyle: {
-            color: '#fff',
-            fontSize: 12
-          }
-        },
-        legend: {
-          data: ['温度曲线'],
-          bottom: 10,
-          selectedMode: false,
-          textStyle: {
-            color: this.theme === 'dark' ? '#e6e6e6' : '#333',
-            fontSize: 12,
-            fontWeight: 'bold'
-          },
-          icon: 'roundRect',
-          itemWidth: 24,
-          itemHeight: 12,
-          itemGap: 20
-        },
-        xAxis: {
-          type: 'value',
-          name: this.xAxisName,
-          nameLocation: 'middle',
-          nameGap: 30,
-          nameTextStyle: {
-            fontSize: 12,
-            color: this.theme === 'dark' ? '#ccc' : '#333',
-            fontWeight: 'bold'
-          },
-          axisLabel: {
-            formatter: '{value}',
-            color: this.theme === 'dark' ? '#e6e6e6' : '#333',
-            fontSize: 11
-          },
-          axisLine: {
-            lineStyle: {
-              color: this.theme === 'dark' ? '#555' : '#ccc',
-              width: 2
-            }
-          },
-          splitLine: {
-            lineStyle: {
-              color: this.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-              type: 'dashed'
-            }
-          }
-        },
-        yAxis: {
-          type: 'value',
-          name: '温度 (°C)',
-          nameLocation: 'middle',
-          nameGap: 40,
-          nameTextStyle: {
-            fontSize: 12,
-            color: this.theme === 'dark' ? '#ccc' : '#333',
-            fontWeight: 'bold'
-          },
-          min: yAxisMin,
-          max: yAxisMax,
-          axisLabel: {
-            formatter: '{value}',
-            color: this.theme === 'dark' ? '#e6e6e6' : '#333',
-            fontSize: 11
-          },
-          axisLine: {
-            lineStyle: {
-              color: this.theme === 'dark' ? '#555' : '#ccc',
-              width: 2
-            }
-          },
-          splitLine: {
-            lineStyle: {
-              color: this.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-              type: 'dashed'
-            }
-          }
-        },
-        series: [
-          {
-            name: '温度曲线',
-            type: 'line',
-            data: this.combineXY(this.currentData.xAxis, this.currentData.yAxis),
-            markPoint: {
-              data: this.currentData.markPoints,
-              symbol: 'pin',
-              symbolSize: 40
+      try {
+        // 检查数据是否有效
+        if (!this.segments || !this.segments.length) {
+          console.log('ProcessCurveChart: no segments data')
+          // 设置空图表
+          this.chart.setOption({
+            title: {
+              text: '工艺温度曲线 (无数据)',
+              left: 'center'
             },
-            markArea: {
-              data: this.currentData.markAreas,
-              silent: true
+            xAxis: { type: 'value', name: this.xAxisName },
+            yAxis: { type: 'value', name: '温度 (°C)' },
+            series: [{ type: 'line', data: [] }]
+          });
+          return;
+        }
+        
+        // 检查数据点是否有效
+        const dataPoints = this.combineXY(this.currentData.xAxis, this.currentData.yAxis)
+        console.log('ProcessCurveChart: 数据点', dataPoints)
+        
+        if (!dataPoints || dataPoints.length < 2) {
+          console.error('ProcessCurveChart: 有效数据点不足', dataPoints)
+          // 设置空图表
+          this.chart.setOption({
+            title: {
+              text: '工艺温度曲线 (数据不足)',
+              left: 'center'
             },
-            lineStyle: {
-              width: 4,
-              shadowColor: 'rgba(0,0,0,0.3)',
-              shadowBlur: 10,
-              shadowOffsetY: 8,
-              color: this.lineColor
+            xAxis: { type: 'value', name: this.xAxisName },
+            yAxis: { type: 'value', name: '温度 (°C)' },
+            series: [{ type: 'line', data: [] }]
+          });
+          return;
+        }
+        
+        // 生成段类型标签数据
+        const labelData = this.generateLabelData(dataPoints);
+        console.log('ProcessCurveChart: 段类型标签数据', labelData);
+        
+        // 计算温度最大值和最小值以适应Y轴刻度
+        const yValues = dataPoints.map(point => point[1])
+        const maxTemp = Math.max(...yValues, this.initialTemp)
+        const minTemp = Math.min(...yValues, this.initialTemp)
+        const yAxisMin = Math.max(0, Math.floor(minTemp / 100) * 100)
+        const yAxisMax = Math.min(this.yAxisMax, Math.ceil(maxTemp / 100) * 100 + 100)
+        
+        // 美化的图表配置项
+        const option = {
+          backgroundColor: this.theme === 'dark' ? '#1f2d3d' : '#ffffff',
+          grid: {
+            left: '5%',
+            right: '5%',
+            bottom: '15%',
+            top: '15%',
+            containLabel: true
+          },
+          tooltip: {
+            trigger: 'axis',
+            formatter: (params) => {
+              if (!params || !params[0]) return '';
+              const timeValue = params[0].axisValue;
+              const tempValue = params[0].data[1]; // 访问Y值
+              let segmentType = '';
+              
+              // 查找对应的段类型
+              if (this.segments) {
+                let accumulatedTime = 0;
+                for (let i = 0; i < this.segments.length; i++) {
+                  accumulatedTime += this.segments[i].duration || 0;
+                  if (timeValue <= accumulatedTime) {
+                    segmentType = this.segments[i].segmentType || '';
+                    break;
+                  }
+                }
+              }
+              
+              return `<div style="padding: 8px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">${segmentType || '工艺段'}</div>
+                <div>时间: ${timeValue} 小时</div>
+                <div>温度: ${tempValue} °C</div>
+              </div>`;
             },
-            itemStyle: {
-              color: this.lineColor,
-              borderWidth: 2,
-              borderColor: '#fff',
-              shadowColor: 'rgba(0,0,0,0.3)',
-              shadowBlur: 4
+            backgroundColor: 'rgba(50,50,50,0.8)',
+            borderColor: 'rgba(255,255,255,0.3)',
+            borderWidth: 1,
+            padding: 0,
+            textStyle: {
+              color: '#fff',
+              fontSize: 12
             },
-            areaStyle: {
-              color: {
-                type: 'linear',
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [{
-                  offset: 0,
-                  color: this.adjustColorAlpha(this.lineColor, 0.3)
-                }, {
-                  offset: 1,
-                  color: this.adjustColorAlpha(this.lineColor, 0)
-                }]
+            axisPointer: {
+              type: 'cross',
+              lineStyle: {
+                color: '#999',
+                width: 1,
+                type: 'dashed'
+              }
+            }
+          },
+          legend: {
+            data: ['温度曲线'],
+            bottom: 10,
+            textStyle: {
+              color: this.theme === 'dark' ? '#e6e6e6' : '#333',
+              fontSize: 12
+            },
+            icon: 'roundRect',
+            itemWidth: 24,
+            itemHeight: 12
+          },
+          xAxis: {
+            type: 'value',
+            name: this.xAxisName,
+            nameLocation: 'middle',
+            nameGap: 30,
+            nameTextStyle: {
+              fontSize: 12,
+              color: this.theme === 'dark' ? '#ccc' : '#333',
+              fontWeight: 'bold'
+            },
+            axisLabel: {
+              formatter: '{value}',
+              color: this.theme === 'dark' ? '#e6e6e6' : '#333',
+              fontSize: 11
+            },
+            axisLine: {
+              lineStyle: {
+                color: this.theme === 'dark' ? '#555' : '#ccc',
+                width: 2
               }
             },
-            smooth: true,
-            emphasis: {
-              focus: 'series',
-              blurScope: 'coordinateSystem',
+            splitLine: {
               lineStyle: {
-                width: 6,
-                shadowBlur: 15
+                color: this.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                type: 'dashed'
+              }
+            }
+          },
+          yAxis: {
+            type: 'value',
+            name: '温度 (°C)',
+            nameLocation: 'middle',
+            nameGap: 40,
+            nameTextStyle: {
+              fontSize: 12,
+              color: this.theme === 'dark' ? '#ccc' : '#333',
+              fontWeight: 'bold'
+            },
+            min: yAxisMin,
+            max: yAxisMax,
+            axisLabel: {
+              formatter: '{value}',
+              color: this.theme === 'dark' ? '#e6e6e6' : '#333',
+              fontSize: 11
+            },
+            axisLine: {
+              lineStyle: {
+                color: this.theme === 'dark' ? '#555' : '#ccc',
+                width: 2
+              }
+            },
+            splitLine: {
+              lineStyle: {
+                color: this.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                type: 'dashed'
+              }
+            }
+          },
+          series: [
+            // 主曲线
+            {
+              name: '温度曲线',
+              type: 'line',
+              data: dataPoints,
+              smooth: true,
+              symbol: 'circle',
+              symbolSize: 8,
+              showSymbol: true,
+              lineStyle: {
+                width: 4,
+                shadowColor: 'rgba(0,0,0,0.3)',
+                shadowBlur: 10,
+                shadowOffsetY: 8,
+                color: {
+                  type: 'linear',
+                  x: 0,
+                  y: 0,
+                  x2: 1,
+                  y2: 0,
+                  colorStops: [{
+                    offset: 0,
+                    color: '#409EFF' // 蓝色开始
+                  }, {
+                    offset: 0.5,
+                    color: '#F56C6C' // 红色中间
+                  }, {
+                    offset: 1,
+                    color: '#67C23A' // 绿色结束
+                  }]
+                }
               },
               itemStyle: {
-                borderWidth: 3,
+                color: function(params) {
+                  // 根据温度值动态设置颜色
+                  const temp = params.data[1];
+                  if (temp < 200) return '#409EFF'; // 低温蓝色
+                  if (temp < 600) return '#E6A23C'; // 中温橙色
+                  return '#F56C6C'; // 高温红色
+                },
+                borderWidth: 2,
                 borderColor: '#fff',
-                shadowBlur: 10
+                shadowColor: 'rgba(0,0,0,0.3)',
+                shadowBlur: 4
+              },
+              label: {
+                show: true,
+                formatter: function(params) {
+                  return params.data[1] + '°C';
+                },
+                position: 'top',
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                padding: [3, 5],
+                borderRadius: 3,
+                distance: 10,
+                fontSize: 10
+              },
+              areaStyle: {
+                color: {
+                  type: 'linear',
+                  x: 0,
+                  y: 0,
+                  x2: 0,
+                  y2: 1,
+                  colorStops: [{
+                    offset: 0,
+                    color: this.adjustColorAlpha(this.lineColor, 0.3)
+                  }, {
+                    offset: 1,
+                    color: this.adjustColorAlpha(this.lineColor, 0)
+                  }]
+                }
+              },
+              emphasis: {
+                focus: 'series',
+                blurScope: 'coordinateSystem',
+                lineStyle: {
+                  width: 6,
+                  shadowBlur: 15
+                },
+                itemStyle: {
+                  borderWidth: 3,
+                  borderColor: '#fff',
+                  shadowBlur: 10
+                },
+                label: {
+                  show: true,
+                  formatter: function(params) {
+                    return params.data[1] + '°C';
+                  },
+                  fontWeight: 'bold',
+                  fontSize: 12
+                }
               }
             },
-            symbol: 'circle',
-            symbolSize: 8,
-            connectNulls: true,
-            animation: true,
-            animationDuration: 1000,
-            animationEasing: 'cubicOut'
-          }
-        ]
-      };
-      
-      // 应用配置项
-      this.chart.setOption(option, true);
-      
-      // 强制重新调整大小
-      this.$nextTick(() => {
-        this.chart.resize({
-          width: 'auto',
-          animation: {
-            duration: 300
+            // 段类型标签系列 - 改进版
+            {
+              name: '段类型',
+              type: 'custom',
+              renderItem: (params, api) => {
+                const value = api.value(0); // 时间
+                const coord = api.coord([value, 0]); // 获取坐标
+                
+                return {
+                  type: 'group',
+                  children: [{
+                    type: 'text',
+                    style: {
+                      text: api.value(2), // 段类型文本
+                      textFont: api.font({fontSize: 12}),
+                      textFill: '#303133',
+                      textBackgroundColor: 'rgba(255,255,255,0.8)',
+                      textPadding: [4, 8],
+                      textBorderRadius: 4,
+                      textAlign: 'center',
+                      textVerticalAlign: 'bottom'
+                    },
+                    position: [coord[0], params.coordSys.height - 30] // 放在底部
+                  }]
+                };
+              },
+              data: labelData,
+              z: 100 // 确保在最上层
+            }
+          ]
+        };
+        
+        // 应用配置项
+        this.chart.setOption(option, true);
+        
+        // 强制重新调整大小
+        this.$nextTick(() => {
+          if (this.chart) {
+            this.chart.resize();
           }
         });
+      } catch (error) {
+        console.error('更新图表时出错:', error)
+        
+        // 出错时使用最简单的图表配置
+        if (this.chart) {
+          const dataPoints = this.combineXY(this.currentData.xAxis, this.currentData.yAxis)
+          this.chart.setOption({
+            xAxis: { type: 'value', name: this.xAxisName },
+            yAxis: { type: 'value', name: '温度 (°C)' },
+            series: [{ 
+              type: 'line', 
+              data: dataPoints,
+              smooth: true 
+            }]
+          });
+        }
+      }
+    },
+    
+    // 生成段类型标签数据
+    generateLabelData(dataPoints) {
+      if (!this.segments || !this.segments.length || !dataPoints || dataPoints.length < 2) {
+        return [];
+      }
+      
+      const labelData = [];
+      let accumulatedTime = 0;
+      
+      // 为每个段中点添加标签
+      this.segments.forEach((segment, index) => {
+        if (!segment) return;
+        
+        const startTime = accumulatedTime;
+        accumulatedTime += segment.duration || 0;
+        const midTime = startTime + (segment.duration || 0) / 2;
+        
+        // 添加段类型标签 - 简化，直接使用时间坐标
+        labelData.push([
+          midTime,  // X坐标 - 时间
+          0,        // Y坐标 - 不重要，将在renderItem中覆盖
+          `${segment.segmentType || '未知'}-${index + 1}` // 显示段类型和序号
+        ]);
       });
+      
+      return labelData;
     },
     
     // 重新调整图表大小
@@ -589,11 +786,32 @@ export default {
     
     // 将X和Y轴数据转换为坐标点数组
     combineXY(xData, yData) {
-      if (!xData || !xData.length || !yData || !yData.length) return []
+      if (!xData || !xData.length || !yData || !yData.length) {
+        console.warn('ProcessCurveChart: xData或yData为空', xData, yData)
+        return []
+      }
       
-      return xData.map((x, index) => {
-        return [x, yData[index]]
-      })
+      // 确保两个数组长度相同
+      if (xData.length !== yData.length) {
+        console.warn('ProcessCurveChart: xData和yData长度不一致', xData, yData)
+      }
+      
+      // 检查数据有效性
+      const result = []
+      for (let i = 0; i < Math.min(xData.length, yData.length); i++) {
+        // 确保x和y都是有效数值
+        const x = parseFloat(xData[i])
+        const y = parseFloat(yData[i])
+        
+        if (!isNaN(x) && !isNaN(y)) {
+          result.push([x, y])
+        } else {
+          console.warn(`ProcessCurveChart: 无效的数据点 [${xData[i]}, ${yData[i]}]`)
+        }
+      }
+      
+      console.log('ProcessCurveChart: 生成的数据点', result)
+      return result
     },
     
     // 设置色彩透明度的辅助方法

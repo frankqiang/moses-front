@@ -44,6 +44,7 @@
           ref="processCurveChart"
           :segments="form.segments"
           height="350"
+          width="100%"
           :initial-temp="25"
           :interactive="type !== 'view'"
           :downloadable="true"
@@ -56,6 +57,7 @@
           :disabled="type === 'view'"
           :furnace-capabilities="furnaceCapabilities"
           @change="handleSegmentsChange"
+          @input="handleSegmentsInput"
         />
       </div>
     </template>
@@ -474,6 +476,29 @@ export default {
         supportedAtmosphereTypes: ['纯氮气']
       }
       
+      // 映射字段名称，确保与ProcessSegmentTable组件期望的字段名称一致
+      if (capabilities) {
+        // 映射后区循环风机字段
+        if (capabilities.hasRearCirculationFan !== undefined) {
+          this.furnaceCapabilities.hasBackZone = capabilities.hasRearCirculationFan
+        }
+        
+        // 映射负压风机字段
+        if (capabilities.hasVacuumFan !== undefined) {
+          this.furnaceCapabilities.hasNegativePressure = capabilities.hasVacuumFan
+        }
+        
+        // 映射吹洗阀字段
+        if (capabilities.hasPurgeValve !== undefined) {
+          this.furnaceCapabilities.hasCoolingValve = capabilities.hasPurgeValve
+        }
+        
+        // 映射最高温度字段
+        if (capabilities.maxTemperatureLimit !== undefined) {
+          this.furnaceCapabilities.maxTemperature = capabilities.maxTemperatureLimit
+        }
+      }
+      
       console.log('工艺模板表单接收到炉型能力配置:', this.furnaceCapabilities)
       
       // 根据新的炉型能力配置更新工艺段
@@ -483,6 +508,12 @@ export default {
           this.$message.warning(`根据所选炉型，工艺段数量已自动调整为${this.furnaceCapabilities.maxSegments}段`)
           this.form.segments = this.form.segments.slice(0, this.furnaceCapabilities.maxSegments)
         }
+        
+        // 强制更新工艺段表格组件
+        this.$nextTick(() => {
+          // 确保工艺段表格组件能够感知到炉型能力配置的变化
+          this.$forceUpdate()
+        })
       }
     },
     
@@ -497,12 +528,29 @@ export default {
       }
     },
     
-    // 处理工艺段变化
+    // 处理工艺段变化（通过change事件）
     handleSegmentsChange(segments) {
-      this.form.segments = segments
+      console.log('ProcessTemplateFormDrawer: handleSegmentsChange called')
+      this.form.segments = JSON.parse(JSON.stringify(segments))
       // 确保图表更新
       this.$nextTick(() => {
         if (this.$refs.processCurveChart) {
+          console.log('ProcessTemplateFormDrawer: forcing chart update')
+          // 强制更新图表
+          this.$refs.processCurveChart.updateChartData()
+          this.$refs.processCurveChart.updateChart()
+        }
+      })
+    },
+    
+    // 处理工艺段变化（通过input事件）
+    handleSegmentsInput(segments) {
+      console.log('ProcessTemplateFormDrawer: handleSegmentsInput called')
+      this.form.segments = JSON.parse(JSON.stringify(segments))
+      // 确保图表更新
+      this.$nextTick(() => {
+        if (this.$refs.processCurveChart) {
+          console.log('ProcessTemplateFormDrawer: forcing chart update from input')
           // 强制更新图表
           this.$refs.processCurveChart.updateChartData()
           this.$refs.processCurveChart.updateChart()
@@ -661,10 +709,12 @@ export default {
   :deep(.process-curve-chart),
   :deep(.process-segment-table) {
     width: 100%;
+    overflow-x: auto;
   }
   
   :deep(.chart-container) {
     width: 100% !important;
+    min-width: 800px;
   }
 }
 

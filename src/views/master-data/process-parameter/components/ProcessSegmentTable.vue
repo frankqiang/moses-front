@@ -375,11 +375,19 @@ export default {
     
     // 监听炉型能力配置变化
     furnaceCapabilities: {
-      handler() {
-        // 更新工艺段配置以匹配炉型能力
-        this.updateSegmentsForFurnaceCapabilities()
+      handler(newCapabilities, oldCapabilities) {
+        console.log('ProcessSegmentTable: 炉型能力配置变化', newCapabilities)
+        // 如果配置有实质性变化，才更新工艺段配置
+        if (JSON.stringify(newCapabilities) !== JSON.stringify(oldCapabilities)) {
+          console.log('ProcessSegmentTable: 更新工艺段配置以匹配炉型能力')
+          // 更新工艺段配置以匹配炉型能力
+          this.$nextTick(() => {
+            this.updateSegmentsForFurnaceCapabilities()
+          })
+        }
       },
-      deep: true
+      deep: true,
+      immediate: true
     }
   },
   methods: {
@@ -618,6 +626,8 @@ export default {
     updateSegmentsForFurnaceCapabilities() {
       if (!this.segments || !this.segments.length) return
       
+      console.log('ProcessSegmentTable: 更新工艺段以适应炉型能力', this.furnaceCapabilities)
+      
       let hasChanges = false
       
       this.segments.forEach(segment => {
@@ -660,14 +670,22 @@ export default {
       }
       
       if (hasChanges) {
+        console.log('ProcessSegmentTable: 工艺段已更新', this.segments)
         this.emitChange()
       }
     },
     
     // 向父组件发送变更
     emitChange() {
-      this.$emit('input', JSON.parse(JSON.stringify(this.segments)))
-      this.$emit('change', JSON.parse(JSON.stringify(this.segments)))
+      // 创建深拷贝以避免引用问题
+      const segmentsCopy = JSON.parse(JSON.stringify(this.segments))
+      this.$emit('input', segmentsCopy)
+      this.$emit('change', segmentsCopy)
+      
+      // 添加延迟触发，确保数据已更新
+      this.$nextTick(() => {
+        this.$emit('change', JSON.parse(JSON.stringify(this.segments)))
+      })
     },
     
     // 检查温度是否超过炉型上限

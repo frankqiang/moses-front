@@ -27,61 +27,112 @@
       
       <el-popover
         placement="right"
-        width="350"
+        width="600"
         trigger="hover"
         :visible-arrow="true"
         popper-class="furnace-capabilities-popover"
       >
-        <div class="capabilities-container" v-if="selectedType && capabilities">
-          <div class="capabilities-title">炉型能力配置</div>
-          <el-divider></el-divider>
+        <div class="capabilities-card" v-if="selectedType && capabilities">
+          <div class="capabilities-header">
+            <div class="capabilities-title">炉型能力配置</div>
+            <div class="capabilities-subtitle">{{ getSelectedTypeName() }}</div>
+          </div>
+          
           <div class="capabilities-content">
-            <el-row :gutter="20">
-              <el-col :span="12">
+            <!-- 功能支持区域 -->
+            <el-row :gutter="20" v-if="hasDeviceFeatures">
+              <el-col :span="12" v-if="hasField('hasRearCirculationFan')">
                 <div class="capability-item">
-                  <span class="capability-label">区域控制:</span>
-                  <span class="capability-value">{{ capabilities.hasBackZone ? '前后双区' : '单区' }}</span>
+                  <span class="capability-label">后区循环风机:</span>
+                  <span class="capability-value" :class="{'supported': capabilities.hasRearCirculationFan, 'unsupported': !capabilities.hasRearCirculationFan}">
+                    {{ capabilities.hasRearCirculationFan ? '支持' : '不支持' }}
+                  </span>
                 </div>
               </el-col>
-              <el-col :span="12">
+              <el-col :span="12" v-if="hasField('hasVacuumFan')">
                 <div class="capability-item">
-                  <span class="capability-label">负压系统:</span>
-                  <span class="capability-value">{{ capabilities.hasNegativePressure ? '支持' : '不支持' }}</span>
+                  <span class="capability-label">负压风机:</span>
+                  <span class="capability-value" :class="{'supported': capabilities.hasVacuumFan, 'unsupported': !capabilities.hasVacuumFan}">
+                    {{ capabilities.hasVacuumFan ? '支持' : '不支持' }}
+                  </span>
                 </div>
               </el-col>
             </el-row>
-            <el-row :gutter="20">
-              <el-col :span="12">
+            
+            <el-row :gutter="20" v-if="hasDeviceFeatures">
+              <el-col :span="12" v-if="hasField('hasPurgeValve')">
                 <div class="capability-item">
                   <span class="capability-label">吹洗阀:</span>
-                  <span class="capability-value">{{ capabilities.hasCoolingValve ? '支持' : '不支持' }}</span>
+                  <span class="capability-value" :class="{'supported': capabilities.hasPurgeValve, 'unsupported': !capabilities.hasPurgeValve}">
+                    {{ capabilities.hasPurgeValve ? '支持' : '不支持' }}
+                  </span>
                 </div>
               </el-col>
-              <el-col :span="12">
+              <el-col :span="12" v-if="hasField('hasCoolingFan')">
                 <div class="capability-item">
-                  <span class="capability-label">最大工艺段:</span>
-                  <span class="capability-value">{{ capabilities.maxSegments || 12 }}</span>
+                  <span class="capability-label">冷却风机:</span>
+                  <span class="capability-value" :class="{'supported': capabilities.hasCoolingFan, 'unsupported': !capabilities.hasCoolingFan}">
+                    {{ capabilities.hasCoolingFan ? '支持' : '不支持' }}
+                  </span>
                 </div>
               </el-col>
             </el-row>
-            <el-row :gutter="20">
-              <el-col :span="12">
+            
+            <el-row :gutter="20" v-if="hasDeviceFeatures">
+              <el-col :span="12" v-if="hasField('hasPressureControl')">
                 <div class="capability-item">
-                  <span class="capability-label">最高温度:</span>
-                  <span class="capability-value">{{ capabilities.maxTemperature || 1000 }}°C</span>
+                  <span class="capability-label">压力控制:</span>
+                  <span class="capability-value" :class="{'supported': capabilities.hasPressureControl, 'unsupported': !capabilities.hasPressureControl}">
+                    {{ capabilities.hasPressureControl ? '支持' : '不支持' }}
+                  </span>
                 </div>
               </el-col>
-              <el-col :span="12">
+              <el-col :span="12" v-if="hasField('hasRearCirculationFan')">
+                <div class="capability-item">
+                  <span class="capability-label">区域控制:</span>
+                  <span class="capability-value">{{ capabilities.hasRearCirculationFan ? '前后双区' : '单区' }}</span>
+                </div>
+              </el-col>
+            </el-row>
+            
+            <el-divider content-position="center" v-if="hasLimitParams">参数限制</el-divider>
+            
+            <el-row :gutter="20" v-if="hasLimitParams">
+              <el-col :span="12" v-if="hasField('maxSegments')">
+                <div class="capability-item">
+                  <span class="capability-label">最大工艺段:</span>
+                  <span class="capability-value highlight">{{ capabilities.maxSegments }}</span>
+                </div>
+              </el-col>
+              <el-col :span="12" v-if="hasField('maxTemperatureLimit')">
+                <div class="capability-item">
+                  <span class="capability-label">最高温度:</span>
+                  <span class="capability-value highlight">{{ capabilities.maxTemperatureLimit }}°C</span>
+                </div>
+              </el-col>
+            </el-row>
+            
+            <el-row :gutter="20" v-if="hasLimitParams">
+              <el-col :span="12" v-if="hasField('maxHeatingRate')">
                 <div class="capability-item">
                   <span class="capability-label">最大升温速率:</span>
-                  <span class="capability-value">{{ capabilities.maxHeatingRate || 10 }}°C/分钟</span>
+                  <span class="capability-value highlight">{{ capabilities.maxHeatingRate }}°C/分钟</span>
+                </div>
+              </el-col>
+              <el-col :span="12" v-if="hasField('supportedAtmosphereTypes')">
+                <div class="capability-item">
+                  <span class="capability-label">支持气氛:</span>
+                  <span class="capability-value">{{ formatAtmosphereTypes(capabilities.supportedAtmosphereTypes) }}</span>
                 </div>
               </el-col>
             </el-row>
           </div>
         </div>
-        <div class="capabilities-container" v-else>
-          <div class="no-selection">请先选择炉型以查看能力配置</div>
+        <div class="capabilities-card empty-card" v-else>
+          <div class="no-selection">
+            <i class="el-icon-info"></i>
+            <p>请先选择炉型以查看能力配置</p>
+          </div>
         </div>
         <el-button slot="reference" type="text" icon="el-icon-info" :disabled="!selectedType">查看能力配置</el-button>
       </el-popover>
@@ -125,6 +176,25 @@ export default {
       loading: false
     }
   },
+  computed: {
+    // 判断是否有设备功能特性字段
+    hasDeviceFeatures() {
+      if (!this.capabilities) return false
+      return this.hasField('hasRearCirculationFan') || 
+             this.hasField('hasVacuumFan') || 
+             this.hasField('hasPurgeValve') || 
+             this.hasField('hasCoolingFan') || 
+             this.hasField('hasPressureControl')
+    },
+    // 判断是否有参数限制字段
+    hasLimitParams() {
+      if (!this.capabilities) return false
+      return this.hasField('maxSegments') || 
+             this.hasField('maxTemperatureLimit') || 
+             this.hasField('maxHeatingRate') || 
+             this.hasField('supportedAtmosphereTypes')
+    }
+  },
   watch: {
     value: {
       handler(val) {
@@ -142,6 +212,34 @@ export default {
     this.fetchFurnaceTypes()
   },
   methods: {
+    // 检查字段是否存在且有值
+    hasField(field) {
+      return this.capabilities && 
+             this.capabilities[field] !== undefined && 
+             this.capabilities[field] !== null
+    },
+    
+    // 格式化气氛类型显示
+    formatAtmosphereTypes(types) {
+      if (!types || !Array.isArray(types) || types.length === 0) {
+        return '无数据'
+      }
+      return types.join(', ')
+    },
+    
+    // 获取选中炉型名称
+    getSelectedTypeName() {
+      if (!this.selectedType || !this.furnaceTypes || !this.furnaceTypes.length) {
+        return '';
+      }
+      
+      const selectedType = this.furnaceTypes.find(type => 
+        (type.id === this.selectedType) || (type.furnaceTypeCode === this.selectedType)
+      );
+      
+      return selectedType ? selectedType.furnaceTypeName || selectedType.name : '';
+    },
+    
     // 获取炉型列表
     fetchFurnaceTypes() {
       this.loading = true
@@ -208,16 +306,8 @@ export default {
       )
       
       if (selectedType) {
-        // 直接从炉型对象中提取能力参数
-        this.capabilities = {
-          hasBackZone: selectedType.hasRearCirculationFan, // 后区循环风机对应后区控制
-          hasNegativePressure: selectedType.hasVacuumFan, // 负压风机
-          hasCoolingValve: selectedType.hasPurgeValve, // 吹洗阀
-          maxSegments: selectedType.maxSegments || 12,
-          maxTemperature: selectedType.maxTemperatureLimit || 1000,
-          maxHeatingRate: selectedType.maxHeatingRate || 10,
-          supportedAtmosphereTypes: selectedType.supportedAtmosphereTypes || ['纯氮气']
-        }
+        // 直接使用炉型对象的原始数据，不添加不存在的字段
+        this.capabilities = { ...selectedType }
         
         // 发送能力配置变更事件
         this.$emit('capabilities-change', this.capabilities)
@@ -242,27 +332,11 @@ export default {
           )
           
           if (updatedType) {
-            // 直接从炉型对象中提取能力参数
-            this.capabilities = {
-              hasBackZone: updatedType.hasRearCirculationFan,
-              hasNegativePressure: updatedType.hasVacuumFan,
-              hasCoolingValve: updatedType.hasPurgeValve,
-              maxSegments: updatedType.maxSegments || 12,
-              maxTemperature: updatedType.maxTemperatureLimit || 1000,
-              maxHeatingRate: updatedType.maxHeatingRate || 10,
-              supportedAtmosphereTypes: updatedType.supportedAtmosphereTypes || ['纯氮气']
-            }
+            // 直接使用炉型对象的原始数据，不添加不存在的字段
+            this.capabilities = { ...updatedType }
           } else {
-            // 仍然没有找到，使用默认配置
-            this.capabilities = {
-              hasBackZone: true,
-              hasNegativePressure: true,
-              hasCoolingValve: true,
-              maxSegments: 12,
-              maxTemperature: 1000,
-              maxHeatingRate: 10,
-              supportedAtmosphereTypes: ['纯氮气']
-            }
+            // 仍然没有找到，设置为null
+            this.capabilities = null
           }
           
           // 发送能力配置变更事件
@@ -271,20 +345,12 @@ export default {
           
           this.loading = false
         }).catch(() => {
-          // 发生错误，使用默认配置
-          this.capabilities = {
-            hasBackZone: true,
-            hasNegativePressure: true,
-            hasCoolingValve: true,
-            maxSegments: 12,
-            maxTemperature: 1000,
-            maxHeatingRate: 10,
-            supportedAtmosphereTypes: ['纯氮气']
-          }
+          // 发生错误，设置为null
+          this.capabilities = null
           
           // 发送能力配置变更事件
           this.$emit('capabilities-change', this.capabilities)
-          console.log('使用默认炉型能力配置:', this.capabilities)
+          console.log('获取炉型能力配置失败')
           
           this.loading = false
         })
@@ -309,31 +375,74 @@ export default {
   }
 }
 
-.capabilities-container {
-  padding: 10px;
+.capabilities-card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   
-  .capabilities-title {
-    font-size: 16px;
-    font-weight: bold;
-    color: #303133;
-    text-align: center;
-    margin-bottom: 10px;
+  &.empty-card {
+    background: linear-gradient(120deg, #f5f7fa, #e4e8eb);
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .capabilities-header {
+    background: linear-gradient(120deg, #0099ff, #0066cc);
+    color: white;
+    padding: 15px 20px;
+    
+    .capabilities-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .capabilities-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+    }
   }
   
   .capabilities-content {
-    margin-top: 15px;
+    padding: 20px;
+    background: white;
     
     .capability-item {
       margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       
       .capability-label {
         color: #606266;
+        flex: 0 0 auto;
         margin-right: 10px;
+        min-width: 100px;
+        max-width: 100px;
       }
       
       .capability-value {
-        font-weight: bold;
-        color: #303133;
+        font-weight: 600;
+        flex: 1;
+        text-align: right;
+        word-break: break-all;
+        min-width: 100px;
+        padding-left: 5px;
+        
+        &.supported {
+          color: #67c23a;
+        }
+        
+        &.unsupported {
+          color: #909399;
+        }
+        
+        &.highlight {
+          color: #409eff;
+          font-size: 16px;
+        }
       }
     }
   }
@@ -341,14 +450,32 @@ export default {
   .no-selection {
     text-align: center;
     color: #909399;
-    padding: 20px 0;
+    padding: 30px 0;
+    
+    i {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+    
+    p {
+      margin: 5px 0 0;
+      font-size: 14px;
+    }
   }
+}
+
+.el-divider {
+  margin: 15px 0;
 }
 </style>
 
 <style lang="scss">
 .furnace-capabilities-popover {
-  min-width: 350px;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: none !important;
   
   .el-popover__title {
     margin: 0;
