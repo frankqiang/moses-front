@@ -17,7 +17,7 @@
     direction="rtl"
     label-width="100px"
     :wrapper-closable="false"
-    @submit="handleFormSubmit"
+    @submit="handleSubmit"
     @close="handleClose"
   >
     <template #footer>
@@ -27,12 +27,13 @@
     
     <!-- 炉型选择器 -->
     <template #furnaceType>
-      <furnace-type-selector
-        v-model="form.furnaceTypeId"
-        :disabled="type === 'view' || loading"
-        :rules="rules.furnaceTypeId"
-        @capabilities-change="handleFurnaceCapabilitiesChange"
-      />
+      <el-form-item  prop="furnaceTypeId" :rules="rules.furnaceTypeId">
+        <furnace-type-selector
+          v-model="form.furnaceTypeId"
+          :disabled="type === 'view' || loading"
+          @capabilities-change="handleFurnaceCapabilitiesChange"
+        />
+      </el-form-item>
     </template>
     
     <!-- 工艺段定义区域 -->
@@ -120,7 +121,7 @@ import DrawerForm from '@/components/DrawerForm'
 import ProcessCurveChart from './ProcessCurveChart'
 import ProcessSegmentTable from './ProcessSegmentTable'
 import FurnaceTypeSelector from './FurnaceTypeSelector'
-import { getFurnaceTypeList } from '@/api/master-data/process-parameter'
+import { getAllFurnaceTypes } from '@/api/master-data/furnace-type'
 import { getAllProductList } from '@/api/master-data/product-management'
 
 export default {
@@ -227,7 +228,7 @@ export default {
           {
             prop: 'furnaceTypeId',
             label: '关联炉型',
-            type: 'custom',
+            type: 'slot',
             slotName: 'furnaceType',
             rowClass: 'first-row',
             colSpan: 6
@@ -376,33 +377,17 @@ export default {
         hasCoolingValve: true,
         maxSegments: 12,
         maxTemperature: 1000,
-        maxHeatingRate: 10
+        maxHeatingRate: 10,
+        supportedAtmosphereTypes: ['纯氮气']
       }
       
       // 如果是新增模式
       if (this.type === 'create') {
-        // 获取炉型列表并设置默认炉型
-        getFurnaceTypeList().then(response => {
-          const furnaceTypes = response.data || []
-          if (furnaceTypes && furnaceTypes.length > 0) {
-            // 设置默认选择第一个炉型
-            this.form.furnaceTypeId = furnaceTypes[0].id
-            
-            // 更新炉型能力配置
-            if (furnaceTypes[0].capabilities) {
-              this.furnaceCapabilities = furnaceTypes[0].capabilities
-            }
-            
-            // 创建默认工艺段
-            this.createInitialSegment()
-          } else {
-            // 即使没有炉型也创建默认工艺段
-            this.createInitialSegment()
-          }
-        }).catch(() => {
-          // 获取失败也创建默认工艺段
-          this.createInitialSegment()
-        })
+        // 获取炉型列表
+        this.getFurnaceTypes()
+        
+        // 创建默认工艺段
+        this.createInitialSegment()
       } else if (this.templateData) {
         // 编辑或查看模式，复制传入的数据
         const data = JSON.parse(JSON.stringify(this.templateData))
@@ -420,29 +405,28 @@ export default {
         if (!this.form.segments || !this.form.segments.length) {
           this.createInitialSegment()
         }
-        
-        // 更新炉型能力配置
-        if (this.form.furnaceTypeId) {
-          getFurnaceTypeList().then(response => {
-            const furnaceTypes = response.data || []
-            const selectedType = furnaceTypes.find(type => type.id === this.form.furnaceTypeId)
-            if (selectedType && selectedType.capabilities) {
-              this.furnaceCapabilities = selectedType.capabilities
-            }
-          }).catch(() => {
-            // 使用默认配置
-          })
-        }
       }
     },
     
     // 获取炉型列表
     getFurnaceTypes() {
-      getFurnaceTypeList().then(response => {
-        const furnaceTypes = response.data || []
+      getAllFurnaceTypes().then(response => {
+        let furnaceTypes = []
+        
+        // 处理嵌套的API返回结构
+        if (response && response.code === 20000) {
+          if (response.data && response.data.items) {
+            // 分页格式的返回
+            furnaceTypes = response.data.items
+          } else if (Array.isArray(response.data)) {
+            // 直接返回数组的情况
+            furnaceTypes = response.data
+          }
+        }
+        
         this.furnaceTypeOptions = furnaceTypes.map(type => ({
-          label: type.name,
-          value: type.id
+          label: type.furnaceTypeName || type.name,
+          value: type.furnaceTypeCode || type.id
         }))
       }).catch(() => {
         this.$message.error('获取炉型列表失败')
@@ -486,7 +470,19 @@ export default {
         hasCoolingValve: true,
         maxSegments: 12,
         maxTemperature: 1000,
-        maxHeatingRate: 10
+        maxHeatingRate: 10,
+        supportedAtmosphereTypes: ['纯氮气']
+      }
+      
+      console.log('工艺模板表单接收到炉型能力配置:', this.furnaceCapabilities)
+      
+      // 根据新的炉型能力配置更新工艺段
+      if (this.form.segments && this.form.segments.length > 0) {
+        // 如果工艺段数超过最大限制，截断多余段
+        if (this.form.segments.length > this.furnaceCapabilities.maxSegments) {
+          this.$message.warning(`根据所选炉型，工艺段数量已自动调整为${this.furnaceCapabilities.maxSegments}段`)
+          this.form.segments = this.form.segments.slice(0, this.furnaceCapabilities.maxSegments)
+        }
       }
     },
     
@@ -516,7 +512,54 @@ export default {
     
     // 处理表单提交
     handleSubmit() {
-      this.$refs.drawerForm.submitForm()
+      // 首先执行默认的表单验证
+      this.$refs.drawerForm.$refs.form.validate((valid) => {
+        if (valid) {
+          // 表单基本校验通过后，执行自定义校验
+          if (this.validateSegmentsTemperature()) {
+            this.$refs.drawerForm.submitForm()
+          }
+        }
+      })
+    },
+    
+    // 自定义校验 - 检查工艺段目标温度是否超过炉型上限
+    validateSegmentsTemperature() {
+      // 如果没有选择炉型或没有工艺段数据，不执行校验
+      if (!this.furnaceCapabilities || !this.form.segments || !this.form.segments.length) {
+        return true
+      }
+      
+      const maxTemp = this.furnaceCapabilities.maxTemperature || 1000
+      const exceedSegments = this.form.segments.filter(segment => segment.targetTemp > maxTemp)
+      
+      if (exceedSegments.length > 0) {
+        // 找到超出温度限制的段
+        const segmentNumbers = exceedSegments.map(s => s.segmentNumber).join('、')
+        this.$confirm(
+          `工艺段 ${segmentNumbers} 的目标温度超过了所选炉型的最高温度限制 (${maxTemp}°C)，是否继续保存？`,
+          '温度超限警告',
+          {
+            confirmButtonText: '继续保存',
+            cancelButtonText: '返回修改',
+            type: 'warning'
+          }
+        ).then(() => {
+          // 用户确认继续，提交表单
+          this.$refs.drawerForm.submitForm()
+        }).catch(() => {
+          // 用户选择返回修改
+          this.$message({
+            type: 'info',
+            message: '请调整工艺段温度后再保存'
+          })
+          return false
+        })
+        
+        return false // 阻止默认提交
+      }
+      
+      return true // 没有问题，允许提交
     },
     
     // 处理表单提交（验证通过后）

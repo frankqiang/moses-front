@@ -5,94 +5,92 @@
  */
 <template>
   <div class="furnace-type-selector">
-    <el-form-item :label="label" :prop="prop" :rules="rules">
-      <div class="selector-container">
-        <el-select
-          v-model="selectedType"
-          :placeholder="placeholder"
-          :disabled="disabled"
-          :clearable="clearable"
-          filterable
-          @change="handleChange"
-          class="furnace-select"
+    <div class="selector-container">
+      <el-select
+        v-model="selectedType"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :clearable="clearable"
+        filterable
+        @change="handleChange"
+        class="furnace-select"
+      >
+        <el-option
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
         >
-          <el-option
-            v-for="item in options"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          >
-            <span>{{ item.label }}</span>
-          </el-option>
-        </el-select>
-        
-        <el-popover
-          placement="right"
-          width="350"
-          trigger="hover"
-          :visible-arrow="true"
-          popper-class="furnace-capabilities-popover"
-        >
-          <div class="capabilities-container" v-if="selectedType && capabilities">
-            <div class="capabilities-title">炉型能力配置</div>
-            <el-divider></el-divider>
-            <div class="capabilities-content">
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <div class="capability-item">
-                    <span class="capability-label">区域控制:</span>
-                    <span class="capability-value">{{ capabilities.hasBackZone ? '前后双区' : '单区' }}</span>
-                  </div>
-                </el-col>
-                <el-col :span="12">
-                  <div class="capability-item">
-                    <span class="capability-label">负压系统:</span>
-                    <span class="capability-value">{{ capabilities.hasNegativePressure ? '支持' : '不支持' }}</span>
-                  </div>
-                </el-col>
-              </el-row>
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <div class="capability-item">
-                    <span class="capability-label">吹洗阀:</span>
-                    <span class="capability-value">{{ capabilities.hasCoolingValve ? '支持' : '不支持' }}</span>
-                  </div>
-                </el-col>
-                <el-col :span="12">
-                  <div class="capability-item">
-                    <span class="capability-label">最大工艺段:</span>
-                    <span class="capability-value">{{ capabilities.maxSegments || 12 }}</span>
-                  </div>
-                </el-col>
-              </el-row>
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <div class="capability-item">
-                    <span class="capability-label">最高温度:</span>
-                    <span class="capability-value">{{ capabilities.maxTemperature || 1000 }}°C</span>
-                  </div>
-                </el-col>
-                <el-col :span="12">
-                  <div class="capability-item">
-                    <span class="capability-label">最大升温速率:</span>
-                    <span class="capability-value">{{ capabilities.maxHeatingRate || 10 }}°C/分钟</span>
-                  </div>
-                </el-col>
-              </el-row>
-            </div>
+          <span>{{ item.label }}</span>
+        </el-option>
+      </el-select>
+      
+      <el-popover
+        placement="right"
+        width="350"
+        trigger="hover"
+        :visible-arrow="true"
+        popper-class="furnace-capabilities-popover"
+      >
+        <div class="capabilities-container" v-if="selectedType && capabilities">
+          <div class="capabilities-title">炉型能力配置</div>
+          <el-divider></el-divider>
+          <div class="capabilities-content">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <div class="capability-item">
+                  <span class="capability-label">区域控制:</span>
+                  <span class="capability-value">{{ capabilities.hasBackZone ? '前后双区' : '单区' }}</span>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="capability-item">
+                  <span class="capability-label">负压系统:</span>
+                  <span class="capability-value">{{ capabilities.hasNegativePressure ? '支持' : '不支持' }}</span>
+                </div>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <div class="capability-item">
+                  <span class="capability-label">吹洗阀:</span>
+                  <span class="capability-value">{{ capabilities.hasCoolingValve ? '支持' : '不支持' }}</span>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="capability-item">
+                  <span class="capability-label">最大工艺段:</span>
+                  <span class="capability-value">{{ capabilities.maxSegments || 12 }}</span>
+                </div>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <div class="capability-item">
+                  <span class="capability-label">最高温度:</span>
+                  <span class="capability-value">{{ capabilities.maxTemperature || 1000 }}°C</span>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="capability-item">
+                  <span class="capability-label">最大升温速率:</span>
+                  <span class="capability-value">{{ capabilities.maxHeatingRate || 10 }}°C/分钟</span>
+                </div>
+              </el-col>
+            </el-row>
           </div>
-          <div class="capabilities-container" v-else>
-            <div class="no-selection">请先选择炉型以查看能力配置</div>
-          </div>
-          <el-button slot="reference" type="text" icon="el-icon-info" :disabled="!selectedType">查看能力配置</el-button>
-        </el-popover>
-      </div>
-    </el-form-item>
+        </div>
+        <div class="capabilities-container" v-else>
+          <div class="no-selection">请先选择炉型以查看能力配置</div>
+        </div>
+        <el-button slot="reference" type="text" icon="el-icon-info" :disabled="!selectedType">查看能力配置</el-button>
+      </el-popover>
+    </div>
   </div>
 </template>
 
 <script>
-import { getFurnaceTypeList } from '@/api/master-data/furnace-type'
+import { getAllFurnaceTypes } from '@/api/master-data/furnace-type'
 
 export default {
   name: 'FurnaceTypeSelector',
@@ -101,16 +99,6 @@ export default {
     value: {
       type: [String, Number],
       default: ''
-    },
-    // 标签文本
-    label: {
-      type: String,
-      default: '炉型'
-    },
-    // 表单字段
-    prop: {
-      type: String,
-      default: 'furnaceTypeId'
     },
     // 占位文本
     placeholder: {
@@ -126,11 +114,6 @@ export default {
     clearable: {
       type: Boolean,
       default: true
-    },
-    // 表单验证规则
-    rules: {
-      type: [Array, Object],
-      default: () => []
     }
   },
   data() {
@@ -162,17 +145,31 @@ export default {
     // 获取炉型列表
     fetchFurnaceTypes() {
       this.loading = true
-      getFurnaceTypeList().then(response => {
-        const furnaceTypes = response.data || []
+      getAllFurnaceTypes().then(response => {
+        let furnaceTypes = []
+        
+        // 处理嵌套的API返回结构
+        if (response && response.code === 20000) {
+          if (response.data && response.data.items) {
+            // 分页格式的返回
+            furnaceTypes = response.data.items
+          } else if (Array.isArray(response.data)) {
+            // 直接返回数组的情况
+            furnaceTypes = response.data
+          }
+        }
+        
         this.furnaceTypes = furnaceTypes
+        
+        // 转换为下拉选项格式
         this.options = furnaceTypes.map(type => ({
-          label: type.name,
-          value: type.id
+          label: `${type.furnaceTypeName || type.name} (${type.furnaceTypeCode || type.code || '无代码'})`,
+          value: type.furnaceTypeCode || type.id
         }))
         
         // 如果未设置value但有炉型选项，自动选择第一个并触发change事件
         if (!this.selectedType && furnaceTypes.length > 0 && !this.disabled) {
-          const firstType = furnaceTypes[0].id
+          const firstType = furnaceTypes[0].furnaceTypeCode || furnaceTypes[0].id
           this.selectedType = firstType
           this.$emit('input', firstType)
           this.updateCapabilities(firstType)
@@ -197,7 +194,102 @@ export default {
       this.$emit('change', value, this.capabilities)
     },
     
-    // 更新炉型能力配置    updateCapabilities(furnaceTypeId) {      if (!furnaceTypeId || !this.furnaceTypes || !this.furnaceTypes.length) {        this.capabilities = null        return      }            const selectedType = this.furnaceTypes.find(type => type.id === furnaceTypeId)      if (selectedType && selectedType.capabilities) {        this.capabilities = selectedType.capabilities        this.$emit('capabilities-change', this.capabilities)      } else {        // 没有找到能力配置，尝试从后端获取详细信息        this.loading = true        getFurnaceTypeList().then(response => {          const furnaceTypes = response.data || []          const updatedType = furnaceTypes.find(type => type.id === furnaceTypeId)                    if (updatedType && updatedType.capabilities) {            this.capabilities = updatedType.capabilities          } else {            // 仍然没有找到，使用默认配置            this.capabilities = {              hasBackZone: true,              hasNegativePressure: true,              hasCoolingValve: true,              maxSegments: 12,              maxTemperature: 1000,              maxHeatingRate: 10            }          }                    this.$emit('capabilities-change', this.capabilities)          this.loading = false        }).catch(() => {          // 发生错误，使用默认配置          this.capabilities = {            hasBackZone: true,            hasNegativePressure: true,            hasCoolingValve: true,            maxSegments: 12,            maxTemperature: 1000,            maxHeatingRate: 10          }                    this.$emit('capabilities-change', this.capabilities)          this.loading = false        })      }    }
+    // 更新炉型能力配置
+    updateCapabilities(furnaceTypeId) {
+      if (!furnaceTypeId || !this.furnaceTypes || !this.furnaceTypes.length) {
+        this.capabilities = null
+        this.$emit('capabilities-change', null)
+        return
+      }
+      
+      // 查找匹配的炉型，使用ID或者代码
+      const selectedType = this.furnaceTypes.find(type => 
+        (type.id === furnaceTypeId) || (type.furnaceTypeCode === furnaceTypeId)
+      )
+      
+      if (selectedType) {
+        // 直接从炉型对象中提取能力参数
+        this.capabilities = {
+          hasBackZone: selectedType.hasRearCirculationFan, // 后区循环风机对应后区控制
+          hasNegativePressure: selectedType.hasVacuumFan, // 负压风机
+          hasCoolingValve: selectedType.hasPurgeValve, // 吹洗阀
+          maxSegments: selectedType.maxSegments || 12,
+          maxTemperature: selectedType.maxTemperatureLimit || 1000,
+          maxHeatingRate: selectedType.maxHeatingRate || 10,
+          supportedAtmosphereTypes: selectedType.supportedAtmosphereTypes || ['纯氮气']
+        }
+        
+        // 发送能力配置变更事件
+        this.$emit('capabilities-change', this.capabilities)
+        
+        console.log('已更新炉型能力配置:', this.capabilities)
+      } else {
+        // 没有找到能力配置，尝试从后端获取详细信息
+        this.loading = true
+        getAllFurnaceTypes().then(response => {
+          let furnaceTypes = []
+          
+          // 处理不同的API返回结构
+          if (response.data && Array.isArray(response.data.items)) {
+            furnaceTypes = response.data.items
+          } else if (Array.isArray(response.data)) {
+            furnaceTypes = response.data
+          }
+          
+          // 尝试根据ID或代码找到炉型
+          const updatedType = furnaceTypes.find(type => 
+            (type.id === furnaceTypeId) || (type.furnaceTypeCode === furnaceTypeId)
+          )
+          
+          if (updatedType) {
+            // 直接从炉型对象中提取能力参数
+            this.capabilities = {
+              hasBackZone: updatedType.hasRearCirculationFan,
+              hasNegativePressure: updatedType.hasVacuumFan,
+              hasCoolingValve: updatedType.hasPurgeValve,
+              maxSegments: updatedType.maxSegments || 12,
+              maxTemperature: updatedType.maxTemperatureLimit || 1000,
+              maxHeatingRate: updatedType.maxHeatingRate || 10,
+              supportedAtmosphereTypes: updatedType.supportedAtmosphereTypes || ['纯氮气']
+            }
+          } else {
+            // 仍然没有找到，使用默认配置
+            this.capabilities = {
+              hasBackZone: true,
+              hasNegativePressure: true,
+              hasCoolingValve: true,
+              maxSegments: 12,
+              maxTemperature: 1000,
+              maxHeatingRate: 10,
+              supportedAtmosphereTypes: ['纯氮气']
+            }
+          }
+          
+          // 发送能力配置变更事件
+          this.$emit('capabilities-change', this.capabilities)
+          console.log('更新后的炉型能力配置:', this.capabilities)
+          
+          this.loading = false
+        }).catch(() => {
+          // 发生错误，使用默认配置
+          this.capabilities = {
+            hasBackZone: true,
+            hasNegativePressure: true,
+            hasCoolingValve: true,
+            maxSegments: 12,
+            maxTemperature: 1000,
+            maxHeatingRate: 10,
+            supportedAtmosphereTypes: ['纯氮气']
+          }
+          
+          // 发送能力配置变更事件
+          this.$emit('capabilities-change', this.capabilities)
+          console.log('使用默认炉型能力配置:', this.capabilities)
+          
+          this.loading = false
+        })
+      }
+    }
   }
 }
 </script>

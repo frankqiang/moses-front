@@ -581,7 +581,7 @@ export default {
 }
 
 ::v-deep .el-form-item__content {
-  width: calc(100% - 100px);
+  // width: calc(100% - 100px);
   box-sizing: border-box;
   
   > * {

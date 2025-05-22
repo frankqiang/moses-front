@@ -8,97 +8,11 @@
     <div class="chart-header">
       <div class="chart-title">工艺温度曲线</div>
       <div class="chart-actions">
-        <el-tooltip content="图表设置" placement="top">
-          <el-button 
-            type="text" 
-            icon="el-icon-setting" 
-            @click="showChartSettings = true"
-          />
-        </el-tooltip>
-        <el-tooltip content="显示/隐藏区域标记" placement="top">
-          <el-button 
-            :type="showAreas ? 'primary' : 'info'"
-            size="mini"
-            icon="el-icon-view" 
-            @click="toggleAreas"
-          >
-            {{ showAreas ? '隐藏区域' : '显示区域' }}
-          </el-button>
-        </el-tooltip>
-        <el-tooltip content="显示/隐藏点标记" placement="top">
-          <el-button 
-            :type="showPoints ? 'primary' : 'info'"
-            size="mini"
-            icon="el-icon-view" 
-            @click="togglePoints"
-          >
-            {{ showPoints ? '隐藏标记点' : '显示标记点' }}
-          </el-button>
-        </el-tooltip>
         <el-button v-if="downloadable" type="text" icon="el-icon-download" @click="downloadChart" title="下载图表"></el-button>
       </div>
     </div>
     
     <div ref="chartContainer" class="chart-container"></div>
-    
-    <!-- 图表设置抽屉 -->
-    <el-drawer
-      title="图表设置"
-      :visible.sync="showChartSettings"
-      direction="rtl"
-      size="300px"
-      :modal="false"
-      :modal-append-to-body="false"
-      :before-close="() => showChartSettings = false"
-    >
-      <div class="settings-container">
-        <div class="settings-section">
-          <h4>显示设置</h4>
-          <el-form label-position="left" label-width="100px" size="mini">
-            <el-form-item label="曲线平滑">
-              <el-switch v-model="smoothCurve" @change="updateChart" />
-            </el-form-item>
-            <el-form-item label="显示标记点">
-              <el-switch v-model="showPoints" @change="updateChart" />
-            </el-form-item>
-            <el-form-item label="显示区域">
-              <el-switch v-model="showAreas" @change="updateChart" />
-            </el-form-item>
-            <el-form-item label="曲线颜色">
-              <el-color-picker 
-                v-model="lineColor" 
-                size="mini" 
-                :predefine="[
-                  '#409EFF', 
-                  '#67C23A', 
-                  '#E6A23C', 
-                  '#F56C6C', 
-                  '#909399', 
-                  '#9B59B6', 
-                  '#2980B9'
-                ]"
-                @change="handleColorChange" 
-              />
-            </el-form-item>
-          </el-form>
-        </div>
-        
-        <div class="settings-section">
-          <h4>坐标轴设置</h4>
-          <el-form label-position="left" label-width="100px" size="mini">
-            <el-form-item label="X轴单位">
-              <el-select v-model="xAxisUnit" placeholder="选择单位" @change="updateChart">
-                <el-option label="分钟" value="分钟" />
-                <el-option label="小时" value="小时" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="Y轴最大值">
-              <el-input-number v-model="yAxisMax" :min="100" :max="2000" :step="100" @change="updateChart" />
-            </el-form-item>
-          </el-form>
-        </div>
-      </div>
-    </el-drawer>
   </div>
 </template>
 
@@ -148,13 +62,7 @@ export default {
     return {
       chart: null,
       resizeObserver: null,
-      // 图表设置
-      showChartSettings: false,
-      smoothCurve: true,
-      showPoints: true,
-      showAreas: true,
       lineColor: '#409EFF',
-      xAxisUnit: '小时', // 默认使用小时作为单位
       yAxisMax: 1200,
       // 图表数据
       currentData: {
@@ -294,7 +202,7 @@ export default {
     
     // X轴名称
     xAxisName() {
-      return `时间 (${this.xAxisUnit})`
+      return `时间 (小时)`
     }
   },
   watch: {
@@ -431,15 +339,6 @@ export default {
         return;
       }
       
-      // 如果需要转换为小时显示
-      let xAxisData = [...this.currentData.xAxis]
-      let xAxisFormatter = '{value}'
-      
-      if (this.xAxisUnit === '分钟') {
-        // 如果显示分钟，将小时乘以60
-        xAxisData = xAxisData.map(val => val * 60)
-      }
-      
       // 计算温度最大值和最小值以适应Y轴刻度
       const maxTemp = Math.max(...this.currentData.yAxis, this.initialTemp)
       const minTemp = Math.min(...this.currentData.yAxis, this.initialTemp)
@@ -495,49 +394,6 @@ export default {
           itemHeight: 12,
           itemGap: 20
         },
-        toolbox: {
-          feature: {
-            dataZoom: {
-              yAxisIndex: 'none'
-            },
-            restore: {},
-            saveAsImage: {
-              pixelRatio: 2
-            }
-          },
-          right: 15,
-          show: this.downloadable,
-          iconStyle: {
-            borderColor: this.theme === 'dark' ? '#aaa' : '#666'
-          },
-          emphasis: {
-            iconStyle: {
-              borderColor: this.theme === 'dark' ? '#fff' : '#333'
-            }
-          }
-        },
-        dataZoom: [
-          {
-            type: 'inside',
-            start: 0,
-            end: 100,
-            xAxisIndex: [0],
-            moveOnMouseWheel: true,
-            zoomOnMouseWheel: true,
-            filterMode: 'filter'
-          },
-          {
-            type: 'slider',
-            show: true,
-            xAxisIndex: [0],
-            handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-            handleSize: '80%',
-            height: 25,
-            bottom: '3%',
-            left: 'center',
-            width: '60%'
-          }
-        ],
         xAxis: {
           type: 'value',
           name: this.xAxisName,
@@ -549,7 +405,7 @@ export default {
             fontWeight: 'bold'
           },
           axisLabel: {
-            formatter: xAxisFormatter,
+            formatter: '{value}',
             color: this.theme === 'dark' ? '#e6e6e6' : '#333',
             fontSize: 11
           },
@@ -600,14 +456,14 @@ export default {
           {
             name: '温度曲线',
             type: 'line',
-            data: this.combineXY(xAxisData, this.currentData.yAxis),
+            data: this.combineXY(this.currentData.xAxis, this.currentData.yAxis),
             markPoint: {
-              data: this.showPoints ? this.currentData.markPoints : [],
+              data: this.currentData.markPoints,
               symbol: 'pin',
               symbolSize: 40
             },
             markArea: {
-              data: this.showAreas ? this.currentData.markAreas : [],
+              data: this.currentData.markAreas,
               silent: true
             },
             lineStyle: {
@@ -640,7 +496,7 @@ export default {
                 }]
               }
             },
-            smooth: this.smoothCurve,
+            smooth: true,
             emphasis: {
               focus: 'series',
               blurScope: 'coordinateSystem',
@@ -700,18 +556,6 @@ export default {
     handleChartClick(params) {
       // 触发点击事件
       this.$emit('chart-click', params)
-    },
-    
-    // 切换区域显示
-    toggleAreas() {
-      this.showAreas = !this.showAreas
-      this.updateChart()
-    },
-    
-    // 切换点标记显示
-    togglePoints() {
-      this.showPoints = !this.showPoints
-      this.updateChart()
     },
     
     // 下载图表
@@ -774,15 +618,6 @@ export default {
       
       // 默认返回
       return `rgba(0, 0, 0, ${alpha})`;
-    },
-    
-    // 处理颜色变化
-    handleColorChange(color) {
-      this.lineColor = color
-      // 强制更新图表
-      this.$nextTick(() => {
-        this.updateChart()
-      })
     }
   }
 }
@@ -829,22 +664,6 @@ export default {
     overflow: hidden;
     background-color: #fafafa;
     border: 1px solid #ebeef5;
-  }
-}
-
-.settings-container {
-  padding: 20px;
-  
-  .settings-section {
-    margin-bottom: 20px;
-    
-    h4 {
-      margin-top: 0;
-      margin-bottom: 15px;
-      color: #303133;
-      font-size: 16px;
-      font-weight: bold;
-    }
   }
 }
 </style>

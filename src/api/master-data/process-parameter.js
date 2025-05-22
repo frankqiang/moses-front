@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { getAllFurnaceTypes } from '@/api/master-data/furnace-type'
 
 // API基础路径
 const baseURL = '/mes/master-data/process-parameter'
@@ -70,14 +71,6 @@ export function batchChangeProcessTemplateStatus(ids, status) {
     url: `${baseURL}/batch-status`,
     method: 'put',
     data: { ids, status }
-  })
-}
-
-// 获取炉型列表（用于选择关联炉型）
-export function getFurnaceTypeList() {
-  return request({
-    url: '/mes/master-data/furnace-type/list',
-    method: 'get'
   })
 }
 

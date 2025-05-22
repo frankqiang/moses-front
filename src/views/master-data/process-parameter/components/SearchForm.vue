@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { getFurnaceTypeList } from '@/api/master-data/process-parameter'
+import { getAllFurnaceTypes } from '@/api/master-data/furnace-type'
 
 export default {
   name: 'ProcessParameterSearchForm',
@@ -94,17 +94,30 @@ export default {
   methods: {
     // 获取炉型列表
     getFurnaceTypes() {
-      getFurnaceTypeList().then(response => {
+      getAllFurnaceTypes().then(response => {
         const furnaceTypeItem = this.formItems.find(item => item.prop === 'furnaceTypeId')
         if (furnaceTypeItem) {
           // 添加"全部"选项
           const options = [{ label: '全部', value: '' }]
           
           // 添加从API获取的选项
-          if (response.data && Array.isArray(response.data)) {
-            const apiOptions = response.data.map(item => ({
-              label: item.name,
-              value: item.id
+          let furnaceTypes = []
+          
+          // 处理嵌套的API返回结构
+          if (response && response.code === 20000) {
+            if (response.data && response.data.items) {
+              // 分页格式的返回
+              furnaceTypes = response.data.items
+            } else if (Array.isArray(response.data)) {
+              // 直接返回数组的情况
+              furnaceTypes = response.data
+            }
+          }
+          
+          if (furnaceTypes.length > 0) {
+            const apiOptions = furnaceTypes.map(item => ({
+              label: item.furnaceTypeName || item.name,
+              value: item.furnaceTypeCode || item.id
             }))
             options.push(...apiOptions)
           }

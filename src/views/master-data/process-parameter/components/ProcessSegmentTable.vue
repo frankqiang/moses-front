@@ -70,23 +70,7 @@
         </template>
       </el-table-column>
       
-      <!-- 目标温度 -->
-      <el-table-column
-        label="目标温度 (°C)"
-        width="160"
-        align="center"
-      >
-        <template slot-scope="scope">
-          <el-input-number
-            v-model="scope.row.targetTemp"
-            :min="0"
-            :max="maxTemperature"
-            size="mini"
-            :disabled="disabled"
-            @change="handleTargetTempChange(scope.$index)"
-          />
-        </template>
-      </el-table-column>
+      <!-- 目标温度 -->      <el-table-column        label="目标温度 (°C)"        width="160"        align="center"      >        <template slot-scope="scope">          <div class="temp-container">            <el-input-number              v-model="scope.row.targetTemp"              :min="0"              :max="maxTemperature"              size="mini"              :disabled="disabled"              @change="handleTargetTempChange(scope.$index)"            />            <el-tooltip               v-if="isTemperatureExceeded(scope.row)"              :content="`温度超过了炉型上限: ${maxTemperature}°C`"              placement="top"               effect="light"            >              <i class="el-icon-warning-outline temp-warning-icon"></i>            </el-tooltip>          </div>        </template>      </el-table-column>
       
             <!-- 持续时间 -->      <el-table-column        label="持续时间 (小时)"        width="160"        align="center"      >
         <template slot-scope="scope">
@@ -684,6 +668,11 @@ export default {
     emitChange() {
       this.$emit('input', JSON.parse(JSON.stringify(this.segments)))
       this.$emit('change', JSON.parse(JSON.stringify(this.segments)))
+    },
+    
+    // 检查温度是否超过炉型上限
+    isTemperatureExceeded(segment) {
+      return segment.targetTemp > this.maxTemperature
     }
   }
 }
@@ -725,24 +714,7 @@ export default {
     }
   }
   
-  .rate-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    .rate-value {
-      margin-right: 5px;
-      
-      &.rate-warning {
-        color: #E6A23C;
-      }
-    }
-    
-    .rate-warning-icon {
-      color: #E6A23C;
-      cursor: pointer;
-    }
-  }
+  .rate-container,  .temp-container {    display: flex;    align-items: center;    justify-content: center;        .rate-value {      margin-right: 5px;            &.rate-warning {        color: #E6A23C;      }    }        .rate-warning-icon,    .temp-warning-icon {      color: #E6A23C;      cursor: pointer;      margin-left: 5px;    }  }
   
   .action-buttons {
     display: flex;
