@@ -18,8 +18,8 @@ const data = Mock.mock({
       return 'v' + (Math.floor(Math.random() * 3) + 1) + '.' + Math.floor(Math.random() * 10)
     },
     'status|1': ['draft', 'pending', 'effective', 'history'],
-    'furnaceTypeId|1': ['FT001', 'FT002', 'FT003', 'FT004'],
-    'furnaceTypeName|1': ['标准型退火炉', '高温型退火炉', '快速冷却型退火炉', '双区控温退火炉'],
+    'furnaceTypeId|1': ['FT-STANDARD', 'FT-SINGLE', 'FT-RAPID', 'FT-BASIC', 'FT-HIGH-TEMP'],
+    'furnaceTypeName|1': ['标准双区退火炉', '单区退火炉', '快速退火炉', '基础型退火炉', '高温退火炉'],
     'applicableProducts|1-5': [{
       'id|+1': 1,
       'code': /AF-[1-8]0[0-9][0-9]-[HO][1-2][0-8]-0\.[0-9]{3}x[1-9][0-9]{2}/,
@@ -52,8 +52,8 @@ const data = Mock.mock({
 // 炉型列表数据
 const furnaceTypes = [
   {
-    id: 'FT001',
-    name: '标准型退火炉',
+    id: 'FT-STANDARD',
+    name: '标准双区退火炉',
     capabilities: {
       hasBackZone: true,
       hasNegativePressure: true,
@@ -64,8 +64,8 @@ const furnaceTypes = [
     }
   },
   {
-    id: 'FT002',
-    name: '高温型退火炉',
+    id: 'FT-SINGLE',
+    name: '单区退火炉',
     capabilities: {
       hasBackZone: true,
       hasNegativePressure: true,
@@ -76,8 +76,8 @@ const furnaceTypes = [
     }
   },
   {
-    id: 'FT003',
-    name: '快速冷却型退火炉',
+    id: 'FT-RAPID',
+    name: '快速退火炉',
     capabilities: {
       hasBackZone: false,
       hasNegativePressure: true,
@@ -88,8 +88,8 @@ const furnaceTypes = [
     }
   },
   {
-    id: 'FT004',
-    name: '双区控温退火炉',
+    id: 'FT-BASIC',
+    name: '基础型退火炉',
     capabilities: {
       hasBackZone: true,
       hasNegativePressure: false,
@@ -97,6 +97,18 @@ const furnaceTypes = [
       maxSegments: 10,
       maxTemperature: 900,
       maxHeatingRate: 12
+    }
+  },
+  {
+    id: 'FT-HIGH-TEMP',
+    name: '高温退火炉',
+    capabilities: {
+      hasBackZone: true,
+      hasNegativePressure: true,
+      hasCoolingValve: true,
+      maxSegments: 15,
+      maxTemperature: 1500,
+      maxHeatingRate: 8
     }
   }
 ]
@@ -127,19 +139,25 @@ module.exports = [
     url: '/mes/master-data/process-parameter/list',
     type: 'get',
     response: config => {
-      const { templateId, templateName, status, furnaceTypeId, page = 1, limit = 10 } = config.query
+      const { keyword, status, furnaceTypeId, page = 1, limit = 10 } = config.query
+      
+      console.log('Mock服务器收到的查询参数:', config.query)
 
       // 过滤
       let filteredItems = [...items]
-      if (templateId) {
-        filteredItems = filteredItems.filter(item => item.templateId.includes(templateId))
+      
+      // 使用keyword参数匹配templateId或templateName
+      if (keyword) {
+        filteredItems = filteredItems.filter(item => 
+          item.templateId.toLowerCase().includes(keyword.toLowerCase()) || 
+          item.templateName.toLowerCase().includes(keyword.toLowerCase())
+        )
       }
-      if (templateName) {
-        filteredItems = filteredItems.filter(item => item.templateName.includes(templateName))
-      }
+      
       if (status) {
         filteredItems = filteredItems.filter(item => item.status === status)
       }
+      
       if (furnaceTypeId) {
         filteredItems = filteredItems.filter(item => item.furnaceTypeId === furnaceTypeId)
       }

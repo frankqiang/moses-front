@@ -6,6 +6,8 @@ const baseURL = '/mes/master-data/process-parameter'
 
 // 获取工艺模板列表
 export function getProcessTemplateList(query) {
+  console.log('API请求参数:', query)
+  
   return request({
     url: `${baseURL}/list`,
     method: 'get',

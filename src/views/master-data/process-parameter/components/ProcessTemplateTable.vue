@@ -210,7 +210,7 @@ export default {
         { prop: 'version', label: '版本号', width: '80' },
         { prop: 'status', label: '状态', width: '100' },
         { prop: 'furnaceTypeName', label: '关联炉型', width: '150' },
-        { prop: 'applicableProducts', label: '适用产品范围', width: '200' },
+        { prop: 'applicableProducts', label: '适用产品范围', },
         { prop: 'createdBy', label: '创建人', width: '120' },
         { prop: 'createdAt', label: '创建时间', width: '150', formatter: this.formatDateTime },
         { prop: 'updatedBy', label: '最后修改人', width: '120' },

@@ -11,7 +11,8 @@
     :loading="loading"
     @search="handleSearch"
     @reset="handleReset"
-  />
+  >
+  </search-form>
 </template>
 
 <script>
@@ -95,6 +96,8 @@ export default {
     // 获取炉型列表
     getFurnaceTypes() {
       getAllFurnaceTypes().then(response => {
+        console.log('获取到的炉型数据:', response)
+        
         const furnaceTypeItem = this.formItems.find(item => item.prop === 'furnaceTypeId')
         if (furnaceTypeItem) {
           // 添加"全部"选项
@@ -115,15 +118,20 @@ export default {
           }
           
           if (furnaceTypes.length > 0) {
-            const apiOptions = furnaceTypes.map(item => ({
-              label: item.furnaceTypeName || item.name,
-              value: item.furnaceTypeCode || item.id
-            }))
+            const apiOptions = furnaceTypes.map(item => {
+              const option = {
+                label: item.furnaceTypeName || item.name,
+                value: item.furnaceTypeCode || item.id
+              }
+              console.log('炉型选项:', option)
+              return option
+            })
             options.push(...apiOptions)
           }
           
           // 更新炉型选项
           furnaceTypeItem.options = options
+          console.log('最终炉型选项列表:', furnaceTypeItem.options)
         }
       }).catch((error) => {
         console.error('获取炉型列表失败:', error)
@@ -140,18 +148,29 @@ export default {
           delete searchParams[key]
         }
       })
+      
+      console.log('搜索参数:', searchParams)
       this.$emit('search', searchParams)
     },
     
     // 重置按钮点击事件
     handleReset() {
+      // 重置表单数据
       this.formModel = {
         keyword: '',
         status: '',
         furnaceTypeId: ''
       }
+      
+      // 触发重置事件
+      console.log('触发重置事件')
       this.$emit('reset')
-    }
+      
+      // 重置表单验证状态
+      if (this.$refs.searchForm && this.$refs.searchForm.$refs && this.$refs.searchForm.$refs.form) {
+        this.$refs.searchForm.$refs.form.clearValidate()
+      }
+    },
   }
 }
 </script> 

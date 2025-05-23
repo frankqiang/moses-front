@@ -17,12 +17,12 @@
     direction="rtl"
     label-width="100px"
     :wrapper-closable="false"
-    @submit="handleSubmit"
+    @submit="handleFormSubmit"
     @close="handleClose"
   >
     <template #footer>
       <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
-      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit" :loading="loading">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
+      <el-button v-if="type !== 'view'" type="primary" @click="validateAndSubmit" :loading="loading">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
     </template>
     
     <!-- 炉型选择器 -->
@@ -558,8 +558,8 @@ export default {
       })
     },
     
-    // 处理表单提交
-    handleSubmit() {
+    // 处理表单验证和提交
+    validateAndSubmit() {
       // 首先执行默认的表单验证
       this.$refs.drawerForm.$refs.form.validate((valid) => {
         if (valid) {
@@ -611,12 +611,12 @@ export default {
     },
     
     // 处理表单提交（验证通过后）
-    handleFormSubmit() {
+    handleFormSubmit(formData) {
       // 构建提交数据
-      const formData = JSON.parse(JSON.stringify(this.form))
+      const submitData = JSON.parse(JSON.stringify(formData))
       
       // 将适用产品IDs转换为对象数组
-      formData.applicableProducts = this.form.applicableProductIds.map(id => {
+      submitData.applicableProducts = formData.applicableProductIds.map(id => {
         const product = this.productOptions.find(p => p.id === id)
         return {
           id,
@@ -626,7 +626,7 @@ export default {
       })
       
       // 触发提交事件
-      this.$emit('submit', formData)
+      this.$emit('submit', submitData)
     },
     
     // 处理关闭

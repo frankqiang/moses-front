@@ -74,6 +74,7 @@ import {
   batchDeleteProcessTemplate,
   batchChangeProcessTemplateStatus
 } from '@/api/master-data/process-parameter'
+import { getAllFurnaceTypes } from '@/api/master-data/furnace-type'
 
 // 引入子组件
 import SearchForm from './components/SearchForm'
@@ -123,34 +124,88 @@ export default {
     // 获取工艺模板列表
     getList() {
       this.listLoading = true
-      getProcessTemplateList(this.listQuery).then(response => {
-        this.list = response.data.items
-        this.total = response.data.total
-        this.listLoading = false
-        // 滚动到顶部
-        scrollTo(0, 500)
+      
+      // 先获取所有炉型数据
+      getAllFurnaceTypes().then(furnaceResponse => {
+        let furnaceTypes = []
+        
+        // 处理嵌套的API返回结构
+        if (furnaceResponse && furnaceResponse.code === 20000) {
+          if (furnaceResponse.data && furnaceResponse.data.items) {
+            // 分页格式的返回
+            furnaceTypes = furnaceResponse.data.items
+          } else if (Array.isArray(furnaceResponse.data)) {
+            // 直接返回数组的情况
+            furnaceTypes = furnaceResponse.data
+          }
+        }
+        
+        // 创建炉型ID到名称的映射表
+        const furnaceTypeMap = {}
+        furnaceTypes.forEach(type => {
+          furnaceTypeMap[type.furnaceTypeCode || type.id] = type.furnaceTypeName || type.name
+        })
+        
+        console.log('炉型映射表:', furnaceTypeMap)
+        console.log('当前查询参数:', this.listQuery)
+        
+        // 获取工艺模板列表
+        getProcessTemplateList(this.listQuery).then(response => {
+          this.listLoading = false
+          
+          if (response && response.code === 20000 && response.data) {
+            this.list = response.data.items || []
+            this.total = response.data.total || 0
+            
+            console.log('API返回数据:', this.list)
+            
+            // 添加炉型名称字段
+            this.list.forEach(item => {
+              if (item.furnaceTypeId && furnaceTypeMap[item.furnaceTypeId]) {
+                item.furnaceTypeName = furnaceTypeMap[item.furnaceTypeId]
+              }
+            })
+          } else {
+            this.$message.error('获取工艺模板列表失败')
+          }
+        }).catch(() => {
+          this.listLoading = false
+          this.$message.error('获取工艺模板列表失败')
+        })
       }).catch(() => {
         this.listLoading = false
+        this.$message.error('获取炉型数据失败')
       })
     },
     
     // 搜索
     handleSearch(formData) {
+      console.log('接收到的搜索参数:', formData)
+      // 只保留分页相关参数，其他查询条件全部使用当前传入的
       this.listQuery = {
-        ...this.listQuery,
         page: 1,
+        limit: this.listQuery.limit || 10,
         ...formData
       }
+      console.log('最终查询参数:', this.listQuery)
       this.getList()
     },
     
     // 重置
     handleReset() {
+      console.log('接收到重置事件')
+      // 只保留分页相关参数，其他查询条件全部清空
       this.listQuery = {
         page: 1,
-        limit: 10
+        limit: this.listQuery.limit || 10
+        // 不再包含其他查询参数
       }
-      this.getList()
+      
+      console.log('重置后的查询参数:', this.listQuery)
+      // 立即触发查询
+      this.$nextTick(() => {
+        this.getList()
+      })
     },
     
     // 选择变化

@@ -30,6 +30,7 @@
             :disabled="item.disabled"
             :clearable="item.clearable !== false"
             @change="item.onChange && item.onChange(formModel[item.prop])"
+            @clear="handleInputClear(item.prop)"
           />
           
           <!-- 选择器 -->
@@ -42,6 +43,7 @@
             :multiple="item.multiple"
             :collapse-tags="item.collapseTags"
             @change="item.onChange && item.onChange(formModel[item.prop])"
+            @clear="handleInputClear(item.prop)"
           >
             <el-option
               v-for="opt in item.options"
@@ -325,8 +327,38 @@ export default {
     handleSubmit() {
       this.$refs.form.validate(valid => {
         if (valid) {
-          this.$emit('search', this.formModel)
+          // 创建一个新对象，移除空值
+          const submitData = {}
+          Object.keys(this.formModel).forEach(key => {
+            if (this.formModel[key] !== undefined && this.formModel[key] !== null && this.formModel[key] !== '') {
+              submitData[key] = this.formModel[key]
+            }
+          })
+          console.log('提交搜索数据:', submitData)
+          this.$emit('search', submitData)
+          // 同步到父组件
+          this.$emit('input', this.formModel)
         }
+      })
+    },
+    
+    // 处理输入框清除事件
+    handleInputClear(prop) {
+      // 确保值被清空并同步到父组件
+      this.$nextTick(() => {
+        this.formModel[prop] = ''
+        this.$emit('input', this.formModel)
+        
+        // 创建一个新对象，移除空值
+        const submitData = {}
+        Object.keys(this.formModel).forEach(key => {
+          if (this.formModel[key] !== undefined && this.formModel[key] !== null && this.formModel[key] !== '') {
+            submitData[key] = this.formModel[key]
+          }
+        })
+        
+        // 自动触发搜索
+        this.$emit('search', submitData)
       })
     },
     
@@ -338,19 +370,30 @@ export default {
       const emptyModel = {}
       this.items.forEach(item => {
         if (item.prop) {
-          emptyModel[item.prop] = undefined
+          // 根据字段类型设置默认空值
+          if (item.type === 'select' && item.multiple) {
+            emptyModel[item.prop] = []
+          } else {
+            emptyModel[item.prop] = ''
+          }
         }
       })
+      
+      // 更新内部表单模型
       this.formModel = { ...emptyModel }
       
-      // 触发更新事件
-      this.$emit('reset')
-      this.$emit('input', this.formModel)
-      
-      // 如果需要重置后自动查询，则触发查询事件
-      if (this.searchAfterReset) {
-        this.$emit('search', this.formModel)
-      }
+      // 确保更新同步到父组件
+      this.$nextTick(() => {
+        console.log('重置后的表单数据:', this.formModel)
+        // 触发更新事件
+        this.$emit('input', this.formModel)
+        this.$emit('reset')
+        
+        // 如果需要重置后自动查询，则触发查询事件
+        if (this.searchAfterReset) {
+          this.$emit('search', {})
+        }
+      })
     }
   }
 }
