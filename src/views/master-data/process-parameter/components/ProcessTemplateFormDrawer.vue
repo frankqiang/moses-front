@@ -19,6 +19,7 @@
     :wrapper-closable="false"
     @submit="handleFormSubmit"
     @close="handleClose"
+    @form-change="handleFormChange"
   >
     <template #footer>
       <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
@@ -610,13 +611,35 @@ export default {
       return true // 没有问题，允许提交
     },
     
+    // 处理表单数据变化
+    handleFormChange(changedFields) {
+      // 更新本地表单数据，保留原有数据不被覆盖
+      if (changedFields && Object.keys(changedFields).length > 0) {
+        console.log('表单数据更新(来自DrawerForm):', JSON.stringify(changedFields, null, 2))
+        
+        // 比较新旧数据，检查是否有实际变化
+        let hasChanged = false
+        Object.keys(changedFields).forEach(key => {
+          if (JSON.stringify(this.form[key]) !== JSON.stringify(changedFields[key])) {
+            this.form[key] = changedFields[key]
+            hasChanged = true
+          }
+        })
+        
+        if (hasChanged) {
+          console.log('表单数据已实际更新，当前form数据:', JSON.stringify(this.form, null, 2))
+        }
+      }
+    },
+    
     // 处理表单提交（验证通过后）
     handleFormSubmit(formData) {
-      // 构建提交数据
-      const submitData = JSON.parse(JSON.stringify(formData))
+      // 构建提交数据，合并DrawerForm提交的数据和本地表单数据
+      const submitData = { ...formData, ...this.form }
+      console.log('合并后的提交数据:', submitData)
       
       // 将适用产品IDs转换为对象数组
-      submitData.applicableProducts = formData.applicableProductIds.map(id => {
+      submitData.applicableProducts = submitData.applicableProductIds.map(id => {
         const product = this.productOptions.find(p => p.id === id)
         return {
           id,

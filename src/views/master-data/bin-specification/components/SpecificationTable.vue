@@ -9,7 +9,7 @@
     <table-toolbar
       :enable-column-settings="true"
       :column-options="allColumns"
-      :storage-key="currentStorageKey"
+      :storage-key="columnSettingsKey"
       :default-visible-columns="defaultVisibleColumns"
       :enable-batch-actions="true"
       :selected-rows="selectedRows"
@@ -205,8 +205,8 @@ export default {
   },
   computed: {
     // 列设置存储键
-    currentStorageKey() {
-      return `${this.columnSettingsKeyPrefix}`
+    columnSettingsKey() {
+      return `${this.columnSettingsKeyPrefix}_${this.$options.name || 'common'}`
     },
     
     // 默认显示的列
@@ -270,11 +270,27 @@ export default {
     }
   },
   created() {
+    // 迁移旧的列设置
+    this.migrateOldColumnSettings()
     // 初始化列配置
     this.initSpecificationColumns()
     this.updateExportParams()
   },
   methods: {
+    // 迁移旧的列设置
+    migrateOldColumnSettings() {
+      const oldKey = this.columnSettingsKeyPrefix
+      const newKey = `${this.columnSettingsKeyPrefix}_${this.$options.name || 'common'}`
+      
+      // 检查是否存在旧的配置
+      const oldSettings = localStorage.getItem(oldKey)
+      if (oldSettings && !localStorage.getItem(newKey)) {
+        // 如果存在旧配置且新配置不存在，则迁移
+        localStorage.setItem(newKey, oldSettings)
+        console.log('已迁移列设置配置:', oldKey, '->', newKey)
+      }
+    },
+    
     // 获取操作按钮配置
     getActionButtons(row) {
       // 创建自定义状态切换按钮
@@ -409,6 +425,14 @@ export default {
     // 导出成功
     handleExportSuccess(result) {
       this.$emit('export-success', result)
+    },
+    
+    // 重写columnSettingsMixin中的handleColumnChange方法
+    handleColumnChange(columns) {
+      // 调用父类方法
+      this.$options.mixins[0].methods.handleColumnChange.call(this, columns)
+      // 更新导出参数
+      this.updateExportParams()
     }
   }
 }

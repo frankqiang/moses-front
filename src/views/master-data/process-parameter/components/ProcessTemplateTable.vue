@@ -20,6 +20,7 @@
       :enable-export="true"
       :export-api="exportApiFunction"
       :export-params="exportParams"
+      :hide-status-buttons="true"
       :status-buttons-mode="'buttons'"
       :status-confirm="false"
       :delete-confirm="true"
@@ -27,8 +28,6 @@
       @refresh="handleRefresh"
       @column-change="handleColumnChange"
       @batch-delete="handleBatchDelete"
-      @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable"
       @import-success="handleImportSuccess"
       @export-success="handleExportSuccess"
     >
@@ -97,7 +96,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="250" align="center" fixed="right">
+      <el-table-column label="操作" width="200" align="center" fixed="right">
         <template slot-scope="scope">
           <!-- 使用ActionButtons组件替代原来的按钮组 -->
           <ActionButtons
@@ -324,8 +323,7 @@ export default {
         buttons.push(
           { text: '编辑', action: 'edit', icon: 'el-icon-edit', type: 'text', tooltip: '编辑工艺模板' },
           { text: '查看', action: 'view', icon: 'el-icon-view', type: 'text', tooltip: '查看工艺模板详情' },
-          { text: '提交审批', action: 'submit', icon: 'el-icon-s-promotion', type: 'text', tooltip: '提交审批' },
-          { text: '删除', action: 'delete', icon: 'el-icon-delete', type: 'text', class: 'danger', tooltip: '删除工艺模板' }
+          { text: '提交审批', action: 'submit', icon: 'el-icon-s-promotion', type: 'text', tooltip: '提交审批' }
         )
       } else if (row.status === 'pending') {
         // 待审批状态
@@ -367,9 +365,6 @@ export default {
           break
         case 'reject':
           this.handleReject(row)
-          break
-        case 'delete':
-          this.handleDelete(row)
           break
         case 'new-version':
           this.handleNewVersion(row)
@@ -415,22 +410,6 @@ export default {
     // 处理查看
     handleView(row) {
       this.$emit('view', row)
-    },
-    
-    // 处理删除
-    handleDelete(row) {
-      this.$confirm('此操作将永久删除该工艺模板, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.$emit('delete', row)
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: '已取消删除'
-        })
-      })
     },
     
     // 处理提交审批
@@ -500,21 +479,6 @@ export default {
       })
     },
     
-    // 处理批量删除
-    handleBatchDelete(rows) {
-      this.$emit('batch-delete', rows)
-    },
-    
-    // 处理批量启用
-    handleBatchEnable(rows) {
-      this.$emit('batch-enable', rows)
-    },
-    
-    // 处理批量禁用
-    handleBatchDisable(rows) {
-      this.$emit('batch-disable', rows)
-    },
-    
     // 处理导入成功
     handleImportSuccess(response) {
       this.$emit('import-success', response)
@@ -523,6 +487,16 @@ export default {
     // 处理导出成功
     handleExportSuccess() {
       this.$emit('export-success')
+    },
+    
+    // 处理批量删除
+    handleBatchDelete(selection) {
+      this.$emit('batch-delete', selection)
+    },
+    
+    // 处理列变化
+    handleColumnChange(columns) {
+      this.$emit('column-change', columns)
     }
   }
 }

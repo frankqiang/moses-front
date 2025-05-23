@@ -265,16 +265,11 @@ export default {
           value: type.furnaceTypeCode || type.id
         }))
         
-        // 如果未设置value但有炉型选项，自动选择第一个并触发change事件
-        if (!this.selectedType && furnaceTypes.length > 0 && !this.disabled) {
-          const firstType = furnaceTypes[0].furnaceTypeCode || furnaceTypes[0].id
-          this.selectedType = firstType
-          this.$emit('input', firstType)
-          this.updateCapabilities(firstType)
-        } else if (this.selectedType) {
-          // 更新当前选中炉型的能力配置
+        // 如果已经有选中值，只更新能力配置，不触发change事件
+        if (this.selectedType) {
           this.updateCapabilities(this.selectedType)
         }
+        // 移除自动选择第一个炉型的逻辑，防止清空其他表单字段
         
         this.loading = false
       }).catch(error => {
@@ -287,8 +282,11 @@ export default {
     // 处理炉型变更
     handleChange(value) {
       this.selectedType = value
+      // 先更新炉型能力配置
       this.updateCapabilities(value)
+      // 再触发input事件通知父组件值变化
       this.$emit('input', value)
+      // 最后触发change事件
       this.$emit('change', value, this.capabilities)
     },
     
