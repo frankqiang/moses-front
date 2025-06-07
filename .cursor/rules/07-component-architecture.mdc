@@ -102,11 +102,7 @@ views/module-name/
 - **简单模块**：可以省略router、constants等目录
 - **中等复杂度模块**：保留主要目录，如api、components、mixins
 - **复杂模块**：使用完整的目录结构，必要时可以增加子模块目录
-
-## 参考示例
-- 请参考`src/views/master-data/bin-specification`目录作为组件化开发的标准示例
-- 对于表格类模块，请参考`src/views/master-data/equipment`目录，并遵循[表格模块开发规范](mdc:.cursor/rules/08-table-module-development.mdc)
-
+ 
 ## 组件设计规范
 
 ### 容器组件 (index.vue)

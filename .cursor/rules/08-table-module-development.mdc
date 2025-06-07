@@ -13,87 +13,33 @@ alwaysApply: false
 
 ## 最佳实践和高级功能
 
-### 1. 类型化开发
-- 为表格数据和表单数据定义TypeScript接口
-- 使用类型注解提高代码可维护性和开发效率
-- 示例：
-
-```typescript
-// 设备数据接口
-interface Equipment {
-  id: number;
-  equipmentId: string;
-  name: string;
-  model: string;
-  equipmentType: string;
-  installDate: string;
-  status: number;
-  [key: string]: any;
-}
-
-// 表格列配置接口
-interface TableColumn {
-  prop: string;
-  label: string;
-  width?: string;
-  minWidth?: string;
-  align?: 'left' | 'center' | 'right';
-  sortable?: boolean | string;
-  renderType?: 'status' | 'date' | 'enum' | 'custom';
-  formatter?: (row: any, column: any, cellValue: any) => string;
-  [key: string]: any;
-}
-```
-
-### 2. 性能优化
+### 1. 性能优化
 - 大数据量表格使用虚拟滚动
 - 复杂表单使用懒加载
 - 表格数据使用本地缓存减少请求
 - 列表页面添加防抖/节流优化搜索性能
 
-### 3. 高级搜索和过滤
+### 2. 高级搜索和过滤
 - 实现保存搜索条件功能
 - 支持高级筛选器和复杂查询条件
 - 筛选条件可视化构建器
 
-### 4. 用户体验增强
+### 3. 用户体验增强
 - 操作引导和提示
 - 列设置拖拽排序
 - 自适应布局，支持不同屏幕分辨率
 - 表格行内编辑功能
 
-## 目录结构规范
-每个表格模块必须遵循以下目录结构：
-```
-module-name/
-├── index.vue                  # 主页面（容器组件）
-├── components/                # 子组件目录
-│   ├── SearchForm.vue         # 搜索表单组件
-│   ├── [Module]Table.vue      # 数据表格组件（如EquipmentTable.vue）
-│   ├── [Module]FormDrawer.vue # 表单抽屉组件（如EquipmentFormDrawer.vue）
-│   └── ActionBar.vue          # 操作栏组件（可选）
-├── docs/                      # 文档目录
-│   └── [模块名称]说明文档.md   # 模块详细说明文档（包含需求、接口、数据结构等）
-└── mixins/                    # 混入目录（可选）
-    └── [功能].js              # 特定功能的混入文件
-```
-
-特别说明：
-1. 模块说明文档应放在`docs`目录中，而非根目录的README.md
-2. 组件命名应与模块相关，如设备模块的表格组件命名为EquipmentTable.vue
-3. 表单抽屉组件命名为[Module]FormDrawer.vue，以区别于旧版的表单组件
-4. API调用方法不再放在模块目录下，而是集中在`src/api`目录对应的业务模块中
-
 ## 全局组件使用规范
 
-### 1. SearchForm组件
-- **强制要求**：所有列表搜索表单必须使用全局SearchForm组件
+### 1. SearchFormV2组件
+- **组件标准**：所有列表搜索表单需使用全局SearchFormV2组件
 - 通过配置方式定义表单项，而不是手写表单元素
 - 支持展开/收起功能，将非主要搜索条件设为折叠项
 - 示例用法：
 
 ```vue
-<search-form
+<search-form-v2
   ref="searchForm"
   :items="formItems"
   :value="formModel"
@@ -102,11 +48,11 @@ module-name/
   @reset="handleReset"
 >
   <!-- 自定义插槽内容（如有需要） -->
-</search-form>
+</search-form-v2>
 ```
 
 ### 2. TableToolbar组件
-- **强制要求**：所有表格上方的工具栏必须使用全局TableToolbar组件
+- **组件标准**：所有表格上方的工具栏需使用全局TableToolbar组件
 - 整合了批量操作、列设置、导入导出和自定义操作按钮
 - 支持左右两侧自定义内容插槽
 - 示例用法：
@@ -140,7 +86,7 @@ module-name/
 ```
 
 ### 3. ActionButtons组件
-- **强制要求**：表格中的操作按钮必须使用全局ActionButtons组件
+- **组件标准**：表格中的操作按钮需使用全局ActionButtons组件
 - 使用预设按钮配置或自定义按钮配置
 - 支持文本模式和图标模式
 - 示例用法：
@@ -155,7 +101,7 @@ module-name/
 ```
 
 ### 4. StatusTag组件
-- **强制要求**：所有状态展示必须使用全局StatusTag组件
+- **组件标准**：所有状态展示需使用全局StatusTag组件
 - 使用预设状态类型或自定义状态配置
 - 示例用法：
 
@@ -168,7 +114,7 @@ module-name/
 ```
 
 ### 5. 表单与抽屉组件
-- **强制要求**：所有表单抽屉必须采用组件分离与组合模式，使用BaseDrawer和EnhancedForm组件
+- **组件标准**：所有表单抽屉需采用组件分离与组合模式，使用BaseDrawer和EnhancedForm组件
 - 通过组合BaseDrawer和EnhancedForm实现表单抽屉功能，而非使用耦合的组件
 - 支持create/update/view三种模式
 - 示例用法：
@@ -211,7 +157,7 @@ module-name/
 ```
 
 ### 6. Pagination组件
-- **强制要求**：所有表格分页必须使用全局Pagination组件
+- **组件标准**：所有表格分页需使用全局Pagination组件
 - 正确处理分页事件和同步属性
 - 示例用法：
 
@@ -729,8 +675,8 @@ handleActionClick({ action, row }) {
 1. **使用计算属性**：将复杂的表单和表格配置放在计算属性中
 2. **模块化API**：将API调用封装在单独的文件中
 3. **配置预设**：使用预设配置简化常见操作
-4. **TypeScript支持**：为配置项添加TypeScript类型定义
-5. **文档完善**：在README.md中记录模块功能、组件说明和注意事项
+4. **文档完善**：在README.md中记录模块功能、组件说明和注意事项
+5. **代码复用**：抽取可复用逻辑到mixins中
 
 ## 核心原则
 
