@@ -80,54 +80,20 @@
       ></export-button>
       
       <!-- 刷新按钮 -->
-      <el-button
+      <refresh-button
         size="mini"
-        icon="el-icon-refresh"
-        @click="handleRefresh"
-      >
-        刷新
-      </el-button>
+        @refresh="handleRefresh"
+      />
       
-      <!-- 列设置下拉菜单 -->
-      <el-dropdown
+      <!-- 列设置组件 -->
+      <column-settings
         v-if="enableColumnSettings"
-        trigger="click"
-        @command="handleColumnCommand"
-        ref="columnDropdown"
-      >
-        <el-button size="mini">
-          <i class="el-icon-s-operation"></i>
-          列设置
-          <i class="el-icon-arrow-down el-icon--right"></i>
-        </el-button>
-        <el-dropdown-menu slot="dropdown" class="column-dropdown">
-          <div class="column-dropdown-header">
-            <el-checkbox
-              v-model="tempCheckAll"
-              :indeterminate="tempIndeterminate"
-              @change="handleTempCheckAllChange"
-            >
-              全选
-            </el-checkbox>
-            <div class="column-dropdown-actions">
-              <el-button type="text" size="mini" @click="applyColumnSettings">应用</el-button>
-              <el-button type="text" size="mini" @click="resetColumnSettings">重置</el-button>
-            </div>
-          </div>
-          <el-dropdown-item divided></el-dropdown-item>
-          <div class="column-item"
-            v-for="col in columnOptions" 
-            :key="col.prop"
-          >
-            <el-checkbox 
-              v-model="tempColumnVisibility[col.prop]"
-              @change="handleTempColumnChange"
-            >
-              {{ col.label }}
-            </el-checkbox>
-          </div>
-        </el-dropdown-menu>
-      </el-dropdown>
+        :column-options="columnOptions"
+        :storage-key="storageKey"
+        :default-visible-columns="defaultVisibleColumns"
+        :size="size"
+        @change="handleColumnChange"
+      />
       
       <slot name="toolbar-right"></slot>
     </div>
@@ -138,13 +104,17 @@
 import BatchAction from '@/components/BatchAction'
 import ExportButton from '@/components/ExportButton'
 import ImportButton from '@/components/ImportButton'
+import RefreshButton from '@/components/RefreshButton'
+import ColumnSettings from '@/components/ColumnSettings'
 
 export default {
   name: 'TableToolbar',
   components: {
     BatchAction,
     ExportButton,
-    ImportButton
+    ImportButton,
+    RefreshButton,
+    ColumnSettings
   },
   props: {
     // 通用配置
@@ -339,24 +309,14 @@ export default {
   },
   data() {
     return {
-      // 临时列可见性状态
-      tempColumnVisibility: {},
-      // 临时全选状态
-      tempCheckAll: true,
-      // 临时半选状态
-      tempIndeterminate: false
+      // 临时数据，如果需要的话
     }
   },
   computed: {
-    // 当前可见列
-    computedVisibleColumns() {
-      return this.columnOptions
-        .filter(col => this.tempColumnVisibility[col.prop])
-        .map(col => col.prop)
-    }
+    // 计算属性，如果需要的话
   },
   created() {
-    this.initTempColumnVisibility()
+    // 初始化逻辑，如果需要的话
   },
   methods: {
     // 刷新表格
@@ -364,97 +324,6 @@ export default {
       this.$emit('refresh')
     },
     
-    // 列设置命令处理
-    handleColumnCommand(command) {
-      // 可以用于处理特殊列设置命令
-    },
-    
-    // 初始化临时列可见性状态
-    initTempColumnVisibility() {
-      // 尝试从localStorage读取用户设置的可见列
-      const savedColumns = localStorage.getItem(this.storageKey)
-      let visibleColumns = []
-      
-      if (savedColumns) {
-        try {
-          visibleColumns = JSON.parse(savedColumns)
-        } catch (e) {
-          console.error('解析保存的列设置失败:', e)
-          visibleColumns = [...this.defaultVisibleColumns]
-        }
-      } else {
-        visibleColumns = [...this.defaultVisibleColumns]
-      }
-      
-      // 初始化临时列可见性状态
-      const tempVisibility = {}
-      this.columnOptions.forEach(col => {
-        tempVisibility[col.prop] = visibleColumns.includes(col.prop)
-      })
-      
-      this.tempColumnVisibility = tempVisibility
-      this.updateTempCheckAllState()
-    },
-    
-    // 更新临时全选状态
-    updateTempCheckAllState() {
-      const selectedCount = Object.values(this.tempColumnVisibility).filter(v => v).length
-      this.tempCheckAll = selectedCount === this.columnOptions.length
-      this.tempIndeterminate = selectedCount > 0 && selectedCount < this.columnOptions.length
-    },
-    
-    // 临时列变化处理
-    handleTempColumnChange() {
-      this.updateTempCheckAllState()
-    },
-    
-    // 临时全选变化处理
-    handleTempCheckAllChange(val) {
-      Object.keys(this.tempColumnVisibility).forEach(key => {
-        this.tempColumnVisibility[key] = val
-      })
-      this.tempIndeterminate = false
-    },
-    
-    // 应用列设置
-    applyColumnSettings() {
-      // 保存设置到localStorage
-      localStorage.setItem(this.storageKey, JSON.stringify(this.computedVisibleColumns))
-      
-      // 发送列设置变更事件
-      this.$emit('column-change', this.computedVisibleColumns)
-      
-      // 提示用户
-      this.$message.success('列设置已应用')
-      
-      // 关闭下拉菜单
-      this.$refs.columnDropdown.hide()
-    },
-    
-    // 重置列设置
-    resetColumnSettings() {
-      // 重置为默认列配置
-      const tempVisibility = {}
-      this.columnOptions.forEach(col => {
-        tempVisibility[col.prop] = this.defaultVisibleColumns.includes(col.prop)
-      })
-      
-      this.tempColumnVisibility = tempVisibility
-      this.updateTempCheckAllState()
-      
-      // 清除localStorage中保存的设置
-      localStorage.removeItem(this.storageKey)
-      
-      // 发送列设置变更事件
-      this.$emit('column-change', [...this.defaultVisibleColumns])
-      
-      // 提示用户
-      this.$message.success('列设置已重置为默认')
-      
-      // 关闭下拉菜单
-      this.$refs.columnDropdown.hide()
-    },
-
     // BatchAction 相关方法
     handleBatchDelete() {
       this.$emit('batch-delete', this.selectedRows)
@@ -492,6 +361,11 @@ export default {
     
     handleExportError(error) {
       this.$emit('export-error', error)
+    },
+
+    // ColumnSettings 相关方法
+    handleColumnChange(newVisibleColumns) {
+      this.$emit('column-change', newVisibleColumns)
     }
   }
 }
@@ -515,53 +389,6 @@ export default {
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-  }
-}
-
-// 列设置下拉菜单样式
-.el-dropdown-menu.column-dropdown {
-  min-width: 180px;
-  max-height: 400px;
-  overflow-y: auto;
-
-  .column-dropdown-header {
-    padding: 12px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #ebeef5;
-    margin-bottom: 5px;
-    background-color: #f5f7fa;
-    
-    .column-dropdown-actions {
-      .el-button {
-        padding: 2px 5px;
-        margin-left: 8px;
-      }
-    }
-  }
-  
-  .column-item {
-    padding: 8px 16px;
-    line-height: 1.5;
-    cursor: pointer;
-    
-    .el-checkbox {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      margin-right: 0;
-    }
-
-    &:hover {
-      background-color: transparent;
-    }
-  }
-
-  .el-dropdown-menu__item.divided {
-    margin: 0;
-    padding: 0;
-    height: 1px;
   }
 }
 </style> 

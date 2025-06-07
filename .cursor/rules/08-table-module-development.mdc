@@ -167,25 +167,47 @@ module-name/
 />
 ```
 
-### 5. DrawerForm组件
-- **强制要求**：所有表单抽屉必须使用全局DrawerForm组件
-- 通过`formSections`配置分段表单内容
+### 5. 表单与抽屉组件
+- **强制要求**：所有表单抽屉必须采用组件分离与组合模式，使用BaseDrawer和EnhancedForm组件
+- 通过组合BaseDrawer和EnhancedForm实现表单抽屉功能，而非使用耦合的组件
 - 支持create/update/view三种模式
 - 示例用法：
 
 ```vue
-<drawer-form
-  ref="drawerForm"
+<base-drawer
+  ref="drawer"
   :visible.sync="drawerVisible"
-  :title="formTitle"
-  :mode="formMode"
-  :data="formData"
-  :rules="rules"
-  :form-sections="formSections"
-  @submit="handleFormSubmit"
+  :title="getDrawerTitle()"
+  width="550px"
+  direction="rtl"
+  :wrapper-closable="false"
+  :loading="loading"
+  @confirm="handleDrawerConfirm"
+  @cancel="handleDrawerCancel"
 >
-  <!-- 自定义表单内容（如有需要） -->
-</drawer-form>
+  <enhanced-form
+    ref="form"
+    :data="formData"
+    :mode="formMode"
+    :rules="rules"
+    label-width="100px"
+    :loading="loading"
+    :show-continue-button="formMode === 'create'"
+    @submit="handleFormSubmit"
+    @validate="handleCustomValidate"
+    @validate-error="handleValidateError"
+  >
+    <!-- 表单内容 -->
+    <template v-slot="{ form, mode }">
+      <!-- 在这里放置表单内容 -->
+      <el-form-item label="字段1" prop="field1">
+        <el-input v-model="form.field1"></el-input>
+      </el-form-item>
+      
+      <!-- 更多表单项... -->
+    </template>
+  </enhanced-form>
+</base-drawer>
 ```
 
 ### 6. Pagination组件
@@ -352,72 +374,128 @@ module-name/
 ```
 
 ### [Module]FormDrawer 组件集成
-- 表单抽屉组件应使用全局 DrawerForm 组件
+- 表单抽屉组件应采用组件分离与组合模式，使用BaseDrawer和EnhancedForm组件
 - 根据不同的模式（create/update/view）展示不同的表单内容
-- 通过 formSections 配置表单分段内容
 - **必须实现"保存并继续"功能**，允许用户在新增模式下连续添加多条记录
 
 ```vue
 <!-- [Module]FormDrawer.vue 组件示例 -->
 <template>
-  <drawer-form
-    ref="drawerForm"
+  <base-drawer
+    ref="drawer"
     :visible.sync="visibleSync"
     :title="drawerTitle"
-    :mode="type"
-    :data="formData"
+    :width="drawerWidth"
+    :direction="direction"
+    :wrapper-closable="false"
     :loading="loading"
-    :rules="formRules"
-    :form-sections="formSections"
-    :submit-button-text="submitButtonText"
-    @submit="handleSubmit"
-    @close="handleClose"
+    @confirm="handleDrawerConfirm"
+    @cancel="handleDrawerCancel"
   >
-    <!-- 自定义底部按钮，包含保存并继续功能 -->
-    <template #footer>
-      <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
-      <el-button v-if="type === 'create'" type="primary" @click="handleSubmitAndContinue" :loading="loading">保存并继续</el-button>
-      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit" :loading="loading">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
-    </template>
-    
-    <!-- 可选的自定义内容 -->
-    <template v-slot:custom-field="{field, formData}">
-      <!-- 根据需要自定义表单项 -->
-    </template>
-  </drawer-form>
+    <!-- 表单内容 -->
+    <enhanced-form
+      ref="form"
+      :data="formData"
+      :mode="type"
+      :rules="rules"
+      :label-width="formLabelWidth"
+      :loading="loading"
+      :show-continue-button="type === 'create'"
+      @submit="handleFormSubmit"
+      @validate="handleCustomValidate"
+      @validate-error="handleValidateError"
+      @field-change="handleFieldChange"
+    >
+      <!-- 表单内容 -->
+      <template v-slot="{ form, mode }">
+        <!-- 基础信息部分 -->
+        <div class="form-section">
+          <h3 class="section-title">基础信息</h3>
+          <!-- 表单项 -->
+          <el-form-item label="名称" prop="name">
+            <el-input v-model="form.name" :disabled="mode === 'view'"></el-input>
+          </el-form-item>
+          <!-- 更多表单项... -->
+        </div>
+        
+        <!-- 详细信息部分 -->
+        <div class="form-section">
+          <h3 class="section-title">详细信息</h3>
+          <!-- 更多表单项... -->
+        </div>
+      </template>
+    </enhanced-form>
+  </base-drawer>
 </template>
 
 <script>
-export default {
-  // ... 其他代码
+import BaseDrawer from '@/components/Drawer/index.vue'
+import EnhancedForm from '@/components/EnhancedForm/index.vue'
 
+export default {
+  components: {
+    BaseDrawer,
+    EnhancedForm
+  },
+  
+  // ... 其他代码
+  
   methods: {
-    // 处理表单提交
-    handleSubmit() {
-      this.$refs.drawerForm.$refs.form.validate((valid) => {
-        if (valid) {
-          // 获取用户实际输入的值
-          const formData = { ...this.$refs.drawerForm.formData }
-          this.$emit('submit', formData, false)
-        }
-      })
+    // 抽屉确认按钮点击处理
+    handleDrawerConfirm() {
+      this.$refs.form.handleSubmit()
     },
     
-    // 处理保存并继续
-    handleSubmitAndContinue() {
-      this.$refs.drawerForm.$refs.form.validate((valid) => {
-        if (valid) {
-          // 获取用户实际输入的值
-          const formData = { ...this.$refs.drawerForm.formData }
-          this.$emit('submit', formData, true) // 传递第二个参数表示保存并继续
-        }
-      })
+    // 抽屉取消按钮点击处理
+    handleDrawerCancel() {
+      this.visibleSync = false
+      this.$emit('close')
     },
     
-    // ... 其他方法
+    // 表单提交处理
+    handleFormSubmit(formData, continueEdit) {
+      this.$emit('submit', formData, continueEdit)
+    },
+    
+    // 自定义验证处理
+    handleCustomValidate(formData, callback) {
+      // 执行自定义验证逻辑
+      // ...
+      
+      // 验证通过
+      callback(true)
+      
+      // 如果验证失败
+      // callback(false)
+    },
+    
+    // 验证失败处理
+    handleValidateError() {
+      this.$message.error('表单验证失败，请检查表单填写是否正确')
+    },
+    
+    // 字段变更处理
+    handleFieldChange({ field, value, formData }) {
+      // 处理字段联动逻辑
+      // ...
+    }
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.form-section {
+  margin-bottom: 25px;
+  
+  .section-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ebeef5;
+  }
+}
+</style>
 ```
 
 ## 交互规范

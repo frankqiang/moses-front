@@ -28,6 +28,7 @@ import RefreshButton from '@/components/RefreshButton'
 import ImportButton from '@/components/ImportButton'
 import ExportButton from '@/components/ExportButton'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
+import ColumnSettings from '@/components/ColumnSettings'
 
 /**
  * If you don't want to use mock-server
@@ -60,6 +61,7 @@ Vue.component('RefreshButton', RefreshButton)
 Vue.component('ImportButton', ImportButton)
 Vue.component('ExportButton', ExportButton)
 Vue.component('OverflowTagsPopover', OverflowTagsPopover)
+Vue.component('ColumnSettings', ColumnSettings)
 
 Vue.config.productionTip = false
 

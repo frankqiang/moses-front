@@ -41,21 +41,67 @@ alwaysApply: true
 - **可维护性**：清晰的结构和足够的文档
 - **用户体验**：一致的交互模式和视觉样式
 
-## 通用目录结构规范
-每个功能模块应遵循以下目录结构：
+## 标准模块目录结构
+每个功能模块应遵循以下标准目录结构：
+
 ```
-module-name/
-├── index.vue                 # 主页面（容器组件）
+views/module-name/
+├── index.vue                 # 主页面组件（入口）
+├── router/                   # 路由配置
+│   └── index.js              # 模块路由定义
+├── api/                      # API调用
+│   └── index.js              # 模块API封装
 ├── components/               # 子组件目录
-│   ├── ComponentA.vue        # 子组件A
-│   ├── ComponentB.vue        # 子组件B
-│   └── ComponentC.vue        # 子组件C
-├── mixins/                   # 混入目录（可选）
-│   ├── mixinA.js             # 混入A
-│   └── mixinB.js             # 混入B
-└── docs/                     # 文档目录（可选）
-    └── README.md             # 模块说明文档
+│   ├── common/               # 通用组件
+│   │   ├── ActionBar.vue     # 操作按钮组件
+│   │   └── StatusTag.vue     # 状态标签组件
+│   ├── form/                 # 表单相关组件
+│   │   ├── index.vue         # 表单组件入口
+│   │   └── FormSections/     # 表单分段组件
+│   │       ├── BaseInfo.vue  # 基础信息表单段
+│   │       └── TypeSpecific/ # 特定类型表单段
+│   ├── table/                # 表格相关组件
+│   │   ├── index.vue         # 表格组件入口
+│   │   └── columns/          # 表格列配置
+│   │       ├── base.js       # 基础列配置
+│   │       └── specific.js   # 特定列配置
+│   └── search/               # 搜索相关组件
+│       └── index.vue         # 搜索表单组件
+├── constants/                # 常量定义
+│   ├── types.js              # 类型常量
+│   └── status-codes.js       # 状态码常量
+├── mixins/                   # 混入目录
+│   ├── form-mixin.js         # 表单相关混入
+│   └── table-mixin.js        # 表格相关混入
+├── utils/                    # 工具函数
+│   └── formatter.js          # 格式化工具
+├── styles/                   # 样式文件
+│   └── index.scss            # 模块样式
+├── docs/                     # 文档目录
+│   └── README.md             # 详细需求文档
+└── README.md                 # 模块说明文档
 ```
+
+### 目录结构说明
+
+1. **index.vue**: 主页面组件，应保持轻量，主要负责组织布局和状态管理
+2. **router/**: 包含模块内部路由配置，便于大型模块的路由管理
+3. **api/**: 集中管理模块的API调用，避免在组件中直接调用API
+4. **components/**: 按功能分类的子组件目录
+5. **constants/**: 存放模块内的常量定义，便于统一管理和修改
+6. **mixins/**: 存放可复用的业务逻辑
+7. **utils/**: 存放模块特定的工具函数
+8. **styles/**: 存放模块特定的样式文件
+9. **docs/**: 存放详细的文档和需求说明
+10. **README.md**: 提供模块的简要说明和使用指南
+
+### 目录结构调整指南
+
+根据模块的复杂度和特点，可以适当调整目录结构：
+
+- **简单模块**：可以省略router、constants等目录
+- **中等复杂度模块**：保留主要目录，如api、components、mixins
+- **复杂模块**：使用完整的目录结构，必要时可以增加子模块目录
 
 ## 参考示例
 - 请参考`src/views/master-data/bin-specification`目录作为组件化开发的标准示例
@@ -68,12 +114,35 @@ module-name/
 - 不应包含复杂UI逻辑，主要是组件组合和事件处理
 - 包含数据加载和提交的核心方法
 - 引入必要的mixins
+- **新建议**: 将API调用逻辑抽离到api目录中，容器组件只负责调用API并处理响应
 
 ### 子组件设计
 - 专注于单一功能或UI区块
 - 通过props接收数据，通过events发送用户操作
 - 避免直接调用API或修改全局状态
 - 保持组件的独立性和可复用性
+- **新建议**: 对于表单和表格等复杂组件，进一步拆分为更小的功能组件
+
+### 表单组件最佳实践
+- 将表单拆分为基础信息和特定类型信息等逻辑段落
+- 使用动态组件加载不同类型的表单段
+- 避免在单个组件中包含大量表单项
+- 使用局部表单模型与外部数据解耦，避免双向绑定死循环
+- 表单提交前进行数据验证和格式化
+
+### 表格组件最佳实践
+- 将表格列配置抽离到单独的文件中管理
+- 使用动态列渲染，支持列设置和持久化
+- 使用slot自定义单元格渲染
+- 表格操作按钮统一管理，避免重复代码
+- 优化大数据量表格的性能
+
+### 搜索组件最佳实践
+- 提供基础搜索和高级搜索两种模式
+- 使用防抖处理避免频繁触发搜索
+- 搜索条件与URL参数同步，支持页面刷新保留搜索条件
+- 使用清晰的数据流向，避免双向绑定陷阱
+- 支持搜索历史记录功能
 
 ## 全局组件使用规范
 
@@ -113,6 +182,84 @@ export default {
 }
 ```
 
+## API 管理规范
+
+### API封装原则
+- 每个模块在api目录下集中管理API调用
+- 使用统一的命名和参数传递方式
+- 提供清晰的函数名和注释说明
+- 处理基本的错误和异常情况
+
+### API封装示例
+```javascript
+// api/index.js
+import request from '@/utils/request'
+
+// 基础API路径
+const baseUrl = '/api/module-name'
+
+/**
+ * 获取列表数据
+ * @param {Object} params - 查询参数
+ * @returns {Promise} - 返回Promise对象
+ */
+export function getList(params) {
+  return request({
+    url: `${baseUrl}/list`,
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 创建新记录
+ * @param {Object} data - 创建数据
+ * @returns {Promise} - 返回Promise对象
+ */
+export function create(data) {
+  return request({
+    url: `${baseUrl}/create`,
+    method: 'post',
+    data
+  })
+}
+
+// 其他API函数...
+```
+
+## 常量管理规范
+
+### 常量定义原则
+- 将重复使用的字符串、数值、配置等提取为常量
+- 使用语义化命名，提高代码可读性
+- 按照功能和用途分类组织常量
+- 导出常量便于在不同组件中复用
+
+### 常量定义示例
+```javascript
+// constants/types.js
+// 数据类型常量
+export const DATA_TYPES = {
+  TYPE_A: 'TYPE_A',
+  TYPE_B: 'TYPE_B',
+  TYPE_C: 'TYPE_C'
+}
+
+// 类型显示名称映射
+export const TYPE_LABELS = {
+  [DATA_TYPES.TYPE_A]: '类型A',
+  [DATA_TYPES.TYPE_B]: '类型B',
+  [DATA_TYPES.TYPE_C]: '类型C'
+}
+
+// 类型特性字段映射
+export const TYPE_FIELDS = {
+  [DATA_TYPES.TYPE_A]: ['fieldA1', 'fieldA2', 'fieldA3'],
+  [DATA_TYPES.TYPE_B]: ['fieldB1', 'fieldB2'],
+  [DATA_TYPES.TYPE_C]: ['fieldC1', 'fieldC2', 'fieldC3', 'fieldC4']
+}
+```
+
 ## Mixin设计规范
 
 ### 通用Mixin设计原则
@@ -126,6 +273,49 @@ export default {
 - **i18nMixin**：处理国际化
 - **permissionMixin**：处理权限控制
 - **themeMixin**：处理主题切换
+- **formMixin**：处理表单相关逻辑
+- **tableMixin**：处理表格相关逻辑
+- **searchMixin**：处理搜索相关逻辑
+
+### Mixin示例
+```javascript
+// mixins/form-mixin.js
+export default {
+  data() {
+    return {
+      loading: false,
+      form: {},
+      rules: {}
+    }
+  },
+  methods: {
+    // 初始化表单数据
+    initFormData() {
+      this.form = {
+        // 默认表单数据
+      }
+    },
+    // 验证表单
+    validateForm() {
+      return new Promise((resolve, reject) => {
+        this.$refs.form.validate(valid => {
+          if (valid) {
+            resolve(this.form)
+          } else {
+            this.$message.warning('表单填写有误，请检查')
+            reject(new Error('表单验证失败'))
+          }
+        })
+      })
+    },
+    // 重置表单
+    resetForm() {
+      this.$refs.form && this.$refs.form.resetFields()
+      this.initFormData()
+    }
+  }
+}
+```
 
 ## 组件通信规范
 
@@ -346,14 +536,20 @@ service.interceptors.response.use(
 - 合理使用computed属性缓存计算结果
 - 避免在template中进行复杂计算
 - 使用v-if/v-show来优化渲染性能
+- 使用keep-alive缓存频繁切换的组件
+- 大型列表使用虚拟滚动技术
+- 路由懒加载减少初始加载体积
 
 ## 最佳实践
 
 1. **使用计算属性**：将复杂计算放在computed中
 2. **模块化API**：将API调用封装在单独的文件中
 3. **配置预设**：使用预设配置简化常见操作
-4. **TypeScript支持**：为组件和配置项添加TypeScript类型定义
-5. **文档完善**：在README.md中记录模块功能、组件说明和注意事项
+4. **文档完善**：在README.md中记录模块功能、组件说明和注意事项
+5. **代码复用**：抽取可复用逻辑到mixins中
+6. **响应式设计**：确保组件在不同屏幕尺寸下正常工作
+7. **优雅降级**：处理异常情况和边界条件
+8. **用户体验**：关注加载状态、错误提示和操作反馈
 
 ## 迁移策略
 对于现有的大型组件，可以采用以下迁移策略：
@@ -361,6 +557,7 @@ service.interceptors.response.use(
 2. 从UI层开始拆分（先拆分模板和样式）
 3. 逐步抽取业务逻辑到mixins
 4. 重构主组件使用新拆分的子组件
+5. 引入api目录和constants目录，集中管理API调用和常量
 
 ## 质量检查清单
 
@@ -368,10 +565,15 @@ service.interceptors.response.use(
 
 - [ ] 组件结构清晰，职责单一
 - [ ] 组件间通信方式合理
+- [ ] API调用集中管理在api目录
+- [ ] 常量定义集中管理在constants目录
 - [ ] 使用了适当的全局组件
+- [ ] 表单、表格等复杂组件进行了合理拆分
+- [ ] 业务逻辑抽取到mixins
 - [ ] 代码注释完善
 - [ ] 性能优化措施到位
 - [ ] 交互体验符合规范
 - [ ] 代码符合ESLint规范
 - [ ] 组件大小控制在合理范围内
+- [ ] README.md文档完整
 

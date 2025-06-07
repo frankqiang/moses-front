@@ -10,7 +10,7 @@
     <table-toolbar
       :enable-column-settings="true"
       :column-options="allColumns"
-      :storage-key="currentStorageKey"
+      :storage-key="tableStorageKey"
       :default-visible-columns="defaultVisibleColumns"
       :enable-batch-actions="true"
       :selected-rows="selectedRows"
@@ -50,7 +50,7 @@
       <el-table-column type="selection" width="45" align="center" fixed="left" />
       <el-table-column label="#" type="index" width="50" align="center" fixed="left" />
       
-      <template v-for="col in tableColumns">
+      <template v-for="col in visibleColumnsConfig">
         <el-table-column
           :key="col.prop"
           v-bind="col"
@@ -174,8 +174,8 @@ export default {
       currentPage: 1,
       // 每页大小
       pageSize: 10,
-      // 重写列设置存储键前缀
-      columnSettingsKeyPrefix: 'warehouse_columns',
+      // 存储键后缀，用于区分不同表格
+      storageKeySuffix: 'warehouse',
       // 导出参数
       exportParams: {},
       // 选中的行
@@ -193,11 +193,6 @@ export default {
     }
   },
   computed: {
-    // 重写列设置存储键
-    currentStorageKey() {
-      return this.columnSettingsKeyPrefix
-    },
-    
     // 默认显示的列
     defaultVisibleColumns() {
       return ['code', 'name', 'warehouseType', 'address', 'manager', 'status']
@@ -256,6 +251,13 @@ export default {
         this.pageSize = val
       },
       immediate: true
+    },
+    // 监听可见列变化，更新导出参数
+    visibleColumns: {
+      handler(val) {
+        this.updateExportParams()
+      },
+      deep: true
     }
   },
   created() {
@@ -321,7 +323,7 @@ export default {
     // 更新导出参数
     updateExportParams() {
       this.exportParams = {
-        columns: this.internalVisibleColumns
+        columns: this.visibleColumns
       }
     },
 
