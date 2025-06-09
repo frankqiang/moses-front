@@ -472,14 +472,36 @@ module.exports = [
       const sourceItem = items.find(item => item.id === id || item.templateId === id)
       
       if (sourceItem) {
-        // 解析当前版本号并增加
-        const currentVersion = sourceItem.version
-        const versionNum = parseFloat(currentVersion.substring(1))
-        const newVersionNum = Math.floor(versionNum) + 0.1
-        const newVersion = 'v' + newVersionNum.toFixed(1)
+        // 获取基础模板ID（去除版本号部分）
+        const baseTemplateId = sourceItem.templateId.split('-v')[0] || sourceItem.templateId.replace(/v[\d.]+$/, '')
+        
+        // 找到同一模板系列的所有版本，并获取最高版本号
+        const sameTemplateItems = items.filter(item => {
+          const itemBaseId = item.templateId.split('-v')[0] || item.templateId.replace(/v[\d.]+$/, '')
+          return itemBaseId === baseTemplateId
+        })
+        
+        // 解析所有版本号并找到最高版本
+        let maxVersion = { major: 0, minor: 0 }
+        sameTemplateItems.forEach(item => {
+          const versionStr = item.version.substring(1) // 去掉 'v'
+          if (versionStr.includes('.')) {
+            const [major, minor] = versionStr.split('.').map(Number)
+            if (major > maxVersion.major || (major === maxVersion.major && minor > maxVersion.minor)) {
+              maxVersion = { major, minor }
+            }
+          } else {
+            const major = parseInt(versionStr)
+            if (major > maxVersion.major) {
+              maxVersion = { major, minor: 0 }
+            }
+          }
+        })
+        
+        // 基于最高版本号生成新版本号
+        const newVersion = `v${maxVersion.major}.${maxVersion.minor + 1}`
         
         const newId = items.length + 1
-        const baseTemplateId = sourceItem.templateId.split('-v')[0] || sourceItem.templateId
         const newTemplateId = baseTemplateId + '-' + newVersion
         
         const newItem = {

@@ -406,7 +406,6 @@ export default {
     handleUpdate(row) {
       this.$emit('update', row)
     },
-    
     // 处理查看
     handleView(row) {
       this.$emit('view', row)

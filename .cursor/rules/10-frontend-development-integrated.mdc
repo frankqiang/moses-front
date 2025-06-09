@@ -1,0 +1,668 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 前端开发集成指南
+
+## 规则说明与适用范围
+本规则整合了前端开发的各项最佳实践，包括组件架构、API接口层、Mock服务和工具函数等。所有新模块和改造的旧模块都需遵循此规范，以保证代码质量和一致性。
+
+## 目录
+
+1. [项目结构与文件组织](mdc:#项目结构与文件组织)
+2. [组件架构设计](mdc:#组件架构设计)
+3. [API接口层开发](mdc:#api接口层开发)
+4. [Mock服务开发](mdc:#mock服务开发)
+5. [工具函数开发](mdc:#工具函数开发)
+6. [常量管理](mdc:#常量管理)
+7. [错误处理与消息提示](mdc:#错误处理与消息提示)
+8. [性能优化实践](mdc:#性能优化实践)
+9. [代码质量检查清单](mdc:#代码质量检查清单)
+
+## 项目结构与文件组织
+
+### 标准项目结构
+```
+src/
+├── api/                     # API接口层
+│   ├── index.js             # API入口，统一导出
+│   └── modules/             # 按业务模块拆分API
+│       ├── common.js        # 通用API
+│       └── master-data/     # 主数据API目录
+│           ├── index.js     # 导出所有主数据API
+│           └── module-name.js  # 具体模块API
+├── components/              # 全局通用组件
+│   ├── SvgIcon/             # SVG图标组件
+│   ├── Breadcrumb/          # 面包屑导航组件
+│   └── ...                  # 其他全局组件
+├── utils/                   # 工具函数
+│   ├── request.js           # 请求工具
+│   ├── formatter.js         # 格式化工具
+│   └── validator.js         # 验证工具
+├── mock/                    # Mock数据
+│   ├── index.js             # Mock入口
+│   ├── utils/               # Mock工具函数
+│   │   ├── response.js      # 响应处理工具
+│   │   └── generator.js     # 数据生成工具
+│   └── modules/             # Mock模块
+│       └── module-group/    # 模块组
+│           ├── index.js     # 模块组入口
+│           ├── data/        # 基础数据
+│           │   └── module-name.js  # 模块基础数据
+│           └── module-name.js  # 模块API Mock
+├── layout/                  # 布局组件
+│   ├── index.vue            # 主布局容器
+│   ├── components/          # 布局子组件
+│   │   ├── Sidebar/         # 侧边栏组件
+│   │   ├── Navbar.vue       # 顶部导航组件
+│   │   └── ...              # 其他布局组件
+├── views/                   # 页面视图组件
+│   ├── module-name/         # 功能模块目录
+│   │   ├── index.vue        # 模块主页面
+│   │   └── components/      # 模块专用组件
+└── constants/               # 全局常量
+    ├── index.js             # 常量入口
+    └── modules/             # 按模块划分的常量
+```
+
+### 目录命名规范
+- 使用小写中划线命名法（kebab-case）命名目录
+- 业务模块按功能域划分（如`master-data`, `process-control`, `user-management`等）
+- 通用功能放在公共目录（如`common`, `shared`等）
+
+### 功能模块目录结构
+每个功能模块应遵循以下标准目录结构：
+
+```
+views/module-name/
+├── index.vue                 # 主页面组件（入口）
+├── router/                   # 路由配置
+│   └── index.js              # 模块路由定义
+├── api/                      # API调用
+│   └── index.js              # 模块API封装
+├── components/               # 子组件目录
+│   ├── common/               # 通用组件
+│   ├── form/                 # 表单相关组件
+│   ├── table/                # 表格相关组件
+│   └── search/               # 搜索相关组件
+├── constants/                # 常量定义
+├── mixins/                   # 混入目录
+├── utils/                    # 工具函数
+├── styles/                   # 样式文件
+├── docs/                     # 文档目录
+└── README.md                 # 模块说明文档
+```
+
+根据模块的复杂度和特点，可以适当调整目录结构：
+- **简单模块**：可以省略router、constants等目录
+- **中等复杂度模块**：保留主要目录，如api、components、mixins
+- **复杂模块**：使用完整的目录结构，必要时可以增加子模块目录
+
+## 组件架构设计
+
+### 组件系统概述
+项目组件分为两类：
+1. 通用组件 (`src/components`) - 可在多个页面复用的组件
+2. 视图组件 (`src/views`) - 特定页面的组件
+
+### 核心设计原则
+- **组件化开发**：将大型组件拆分为小型、可复用的组件
+- **关注点分离**：组件应专注于单一功能或职责
+- **逻辑与UI分离**：使用mixins或Vuex管理逻辑，组件专注于UI渲染
+- **命名统一**：组件、文件和目录命名应遵循统一规范
+- **配置化**：尽量通过配置而非硬编码实现功能
+- **复用性**：充分利用全局组件和预设配置
+- **可维护性**：清晰的结构和足够的文档
+- **用户体验**：一致的交互模式和视觉样式
+
+### 组件设计模式
+
+#### 容器组件 (index.vue)
+- 负责组合子组件、管理状态和数据流转
+- 不应包含复杂UI逻辑，主要是组件组合和事件处理
+- 包含数据加载和提交的核心方法
+- 引入必要的mixins
+- 将API调用逻辑抽离到api目录中，容器组件只负责调用API并处理响应
+
+#### 展示组件
+- 专注于单一功能或UI区块
+- 通过props接收数据，通过events发送用户操作
+- 避免直接调用API或修改全局状态
+- 保持组件的独立性和可复用性
+- 对于表单和表格等复杂组件，进一步拆分为更小的功能组件
+
+### 数据加载模式
+组件中的数据加载应遵循以下模式：
+
+```javascript
+export default {
+  data() {
+    return {
+      loading: false,
+      list: [],
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10,
+        // 其他查询参数...
+      }
+    }
+  },
+  
+  created() {
+    // 创建防抖函数
+    this.debouncedGetList = debounce(this.getList, 300)
+    // 初始加载
+    this.getList()
+  },
+  
+  methods: {
+    async getList() {
+      try {
+        this.loading = true
+        const res = await api.getList(this.listQuery)
+        this.list = res.data.items
+        this.total = res.data.total
+      } catch (error) {
+        console.error('获取列表失败', error)
+        this.$message.error('获取数据失败: ' + (error.message || '未知错误'))
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    // 搜索处理
+    handleSearch() {
+      this.listQuery.page = 1
+      this.debouncedGetList()
+    },
+    
+    // 分页处理
+    handlePageChange(page) {
+      this.listQuery.page = page
+      this.getList()
+    }
+  }
+}
+```
+
+### 组件通信规范
+
+#### Props命名规范
+- 使用小驼峰命名法
+- 提供默认值和类型验证
+- 文档化prop的用途和限制
+
+#### Events命名规范
+- 使用kebab-case（短横线）命名法
+- 使用动词前缀如：`search`、`update`、`select`、`change`
+- 确保事件名称明确表达意图
+
+#### 父子组件通信规范
+- 父传子：使用props
+- 子传父：使用自定义事件($emit)
+- 复杂状态：考虑使用Vuex
+
+## API接口层开发
+
+### API模块设计标准
+每个API模块文件应遵循以下结构：
+
+```javascript
+/**
+ * 模块名称API
+ * 功能描述：提供模块相关的API调用方法
+ * 创建日期：YYYY-MM-DD
+ */
+import request from '@/utils/request'
+import { formatQueryParams } from '@/utils/formatter'
+
+// API基础路径常量（使用大写命名）
+const BASE_URL = '/mes/module-path'  // 必须包含/mes前缀
+
+/**
+ * 获取列表数据
+ * @param {Object} query - 查询参数
+ * @param {number} [query.page=1] - 页码
+ * @param {number} [query.limit=10] - 每页条数
+ * @param {string} [query.keyword] - 关键词搜索
+ * @param {string} [query.status] - 状态过滤
+ * @returns {Promise} 返回Promise对象
+ */
+export function getList(query = {}) {
+  return request({
+    url: `${BASE_URL}/list`,
+    method: 'get',
+    params: formatQueryParams(query)
+  })
+}
+
+// 其他API方法...
+
+/**
+ * 导出所有模块相关API
+ */
+export default {
+  getList,
+  getDetail,
+  create,
+  update,
+  remove,
+  // 其他方法...
+}
+```
+
+### API命名规范
+- 获取列表：`getXxxList`
+- 获取详情：`getXxxDetail`
+- 创建记录：`createXxx`
+- 更新记录：`updateXxx`
+- 删除记录：`deleteXxx` 或 `removeXxx`
+- 批量操作：`batchXxx`（如`batchDelete`, `batchUpdate`等）
+- 特殊操作：使用动词+名词结构（如`changeStatus`, `exportData`等）
+
+### API统一出口
+每个模块组应提供统一出口文件，方便引入：
+
+```javascript
+// src/api/modules/master-data/index.js
+import * as furnaceType from './furnace-type'
+import * as equipment from './equipment'
+// 其他模块...
+
+export {
+  furnaceType,
+  equipment
+  // 其他模块...
+}
+```
+
+### URL路径规范
+所有API路径必须遵循以下规则：
+1. 所有API路径必须以`/mes`作为前缀
+2. 路径应按照业务模块组织，例如：`/mes/master-data/xxx`、`/mes/production/xxx`
+3. 不要使用`/vue-admin-template`前缀
+
+### 请求工具规范
+请求工具应实现以下功能：
+- 统一配置（如baseURL, timeout等）
+- 请求拦截器（添加认证头、处理请求参数等）
+- 响应拦截器（处理常见错误如401、404等）
+- 错误处理（网络错误、超时等）
+
+## Mock服务开发
+
+### 模块系统规范
+**重要提示**：项目使用CommonJS模块系统，而非ES模块系统。这意味着：
+
+1. 使用`require()`引入模块，而非`import`
+2. 使用`module.exports`导出，而非`export`或`export default`
+
+### 基础数据与处理逻辑分离
+每个Mock模块应分为数据生成和API处理两部分：
+
+```javascript
+// mock/modules/master-data/data/module-name.js
+const Mock = require('mockjs')
+
+/**
+ * 生成模块基础数据
+ * @returns {Array} 数据数组
+ */
+const generateData = () => {
+  const baseData = [
+    {
+      id: 1,
+      code: 'CODE-001',
+      name: '示例名称1',
+      // 其他属性...
+    },
+    // 其他基础数据...
+  ]
+
+  const randomData = Mock.mock({
+    'items|20': [{
+      'id|+1': baseData.length + 1,
+      // 随机数据规则...
+    }]
+  }).items
+
+  return [...baseData, ...randomData]
+}
+
+// 导出数据生成器和基础数据
+module.exports = {
+  generateData,
+  data: generateData()
+}
+```
+
+### API处理函数设计
+
+```javascript
+// mock/modules/master-data/module-name.js
+const { data } = require('./data/module-name')
+const { success, error, formatTime } = require('../../utils/response')
+
+// 数据缓存
+const dataCache = [...data]
+
+// API处理函数
+const handlers = {
+  /**
+   * 获取列表
+   */
+  getList(config) {
+    const { page = 1, limit = 10, keyword, status } = config.query
+    let filteredData = [...dataCache]
+
+    // 筛选逻辑...
+    // 分页逻辑...
+
+    return success({
+      total: filteredData.length,
+      items: pageList
+    })
+  },
+  
+  // 其他处理函数...
+}
+
+// 导出Mock路由配置
+module.exports = [
+  {
+    url: '/mes/module-path/list',  // 注意：使用/mes前缀
+    type: 'get',
+    response: handlers.getList
+  },
+  // 其他路由...
+]
+```
+
+### 响应格式规范
+```javascript
+{
+  code: 20000,      // 状态码：20000成功，其他失败
+  data: {           // 响应数据
+    // ... 具体数据
+  },
+  message: 'success' // 状态信息
+}
+```
+
+### 接口路径管理和冲突避免
+- **每个API路径必须且只能在一个Mock文件中定义**
+- 不允许在多个文件中定义相同的API路径，这会导致接口被覆盖
+- 使用[check-mock-api-duplicates.js](mdc:scripts/check-mock-api-duplicates.js)检查API重复问题
+
+### 数据一致性
+- Mock返回的数据结构必须与前端组件期望的结构完全一致
+- 字段命名应遵循统一规范，避免前后端字段名不一致
+- 必要时添加数据适配层进行转换
+
+## 工具函数开发
+
+### 工具函数设计原则
+- **单一职责**：每个工具函数只做一件事
+- **参数校验**：函数开头验证参数有效性
+- **默认值处理**：为可选参数提供合理默认值
+- **错误处理**：处理异常情况并提供有用错误信息
+- **纯函数优先**：尽量使用纯函数，减少副作用
+- **文档完善**：详细的JSDoc注释说明用途、参数和返回值
+
+### 示例：防抖函数
+```javascript
+/**
+ * 防抖函数工厂
+ * @param {Function} fn - 需要防抖的函数
+ * @param {number} [delay=300] - 延迟时间(ms)
+ * @param {boolean} [immediate=false] - 是否立即执行
+ * @returns {Function} 防抖后的函数
+ */
+export function debounce(fn, delay = 300, immediate = false) {
+  let timer = null
+  return function(...args) {
+    const context = this
+    
+    if (timer) clearTimeout(timer)
+    
+    if (immediate && !timer) {
+      fn.apply(context, args)
+    }
+    
+    timer = setTimeout(() => {
+      if (!immediate) fn.apply(context, args)
+      timer = null
+    }, delay)
+  }
+}
+```
+
+## 常量管理
+
+### 常量定义标准
+业务常量应统一管理，避免魔法字符串：
+
+```javascript
+// constants/master-data.js
+
+// 状态常量
+export const STATUS = {
+  ENABLED: 'enabled',
+  DISABLED: 'disabled',
+  PENDING: 'pending'
+}
+
+// 状态显示文本
+export const STATUS_TEXT = {
+  [STATUS.ENABLED]: '启用',
+  [STATUS.DISABLED]: '禁用',
+  [STATUS.PENDING]: '待审核'
+}
+
+// 状态标签类型
+export const STATUS_TYPE = {
+  [STATUS.ENABLED]: 'success',
+  [STATUS.DISABLED]: 'info',
+  [STATUS.PENDING]: 'warning'
+}
+```
+
+### 常量使用规范
+- 组件中应导入并使用常量，避免硬编码
+- 使用对象解构获取需要的常量
+- 建立动态映射关系
+
+```javascript
+import { STATUS, STATUS_TEXT, STATUS_TYPE } from '@/constants/master-data'
+
+export default {
+  computed: {
+    statusOptions() {
+      return Object.keys(STATUS).map(key => ({
+        label: STATUS_TEXT[STATUS[key]],
+        value: STATUS[key]
+      }))
+    }
+  },
+  methods: {
+    getStatusType(status) {
+      return STATUS_TYPE[status] || ''
+    }
+  }
+}
+```
+
+## 错误处理与消息提示
+
+### 错误处理模式
+所有API调用都应使用try/catch处理潜在错误：
+
+```javascript
+async submitForm() {
+  try {
+    this.loading = true
+    // 表单验证
+    await this.$refs.form.validate()
+    // 提交数据
+    const res = await api.create(this.form)
+    this.$message.success('创建成功')
+    this.dialogVisible = false
+    this.$emit('refresh')
+  } catch (error) {
+    // 区分表单验证错误和API错误
+    if (error === false) {
+      this.$message.warning('请检查表单填写是否正确')
+    } else {
+      this.$message.error(error.message || '创建失败')
+    }
+  } finally {
+    this.loading = false
+  }
+}
+```
+
+### 消息提示规范
+
+#### 基本原则
+- **一致性**: 全系统保持统一的消息提示方式
+- **精确性**: 消息内容应准确传达操作结果
+- **层次性**: 区分不同级别的消息（成功、警告、错误等）
+- **简洁性**: 消息内容应简明扼要
+
+#### 消息类型与使用场景
+1. **成功消息(`success`)**:
+   - 数据创建/更新/删除成功
+   - 批量操作成功完成
+   - 用户操作达到预期效果
+
+2. **警告消息(`warning`)**:
+   - 操作可能导致不可恢复的结果时
+   - 用户输入不完整但不影响继续
+   - 提醒用户注意但不阻止操作
+
+3. **错误消息(`error`)**:
+   - API请求返回错误
+   - 表单验证失败
+   - 操作未能完成
+
+4. **信息消息(`info`)**:
+   - 操作取消通知
+   - 中性提示信息
+   - 系统通知
+
+#### 全局错误处理配置
+项目中的API请求拦截器应配置为：
+- 全局处理认证错误和网络错误
+- 将业务错误直接传递给业务组件处理
+
+```javascript
+// 响应拦截器配置 (src/utils/request.js)
+service.interceptors.response.use(
+  response => {
+    const res = response.data
+
+    if (res.code !== 20000) {
+      // 只在全局处理认证相关错误
+      if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
+        Message.error(res.message || 'Authentication Error')
+        // 处理登出逻辑...
+      }
+      
+      // 其他业务错误直接返回给业务组件处理
+      return Promise.reject(res)
+    } else {
+      return res
+    }
+  },
+  error => {
+    // 只处理网络级别错误
+    Message.error('网络请求失败，请稍后重试')
+    return Promise.reject(error)
+  }
+)
+```
+
+## 性能优化实践
+
+### 组件优化
+- 合理使用computed属性缓存计算结果
+- 避免在template中进行复杂计算
+- 使用v-if/v-show来优化渲染性能
+- 使用keep-alive缓存频繁切换的组件
+- 大型列表使用虚拟滚动技术
+- 路由懒加载减少初始加载体积
+
+### 数据请求优化
+- 使用防抖/节流避免频繁请求
+- 本地缓存不常变化的数据
+- 使用批量请求替代多个单独请求
+- 合理设置请求超时时间
+
+### 组件大小控制
+- 单个组件模板不超过200行
+- 单个组件脚本不超过300行
+- 超出限制时应考虑进一步拆分
+
+## 文档与注释规范
+
+### 文件头部注释
+每个文件顶部应有描述文件功能的注释：
+
+```javascript
+/**
+ * 文件名称：module-name.js
+ * 文件描述：简要说明该文件的功能和用途
+ * 创建日期：YYYY-MM-DD
+ * 修改记录：
+ *   - YYYY-MM-DD: 修改内容描述
+ */
+```
+
+### 函数注释
+关键函数应有详细的JSDoc注释：
+
+```javascript
+/**
+ * 函数名称
+ * @param {类型} 参数名 - 参数说明
+ * @param {类型} [可选参数] - 参数说明
+ * @returns {类型} 返回值说明
+ * @throws {错误类型} 可能抛出的错误说明
+ */
+```
+
+### 复杂逻辑注释
+复杂逻辑应添加详细注释：
+
+```javascript
+// 处理特殊业务逻辑
+if (complexCondition) {
+  // 这里使用特殊处理是因为需要满足业务规则XYZ
+  // 步骤1: 处理A
+  // 步骤2: 处理B
+  // 步骤3: 处理C
+}
+```
+
+## 代码质量检查清单
+
+开发完成后，请检查以下项目是否符合规范：
+
+- [ ] **模块化**：每个文件只有单一职责，相关功能放在一起  
+- [ ] **注释完善**：文件顶部有说明，函数有完整JSDoc注释
+- [ ] **错误处理**：所有API调用都有try/catch，提供友好错误信息
+- [ ] **常量抽取**：业务常量统一管理，避免魔法字符串
+- [ ] **工具函数**：通用逻辑抽取为工具函数，避免代码重复
+- [ ] **命名规范**：变量、函数使用驼峰命名，常量使用全大写下划线
+- [ ] **代码组织**：相关代码放在一起，逻辑流程清晰
+- [ ] **性能优化**：使用防抖/节流，避免不必要的渲染和请求
+- [ ] **API封装**：统一的请求/响应处理，参数验证
+- [ ] **Mock数据**：与真实API保持一致，模拟业务逻辑
+- [ ] **组件通信**：组件间通信方式合理
+- [ ] **表单和表格组件**：复杂组件进行了合理拆分
+- [ ] **业务逻辑**：抽取到mixins或单独文件
+- [ ] **交互体验**：符合规范，提供友好的用户反馈
+- [ ] **代码格式**：符合ESLint规范
+- [ ] **文档完整**：提供充分的使用说明

@@ -1,5 +1,5 @@
 ---
-description: 当需要开发新的API接口、测试数据流或模拟后端服务时请求此规则
+description: 
 globs: 
 alwaysApply: false
 ---
@@ -456,5 +456,6 @@ const { someData } = require('./other-module')
 - [ ] 添加了充分的注释说明
 - [ ] 运行`npm run check-mock`验证无API冲突
 
-## 完整规范
-完整的Mock服务开发规范请参考[mock-development-rules.md](mdc:mock/mock-development-rules.md)
+
+
+
