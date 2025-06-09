@@ -28,30 +28,45 @@
     
     <!-- 关联设备列表 -->
     <template #relatedEquipment>
-      <div class="related-list" v-loading="relatedItemsLoading">
-        <div class="related-list-header">关联设备列表</div>
-        <el-table
-          v-if="form.furnaceTypeCode && relatedEquipment.length > 0"
-          :data="relatedEquipment"
-          border
-          style="width: 100%"
-          max-height="300"
-        >
-          <el-table-column prop="equipmentId" label="设备编号" width="120" />
-          <el-table-column prop="name" label="设备名称" />
-          <el-table-column prop="model" label="型号" width="120" />
-          <el-table-column prop="status" label="状态" width="100">
-            <template slot-scope="scope">
+      <div class="related-section" v-loading="relatedItemsLoading">
+        <div class="section-header">
+          <i class="el-icon-monitor"></i>
+          <span>关联设备列表</span>
+          <span class="count-badge" v-if="relatedEquipment.length > 0">{{ relatedEquipment.length }}</span>
+        </div>
+        <div v-if="relatedEquipment.length > 0" class="cards-container">
+          <div 
+            v-for="equipment in relatedEquipment" 
+            :key="equipment.equipmentId"
+            class="equipment-card"
+          >
+            <div class="card-header">
+              <div class="equipment-name">{{ equipment.name }}</div>
               <StatusTag
-                :status="scope.row.status"
+                :status="equipment.status"
                 :text-map="equipmentStatusTextMap"
                 :type-map="equipmentStatusTypeMap"
+                size="small"
               />
-            </template>
-          </el-table-column>
-        </el-table>
+            </div>
+            <div class="card-content">
+              <div class="info-item">
+                <span class="label">设备编号:</span>
+                <span class="value">{{ equipment.equipmentId }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">设备型号:</span>
+                <span class="value">{{ equipment.model }}</span>
+              </div>
+              <div class="info-item" v-if="equipment.installDate">
+                <span class="label">安装日期:</span>
+                <span class="value">{{ equipment.installDate }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <div v-else class="empty-content">
-          <i class="el-icon-document"></i>
+          <i class="el-icon-monitor"></i>
           <p>暂无关联设备</p>
         </div>
       </div>
@@ -59,30 +74,45 @@
     
     <!-- 关联工艺模板列表 -->
     <template #relatedTemplates>
-      <div class="related-list" v-loading="relatedItemsLoading">
-        <div class="related-list-header">关联工艺模板列表</div>
-        <el-table
-          v-if="form.furnaceTypeCode && relatedTemplates.length > 0"
-          :data="relatedTemplates"
-          border
-          style="width: 100%"
-          max-height="300"
-        >
-          <el-table-column prop="templateId" label="模板ID" width="120" />
-          <el-table-column prop="templateName" label="模板名称" />
-          <el-table-column prop="version" label="版本" width="80" />
-          <el-table-column prop="status" label="状态" width="100">
-            <template slot-scope="scope">
+      <div class="related-section" v-loading="relatedItemsLoading">
+        <div class="section-header">
+          <i class="el-icon-document"></i>
+          <span>关联工艺模板列表</span>
+          <span class="count-badge" v-if="relatedTemplates.length > 0">{{ relatedTemplates.length }}</span>
+        </div>
+        <div v-if="relatedTemplates.length > 0" class="cards-container">
+          <div 
+            v-for="template in relatedTemplates" 
+            :key="template.templateId"
+            class="template-card"
+          >
+            <div class="card-header">
+              <div class="template-name">{{ template.templateName }}</div>
               <StatusTag
-                :status="scope.row.status"
+                :status="template.status"
                 :text-map="templateStatusTextMap"
                 :type-map="templateStatusTypeMap"
+                size="small"
               />
-            </template>
-          </el-table-column>
-        </el-table>
+            </div>
+            <div class="card-content">
+              <div class="info-item">
+                <span class="label">模板ID:</span>
+                <span class="value">{{ template.templateId }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">版本:</span>
+                <span class="value">{{ template.version }}</span>
+              </div>
+              <div class="info-item" v-if="template.createdAt">
+                <span class="label">创建时间:</span>
+                <span class="value">{{ template.createdAt }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <div v-else class="empty-content">
-          <i class="el-icon-tickets"></i>
+          <i class="el-icon-document"></i>
           <p>暂无关联工艺模板</p>
         </div>
       </div>
@@ -416,29 +446,26 @@ export default {
     loadRelatedData(id) {
       this.relatedItemsLoading = true
       
-      // 获取关联设备列表
-      getRelatedEquipment(id)
-        .then(response => {
-          this.relatedEquipment = response.data || []
-        })
-        .catch(() => {
-          this.$message.error('获取关联设备列表失败')
-        })
-        .finally(() => {
-          this.relatedItemsLoading = false
-        })
+      // 如果form中已经有关联数据，直接使用
+      if (this.form.relatedEquipment && this.form.relatedTemplates) {
+        this.relatedEquipment = this.form.relatedEquipment || []
+        this.relatedTemplates = this.form.relatedTemplates || []
+        this.relatedItemsLoading = false
+        return
+      }
       
-      // 获取关联工艺模板列表
-      getRelatedTemplates(id)
-        .then(response => {
-          this.relatedTemplates = response.data || []
-        })
-        .catch(() => {
-          this.$message.error('获取关联工艺模板列表失败')
-        })
-        .finally(() => {
-          this.relatedItemsLoading = false
-        })
+      // 否则通过API获取
+      Promise.all([
+        getRelatedEquipment(id).catch(() => ({ data: [] })),
+        getRelatedTemplates(id).catch(() => ({ data: [] }))
+      ]).then(([equipmentResponse, templatesResponse]) => {
+        this.relatedEquipment = equipmentResponse.data || []
+        this.relatedTemplates = templatesResponse.data || []
+      }).catch(() => {
+        this.$message.error('获取关联数据失败')
+      }).finally(() => {
+        this.relatedItemsLoading = false
+      })
     },
     
     // 获取抽屉标题
@@ -525,11 +552,14 @@ export default {
           hasCoolingFan: data.hasCoolingFan,
           supportedAtmosphereTypes: data.supportedAtmosphereTypes || [],
           maxTemperatureLimit: data.maxTemperatureLimit,
-          hasPressureControl: data.hasPressureControl
+          hasPressureControl: data.hasPressureControl,
+          // 传递关联数据
+          relatedEquipment: data.relatedEquipment || [],
+          relatedTemplates: data.relatedTemplates || []
         }
         
-        // 查看模式下加载关联数据
-        if (type === 'view' && data.furnaceTypeCode) {
+        // 编辑或查看模式下加载关联数据
+        if ((type === 'update' || type === 'view') && data.furnaceTypeCode) {
           this.loadRelatedData(data.furnaceTypeCode)
         }
       }
@@ -552,15 +582,173 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.related-list {
-  margin-bottom: 20px;
+// 关联数据区域样式
+.related-section {
+  margin-bottom: 24px;
   
-  &-header {
-    font-weight: bold;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #ebeef5;
-    color: #303133;
+  .section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 8px;
+    border-left: 4px solid #409EFF;
+    
+    i {
+      font-size: 18px;
+      color: #409EFF;
+      margin-right: 8px;
+    }
+    
+    span {
+      font-weight: 600;
+      color: #303133;
+      flex: 1;
+    }
+    
+    .count-badge {
+      background: #409EFF;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 12px;
+      flex: none;
+    }
+  }
+  
+  .cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+    
+    // 滚动条样式
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #a8a8a8;
+      }
+    }
+  }
+  
+  .equipment-card,
+  .template-card {
+    background: white;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-color: #409EFF;
+      transform: translateY(-2px);
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+      
+      .equipment-name,
+      .template-name {
+        font-weight: 600;
+        color: #303133;
+        font-size: 14px;
+        flex: 1;
+        margin-right: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+    
+    .card-content {
+      .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .label {
+          font-size: 12px;
+          color: #909399;
+          min-width: 70px;
+          margin-right: 8px;
+          flex-shrink: 0;
+        }
+        
+        .value {
+          font-size: 13px;
+          color: #606266;
+          font-weight: 500;
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+  
+  .equipment-card {
+    border-left: 3px solid #67C23A;
+    
+    &:hover {
+      border-left-color: #67C23A;
+    }
+  }
+  
+  .template-card {
+    border-left: 3px solid #E6A23C;
+    
+    &:hover {
+      border-left-color: #E6A23C;
+    }
+  }
+  
+  .empty-content {
+    text-align: center;
+    padding: 40px 20px;
+    color: #909399;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px dashed #d9d9d9;
+    
+    i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+      opacity: 0.5;
+    }
+    
+    p {
+      font-size: 14px;
+      margin: 0;
+    }
   }
 }
 

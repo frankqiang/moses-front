@@ -155,33 +155,67 @@ const generateFurnaceTypes = () => {
   return [...types, ...randomTypes]
 }
 
-// 生成关联设备数据
-const generateRelatedEquipment = (furnaceTypeId) => {
-  return Mock.mock({
-    'items|1-5': [{
-      'equipmentId': /EQ[0-9]{4}/,
-      'name': () => `${Mock.Random.ctitle(2, 4)}退火炉设备`,
-      'model': () => `Model-${Mock.Random.string('upper', 2)}-${Mock.Random.integer(100, 999)}`,
-      'status|1': ['enabled', 'disabled', 'maintenance'],
-      'installDate': '@date("yyyy-MM-dd")'
-    }]
-  }).items
+// 真实的设备数据 - 基于设备管理模块的数据结构
+const realEquipmentData = [
+  // 标准双区退火炉相关设备
+  { equipmentId: 'FURN-001', name: '1号退火炉', model: 'HX-T40A', status: 'enabled', installDate: '2023-01-15', furnaceTypeCode: 'FT-STANDARD' },
+  { equipmentId: 'FURN-002', name: '2号退火炉', model: 'HX-T40A', status: 'enabled', installDate: '2023-02-20', furnaceTypeCode: 'FT-STANDARD' },
+  { equipmentId: 'FURN-003', name: '3号退火炉', model: 'HX-T40A', status: 'maintenance', installDate: '2023-03-10', furnaceTypeCode: 'FT-STANDARD' },
+  { equipmentId: 'FURN-004', name: '4号退火炉', model: 'HX-T40A', status: 'enabled', installDate: '2023-04-05', furnaceTypeCode: 'FT-STANDARD' },
+  { equipmentId: 'FURN-005', name: '5号退火炉', model: 'HX-T40A', status: 'enabled', installDate: '2023-05-12', furnaceTypeCode: 'FT-STANDARD' },
+  
+  // 单区退火炉相关设备
+  { equipmentId: 'FURN-006', name: '6号退火炉', model: 'HX-T35B', status: 'enabled', installDate: '2023-06-01', furnaceTypeCode: 'FT-SINGLE' },
+  { equipmentId: 'FURN-007', name: '7号退火炉', model: 'HX-T35B', status: 'enabled', installDate: '2023-07-15', furnaceTypeCode: 'FT-SINGLE' },
+  { equipmentId: 'FURN-008', name: '8号退火炉', model: 'HX-T35B', status: 'disabled', installDate: '2023-08-20', furnaceTypeCode: 'FT-SINGLE' },
+  
+  // 快速退火炉相关设备
+  { equipmentId: 'FURN-009', name: '9号退火炉', model: 'HX-T50C', status: 'enabled', installDate: '2023-09-10', furnaceTypeCode: 'FT-RAPID' },
+  { equipmentId: 'FURN-010', name: '10号退火炉', model: 'HX-T50C', status: 'enabled', installDate: '2023-10-05', furnaceTypeCode: 'FT-RAPID' },
+  
+  // 高温退火炉相关设备
+  { equipmentId: 'FURN-011', name: '11号退火炉', model: 'HX-T60D', status: 'enabled', installDate: '2023-11-01', furnaceTypeCode: 'FT-HIGH-TEMP' }
+]
+
+// 真实的工艺模板数据 - 基于工艺参数管理模块的数据结构
+const realTemplateData = [
+  // 标准双区退火炉工艺模板
+  { templateId: 'PROC001', templateName: '1100H18退火工艺模板', version: 'v2.1', status: 'effective', createdAt: '2023-01-15 10:00:00', furnaceTypeCode: 'FT-STANDARD' },
+  { templateId: 'PROC002', templateName: '8011O退火工艺模板', version: 'v1.5', status: 'effective', createdAt: '2023-02-10 14:30:00', furnaceTypeCode: 'FT-STANDARD' },
+  { templateId: 'PROC003', templateName: '3003H22退火工艺模板', version: 'v3.0', status: 'effective', createdAt: '2023-03-05 09:15:00', furnaceTypeCode: 'FT-STANDARD' },
+  { templateId: 'PROC004', templateName: '8021H24退火工艺模板', version: 'v1.8', status: 'pending', createdAt: '2023-04-12 16:20:00', furnaceTypeCode: 'FT-STANDARD' },
+  { templateId: 'PROC005', templateName: '1060O退火工艺模板', version: 'v2.3', status: 'effective', createdAt: '2023-05-18 11:45:00', furnaceTypeCode: 'FT-STANDARD' },
+  { templateId: 'PROC006', templateName: '5052H32退火工艺模板', version: 'v1.2', status: 'effective', createdAt: '2023-06-25 13:10:00', furnaceTypeCode: 'FT-STANDARD' },
+  { templateId: 'PROC007', templateName: '6061T6退火工艺模板', version: 'v2.0', status: 'draft', createdAt: '2023-07-30 08:30:00', furnaceTypeCode: 'FT-STANDARD' },
+  { templateId: 'PROC008', templateName: '1050H14退火工艺模板', version: 'v1.6', status: 'effective', createdAt: '2023-08-15 15:25:00', furnaceTypeCode: 'FT-STANDARD' },
+  
+  // 单区退火炉工艺模板
+  { templateId: 'PROC009', templateName: '简化1100退火工艺', version: 'v1.3', status: 'effective', createdAt: '2023-09-20 10:20:00', furnaceTypeCode: 'FT-SINGLE' },
+  { templateId: 'PROC010', templateName: '简化8011退火工艺', version: 'v2.1', status: 'effective', createdAt: '2023-10-10 14:15:00', furnaceTypeCode: 'FT-SINGLE' },
+  { templateId: 'PROC011', templateName: '简化3003退火工艺', version: 'v1.7', status: 'effective', createdAt: '2023-11-05 09:40:00', furnaceTypeCode: 'FT-SINGLE' },
+  { templateId: 'PROC012', templateName: '简化5052退火工艺', version: 'v1.0', status: 'pending', createdAt: '2023-11-25 16:55:00', furnaceTypeCode: 'FT-SINGLE' },
+  { templateId: 'PROC013', templateName: '简化1060退火工艺', version: 'v1.4', status: 'effective', createdAt: '2023-12-08 12:30:00', furnaceTypeCode: 'FT-SINGLE' },
+  
+  // 快速退火炉工艺模板
+  { templateId: 'PROC014', templateName: '快速1100退火工艺', version: 'v2.5', status: 'effective', createdAt: '2023-09-15 11:00:00', furnaceTypeCode: 'FT-RAPID' },
+  { templateId: 'PROC015', templateName: '快速8011退火工艺', version: 'v1.9', status: 'effective', createdAt: '2023-10-20 15:30:00', furnaceTypeCode: 'FT-RAPID' },
+  { templateId: 'PROC016', templateName: '快速3003退火工艺', version: 'v1.1', status: 'draft', createdAt: '2023-11-10 08:45:00', furnaceTypeCode: 'FT-RAPID' },
+  { templateId: 'PROC017', templateName: '快速5052退火工艺', version: 'v2.0', status: 'effective', createdAt: '2023-12-01 14:20:00', furnaceTypeCode: 'FT-RAPID' },
+  
+  // 高温退火炉工艺模板
+  { templateId: 'PROC018', templateName: '高温7075退火工艺', version: 'v1.5', status: 'effective', createdAt: '2023-11-15 10:15:00', furnaceTypeCode: 'FT-HIGH-TEMP' },
+  { templateId: 'PROC019', templateName: '高温2024退火工艺', version: 'v1.2', status: 'pending', createdAt: '2023-12-05 13:40:00', furnaceTypeCode: 'FT-HIGH-TEMP' },
+  { templateId: 'PROC020', templateName: '高温6082退火工艺', version: 'v2.1', status: 'effective', createdAt: '2023-12-20 09:25:00', furnaceTypeCode: 'FT-HIGH-TEMP' }
+]
+
+// 生成关联设备数据 - 基于真实的设备数据
+const generateRelatedEquipment = (furnaceTypeCode) => {
+  return realEquipmentData.filter(equipment => equipment.furnaceTypeCode === furnaceTypeCode)
 }
 
-// 生成关联工艺模板数据
-const generateRelatedTemplates = (furnaceTypeId) => {
-  return Mock.mock({
-    'items|1-8': [{
-      'templateId': /TPL[0-9]{4}/,
-      'templateName': () => `${Mock.Random.ctitle(2, 6)}工艺`,
-      'version': /[1-9]\.[0-9]/,
-      'status|1': ['draft', 'pending', 'effective', 'history'],
-      'createdAt': () => {
-        const date = Mock.Random.datetime('yyyy-MM-dd HH:mm:ss');
-        return date;
-      }
-    }]
-  }).items
+// 生成关联工艺模板数据 - 基于真实的工艺模板数据
+const generateRelatedTemplates = (furnaceTypeCode) => {
+  return realTemplateData.filter(template => template.furnaceTypeCode === furnaceTypeCode)
 }
 
 // 初始化炉型数据
@@ -230,13 +264,25 @@ module.exports = [
       // 分页
       const pageList = filteredData.slice((page - 1) * limit, page * limit)   
 
-     
+      // 为每个炉型添加关联数据
+      const itemsWithRelatedData = pageList.map(item => {
+        const relatedEquipment = generateRelatedEquipment(item.furnaceTypeCode)
+        const relatedTemplates = generateRelatedTemplates(item.furnaceTypeCode)
+        
+        return {
+          ...item,
+          relatedEquipment,
+          relatedTemplates,
+          equipmentCount: relatedEquipment.length,
+          templateCount: relatedTemplates.length
+        }
+      })
 
       return {
         code: 20000,
         data: {
           total: filteredData.length,
-          items: pageList
+          items: itemsWithRelatedData
         }
       }
     }
@@ -257,9 +303,21 @@ module.exports = [
         }
       }
 
+      // 添加关联数据
+      const relatedEquipment = generateRelatedEquipment(furnaceType.furnaceTypeCode)
+      const relatedTemplates = generateRelatedTemplates(furnaceType.furnaceTypeCode)
+
+      const detailData = {
+        ...furnaceType,
+        relatedEquipment,
+        relatedTemplates,
+        equipmentCount: relatedEquipment.length,
+        templateCount: relatedTemplates.length
+      }
+
       return {
         code: 20000,
-        data: furnaceType
+        data: detailData
       }
     }
   },
@@ -420,6 +478,36 @@ module.exports = [
         data: {
           message: '状态更新成功'
         }
+      }
+    }
+  },
+
+  // 获取炉型关联设备列表
+  {
+    url: /\/mes\/master-data\/furnace-type\/([^\/]+)\/related-equipment/,
+    type: 'get',
+    response: config => {
+      const furnaceTypeCode = config.url.match(/\/([^\/]+)\/related-equipment/)[1]
+      const relatedEquipment = generateRelatedEquipment(furnaceTypeCode)
+      
+      return {
+        code: 20000,
+        data: relatedEquipment
+      }
+    }
+  },
+
+  // 获取炉型关联工艺模板列表
+  {
+    url: /\/mes\/master-data\/furnace-type\/([^\/]+)\/related-templates/,
+    type: 'get',
+    response: config => {
+      const furnaceTypeCode = config.url.match(/\/([^\/]+)\/related-templates/)[1]
+      const relatedTemplates = generateRelatedTemplates(furnaceTypeCode)
+      
+      return {
+        code: 20000,
+        data: relatedTemplates
       }
     }
   },

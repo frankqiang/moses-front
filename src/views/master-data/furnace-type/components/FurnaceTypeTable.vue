@@ -134,47 +134,24 @@
             />
           </template>
           
-          <!-- 关联设备和工艺模板数 -->
-          <template v-else-if="col.prop === 'equipmentCount'">
-            <el-popover
-              v-if="scope.row.equipmentCount > 0"
-              placement="top"
-              width="200"
-              trigger="click"
-              popper-class="popover-equipment-list"
-            >
-              <div class="related-items-list">
-                <div class="related-items-header">关联设备列表</div>
-                <div class="related-items-content">
-                  <el-button type="text" @click="handleViewRelatedEquipment(scope.row)">查看详细信息</el-button>
-                </div>
-              </div>
-              <el-tag slot="reference" type="primary" style="cursor: pointer">
-                {{ scope.row.equipmentCount }}
-              </el-tag>
-            </el-popover>
-            <span v-else>0</span>
+          <!-- 关联设备列表 -->
+          <template v-else-if="col.prop === 'relatedEquipment'">
+            <overflow-tags-popover
+              :data="scope.row.relatedEquipment || []"
+              :max-show="1"
+              label-key="name"
+              title="关联设备列表"
+            />
           </template>
           
-          <template v-else-if="col.prop === 'templateCount'">
-            <el-popover
-              v-if="scope.row.templateCount > 0"
-              placement="top"
-              width="200"
-              trigger="click"
-              popper-class="popover-template-list"
-            >
-              <div class="related-items-list">
-                <div class="related-items-header">关联工艺模板列表</div>
-                <div class="related-items-content">
-                  <el-button type="text" @click="handleViewRelatedTemplates(scope.row)">查看详细信息</el-button>
-                </div>
-              </div>
-              <el-tag slot="reference" type="primary" style="cursor: pointer">
-                {{ scope.row.templateCount }}
-              </el-tag>
-            </el-popover>
-            <span v-else>0</span>
+          <!-- 关联工艺模板列表 -->
+          <template v-else-if="col.prop === 'relatedTemplates'">
+            <overflow-tags-popover
+              :data="scope.row.relatedTemplates || []"
+              :max-show="1"
+              label-key="templateName"
+              title="关联工艺模板列表"
+            />
           </template>
           
           <!-- 其他列的默认渲染 -->
@@ -212,72 +189,7 @@
       @pagination="handlePagination"
     />
     
-    <!-- 关联设备对话框 -->
-    <el-dialog
-      title="关联设备列表"
-      :visible.sync="relatedEquipmentDialogVisible"
-      width="800px"
-    >
-      <div v-loading="relatedItemsLoading">
-        <el-table
-          v-if="relatedEquipment.length > 0"
-          :data="relatedEquipment"
-          border
-          style="width: 100%"
-        >
-          <el-table-column prop="equipmentId" label="设备编号" width="120" />
-          <el-table-column prop="name" label="设备名称" />
-          <el-table-column prop="model" label="型号" width="120" />
-          <el-table-column prop="status" label="状态" width="100">
-            <template slot-scope="scope">
-              <StatusTag
-                :status="scope.row.status"
-                :text-map="equipmentStatusTextMap"
-                :type-map="equipmentStatusTypeMap"
-              />
-            </template>
-          </el-table-column>
-          <el-table-column prop="installDate" label="安装日期" width="120" />
-        </el-table>
-        <el-empty v-else description="暂无关联设备" />
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="relatedEquipmentDialogVisible = false">关闭</el-button>
-      </span>
-    </el-dialog>
-    
-    <!-- 关联工艺模板对话框 -->
-    <el-dialog
-      title="关联工艺模板列表"
-      :visible.sync="relatedTemplatesDialogVisible"
-      width="800px"
-    >
-      <div v-loading="relatedItemsLoading">
-        <el-table
-          v-if="relatedTemplates.length > 0"
-          :data="relatedTemplates"
-          border
-          style="width: 100%"
-        >
-          <el-table-column prop="templateId" label="模板ID" width="120" />
-          <el-table-column prop="templateName" label="模板名称" />
-          <el-table-column prop="version" label="版本" width="80" />
-          <el-table-column prop="status" label="状态" width="100">
-            <template slot-scope="scope">
-              <StatusTag
-                :status="scope.row.status"
-                :text-map="templateStatusTextMap"
-                :type-map="templateStatusTypeMap"
-              />
-            </template>
-          </el-table-column>
-        </el-table>
-        <el-empty v-else description="暂无关联工艺模板" />
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="relatedTemplatesDialogVisible = false">关闭</el-button>
-      </span>
-    </el-dialog>
+
   </div>
 </template>
 
@@ -355,18 +267,7 @@ export default {
       currentPage: 1,
       // 每页条数
       pageSize: 10,
-      // 关联设备对话框可见性
-      relatedEquipmentDialogVisible: false,
-      // 关联工艺模板对话框可见性
-      relatedTemplatesDialogVisible: false,
-      // 关联项加载状态
-      relatedItemsLoading: false,
-      // 当前炉型ID
-      currentFurnaceTypeId: null,
-      // 关联设备数据
-      relatedEquipment: [],
-      // 关联工艺模板数据
-      relatedTemplates: [],
+
       // 状态文本映射
       statusTextMap: {
         'enabled': '启用',
@@ -420,8 +321,8 @@ export default {
         { prop: 'maxSegments', label: '最大工艺段数', width: '120' },
         { prop: 'maxTemperatureLimit', label: '温度上限(°C)', width: '120' },
         { prop: 'supportedAtmosphereTypes', label: '支持的气氛类型', width: '150' },
-        { prop: 'equipmentCount', label: '关联设备数', width: '100' },
-        { prop: 'templateCount', label: '关联模板数', width: '100' },
+        { prop: 'relatedEquipment', label: '关联设备', width: '140' },
+        { prop: 'relatedTemplates', label: '关联工艺模板', width: '140' },
         { prop: 'description', label: '描述', width: '200' },
         { prop: 'createdBy', label: '创建人', width: '100' },
         { prop: 'createdAt', label: '创建时间', width: '150' },
@@ -431,7 +332,7 @@ export default {
     },
     // 覆盖mixin中的默认可见列
     defaultVisibleColumns() {
-      return ['furnaceTypeCode', 'furnaceTypeName', 'status', 'hasRearCirculationFan', 'hasVacuumFan', 'hasPurgeValve', 'hasCoolingFan', 'maxSegments', 'maxTemperatureLimit', 'equipmentCount', 'templateCount']
+      return ['furnaceTypeCode', 'furnaceTypeName', 'status', 'hasRearCirculationFan', 'hasVacuumFan', 'hasPurgeValve', 'hasCoolingFan', 'maxSegments', 'maxTemperatureLimit', 'relatedEquipment', 'relatedTemplates']
     },
     // 重写列设置存储键
     currentStorageKey() {
@@ -683,33 +584,7 @@ export default {
       return ''
     },
     
-    // 处理查看关联设备
-    handleViewRelatedEquipment(row) {
-      this.relatedItemsLoading = true
-      this.relatedEquipmentDialogVisible = true
-      
-      getRelatedEquipment(row.furnaceTypeCode).then(response => {
-        this.relatedEquipment = response.data || []
-        this.relatedItemsLoading = false
-      }).catch(() => {
-        this.$message.error('获取关联设备列表失败')
-        this.relatedItemsLoading = false
-      })
-    },
-    
-    // 处理查看关联工艺模板
-    handleViewRelatedTemplates(row) {
-      this.relatedItemsLoading = true
-      this.relatedTemplatesDialogVisible = true
-      
-      getRelatedTemplates(row.furnaceTypeCode).then(response => {
-        this.relatedTemplates = response.data || []
-        this.relatedItemsLoading = false
-      }).catch(() => {
-        this.$message.error('获取关联工艺模板列表失败')
-        this.relatedItemsLoading = false
-      })
-    },
+
     
     // 设置搜索参数
     setSearchParams(params) {
@@ -777,19 +652,7 @@ export default {
     color: #c0c4cc;
   }
   
-  .related-items-list {
-    .related-items-header {
-      font-weight: bold;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #ebeef5;
-    }
-    
-    .related-items-content {
-      max-height: 150px;
-      overflow-y: auto;
-    }
-  }
+
   
   .atmosphere-list {
     .atmosphere-list-header {
