@@ -45,8 +45,3 @@ alwaysApply: true
 - `public/` - 不需要webpack处理的静态资源
 - `src/assets/` - 需要webpack处理的静态资源
 
-## 模拟数据
-- `mock/` - 模拟数据和API定义
-  - `mock/master-data/` - 主数据管理模块Mock数据
-  - `mock/utils.js` - Mock工具函数
-  - `mock/index.js` - Mock服务器入口

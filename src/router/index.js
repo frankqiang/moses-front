@@ -140,6 +140,12 @@ export const constantRoutes = [
         name: 'MoreComponents',
         component: () => import('@/views/components-examples/index'),
         meta: { title: '更多组件示例' }
+      },
+      {
+        path: 'base-table',
+        name: 'BaseTableDemo',
+        component: () => import('@/views/base-table-demo/index'),
+        meta: { title: 'BaseTable 表格组件' }
       }
     ]
   },

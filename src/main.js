@@ -29,6 +29,7 @@ import ImportButton from '@/components/ImportButton'
 import ExportButton from '@/components/ExportButton'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import ColumnSettings from '@/components/ColumnSettings'
+import BaseTable from '@/components/BaseTable'
 
 /**
  * If you don't want to use mock-server
@@ -62,6 +63,7 @@ Vue.component('ImportButton', ImportButton)
 Vue.component('ExportButton', ExportButton)
 Vue.component('OverflowTagsPopover', OverflowTagsPopover)
 Vue.component('ColumnSettings', ColumnSettings)
+Vue.component('BaseTable', BaseTable)
 
 Vue.config.productionTip = false
 

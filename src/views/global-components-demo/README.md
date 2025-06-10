@@ -238,6 +238,91 @@ const statusButtons = createStatusButtons(row => row.id !== 1)
 | footer | 底部按钮区域插槽 |
 | [prop] | 自定义表单项插槽，名称为表单项的prop |
 
+## 5. BaseTable 表格组件
+
+`BaseTable`组件是一个配置驱动的表格组件，通过JavaScript配置对象来定义表格结构，集成了分页、状态标签、加载状态等功能。
+
+### 基本用法
+
+```vue
+<template>
+  <BaseTable
+    :data="tableData"
+    :columns="columns"
+    :loading="loading"
+    :pagination="pagination"
+    @pagination-change="handlePaginationChange"
+  />
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      tableData: [],
+      loading: false,
+      pagination: {
+        page: 1,
+        limit: 10,
+        total: 0
+      },
+      columns: [
+        { prop: 'name', label: '名称', width: '120' },
+        { prop: 'code', label: '编码', width: '100' },
+        { 
+          prop: 'status', 
+          label: '状态',
+          type: 'status',
+          textMap: { 1: '启用', 0: '禁用' },
+          typeMap: { 1: 'success', 0: 'danger' }
+        },
+        { 
+          prop: 'createTime', 
+          label: '创建时间',
+          type: 'datetime',
+          format: '{y}-{m}-{d} {h}:{i}'
+        }
+      ]
+    }
+  }
+}
+</script>
+```
+
+### 核心属性
+
+| 属性名 | 说明 | 类型 | 默认值 |
+|------|------|------|------|
+| data | 表格数据 | Array | [] |
+| columns | 列配置数组 | Array | [] |
+| loading | 加载状态 | Boolean | false |
+| showSelection | 是否显示多选框 | Boolean | false |
+| showIndex | 是否显示序号列 | Boolean | false |
+| pagination | 分页配置 | Object | null |
+
+### 列配置(columns)重要属性
+
+| 属性名 | 说明 | 类型 |
+|------|------|------|
+| prop | 数据字段名 | String |
+| label | 列标题 | String |
+| type | 列类型('status'/'datetime') | String |
+| slotName | 自定义插槽名称 | String |
+| textMap | 状态文本映射(type='status'时) | Object |
+| typeMap | 状态类型映射(type='status'时) | Object |
+| format | 时间格式(type='datetime'时) | String |
+
+### 核心功能
+
+1. **配置驱动**: 通过columns配置数组定义表格结构
+2. **内置类型**: 支持状态列和时间列的自动渲染  
+3. **插槽支持**: 通过slotName配置自定义列渲染
+4. **分页集成**: 内置分页组件，支持双向绑定
+5. **状态管理**: 集成StatusTag组件显示状态
+6. **多选支持**: 内置多选功能和操作列插槽
+
+详细使用方法请查看[BaseTable演示页面](/components/base-table)。
+
 ## 使用建议
 
 1. **推荐在何处使用全局组件：**
@@ -245,8 +330,9 @@ const statusButtons = createStatusButtons(row => row.id !== 1)
    - `ActionButtons`: 用于表格的操作列，统一操作按钮的展示和处理
    - `SearchForm`: 用于列表页面的搜索区域
    - `DialogForm`: 用于新增/编辑/查看详情的弹窗表单
+   - `BaseTable`: 用于所有列表页面，替代手写的el-table结构
 
-2. **组件组合**：这些组件可以互相组合使用，例如在`DialogForm`中使用`StatusTag`。
+2. **组件组合**：这些组件可以互相组合使用，例如在`BaseTable`中使用`StatusTag`和`ActionButtons`。
 
 3. **自定义样式**：所有组件都支持通过CSS自定义样式，可以通过覆盖相应的类名来实现。
 
