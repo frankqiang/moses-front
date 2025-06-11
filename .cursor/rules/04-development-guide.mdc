@@ -1,5 +1,5 @@
 ---
-description: 当进行新功能开发、API集成或状态管理时请求此规则
+description: 
 globs: 
 alwaysApply: false
 ---

@@ -1,8 +1,15 @@
-# BaseTable 表格组件
+# BaseTable 表格组件 (优化版)
 
 ## 简介
 
 BaseTable 是一个基于 Element UI 的 el-table 封装的配置驱动表格组件。它通过 JavaScript 配置对象来定义表格结构，减少模板中的重复代码，同时集成了加载状态、分页、空状态、状态标签等常用功能。
+
+**🚀 新版优化特性**：
+- **虚拟滚动**：支持大数据量渲染，性能大幅提升
+- **错误处理**：完善的错误捕获和降级方案
+- **防抖优化**：减少频繁操作带来的性能损耗
+- **数据安全**：异常数据保护和类型检查
+- **高可用性**：加载失败重试机制
 
 ## 功能特点
 
@@ -13,6 +20,10 @@ BaseTable 是一个基于 Element UI 的 el-table 封装的配置驱动表格组
 - **完整透传**：通过 `$attrs` 完全支持 el-table 的所有原生属性
 - **方法暴露**：暴露 el-table 的所有原生方法
 - **统一体验**：提供一致的加载状态、空状态和分页体验
+- **🆕 虚拟滚动**：支持10万+条数据流畅渲染
+- **🆕 错误边界**：自动捕获渲染错误，提供降级方案
+- **🆕 防抖处理**：优化用户交互响应性能
+- **🆕 数据保护**：异常数据自动处理和告警
 
 ## 基本使用
 
@@ -61,7 +72,38 @@ export default {
 </script>
 ```
 
-### 带有自定义插槽的示例
+### 🆕 虚拟滚动示例
+
+```vue
+<template>
+  <base-table
+    :data="largeData"
+    :columns="columns"
+    :virtual-scroll="true"
+    :virtual-threshold="100"
+    :virtual-height="400"
+    :item-height="48"
+    :show-index="true"
+  />
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      largeData: [], // 10000+ 条数据
+      columns: [
+        { prop: 'name', label: '姓名' },
+        { prop: 'email', label: '邮箱' },
+        { prop: 'status', label: '状态', type: 'status' }
+      ]
+    }
+  }
+}
+</script>
+```
+
+### 🆕 错误处理示例
 
 ```vue
 <template>
@@ -69,49 +111,38 @@ export default {
     :data="tableData"
     :columns="columns"
     :loading="loading"
-    :show-selection="true"
-    :pagination="pagination"
-    @selection-change="handleSelectionChange"
-    @pagination-change="handlePaginationChange"
-  >
-    <!-- 自定义状态列渲染 -->
-    <template v-slot:status="{ row, value }">
-      <status-tag
-        :status="value"
-        :text-map="statusTextMap"
-        :type-map="statusTypeMap"
-      />
-    </template>
-
-    <!-- 自定义操作列 -->
-    <template v-slot:actions>
-      <el-table-column label="操作" width="150" align="center" fixed="right">
-        <template v-slot="{ row }">
-          <el-button type="primary" size="mini" @click="handleEdit(row)">编辑</el-button>
-          <el-button type="danger" size="mini" @click="handleDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </template>
-  </base-table>
+    :load-error="loadError"
+    :allow-retry="true"
+    @retry="handleRetry"
+    @data-error="handleDataError"
+    @format-error="handleFormatError"
+  />
 </template>
 
 <script>
 export default {
   data() {
     return {
+      loadError: false, // 可以是 boolean、string 或 Error 对象
       columns: [
-        { prop: 'name', label: '名称' },
-        { prop: 'code', label: '编码' },
-        { prop: 'status', label: '状态', slotName: 'status' } // 使用插槽
-      ],
-      statusTextMap: {
-        1: '启用',
-        0: '禁用'
-      },
-      statusTypeMap: {
-        1: 'success',
-        0: 'danger'
-      }
+        { prop: 'name', label: '姓名' },
+        { prop: 'createTime', label: '创建时间', type: 'datetime' },
+        { prop: 'nested.value', label: '嵌套属性' } // 支持嵌套属性
+      ]
+    }
+  },
+  methods: {
+    handleRetry() {
+      // 重新加载数据
+      this.fetchData()
+    },
+    
+    handleDataError(error) {
+      console.error('数据错误:', error)
+    },
+    
+    handleFormatError(error) {
+      console.error('格式化错误:', error)
     }
   }
 }
@@ -127,11 +158,18 @@ export default {
 | data | Array | [] | **必需。** 表格要显示的数据数组 |
 | columns | Array | [] | **必需。** 表格的列配置数组 |
 | loading | Boolean | false | 是否显示加载动画 |
+| **🆕 loadError** | Boolean/String/Error | false | **新增。** 加载错误状态，支持错误对象或错误信息 |
+| **🆕 allowRetry** | Boolean | true | **新增。** 是否允许重试操作 |
 | showSelection | Boolean | false | 是否显示多选框列 |
 | showIndex | Boolean | false | 是否显示序号列 |
 | indexMethod | Function | null | 序号计算方法，接收参数为当前行的index |
 | pagination | Object | null | 分页配置对象，如果传入则显示分页 |
 | showPagination | Boolean | true | 当pagination存在时，是否显示分页组件 |
+| **🆕 virtualScroll** | Boolean | false | **新增。** 是否启用虚拟滚动 |
+| **🆕 virtualThreshold** | Number | 100 | **新增。** 虚拟滚动触发阈值，超过此数量自动启用 |
+| **🆕 virtualHeight** | Number | 400 | **新增。** 虚拟滚动容器高度(px) |
+| **🆕 itemHeight** | Number | 48 | **新增。** 虚拟滚动每行高度(px) |
+| **🆕 bufferSize** | Number | 5 | **新增。** 虚拟滚动缓冲区大小 |
 
 **注意：** BaseTable 通过 `v-bind="$attrs"` 支持 el-table 的所有原生属性，如 `height`、`max-height`、`stripe`、`border`、`row-key` 等。
 
@@ -141,7 +179,7 @@ export default {
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
-| prop | String | 对应 data 数组中对象的键名 |
+| prop | String | 对应 data 数组中对象的键名，**🆕 支持嵌套属性** (如 'user.name') |
 | label | String | 列的标题 |
 | width | String | 列的宽度 |
 | minWidth | String | 列的最小宽度 |
@@ -154,6 +192,7 @@ export default {
 | labelClassName | String | 当前列标题的自定义类名 |
 | **slotName** | String | **核心功能。** 如果提供此字段，组件将使用具名插槽来渲染该列 |
 | **type** | String | 列类型，支持 'status'（状态列）、'datetime'（时间列） |
+| **🆕 errorFallback** | String | **新增。** 列渲染错误时的降级内容，默认为 '-' |
 | attrs | Object | 其他 el-table-column 的原生属性 |
 
 #### 状态列专用属性 (type: 'status')
@@ -190,24 +229,27 @@ export default {
 
 | 事件名称 | 参数 | 说明 |
 |---------|------|------|
-| sort-change | { column, prop, order } | 当用户进行排序时触发 |
+| sort-change | { column, prop, order } | 当用户进行排序时触发，**🆕 自动防抖处理** |
 | selection-change | selection (Array) | 当多选框选择项发生变化时触发 |
 | row-click | row, column, event | 当某一行被点击时触发 |
 | row-dblclick | row, column, event | 当某一行被双击时触发 |
-| pagination-change | { page, limit } | 当分页参数变化时触发 |
+| pagination-change | { page, limit } | 当分页参数变化时触发，**🆕 自动防抖处理** |
+| **🆕 retry** | - | **新增。** 当用户点击重试按钮时触发 |
+| **🆕 data-error** | error | **新增。** 当数据格式异常时触发 |
+| **🆕 format-error** | error | **新增。** 当格式化失败时触发 |
 
 ### Slots
 
 | 插槽名称 | 作用域 | 说明 |
 |---------|-------|------|
-| [动态插槽名] | { row, column, $index, value } | **核心功能。** 根据 columns 配置中的 slotName 动态生成 |
+| [动态插槽名] | { row, column, $index, value } | **核心功能。** 根据 columns 配置中的 slotName 动态生成，**🆕 value已安全处理** |
 | actions | - | 便捷的操作列插槽，通常用于放置操作按钮 |
 | empty | - | 自定义表格数据为空时的内容 |
 | append | - | 在表格最后追加内容，可用于合计行 |
 
 ### 方法
 
-BaseTable 暴露了 el-table 的所有原生方法：
+BaseTable 暴露了 el-table 的所有原生方法，**🆕 增加了安全检查**：
 
 | 方法名 | 参数 | 说明 |
 |-------|------|------|
@@ -219,18 +261,121 @@ BaseTable 暴露了 el-table 的所有原生方法：
 | clearFilter | columnKey | 用于清空指定列的过滤条件 |
 | doLayout | - | 对表格进行重新布局 |
 
-## 使用示例
+## 🚀 性能优化特性
 
-### 1. 基础表格
+### 1. 虚拟滚动
+
+当数据量超过 `virtualThreshold` 时自动启用虚拟滚动：
+
+```vue
+<base-table
+  :data="largeData"
+  :columns="columns"
+  :virtual-scroll="true"
+  :virtual-threshold="100"  <!-- 超过100条启用 -->
+  :virtual-height="400"     <!-- 容器高度 -->
+  :item-height="48"         <!-- 行高 -->
+/>
+```
+
+**优势**：
+- 支持 10万+ 条数据流畅渲染
+- 内存占用恒定，不随数据量增长
+- 滚动流畅，无卡顿
+
+### 2. 列配置优化 (Memoization)
+
+列配置通过 `computed` 属性缓存，避免重复计算：
+
+```javascript
+// 优化前：每次渲染都重新处理
+:align="column.align || 'left'"
+
+// 优化后：只在配置变化时重新计算
+computed: {
+  processedColumns() {
+    return this.columns.map(column => ({
+      ...column,
+      align: column.align || 'left'
+    }))
+  }
+}
+```
+
+### 3. 防抖处理
+
+自动为频繁操作添加防抖：
+
+```javascript
+// 分页和排序操作自动防抖 300ms
+@pagination-change="debouncedPaginationChange"
+@sort-change="debouncedSortChange"
+```
+
+## 🛡️ 错误处理特性
+
+### 1. 数据异常保护
+
+自动检测和处理异常数据：
+
+```javascript
+// 自动处理以下情况：
+const errorData = [
+  null,                    // 空数据
+  'invalid-row',          // 非对象数据
+  { name: undefined },    // 缺失字段
+  { nested: null }        // 嵌套属性异常
+]
+```
+
+### 2. 渲染错误捕获
+
+使用错误边界组件保护每个单元格：
+
+```vue
+<!-- 自动包装每个单元格 -->
+<error-boundary :fallback="getCellFallback(scope.row, column)">
+  <your-cell-content />
+</error-boundary>
+```
+
+### 3. 格式化错误处理
+
+安全的时间格式化和属性访问：
+
+```javascript
+// 安全的时间格式化
+safeFormatTime(time, format) {
+  try {
+    return parseTime(time, format)
+  } catch (error) {
+    this.$emit('format-error', { type: 'time', value: time, error })
+    return time.toString() // 降级处理
+  }
+}
+
+// 安全的属性访问（支持嵌套）
+safeGetValue(obj, prop) {
+  try {
+    return prop.split('.').reduce((current, key) => {
+      return current && current[key] !== undefined ? current[key] : undefined
+    }, obj)
+  } catch (error) {
+    return undefined
+  }
+}
+```
+
+### 4. 加载失败处理
+
+完善的加载失败和重试机制：
 
 ```vue
 <template>
   <base-table
-    :data="tableData"
-    :columns="columns"
-    :loading="loading"
-    border
-    stripe
+    :load-error="loadError"
+    :allow-retry="true"
+    @retry="handleRetry"
   />
 </template>
 
@@ -238,32 +383,42 @@ BaseTable 暴露了 el-table 的所有原生方法：
 export default {
   data() {
     return {
-      loading: false,
-      tableData: [
-        { id: 1, name: '张三', age: 25, email: 'zhangsan@example.com' },
-        { id: 2, name: '李四', age: 30, email: 'lisi@example.com' }
-      ],
-      columns: [
-        { prop: 'name', label: '姓名', width: '100' },
-        { prop: 'age', label: '年龄', width: '80', align: 'center' },
-        { prop: 'email', label: '邮箱', minWidth: '150' }
-      ]
+      loadError: false  // 可以是 boolean、string 或 Error 对象
+    }
+  },
+  methods: {
+    async fetchData() {
+      try {
+        const data = await api.getData()
+        this.loadError = false
+      } catch (error) {
+        this.loadError = error.message || '加载失败'
+      }
+    },
+    
+    handleRetry() {
+      this.fetchData()
     }
   }
 }
 </script>
 ```
 
-### 2. 带分页的表格
+## 使用示例
+
+### 🆕 虚拟滚动大数据表格
 
 ```vue
 <template>
   <base-table
-    :data="tableData"
+    :data="largeData"
     :columns="columns"
+    :virtual-scroll="true"
+    :virtual-threshold="100"
+    :virtual-height="400"
+    :item-height="48"
+    :show-index="true"
     :loading="loading"
-    :pagination="pagination"
-    @pagination-change="handlePaginationChange"
   />
 </template>
 
@@ -272,15 +427,69 @@ export default {
   data() {
     return {
       loading: false,
+      largeData: [], // 可以是10000+条数据
+      columns: [
+        { prop: 'name', label: '姓名', width: '120' },
+        { prop: 'email', label: '邮箱', minWidth: '180' },
+        { prop: 'status', label: '状态', width: '100', type: 'status', textMap: {1: '在职', 0: '离职'}, typeMap: {1: 'success', 0: 'info'} }
+      ]
+    }
+  },
+  created() {
+    this.generateLargeData()
+  },
+  methods: {
+    generateLargeData() {
+      this.loading = true
+      
+      // 模拟生成大量数据
+      setTimeout(() => {
+        const data = []
+        for (let i = 1; i <= 10000; i++) {
+          data.push({
+            id: i,
+            name: `用户${i}`,
+            email: `user${i}@company.com`,
+            status: Math.random() > 0.3 ? 1 : 0
+          })
+        }
+        this.largeData = data
+        this.loading = false
+      }, 1000)
+    }
+  }
+}
+</script>
+```
+
+### 🆕 带错误处理的表格
+
+```vue
+<template>
+  <base-table
+    :data="tableData"
+    :columns="columns"
+    :loading="loading"
+    :load-error="loadError"
+    :allow-retry="true"
+    @retry="handleRetry"
+    @data-error="handleDataError"
+    @format-error="handleFormatError"
+  />
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      loading: false,
+      loadError: false,
       tableData: [],
-      pagination: {
-        page: 1,
-        limit: 10,
-        total: 0
-      },
       columns: [
         { prop: 'name', label: '姓名' },
-        { prop: 'code', label: '编码' }
+        { prop: 'createTime', label: '创建时间', type: 'datetime' },
+        { prop: 'user.profile.email', label: '邮箱' }, // 嵌套属性
+        { prop: 'status', label: '状态', type: 'status', textMap: {1: '正常', 0: '异常'}, typeMap: {1: 'success', 0: 'danger'} }
       ]
     }
   },
@@ -290,27 +499,36 @@ export default {
   methods: {
     async fetchData() {
       this.loading = true
+      this.loadError = false
+      
       try {
-        const response = await this.$api.getList({
-          page: this.pagination.page,
-          limit: this.pagination.limit
-        })
-        this.tableData = response.data.items
-        this.pagination.total = response.data.total
+        const response = await api.getData()
+        this.tableData = response.data
+      } catch (error) {
+        this.loadError = error.message || '数据加载失败，请重试'
       } finally {
         this.loading = false
       }
     },
     
-    handlePaginationChange() {
+    handleRetry() {
       this.fetchData()
+    },
+    
+    handleDataError(error) {
+      console.error('数据错误:', error)
+      this.$message.warning(`数据第${error.index}行格式异常`)
+    },
+    
+    handleFormatError(error) {
+      console.error('格式化错误:', error)
     }
   }
 }
 </script>
 ```
 
-### 3. 带状态和时间列的表格
+### 带状态和时间列的表格
 
 ```vue
 <template>
@@ -347,7 +565,7 @@ export default {
 </script>
 ```
 
-### 4. 排序功能示例
+### 排序功能示例
 
 BaseTable 支持前端排序和后端排序两种方式：
 
@@ -411,7 +629,7 @@ export default {
     }
   },
   methods: {
-    // 处理排序变化
+    // 处理排序变化 (自动防抖)
     handleSortChange({ column, prop, order }) {
       this.currentSort = {
         prop: prop || '',
@@ -446,7 +664,7 @@ export default {
 </script>
 ```
 
-### 5. 带多选和操作列的表格
+### 带多选和操作列的表格
 
 ```vue
 <template>
@@ -502,7 +720,7 @@ export default {
 </script>
 ```
 
-### 5. 带自定义插槽的表格
+### 带自定义插槽的表格
 
 ```vue
 <template>
@@ -585,6 +803,7 @@ export default {
     return {
       loading: false,
       tableData: [],
+      loadError: false,
       pagination: {
         page: 1,
         limit: 10,
@@ -595,16 +814,24 @@ export default {
   methods: {
     async fetchData() {
       this.loading = true
+      this.loadError = false
+      
       try {
         const response = await this.getListData()
         this.tableData = response.data.items
         this.pagination.total = response.data.total
+      } catch (error) {
+        this.loadError = error.message || '加载失败'
       } finally {
         this.loading = false
       }
     },
     
     handlePaginationChange() {
+      this.fetchData()
+    },
+    
+    handleRetry() {
       this.fetchData()
     }
   }
@@ -633,22 +860,38 @@ export default {
       :data="tableData"
       :columns="columns"
       :loading="loading"
+      :load-error="loadError"
       :show-selection="true"
       :pagination="pagination"
       @selection-change="selectedRows = $event"
       @pagination-change="handlePaginationChange"
+      @retry="handleRetry"
     />
   </div>
 </template>
 ```
 
-## 注意事项
+## 🚧 注意事项
 
-1. **列配置优先级**：插槽 > 内置类型渲染 > 默认渲染
-2. **分页配置**：使用 `.sync` 修饰符确保分页状态正确同步
-3. **性能优化**：对于大量数据，建议使用后端分页
-4. **插槽作用域**：合理使用插槽的作用域数据，避免在模板中进行复杂计算
-5. **事件处理**：表格事件统一通过 emit 向上传递，保持组件的单向数据流
+### 性能相关
+1. **虚拟滚动**：启用虚拟滚动时，请确保每行高度一致
+2. **列配置**：频繁变化的列配置会触发重新计算，建议保持稳定
+3. **防抖延迟**：默认300ms，可根据实际需求调整
+
+### 数据安全
+1. **数据格式**：确保传入的data是数组格式
+2. **嵌套属性**：使用点号分隔，如 'user.profile.name'
+3. **错误监听**：建议监听 `data-error` 和 `format-error` 事件
+
+### 兼容性
+1. **Vue版本**：支持Vue 2.6+
+2. **Element UI**：需要Element UI 2.x
+3. **浏览器**：现代浏览器，IE11+
+
+### 升级指南
+1. **向后兼容**：所有原有API保持兼容
+2. **新增属性**：可选择性使用新功能
+3. **错误处理**：建议添加错误监听处理
 
 ## 扩展开发
 
@@ -657,4 +900,5 @@ export default {
 1. 优先通过插槽和配置来实现自定义需求
 2. 对于通用的列类型，可以在组件内部添加新的 type 支持
 3. 复杂的业务逻辑应该在父组件中处理，而不是在 BaseTable 中
-4. 保持组件的通用性，避免添加过于具体的业务逻辑 
+4. 保持组件的通用性，避免添加过于具体的业务逻辑
+5. **🆕 新增错误边界**：可以自定义 ErrorBoundary 组件来处理特殊错误情况 

@@ -1,7 +1,8 @@
 /**
- * BaseTable 使用示例
- * 功能描述：演示BaseTable组件的各种功能和配置方式
+ * BaseTable 使用示例 (包含新优化功能)
+ * 功能描述：演示BaseTable组件的各种功能和配置方式，包括虚拟滚动、错误处理等
  * 创建日期：2024-12-18
+ * 更新日期：2024-12-19
  */
 <template>
   <div class="base-table-example">
@@ -17,7 +18,7 @@
     </div>
 
     <div class="example-section">
-      <h3>带分页的表格示例</h3>
+      <h3>带分页的表格示例 (防抖优化)</h3>
       <base-table
         :data="paginationTableData"
         :columns="paginationColumns"
@@ -26,10 +27,55 @@
         @pagination-change="handlePaginationChange"
         border
       />
+      <p class="demo-tip">💡 快速点击分页按钮测试防抖效果，只有最后一次点击会生效</p>
     </div>
 
     <div class="example-section">
-      <h3>带状态和时间列的表格示例</h3>
+      <h3>虚拟滚动表格示例 (大数据量)</h3>
+      <div class="demo-controls">
+        <el-button @click="generateLargeData(1000)" type="primary" size="small">生成1000条数据</el-button>
+        <el-button @click="generateLargeData(5000)" type="success" size="small">生成5000条数据</el-button>
+        <el-button @click="generateLargeData(10000)" type="warning" size="small">生成10000条数据</el-button>
+        <el-button @click="clearLargeData" size="small">清空数据</el-button>
+      </div>
+      <base-table
+        :data="largeTableData"
+        :columns="largeDataColumns"
+        :loading="largeDataLoading"
+        :virtual-scroll="true"
+        :virtual-threshold="100"
+        :virtual-height="400"
+        :item-height="48"
+        :show-index="true"
+        border
+      />
+      <p class="demo-tip">💡 虚拟滚动：当数据量超过100条时自动启用，只渲染可见行，提升性能</p>
+    </div>
+
+    <div class="example-section">
+      <h3>错误处理和数据异常示例</h3>
+      <div class="demo-controls">
+        <el-button @click="setNormalData" type="success" size="small">正常数据</el-button>
+        <el-button @click="setErrorData" type="danger" size="small">异常数据</el-button>
+        <el-button @click="setLoadError" type="warning" size="small">加载失败</el-button>
+        <el-button @click="clearLoadError" size="small">清除错误</el-button>
+      </div>
+      <base-table
+        :data="errorTableData"
+        :columns="errorTestColumns"
+        :loading="errorTableLoading"
+        :load-error="loadError"
+        :allow-retry="true"
+        @retry="handleRetry"
+        @data-error="handleDataError"
+        @format-error="handleFormatError"
+        border
+      />
+      <p class="demo-tip">💡 包含错误捕获、数据异常处理、加载失败重试等功能</p>
+    </div>
+
+    <div class="example-section">
+      <h3>带状态和时间列的表格示例 (错误保护)</h3>
       <base-table
         :data="statusTableData"
         :columns="statusColumns"
@@ -127,6 +173,18 @@
         </template>
       </base-table>
     </div>
+
+    <!-- 错误日志显示 -->
+    <div v-if="errorLogs.length > 0" class="error-logs">
+      <h4>错误日志：</h4>
+      <el-card v-for="(log, index) in errorLogs" :key="index" class="error-log-item">
+        <div class="log-time">{{ log.time }}</div>
+        <div class="log-type">类型: {{ log.type }}</div>
+        <div class="log-message">{{ log.message }}</div>
+        <div v-if="log.data" class="log-data">数据: {{ JSON.stringify(log.data) }}</div>
+      </el-card>
+      <el-button @click="clearErrorLogs" size="small" type="danger">清空日志</el-button>
+    </div>
   </div>
 </template>
 
@@ -168,6 +226,28 @@ export default {
         limit: 10,
         total: 0
       },
+
+      // 大数据量表格
+      largeDataLoading: false,
+      largeTableData: [],
+      largeDataColumns: [
+        { prop: 'name', label: '用户名', width: '120' },
+        { prop: 'email', label: '邮箱', minWidth: '180' },
+        { prop: 'phone', label: '电话', width: '120' },
+        { prop: 'department', label: '部门', width: '120' },
+        { prop: 'status', label: '状态', width: '80', type: 'status', textMap: { 1: '在职', 0: '离职' }, typeMap: { 1: 'success', 0: 'info' } }
+      ],
+
+      // 错误处理测试
+      errorTableData: [],
+      errorTableLoading: false,
+      loadError: false,
+      errorTestColumns: [
+        { prop: 'name', label: '姓名', width: '120' },
+        { prop: 'invalid_time', label: '时间', width: '160', type: 'datetime' },
+        { prop: 'nested.value', label: '嵌套属性', width: '120' },
+        { prop: 'status', label: '状态', width: '100', type: 'status', textMap: { 1: '正常', 0: '异常' }, typeMap: { 1: 'success', 0: 'danger' } }
+      ],
 
       // 状态表格数据
       statusLoading: false,
@@ -270,7 +350,10 @@ export default {
         { prop: 'tags', label: '技能标签', slotName: 'tags', minWidth: '200' },
         { prop: 'score', label: '评分', width: '80', align: 'center', formatter: this.formatScore },
         { label: '操作', slotName: 'operation', width: '120', align: 'center' }
-      ]
+      ],
+
+      // 错误日志
+      errorLogs: []
     }
   },
   created() {
@@ -311,8 +394,110 @@ export default {
       return data
     },
 
+    // 生成大量数据
+    generateLargeData(count) {
+      this.largeDataLoading = true
+      
+      setTimeout(() => {
+        const data = []
+        const departments = ['技术部', '产品部', '设计部', '运营部', '市场部']
+        
+        for (let i = 1; i <= count; i++) {
+          data.push({
+            id: i,
+            name: `用户${i}`,
+            email: `user${i}@company.com`,
+            phone: `1380013${String(i).padStart(4, '0')}`,
+            department: departments[Math.floor(Math.random() * departments.length)],
+            status: Math.random() > 0.3 ? 1 : 0
+          })
+        }
+        
+        this.largeTableData = data
+        this.largeDataLoading = false
+        this.$message.success(`已生成 ${count} 条数据`)
+      }, 300)
+    },
+
+    // 清空大数据
+    clearLargeData() {
+      this.largeTableData = []
+      this.$message.info('已清空数据')
+    },
+
+    // 设置正常数据
+    setNormalData() {
+      this.errorTableData = [
+        { id: 1, name: '正常用户1', invalid_time: '2024-12-18 10:30:00', nested: { value: '嵌套值1' }, status: 1 },
+        { id: 2, name: '正常用户2', invalid_time: '2024-12-17 09:15:00', nested: { value: '嵌套值2' }, status: 0 }
+      ]
+      this.loadError = false
+      this.$message.success('已设置正常数据')
+    },
+
+    // 设置异常数据
+    setErrorData() {
+      this.errorTableData = [
+        { id: 1, name: '用户1', invalid_time: 'invalid-date', nested: null, status: 1 },
+        null, // 空数据
+        { id: 3, name: '用户3', invalid_time: undefined, nested: { value: null }, status: 'invalid' },
+        'invalid-row-data', // 非对象数据
+        { id: 5, name: '用户5', invalid_time: 12345, nested: { value: '正常值' }, status: 0 }
+      ]
+      this.loadError = false
+      this.$message.warning('已设置异常数据，查看错误处理效果')
+    },
+
+    // 设置加载错误
+    setLoadError() {
+      this.loadError = '网络连接失败，无法加载数据'
+      this.errorTableData = []
+      this.$message.error('模拟加载失败')
+    },
+
+    // 清除加载错误
+    clearLoadError() {
+      this.loadError = false
+      this.setNormalData()
+    },
+
+    // 处理重试
+    handleRetry() {
+      this.$message.info('正在重试...')
+      setTimeout(() => {
+        this.setNormalData()
+        this.$message.success('重试成功')
+      }, 1000)
+    },
+
+    // 处理数据错误
+    handleDataError(error) {
+      this.errorLogs.push({
+        time: new Date().toLocaleString(),
+        type: '数据错误',
+        message: error.message,
+        data: error
+      })
+    },
+
+    // 处理格式化错误
+    handleFormatError(error) {
+      this.errorLogs.push({
+        time: new Date().toLocaleString(),
+        type: '格式化错误',
+        message: `${error.type}格式化失败: ${error.value}`,
+        data: error
+      })
+    },
+
+    // 清空错误日志
+    clearErrorLogs() {
+      this.errorLogs = []
+    },
+
     // 处理分页变化
     handlePaginationChange() {
+      console.log('分页变化 - 防抖后执行:', this.pagination)
       this.loadPaginationData()
     },
 
@@ -380,6 +565,26 @@ export default {
     }
   }
   
+  .demo-controls {
+    margin-bottom: 16px;
+    
+    .el-button {
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+  }
+  
+  .demo-tip {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: #f0f9ff;
+    border: 1px solid #b3d8ff;
+    border-radius: 4px;
+    color: #409eff;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  
   .selection-info {
     margin-top: 16px;
     padding: 12px;
@@ -402,6 +607,48 @@ export default {
     p {
       margin: 16px 0 0 0;
       font-size: 14px;
+    }
+  }
+  
+  .error-logs {
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #fef0f0;
+    border: 1px solid #fbc4c4;
+    border-radius: 4px;
+    
+    h4 {
+      margin: 0 0 16px 0;
+      color: #f56c6c;
+    }
+    
+    .error-log-item {
+      margin-bottom: 12px;
+      
+      .log-time {
+        font-size: 12px;
+        color: #909399;
+        margin-bottom: 4px;
+      }
+      
+      .log-type {
+        font-weight: bold;
+        color: #f56c6c;
+        margin-bottom: 4px;
+      }
+      
+      .log-message {
+        margin-bottom: 4px;
+      }
+      
+      .log-data {
+        font-size: 12px;
+        color: #606266;
+        background-color: #f5f5f5;
+        padding: 4px 8px;
+        border-radius: 2px;
+        word-break: break-all;
+      }
     }
   }
   
