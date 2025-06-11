@@ -1,7 +1,7 @@
 ---
-description: 
+description: 开发流程、新页面添加、模块文档和常见问题解决指南
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 # 开发流程与规范
 

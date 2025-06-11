@@ -4,6 +4,7 @@ globs:
 alwaysApply: true
 ---
 # 规则类型：Auto Attached
+
 # 匹配模式：**/*.{js,vue,ts}
 # 说明：所有代码文件都需要遵循代码规范
 

@@ -1,7 +1,7 @@
 ---
-description: 
+description: API接口开发、Mock服务配置、数据生成和接口管理规范
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 # API接口层与Mock服务开发
 
