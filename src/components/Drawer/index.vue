@@ -114,7 +114,7 @@ export default {
       this.$emit('update:visible', val)
       if (!val) {
         this.$emit('close')
-      }
+      }  
     }
   },
   methods: {

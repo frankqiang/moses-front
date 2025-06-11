@@ -1,0 +1,368 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 错误处理、状态管理与工具函数
+
+## 规则说明与适用范围
+本规则定义了错误处理模式、消息提示规范、状态管理最佳实践和工具函数开发标准。所有业务逻辑处理都需遵循此规范。
+
+## 错误处理与消息提示
+
+### 错误处理模式
+所有API调用都应使用try/catch处理潜在错误：
+
+```javascript
+async submitForm() {
+  try {
+    this.loading = true
+    // 表单验证
+    await this.$refs.form.validate()
+    // 提交数据
+    const res = await api.create(this.form)
+    this.$message.success('创建成功')
+    this.dialogVisible = false
+    this.$emit('refresh')
+  } catch (error) {
+    // 区分表单验证错误和API错误
+    if (error === false) {
+      this.$message.warning('请检查表单填写是否正确')
+    } else {
+      this.$message.error(error.message || '创建失败')
+    }
+  } finally {
+    this.loading = false
+  }
+}
+```
+
+### 消息提示规范
+
+#### 基本原则
+- **一致性**: 全系统保持统一的消息提示方式
+- **精确性**: 消息内容应准确传达操作结果
+- **层次性**: 区分不同级别的消息（成功、警告、错误等）
+- **简洁性**: 消息内容应简明扼要
+
+#### 消息类型与使用场景
+1. **成功消息(`success`)**:
+   - 数据创建/更新/删除成功
+   - 批量操作成功完成
+   - 用户操作达到预期效果
+
+2. **警告消息(`warning`)**:
+   - 操作可能导致不可恢复的结果时
+   - 用户输入不完整但不影响继续
+   - 提醒用户注意但不阻止操作
+
+3. **错误消息(`error`)**:
+   - API请求返回错误
+   - 表单验证失败
+   - 操作未能完成
+
+4. **信息消息(`info`)**:
+   - 操作取消通知
+   - 中性提示信息
+   - 系统通知
+
+#### 全局错误处理配置
+项目中的API请求拦截器应配置为：
+- 全局处理认证错误和网络错误
+- 将业务错误直接传递给业务组件处理
+
+```javascript
+// 响应拦截器配置 (src/utils/request.js)
+service.interceptors.response.use(
+  response => {
+    const res = response.data
+
+    if (res.code !== 20000) {
+      // 只在全局处理认证相关错误
+      if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
+        Message.error(res.message || 'Authentication Error')
+        // 处理登出逻辑...
+      }
+      
+      // 其他业务错误直接返回给业务组件处理
+      return Promise.reject(res)
+    } else {
+      return res
+    }
+  },
+  error => {
+    // 只处理网络级别错误
+    Message.error('网络请求失败，请稍后重试')
+    return Promise.reject(error)
+  }
+)
+```
+
+## 状态管理
+
+### Vuex模块设计
+1. **Vuex模块设计**
+   - 按功能模块划分store
+   - 使用命名空间
+   - 定义清晰的state、mutations和actions
+
+2. **状态更新原则**
+   - 只在mutations中修改state
+   - actions处理异步操作
+   - getter处理数据计算
+
+3. **模块通信**
+   - 使用命名空间访问其他模块
+   - 合理使用rootState和rootGetters
+   - 必要时使用事件总线
+
+### 状态管理最佳实践
+
+#### 模块化状态管理
+```javascript
+// store/modules/example.js
+const state = {
+  list: [],
+  loading: false,
+  currentItem: null
+}
+
+const mutations = {
+  SET_LIST(state, list) {
+    state.list = list
+  },
+  SET_LOADING(state, loading) {
+    state.loading = loading
+  },
+  SET_CURRENT_ITEM(state, item) {
+    state.currentItem = item
+  }
+}
+
+const actions = {
+  async fetchList({ commit }, params) {
+    commit('SET_LOADING', true)
+    try {
+      const response = await api.getList(params)
+      commit('SET_LIST', response.data.items)
+    } catch (error) {
+      console.error('Failed to fetch list:', error)
+    } finally {
+      commit('SET_LOADING', false)
+    }
+  }
+}
+
+const getters = {
+  listCount: state => state.list.length,
+  isLoading: state => state.loading
+}
+
+export default {
+  namespaced: true,
+  state,
+  mutations,
+  actions,
+  getters
+}
+```
+
+## 工具函数开发
+
+### 工具函数设计原则
+- **单一职责**：每个工具函数只做一件事
+- **参数校验**：函数开头验证参数有效性
+- **默认值处理**：为可选参数提供合理默认值
+- **错误处理**：处理异常情况并提供有用错误信息
+- **纯函数优先**：尽量使用纯函数，减少副作用
+- **文档完善**：详细的JSDoc注释说明用途、参数和返回值
+
+### 示例：防抖函数
+```javascript
+/**
+ * 防抖函数工厂
+ * @param {Function} fn - 需要防抖的函数
+ * @param {number} [delay=300] - 延迟时间(ms)
+ * @param {boolean} [immediate=false] - 是否立即执行
+ * @returns {Function} 防抖后的函数
+ */
+export function debounce(fn, delay = 300, immediate = false) {
+  let timer = null
+  return function(...args) {
+    const context = this
+    
+    if (timer) clearTimeout(timer)
+    
+    if (immediate && !timer) {
+      fn.apply(context, args)
+    }
+    
+    timer = setTimeout(() => {
+      if (!immediate) fn.apply(context, args)
+      timer = null
+    }, delay)
+  }
+}
+```
+
+### 示例：格式化工具函数
+```javascript
+/**
+ * 格式化查询参数，移除空值
+ * @param {Object} params - 原始参数对象
+ * @returns {Object} 格式化后的参数对象
+ */
+export function formatQueryParams(params = {}) {
+  const result = {}
+  
+  Object.keys(params).forEach(key => {
+    const value = params[key]
+    // 过滤掉 null、undefined、空字符串
+    if (value !== null && value !== undefined && value !== '') {
+      result[key] = value
+    }
+  })
+  
+  return result
+}
+
+/**
+ * 格式化文件大小
+ * @param {number} bytes - 文件大小（字节）
+ * @param {number} [decimals=2] - 保留小数位数
+ * @returns {string} 格式化后的文件大小
+ */
+export function formatFileSize(bytes, decimals = 2) {
+  if (bytes === 0) return '0 Bytes'
+
+  const k = 1024
+  const dm = decimals < 0 ? 0 : decimals
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+}
+```
+
+## 常量管理
+
+### 常量定义标准
+业务常量应统一管理，避免魔法字符串：
+
+```javascript
+// constants/master-data.js
+
+// 状态常量
+export const STATUS = {
+  ENABLED: 'enabled',
+  DISABLED: 'disabled',
+  PENDING: 'pending'
+}
+
+// 状态显示文本
+export const STATUS_TEXT = {
+  [STATUS.ENABLED]: '启用',
+  [STATUS.DISABLED]: '禁用',
+  [STATUS.PENDING]: '待审核'
+}
+
+// 状态标签类型
+export const STATUS_TYPE = {
+  [STATUS.ENABLED]: 'success',
+  [STATUS.DISABLED]: 'info',
+  [STATUS.PENDING]: 'warning'
+}
+```
+
+### 常量使用规范
+- 组件中应导入并使用常量，避免硬编码
+- 使用对象解构获取需要的常量
+- 建立动态映射关系
+
+```javascript
+import { STATUS, STATUS_TEXT, STATUS_TYPE } from '@/constants/master-data'
+
+export default {
+  computed: {
+    statusOptions() {
+      return Object.keys(STATUS).map(key => ({
+        label: STATUS_TEXT[STATUS[key]],
+        value: STATUS[key]
+      }))
+    }
+  },
+  methods: {
+    getStatusType(status) {
+      return STATUS_TYPE[status] || ''
+    }
+  }
+}
+```
+
+## 全局组件使用规范
+
+### Pagination分页组件
+**重要**: 所有需要分页功能的列表页面必须使用全局Pagination组件。
+
+#### 引入方式
+```js
+import Pagination from '@/components/Pagination'
+
+export default {
+  components: {
+    Pagination
+  }
+}
+```
+
+#### 基本用法
+```html
+<pagination
+  v-show="total>0"
+  :total="total"
+  :page.sync="listQuery.page"
+  :limit.sync="listQuery.limit"
+  @pagination="getList"
+/>
+```
+
+#### 参数说明
+- `total`: 数据总条数（必填）
+- `page`: 当前页码，使用.sync修饰符（默认值：1）
+- `limit`: 每页条数，使用.sync修饰符（默认值：20）
+- `pageSizes`: 每页显示个数选择器的选项（默认值：[10, 20, 30, 50]）
+- `layout`: 组件布局（默认值：'total, sizes, prev, pager, next, jumper'）
+- `background`: 是否为分页按钮添加背景色（默认值：true）
+- `autoScroll`: 分页切换后是否自动滚动到顶部（默认值：true）
+- `hidden`: 是否隐藏分页组件（默认值：false）
+
+#### 事件
+- `pagination`: 页码或每页条数改变时触发，返回 `{page, limit}` 对象
+
+### 滚动动画工具函数
+**重要**: 所有需要滚动功能的页面必须使用全局滚动动画工具函数。
+
+#### 引入方式
+```js
+import { scrollTo } from '@/utils/scroll-to'
+```
+
+#### 基本用法
+```js
+// 滚动到顶部，持续时间500ms
+scrollTo(0, 500)
+
+// 滚动到指定位置，持续时间800ms
+scrollTo(400, 800)
+
+// 滚动到指定位置，带回调函数
+scrollTo(0, 500, () => {
+  console.log('滚动完成')
+})
+```
+
+#### 参数说明
+- `to`: 目标位置（垂直方向的像素值）
+- `duration`: 动画持续时间（毫秒），默认500ms
+- `callback`: 滚动完成后的回调函数（可选）

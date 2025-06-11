@@ -14,7 +14,9 @@ alwaysApply: false
 ## 最佳实践和高级功能
 
 ### 1. 性能优化
-- 大数据量表格使用虚拟滚动
+- **强制要求**：大数据量表格（>1000条）必须使用BaseTable的虚拟滚动功能
+- **自动优化**：BaseTable内置防抖优化，自动处理排序和分页的频繁操作
+- **内存管理**：BaseTable自动清理事件监听器，防止内存泄漏
 - 复杂表单使用懒加载
 - 表格数据使用本地缓存减少请求
 - 列表页面添加防抖/节流优化搜索性能
@@ -199,12 +201,171 @@ alwaysApply: false
 </overflow-tags-popover>
 ```
 
+### 8. BaseTable组件（现代化表格）
+- **强制使用**：所有新开发的表格模块必须使用优化后的 [BaseTable组件](mdc:src/components/BaseTable/index.vue)
+- 自动实现虚拟滚动、错误处理、防抖优化等现代化特性
+- 提供完整的性能优化和用户体验保障
+- 示例用法：
+
+```vue
+<base-table
+  :data="tableData"
+  :columns="tableColumns"
+  :loading="loading"
+  :total="total"
+  :current-page.sync="currentPage"
+  :page-size.sync="pageSize"
+  :show-pagination="true"
+  :virtual-scroll="true"
+  :virtual-threshold="1000"
+  :virtual-height="400"
+  :item-height="40"
+  :buffer-size="5"
+  :load-error="loadError"
+  :allow-retry="true"
+  @selection-change="handleSelectionChange"
+  @sort-change="handleSortChange"
+  @pagination="handlePagination"
+  @retry="handleRetry"
+  @row-click="handleRowClick"
+  @row-dblclick="handleRowDblclick"
+>
+  <!-- 自定义列内容插槽 -->
+  <template #column-status="{ row, column }">
+    <status-tag :status="row.status" />
+  </template>
+  
+  <template #column-actions="{ row }">
+    <action-buttons
+      :buttons="getActionButtons(row)"
+      mode="text"
+      :row="row"
+      @click="handleActionClick"
+    />
+  </template>
+</base-table>
+```
+
+#### BaseTable组件特性
+- **虚拟滚动**：自动处理大数据量（1000+条记录）的性能优化
+- **错误边界**：内置错误捕获和恢复机制，确保表格稳定性
+- **防抖优化**：排序和分页操作自动防抖，避免频繁请求
+- **类型安全**：完整的props验证和数据结构检查
+- **内存管理**：自动清理事件监听器，防止内存泄漏
+- **用户体验**：loading状态、错误重试、空数据状态等完整交互
+
+#### 关键Props说明
+```javascript
+props: {
+  // 基础数据
+  data: { type: Array, required: true },           // 表格数据
+  columns: { type: Array, required: true },        // 列配置
+  loading: { type: Boolean, default: false },      // 加载状态
+  
+  // 分页相关
+  total: { type: Number, default: 0 },             // 总条数
+  currentPage: { type: Number, default: 1 },       // 当前页
+  pageSize: { type: Number, default: 20 },         // 每页条数
+  showPagination: { type: Boolean, default: true }, // 显示分页
+  
+  // 虚拟滚动
+  virtualScroll: { type: Boolean, default: false }, // 启用虚拟滚动
+  virtualThreshold: { type: Number, default: 1000 }, // 虚拟滚动阈值
+  virtualHeight: { type: Number, default: 400 },    // 容器高度
+  itemHeight: { type: Number, default: 40 },        // 行高
+  bufferSize: { type: Number, default: 5 },         // 缓冲区大小
+  
+  // 错误处理
+  loadError: { type: [String, Object], default: null }, // 加载错误
+  allowRetry: { type: Boolean, default: true },          // 允许重试
+  
+  // 表格配置
+  border: { type: Boolean, default: true },         // 边框
+  stripe: { type: Boolean, default: true },         // 斑马纹
+  showSelection: { type: Boolean, default: true },  // 显示选择列
+  showIndex: { type: Boolean, default: false },     // 显示序号列
+  
+  // 空数据
+  emptyText: { type: String, default: '暂无数据' }  // 空数据文本
+}
+```
+
+#### 事件说明
+```javascript
+// 选择变更
+@selection-change="handleSelectionChange"  // 选中行变更
+@sort-change="handleSortChange"            // 排序变更
+@pagination="handlePagination"             // 分页变更
+
+// 错误处理
+@retry="handleRetry"                       // 重试操作
+@data-error="handleDataError"              // 数据错误
+@format-error="handleFormatError"          // 格式化错误
+
+// 行交互
+@row-click="handleRowClick"                // 行点击
+@row-dblclick="handleRowDblclick"          // 行双击
+@cell-click="handleCellClick"              // 单元格点击
+```
+
+#### 列配置增强
+```javascript
+// 表格列配置支持更多渲染类型
+const tableColumns = [
+  {
+    prop: 'id',
+    label: 'ID',
+    width: 80,
+    fixed: 'left'
+  },
+  {
+    prop: 'name',
+    label: '名称',
+    width: 150,
+    sortable: true,
+    // 支持嵌套属性
+    formatter: (row) => row.user?.profile?.name || '-'
+  },
+  {
+    prop: 'status',
+    label: '状态',
+    width: 100,
+    // 使用插槽渲染
+    slot: 'column-status'
+  },
+  {
+    prop: 'tags',
+    label: '标签',
+    width: 200,
+    // 自定义渲染函数
+    render: (h, { row }) => {
+      return h('overflow-tags-popover', {
+        props: {
+          data: row.tags,
+          maxShow: 2,
+          title: '标签列表'
+        }
+      })
+    }
+  },
+  {
+    prop: 'actions',
+    label: '操作',
+    width: 180,
+    fixed: 'right',
+    slot: 'column-actions'
+  }
+]
+```
+
 ## 组件集成规范
 
 ### [Module]Table 组件集成
+- **强制要求**：新开发的表格组件必须使用BaseTable作为核心表格组件
 - 表格组件应集成 TableToolbar、ActionButtons、StatusTag 和 Pagination
 - 必须实现列设置功能，支持用户自定义显示列
 - 将表格操作逻辑封装在组件内部，通过事件向父组件传递操作
+- **性能保障**：自动启用虚拟滚动、防抖优化、错误处理等现代化特性
 
 ```vue
 <!-- [Module]Table.vue 组件示例 -->
@@ -237,86 +398,178 @@ alwaysApply: false
       </template>
     </table-toolbar>
 
-    <!-- 数据表格 -->
-    <el-table
-      v-loading="loading"
+    <!-- 数据表格 - 使用BaseTable组件 -->
+    <base-table
       :data="data"
-      border
-      stripe
-      highlight-current-row
+      :columns="processedColumns"
+      :loading="loading"
+      :total="total"
+      :current-page.sync="currentPage"
+      :page-size.sync="currentLimit"
+      :show-pagination="true"
+      :virtual-scroll="data.length > 1000"
+      :virtual-threshold="1000"
+      :virtual-height="400"
+      :item-height="40"
+      :buffer-size="5"
+      :load-error="loadError"
+      :allow-retry="true"
+      :border="true"
+      :stripe="true"
+      :show-selection="true"
       @selection-change="handleSelectionChange"
       @sort-change="handleSortChange"
+      @pagination="handlePagination"
+      @retry="handleRetry"
+      @row-click="handleRowClick"
     >
-      <!-- 选择列 -->
-      <el-table-column type="selection" width="45" align="center" fixed="left" />
-      
-      <!-- 动态列 -->
-      <template v-for="column in visibleColumns">
-        <el-table-column
-          :key="column.prop"
-          :prop="column.prop"
-          :label="column.label"
-          :width="column.width"
-          :min-width="column.minWidth"
-          :align="column.align || 'left'"
-          :sortable="column.sortable"
-        >
-          <template slot-scope="scope">
-            <!-- 状态列渲染 -->
-            <template v-if="column.renderType === 'status'">
-              <status-tag 
-                :status="scope.row[column.prop]" 
-                :text-map="statusTextMap"
-                :type-map="statusTypeMap"
-              />
-            </template>
-            
-            <!-- 日期列渲染 -->
-            <template v-else-if="column.renderType === 'date'">
-              {{ formatDate(scope.row[column.prop]) }}
-            </template>
-            
-            <!-- 标签数组渲染 -->
-            <template v-else-if="column.renderType === 'tags'">
-              <overflow-tags-popover
-                :data="scope.row[column.prop]"
-                :max-show="column.maxShow || 2"
-                :label-key="column.labelKey"
-                :title="column.popoverTitle || column.label"
-              />
-            </template>
-            
-            <!-- 默认渲染 -->
-            <template v-else>
-              {{ scope.row[column.prop] }}
-            </template>
-          </template>
-        </el-table-column>
+      <!-- 状态列插槽 -->
+      <template #column-status="{ row }">
+        <status-tag 
+          :status="row.status" 
+          :text-map="statusTextMap"
+          :type-map="statusTypeMap"
+        />
       </template>
       
-      <!-- 操作列 -->
-      <el-table-column label="操作" width="180" align="center" fixed="right">
-        <template slot-scope="scope">
-          <action-buttons
-            :buttons="getActionButtons(scope.row)"
-            mode="text"
-            :row="scope.row"
-            @click="handleActionClick"
-          />
-        </template>
-      </el-table-column>
-    </el-table>
-    
-    <!-- 分页器 -->
-    <pagination
-      v-if="total > 0"
-      :total="total"
-      :page.sync="currentPage"
-      :limit.sync="currentLimit"
-      @pagination="handlePagination"
-    />
+      <!-- 标签列插槽 -->
+      <template #column-tags="{ row }">
+        <overflow-tags-popover
+          :data="row.tags"
+          :max-show="2"
+          title="标签列表"
+        />
+      </template>
+      
+      <!-- 操作列插槽 -->
+      <template #column-actions="{ row }">
+        <action-buttons
+          :buttons="getActionButtons(row)"
+          mode="text"
+          :row="row"
+          @click="handleActionClick"
+        />
+      </template>
+    </base-table>
   </div>
 </template>
+
+<script>
+import BaseTable from '@/components/BaseTable'
+import TableToolbar from '@/components/TableToolbar'
+import ActionButtons from '@/components/ActionButtons'
+import StatusTag from '@/components/StatusTag'
+import OverflowTagsPopover from '@/components/OverflowTagsPopover'
+
+export default {
+  name: 'ModuleTable',
+  components: {
+    BaseTable,
+    TableToolbar,
+    ActionButtons,
+    StatusTag,
+    OverflowTagsPopover
+  },
+  
+  props: {
+    data: { type: Array, default: () => [] },
+    loading: { type: Boolean, default: false },
+    total: { type: Number, default: 0 },
+    loadError: { type: [String, Object], default: null }
+  },
+  
+  data() {
+    return {
+      currentPage: 1,
+      currentLimit: 20,
+      selectedRows: []
+    }
+  },
+  
+  computed: {
+    // 处理后的列配置
+    processedColumns() {
+      return [
+        {
+          prop: 'id',
+          label: 'ID',
+          width: 80,
+          fixed: 'left'
+        },
+        {
+          prop: 'name',
+          label: '名称',
+          width: 150,
+          sortable: true
+        },
+        {
+          prop: 'status',
+          label: '状态',
+          width: 100,
+          slot: 'column-status'
+        },
+        {
+          prop: 'tags',
+          label: '标签',
+          width: 200,
+          slot: 'column-tags'
+        },
+        {
+          prop: 'actions',
+          label: '操作',
+          width: 180,
+          fixed: 'right',
+          slot: 'column-actions'
+        }
+      ]
+    }
+  },
+  
+  methods: {
+    // 处理选择变更
+    handleSelectionChange(selectedRows) {
+      this.selectedRows = selectedRows
+      this.$emit('selection-change', selectedRows)
+    },
+    
+    // 处理排序变更
+    handleSortChange({ column, prop, order }) {
+      this.$emit('sort-change', { column, prop, order })
+    },
+    
+    // 处理分页变更
+    handlePagination({ page, limit }) {
+      this.currentPage = page
+      this.currentLimit = limit
+      this.$emit('pagination', { page, limit })
+    },
+    
+    // 处理重试
+    handleRetry() {
+      this.$emit('retry')
+    },
+    
+    // 处理行点击
+    handleRowClick(row, column, event) {
+      this.$emit('row-click', row, column, event)
+    },
+    
+    // 获取操作按钮
+    getActionButtons(row) {
+      return [
+        { text: '编辑', action: 'edit', type: 'text' },
+        { text: '查看', action: 'view', type: 'text' },
+        { text: '删除', action: 'delete', type: 'text', class: 'danger' }
+      ]
+    },
+    
+    // 处理操作按钮点击
+    handleActionClick({ action, row }) {
+      this.$emit('action-click', { action, row })
+    }
+  }
+}
+</script>
 ```
 
 ### [Module]FormDrawer 组件集成
@@ -454,7 +707,7 @@ export default {
 ### 表单抽屉
 - 表单在抽屉中打开，不使用弹窗
 - 表单按分类分段展示，每个分段有明确标题
-- 表单抽屉宽度统一为550px
+- 表单抽屉宽度统一为700px
 - 查看模式下表单项禁用，不显示保存按钮
 
 ### 状态展示
@@ -696,10 +949,24 @@ handleActionClick({ action, row }) {
 
 开发完成后，请检查以下项目是否符合规范：
 
+### 基础规范检查
 - [ ] 目录结构符合规范
 - [ ] 模块说明文档完善，放在 docs 目录下
 - [ ] 组件命名符合规范，使用模块名+功能名方式
 - [ ] 使用全局组件实现核心功能
+- [ ] 代码注释完善，遵循注释规范
+- [ ] 代码符合 ESLint 规范
+
+### BaseTable组件检查
+- [ ] **强制使用BaseTable组件**：新开发的表格模块必须使用优化后的BaseTable
+- [ ] **虚拟滚动配置**：大数据量表格（>1000条）正确配置了虚拟滚动参数
+- [ ] **错误处理实现**：正确处理loadError和retry事件
+- [ ] **列配置完整**：表格列配置包含必要的prop、label、width等属性
+- [ ] **插槽使用正确**：状态和操作列使用了对应的插槽渲染
+- [ ] **事件处理完整**：实现了selection-change、sort-change、pagination等核心事件
+- [ ] **性能优化启用**：启用了防抖、虚拟滚动等性能优化特性
+
+### 功能完整性检查
 - [ ] 搜索表单实现完整搜索和重置功能
 - [ ] 表格实现列设置功能和本地存储
 - [ ] 表单抽屉分段清晰，字段归类合理
@@ -707,11 +974,21 @@ handleActionClick({ action, row }) {
 - [ ] 批量操作实现符合规范
 - [ ] 状态管理和切换功能完整
 - [ ] 导入导出功能正常工作
-- [ ] 代码注释完善，遵循注释规范
-- [ ] 代码符合 ESLint 规范
 - [ ] 功能完整：查询、新增、编辑、查看、删除、状态切换
+
+### 用户体验检查
 - [ ] UI 风格统一，与系统整体风格一致
 - [ ] 错误处理完善，提供友好的错误提示
 - [ ] 添加了必要的加载状态指示
+- [ ] 大数据量表格滚动流畅（60fps）
+- [ ] 错误场景有重试机制和降级显示
+- [ ] 空数据状态显示友好提示
+
+### 性能优化检查
+- [ ] **虚拟滚动性能**：大列表滚动保持流畅，内存占用稳定
+- [ ] **防抖优化**：搜索、排序、分页等操作添加了防抖处理
+- [ ] **内存管理**：组件销毁时正确清理事件监听器和定时器
+- [ ] **数据处理**：使用安全的数据访问方法，避免运行时错误
+- [ ] **类型验证**：Props进行了完整的类型验证和默认值设置
 
 

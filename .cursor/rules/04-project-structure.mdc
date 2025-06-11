@@ -1,0 +1,280 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 项目结构与组件架构
+
+## 规则类型：Auto Attached
+**匹配模式**: `**/README.md`, `**/package.json`, `vue.config.js`
+**说明**: 这些是项目基础配置文件，需要自动附加项目结构规则
+
+## 规则说明与适用范围
+本规则定义了项目的标准目录结构、文件组织方式和组件架构设计原则。所有开发人员都需遵循此结构规范。
+
+## 项目概述
+这是一个基于Vue.js 2.x的管理系统模板，集成了Element UI、axios、权限控制等功能。它为开发管理系统提供了一个完整的框架。
+
+### 核心文件
+- [src/main.js](mdc:src/main.js) - 应用的入口文件，初始化Vue实例和全局配置
+- [src/App.vue](mdc:src/App.vue) - 根组件
+- [src/permission.js](mdc:src/permission.js) - 权限控制逻辑
+
+### 构建和配置
+- [vue.config.js](mdc:vue.config.js) - Vue CLI配置文件
+- [package.json](mdc:package.json) - 项目依赖和脚本
+
+### 环境配置
+- `.env.development` - 开发环境配置
+- `.env.staging` - 测试环境配置
+- `.env.production` - 生产环境配置
+
+### 测试和构建
+- `tests/` - 单元测试和集成测试
+- `build/` - 构建相关配置和脚本
+
+### 静态资源
+- `public/` - 不需要webpack处理的静态资源
+- `src/assets/` - 需要webpack处理的静态资源
+
+## 标准项目结构
+
+```
+src/
+├── api/                     # API接口层
+│   ├── index.js             # API入口，统一导出
+│   └── modules/             # 按业务模块拆分API
+│       ├── common.js        # 通用API
+│       └── master-data/     # 主数据API目录
+│           ├── index.js     # 导出所有主数据API
+│           └── module-name.js  # 具体模块API
+├── components/              # 全局通用组件
+│   ├── SvgIcon/             # SVG图标组件
+│   ├── Breadcrumb/          # 面包屑导航组件
+│   └── ...                  # 其他全局组件
+├── utils/                   # 工具函数
+│   ├── request.js           # 请求工具
+│   ├── formatter.js         # 格式化工具
+│   └── validator.js         # 验证工具
+├── mock/                    # Mock数据
+│   ├── index.js             # Mock入口
+│   ├── utils/               # Mock工具函数
+│   │   ├── response.js      # 响应处理工具
+│   │   └── generator.js     # 数据生成工具
+│   └── modules/             # Mock模块
+│       └── module-group/    # 模块组
+│           ├── index.js     # 模块组入口
+│           ├── data/        # 基础数据
+│           │   └── module-name.js  # 模块基础数据
+│           └── module-name.js  # 模块API Mock
+├── layout/                  # 布局组件
+│   ├── index.vue            # 主布局容器
+│   ├── components/          # 布局子组件
+│   │   ├── Sidebar/         # 侧边栏组件
+│   │   ├── Navbar.vue       # 顶部导航组件
+│   │   └── ...              # 其他布局组件
+├── views/                   # 页面视图组件
+│   ├── module-name/         # 功能模块目录
+│   │   ├── index.vue        # 模块主页面
+│   │   └── components/      # 模块专用组件
+└── constants/               # 全局常量
+    ├── index.js             # 常量入口
+    └── modules/             # 按模块划分的常量
+```
+
+## 目录命名规范
+
+- 使用小写中划线命名法（kebab-case）命名目录
+- 业务模块按功能域划分（如`master-data`, `process-control`, `user-management`等）
+- 通用功能放在公共目录（如`common`, `shared`等）
+
+## 功能模块目录结构
+
+每个功能模块应遵循以下标准目录结构：
+
+```
+views/module-name/
+├── index.vue                 # 主页面组件（入口）
+├── router/                   # 路由配置
+│   └── index.js              # 模块路由定义
+├── api/                      # API调用
+│   └── index.js              # 模块API封装
+├── components/               # 子组件目录
+│   ├── common/               # 通用组件
+│   ├── form/                 # 表单相关组件
+│   ├── table/                # 表格相关组件
+│   └── search/               # 搜索相关组件
+├── constants/                # 常量定义
+├── mixins/                   # 混入目录
+├── utils/                    # 工具函数
+├── styles/                   # 样式文件
+├── docs/                     # 文档目录
+└── README.md                 # 模块说明文档
+```
+
+根据模块的复杂度和特点，可以适当调整目录结构：
+- **简单模块**：可以省略router、constants等目录
+- **中等复杂度模块**：保留主要目录，如api、components、mixins
+- **复杂模块**：使用完整的目录结构，必要时可以增加子模块目录
+
+## 组件架构设计
+
+### 组件系统概述
+项目组件分为两类：
+1. 通用组件 (`src/components`) - 可在多个页面复用的组件
+2. 视图组件 (`src/views`) - 特定页面的组件
+
+### 核心设计原则
+- **组件化开发**：将大型组件拆分为小型、可复用的组件
+- **关注点分离**：组件应专注于单一功能或职责
+- **逻辑与UI分离**：使用mixins或Vuex管理逻辑，组件专注于UI渲染
+- **命名统一**：组件、文件和目录命名应遵循统一规范
+- **配置化**：尽量通过配置而非硬编码实现功能
+- **复用性**：充分利用全局组件和预设配置
+- **可维护性**：清晰的结构和足够的文档
+- **用户体验**：一致的交互模式和视觉样式
+
+### 组件设计模式
+
+#### 容器组件 (index.vue)
+- 负责组合子组件、管理状态和数据流转
+- 不应包含复杂UI逻辑，主要是组件组合和事件处理
+- 包含数据加载和提交的核心方法
+- 引入必要的mixins
+- 将API调用逻辑抽离到api目录中，容器组件只负责调用API并处理响应
+
+#### 展示组件
+- 专注于单一功能或UI区块
+- 通过props接收数据，通过events发送用户操作
+- 避免直接调用API或修改全局状态
+- 保持组件的独立性和可复用性
+- 对于表单和表格等复杂组件，进一步拆分为更小的功能组件
+
+### 数据加载模式
+组件中的数据加载应遵循以下模式：
+
+```javascript
+export default {
+  data() {
+    return {
+      loading: false,
+      list: [],
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10,
+        // 其他查询参数...
+      }
+    }
+  },
+  
+  created() {
+    // 创建防抖函数
+    this.debouncedGetList = debounce(this.getList, 300)
+    // 初始加载
+    this.getList()
+  },
+  
+  methods: {
+    async getList() {
+      try {
+        this.loading = true
+        const res = await api.getList(this.listQuery)
+        this.list = res.data.items
+        this.total = res.data.total
+      } catch (error) {
+        console.error('获取列表失败', error)
+        this.$message.error('获取数据失败: ' + (error.message || '未知错误'))
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    // 搜索处理
+    handleSearch() {
+      this.listQuery.page = 1
+      this.debouncedGetList()
+    },
+    
+    // 分页处理
+    handlePageChange(page) {
+      this.listQuery.page = page
+      this.getList()
+    }
+  }
+}
+```
+
+### 组件通信规范
+
+#### Props命名规范
+- 使用小驼峰命名法
+- 提供默认值和类型验证
+- 文档化prop的用途和限制
+
+#### Events命名规范
+- 使用kebab-case（短横线）命名法
+- 使用动词前缀如：`search`、`update`、`select`、`change`
+- 确保事件名称明确表达意图
+
+#### 父子组件通信规范
+- 父传子：使用props
+- 子传父：使用自定义事件($emit)
+- 复杂状态：考虑使用Vuex
+
+## Mixin设计规范
+
+### 通用Mixin设计原则
+- 一个mixin应专注于一个功能领域
+- 避免在mixin中定义过多的方法和属性
+- 使用命名前缀避免命名冲突
+- 在mixin中提供适当的注释和文档
+
+### 常用通用Mixin
+- **resizeMixin**：处理窗口大小变化
+- **i18nMixin**：处理国际化
+- **permissionMixin**：处理权限控制
+- **themeMixin**：处理主题切换
+- **formMixin**：处理表单相关逻辑
+- **tableMixin**：处理表格相关逻辑
+- **searchMixin**：处理搜索相关逻辑
+
+### Mixin示例
+```javascript
+// mixins/form-mixin.js
+export default {
+  data() {
+    return {
+      loading: false,
+      form: {},
+      rules: {}
+    }
+  },
+  methods: {
+    // 初始化表单数据
+    initFormData() {
+      this.form = {
+        // 默认表单数据
+      }
+    },
+    // 验证表单
+    validateForm() {
+      return new Promise((resolve, reject) => {
+        this.$refs.form.validate(valid => {
+          if (valid) {
+            resolve(this.form)
+          } else {
+            this.$message.warning('表单填写有误，请检查')
+            reject(new Error('表单验证失败'))
+          }
+        })
+      })
+    },
+    // 重置表单
+    resetForm() {
+      this.$refs.form && this.$refs.form.resetFields()
+      this.initFormData()
+    }
+  }
+}
+```
