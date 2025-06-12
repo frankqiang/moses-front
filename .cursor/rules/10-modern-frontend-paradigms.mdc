@@ -15,18 +15,47 @@ alwaysApply: true
 - **防抖节流机制**：用户交互必须添加防抖保护（300ms标准）
 - **懒加载策略**：按需加载资源和组件
 - **缓存优化**：计算结果和API响应智能缓存
+- **第三方库优化**：使用成熟的专用库而非自实现（如lodash.debounce、echarts等）
 
 ### 🛡️ 容错设计范式
 - **错误边界保护**：每个功能模块实现错误隔离
 - **优雅降级**：异常场景提供备用方案
 - **重试机制**：网络和临时错误自动恢复
 - **状态一致性**：确保UI状态与数据状态同步
+- **依赖管理**：确保所有第三方依赖正确安装和版本管理
 
 ### 📱 体验优化范式
 - **即时反馈**：所有操作提供实时状态反馈
 - **渐进增强**：核心功能优先，高级功能逐步加载
 - **无障碍支持**：遵循WCAG标准的可访问性设计
 - **响应式适配**：多设备尺寸完美适配
+- **向后兼容**：新功能通过特性开关渐进式启用
+
+## 第三方库集成标准
+
+### 依赖管理最佳实践
+参考项目中[utils/index.js](mdc:src/utils/index.js)的实现标准：
+
+```javascript
+// 第三方库工具函数统一导出
+import debounce from 'lodash.debounce'
+import throttle from 'lodash.throttle'
+import cloneDeep from 'lodash.clonedeep'
+import * as echarts from 'echarts'
+
+// 统一导出，便于项目内使用
+export { debounce, throttle, cloneDeep, echarts }
+
+// 项目内任何地方都可以这样使用
+// import { debounce, throttle } from '@/utils'
+```
+
+### 第三方库选择原则
+1. **优先使用专用库**：如lodash.debounce而非完整lodash
+2. **版本锁定**：在package.json中明确版本号
+3. **按需引入**：避免全量引入大型库
+4. **兼容性检查**：确保与项目Vue版本兼容
+5. **文档齐全**：选择有完善文档和社区支持的库
 
 ## 虚拟滚动标准实现
 
@@ -70,33 +99,6 @@ const VirtualScrollCore = {
         ...item,
         _virtualIndex: start + index
       }))
-    },
-    
-    totalHeight() {
-      return this.data.length * this.itemHeight
-    },
-    
-    offsetY() {
-      return this.startIndex * this.itemHeight
-    }
-  },
-  
-  methods: {
-    handleScroll(e) {
-      this.scrollTop = e.target.scrollTop
-      this.updateVisibleRange()
-    },
-    
-    updateVisibleRange() {
-      const scrollTop = this.scrollTop
-      const startIndex = Math.floor(scrollTop / this.itemHeight)
-      const endIndex = Math.min(
-        startIndex + this.visibleCount,
-        this.data.length
-      )
-      
-      this.startIndex = startIndex
-      this.endIndex = endIndex
     }
   }
 }
@@ -134,6 +136,8 @@ const RenderOptimization = {
 ## 错误边界与容错机制
 
 ### ErrorBoundary组件标准
+参考[ActionButtons组件](mdc:src/components/ActionButtons/index.vue)的ErrorBoundary实现：
+
 ```javascript
 // 标准错误边界组件实现
 const ErrorBoundary = {
@@ -204,24 +208,6 @@ const ErrorBoundary = {
         window.errorReporter.captureException(errorInfo)
       }
     }
-  },
-  
-  render(h) {
-    if (this.hasError) {
-      const fallbackProps = {
-        props: {
-          error: this.errorInfo,
-          retry: this.retry,
-          reset: this.reset,
-          canRetry: this.retryCount < this.maxRetries,
-          isRetrying: this.isRetrying
-        }
-      }
-      
-      return h(this.fallbackComponent, fallbackProps)
-    }
-    
-    return this.$slots.default
   }
 }
 ```
@@ -277,103 +263,51 @@ const SafeDataAccess = {
 ## 防抖节流优化策略
 
 ### 智能防抖实现
-```javascript
-// 高级防抖功能
-export function smartDebounce(func, delay = 300, options = {}) {
-  const {
-    immediate = false,
-    maxWait = null,
-    leading = false,
-    trailing = true
-  } = options
-  
-  let timeoutId = null
-  let maxTimeoutId = null
-  let lastCallTime = 0
-  
-  return function debounced(...args) {
-    const now = Date.now()
-    const context = this
-    
-    // 清除现有定时器
-    if (timeoutId) clearTimeout(timeoutId)
-    if (maxTimeoutId) clearTimeout(maxTimeoutId)
-    
-    // 立即执行逻辑
-    if (immediate && !timeoutId) {
-      func.apply(context, args)
-    }
-    
-    // 前置执行
-    if (leading && now - lastCallTime >= delay) {
-      func.apply(context, args)
-      lastCallTime = now
-    }
-    
-    // 设置延迟执行
-    if (trailing) {
-      timeoutId = setTimeout(() => {
-        func.apply(context, args)
-        timeoutId = null
-        lastCallTime = Date.now()
-      }, delay)
-    }
-    
-    // 最大等待时间限制
-    if (maxWait && !maxTimeoutId) {
-      maxTimeoutId = setTimeout(() => {
-        func.apply(context, args)
-        if (timeoutId) clearTimeout(timeoutId)
-        timeoutId = null
-        maxTimeoutId = null
-        lastCallTime = Date.now()
-      }, maxWait)
-    }
-  }
-}
+项目已集成lodash.debounce，使用方式参考[ActionButtons组件](mdc:src/components/ActionButtons/index.vue)：
 
-// 节流实现
-export function throttle(func, limit = 300) {
-  let inThrottle = false
-  
-  return function throttled(...args) {
-    if (!inThrottle) {
-      func.apply(this, args)
-      inThrottle = true
-      setTimeout(() => inThrottle = false, limit)
-    }
-  }
-}
-```
-
-### 组件中的防抖应用
 ```javascript
+// 从统一工具函数导入
+import { debounce, throttle } from '@/utils'
+
 // 组件防抖使用标准
 export default {
   created() {
-    // 搜索防抖
-    this.debouncedSearch = smartDebounce(this.handleSearch, 300, {
-      maxWait: 1000 // 最多1秒执行一次
-    })
+    // 搜索防抖 - 标准300ms延迟
+    this.debouncedSearch = debounce(this.handleSearch, 300)
     
-    // 保存防抖
-    this.debouncedSave = smartDebounce(this.handleSave, 500, {
-      leading: false,
-      trailing: true
-    })
+    // 保存防抖 - 较长延迟避免误操作
+    this.debouncedSave = debounce(this.handleSave, 500)
     
-    // 滚动节流
+    // 滚动节流 - 高频操作使用节流
     this.throttledScroll = throttle(this.handleScroll, 16) // 60fps
   },
   
   beforeDestroy() {
-    // 清理防抖函数
+    // 清理防抖函数（如果支持）
     if (this.debouncedSearch.cancel) {
       this.debouncedSearch.cancel()
+    }
+  },
+  
+  methods: {
+    handleButtonClick(button) {
+      // 所有按钮点击都应该有防抖保护
+      const debouncedHandler = debounce(() => {
+        this.$emit(button.event || 'click', button)
+      }, 300)
+      
+      debouncedHandler()
     }
   }
 }
 ```
+
+### 防抖节流应用场景
+- **搜索输入**：300ms防抖，避免频繁API调用
+- **按钮点击**：300ms防抖，防止重复提交
+- **表单保存**：500ms防抖，给用户确认时间
+- **滚动事件**：16ms节流，保持60fps流畅度
+- **窗口大小调整**：100ms节流，避免频繁重计算
 
 ## 用户体验优化模式
 
@@ -429,11 +363,6 @@ const FeedbackSystem = {
       }
       
       this.$message(config)
-      
-      // 触发成功音效（如果支持）
-      if (this.playSound) {
-        this.playSound('success')
-      }
     },
     
     // 错误操作反馈
@@ -456,16 +385,6 @@ const FeedbackSystem = {
       }
     },
     
-    // 警告反馈
-    showWarning(message, options = {}) {
-      this.$message.warning({
-        message,
-        duration: 4000,
-        showClose: true,
-        ...options
-      })
-    },
-    
     // 提取错误信息
     extractErrorMessage(error) {
       if (typeof error === 'string') return error
@@ -480,6 +399,104 @@ const FeedbackSystem = {
       if (error.response?.status >= 500) return true
       if (error.code === 'NETWORK_ERROR') return true
       return false
+    }
+  }
+}
+```
+
+## 图表组件标准化
+
+### ECharts集成规范
+参考[ProcessCurveChart组件](mdc:src/views/master-data/process-parameter/components/ProcessCurveChart.vue)的实现：
+
+```javascript
+// ECharts组件标准实现
+import { echarts } from '@/utils'
+
+export default {
+  name: 'ChartComponent',
+  
+  props: {
+    // 图表数据
+    data: { type: Array, required: true },
+    // 图表配置
+    options: { type: Object, default: () => ({}) },
+    // 主题
+    theme: { type: String, default: 'light' },
+    // 尺寸
+    height: { type: [String, Number], default: '400px' },
+    width: { type: [String, Number], default: '100%' }
+  },
+  
+  data() {
+    return {
+      chart: null,
+      resizeObserver: null
+    }
+  },
+  
+  mounted() {
+    this.initChart()
+    this.setupResize()
+  },
+  
+  beforeDestroy() {
+    this.cleanup()
+  },
+  
+  methods: {
+    initChart() {
+      try {
+        // 初始化图表实例
+        this.chart = echarts.init(this.$refs.chartContainer, this.theme)
+        
+        // 设置图表配置
+        this.updateChart()
+        
+        // 添加事件监听
+        this.chart.on('click', this.handleChartClick)
+      } catch (error) {
+        console.error('图表初始化失败:', error)
+        this.$emit('error', error)
+      }
+    },
+    
+    updateChart() {
+      if (!this.chart) return
+      
+      try {
+        const option = this.generateOption()
+        this.chart.setOption(option, true)
+      } catch (error) {
+        console.error('图表更新失败:', error)
+        this.$emit('error', error)
+      }
+    },
+    
+    setupResize() {
+      // 使用ResizeObserver监听容器大小变化
+      if (window.ResizeObserver) {
+        this.resizeObserver = new ResizeObserver(() => {
+          if (this.chart) {
+            this.chart.resize()
+          }
+        })
+        this.resizeObserver.observe(this.$refs.chartContainer)
+      }
+    },
+    
+    cleanup() {
+      // 清理图表实例
+      if (this.chart) {
+        this.chart.dispose()
+        this.chart = null
+      }
+      
+      // 清理观察者
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
     }
   }
 }
@@ -598,22 +615,108 @@ const MemoryManagement = {
 }
 ```
 
+## 向后兼容性设计
+
+### 特性开关模式
+参考[ActionButtons组件](mdc:src/components/ActionButtons/index.vue)的兼容性设计：
+
+```javascript
+// 向后兼容的特性开关
+export default {
+  props: {
+    // 启用现代化特性
+    enableModernFeatures: {
+      type: Boolean,
+      default: false // 默认关闭，确保向后兼容
+    },
+    
+    // 传统模式配置
+    buttons: { type: Array, required: true },
+    
+    // 现代模式配置
+    preset: { type: String, default: '' },
+    theme: { type: String, default: 'default' }
+  },
+  
+  computed: {
+    // 根据特性开关决定使用哪种模式
+    effectiveButtons() {
+      if (this.enableModernFeatures && this.preset) {
+        return this.getPresetButtons(this.preset)
+      }
+      return this.buttons // 兼容传统用法
+    }
+  },
+  
+  methods: {
+    handleClick(button) {
+      if (this.enableModernFeatures) {
+        // 现代模式：添加防抖、错误处理等
+        this.modernClickHandler(button)
+      } else {
+        // 传统模式：保持原有行为
+        this.legacyClickHandler(button)
+      }
+    }
+  }
+}
+```
+
+## ESLint代码质量标准
+
+### 必须解决的ESLint错误类型
+基于项目当前存在的问题，重点关注：
+
+1. **未使用变量清理**：删除或注释未使用的导入和变量
+2. **重复键检查**：避免对象中的重复键定义
+3. **原型方法访问**：使用Object.prototype.hasOwnProperty.call()替代直接访问
+4. **组件注册检查**：确保注册的组件都被使用
+
+```javascript
+// ESLint问题修复示例
+
+// ❌ 错误：未使用的导入
+import { CommonButtons, generateTableButtons } from '@/utils/button-helper'
+
+// ✅ 正确：删除未使用的导入
+// 如果确实需要，添加eslint-disable注释
+// eslint-disable-next-line no-unused-vars
+import { CommonButtons } from '@/utils/button-helper'
+
+// ❌ 错误：重复键
+const methods = {
+  formatPrice() { return 'old' },
+  formatPrice() { return 'new' } // 重复键
+}
+
+// ✅ 正确：移除重复键
+const methods = {
+  formatPrice() { return 'new' }
+}
+
+// ❌ 错误：直接访问原型方法
+if (obj.hasOwnProperty('key')) {}
+
+// ✅ 正确：安全的原型方法访问
+if (Object.prototype.hasOwnProperty.call(obj, 'key')) {}
+```
+
 ## 现代化质量检查清单
+
+### 必须检查项（强制性）
+- [ ] **依赖管理**：所有第三方库已正确安装（如echarts、lodash.*）
+- [ ] **ESLint合规**：代码通过ESLint检查，无错误警告
+- [ ] **错误边界**：关键组件实现了ErrorBoundary保护
+- [ ] **防抖保护**：用户交互操作添加了防抖/节流
+- [ ] **类型验证**：Props进行了严格的类型验证
+- [ ] **内存清理**：定时器、事件监听器、观察者正确清理
 
 ### 性能检查项
 - [ ] 大数据列表（>1000项）实现了虚拟滚动
-- [ ] 用户交互操作添加了防抖/节流保护
 - [ ] 组件和路由实现了懒加载
 - [ ] 图片和媒体资源实现了懒加载
 - [ ] 复杂计算使用了计算属性缓存
 - [ ] 大对象使用了Object.freeze优化
-
-### 容错检查项
-- [ ] 关键组件实现了错误边界保护
-- [ ] API调用有完善的错误处理和重试机制
-- [ ] 数据访问使用了安全的getter方法
-- [ ] 异常情况提供了合理的降级UI
-- [ ] 错误信息被正确收集和上报
 
 ### 体验检查项
 - [ ] 所有异步操作有loading状态提示
@@ -622,12 +725,11 @@ const MemoryManagement = {
 - [ ] 在不同设备尺寸上表现良好
 - [ ] 交互动画流畅自然（60fps）
 
-### 代码质量检查项
-- [ ] Props进行了严格的类型验证
-- [ ] 组件职责单一，逻辑清晰
-- [ ] 定时器和事件监听器正确清理
-- [ ] 代码通过ESLint检查无警告
-- [ ] 关键功能有单元测试覆盖
+### 兼容性检查项
+- [ ] 新功能通过特性开关控制
+- [ ] 现有代码无需修改即可工作
+- [ ] 提供平滑的迁移路径
+- [ ] 详细的升级文档和示例
 
 ## 性能基准要求
 
@@ -643,11 +745,40 @@ const MemoryManagement = {
 - **内存使用增长**：< 10MB/小时
 - **JavaScript执行时间**：< 50ms per frame
 
-## 最佳实践总结
+### 网络性能指标
+- **API响应时间**：< 500ms
+- **静态资源加载**：< 3秒
+- **图片优化率**：> 70%
+- **代码分割效果**：初始包 < 250KB
+
+## 实际应用指导
+
+### 组件开发流程
+1. **需求分析**：明确组件功能和性能要求
+2. **技术选型**：选择合适的第三方库和技术方案
+3. **架构设计**：设计组件API和内部结构
+4. **编码实现**：遵循本规范进行开发
+5. **质量检查**：使用检查清单验证质量
+6. **测试验证**：功能测试、性能测试、兼容性测试
+7. **文档完善**：编写使用文档和示例
+
+### 代码评审要点
+1. **依赖检查**：确认所有依赖已正确安装
+2. **ESLint合规**：代码无ESLint错误和警告
+3. **性能评估**：是否满足性能基准要求
+4. **错误处理**：是否有完善的错误处理机制
+5. **用户体验**：是否提供良好的交互反馈
+6. **兼容性**：是否保持向后兼容
+
+### 最佳实践总结
 
 1. **始终考虑边界情况**：空数据、网络错误、用户权限等
 2. **优先考虑用户体验**：加载状态、错误提示、操作反馈
 3. **保持代码的可维护性**：清晰的命名、合理的抽象、充分的文档
 4. **持续性能监控**：建立性能基准，定期检查和优化
 5. **渐进式增强**：核心功能稳定可用，增强功能按需加载
+6. **拥抱第三方生态**：使用成熟的第三方库而非重复造轮子
+7. **确保项目质量**：所有组件都应通过质量检查清单验证
+
+通过遵循这些现代前端开发范式，我们可以确保项目中的每个组件都达到最佳实践标准，提供出色的用户体验和可维护的代码质量。
 
