@@ -2,6 +2,14 @@
  * Created by PanJiaChen on 16/11/18.
  */
 
+// 第三方库工具函数导出
+import debounce from 'lodash.debounce'
+import throttle from 'lodash.throttle'
+import cloneDeep from 'lodash.clonedeep'
+
+// 导出第三方库工具函数
+export { debounce, throttle, cloneDeep }
+
 /**
  * Parse the time to string
  * @param {(Object|string|number)} time

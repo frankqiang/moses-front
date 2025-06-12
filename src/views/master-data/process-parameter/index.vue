@@ -20,20 +20,20 @@
     />
 
     <!-- 表格组件 -->
-    <process-template-table 
+    <process-template-table
       ref="templateTable"
-      :data="list" 
-      :total="total" 
-      :loading="listLoading" 
-      :page="listQuery.page" 
-      :limit="listQuery.limit" 
+      :data="list"
+      :total="total"
+      :loading="listLoading"
+      :page="listQuery.page"
+      :limit="listQuery.limit"
       :import-api="'/mes/master-data/process-parameter/import'"
       :template-api="'/mes/master-data/process-parameter/download-template'"
       :export-api="'/mes/master-data/process-parameter/export'"
-      @selection-change="handleSelectionChange" 
-      @size-change="handleSizeChange" 
-      @current-change="handleCurrentChange" 
-      @update="handleUpdate" 
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      @update="handleUpdate"
       @view="handleView"
       @delete="handleDelete"
       @submit-approval="handleSubmitApproval"
@@ -124,11 +124,11 @@ export default {
     // 获取工艺模板列表
     getList() {
       this.listLoading = true
-      
+
       // 先获取所有炉型数据
       getAllFurnaceTypes().then(furnaceResponse => {
         let furnaceTypes = []
-        
+
         // 处理嵌套的API返回结构
         if (furnaceResponse && furnaceResponse.code === 20000) {
           if (furnaceResponse.data && furnaceResponse.data.items) {
@@ -139,26 +139,26 @@ export default {
             furnaceTypes = furnaceResponse.data
           }
         }
-        
+
         // 创建炉型ID到名称的映射表
         const furnaceTypeMap = {}
         furnaceTypes.forEach(type => {
           furnaceTypeMap[type.furnaceTypeCode || type.id] = type.furnaceTypeName || type.name
         })
-        
+
         console.log('炉型映射表:', furnaceTypeMap)
         console.log('当前查询参数:', this.listQuery)
-        
+
         // 获取工艺模板列表
         getProcessTemplateList(this.listQuery).then(response => {
           this.listLoading = false
-          
+
           if (response && response.code === 20000 && response.data) {
             this.list = response.data.items || []
             this.total = response.data.total || 0
-            
+
             console.log('API返回数据:', this.list)
-            
+
             // 添加炉型名称字段
             this.list.forEach(item => {
               if (item.furnaceTypeId && furnaceTypeMap[item.furnaceTypeId]) {
@@ -177,7 +177,7 @@ export default {
         this.$message.error('获取炉型数据失败')
       })
     },
-    
+
     // 搜索
     handleSearch(formData) {
       console.log('接收到的搜索参数:', formData)
@@ -190,7 +190,7 @@ export default {
       console.log('最终查询参数:', this.listQuery)
       this.getList()
     },
-    
+
     // 重置
     handleReset() {
       console.log('接收到重置事件')
@@ -200,52 +200,52 @@ export default {
         limit: this.listQuery.limit || 10
         // 不再包含其他查询参数
       }
-      
+
       console.log('重置后的查询参数:', this.listQuery)
       // 立即触发查询
       this.$nextTick(() => {
         this.getList()
       })
     },
-    
+
     // 选择变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
     },
-    
+
     // 每页条数变化
     handleSizeChange(val) {
       this.listQuery.limit = val
       this.getList()
     },
-    
+
     // 当前页变化
     handleCurrentChange(val) {
       this.listQuery.page = val
       this.getList()
     },
-    
+
     // 新增
     handleCreate() {
       this.drawerType = 'create'
       this.currentTemplate = null
       this.drawerVisible = true
     },
-    
+
     // 编辑
     handleUpdate(row) {
       this.drawerType = 'update'
       this.currentTemplate = row
       this.drawerVisible = true
     },
-    
+
     // 查看
     handleView(row) {
       this.drawerType = 'view'
       this.currentTemplate = row
       this.drawerVisible = true
     },
-    
+
     // 删除
     handleDelete(row) {
       deleteProcessTemplate(row.id).then(() => {
@@ -261,7 +261,7 @@ export default {
         })
       })
     },
-    
+
     // 提交审批
     handleSubmitApproval(row) {
       submitProcessTemplateForApproval(row.id).then(() => {
@@ -277,7 +277,7 @@ export default {
         })
       })
     },
-    
+
     // 审批
     handleApprove(row, approved, comment) {
       approveProcessTemplate(row.id, approved, comment).then(() => {
@@ -293,7 +293,7 @@ export default {
         })
       })
     },
-    
+
     // 创建新版本
     handleNewVersion(row) {
       createNewVersion(row.id).then(response => {
@@ -316,7 +316,7 @@ export default {
         })
       })
     },
-    
+
     // 表单提交
     handleFormSubmit(formData) {
       if (this.drawerType === 'create') {
@@ -351,13 +351,13 @@ export default {
         })
       }
     },
-    
+
     // 抽屉关闭
     handleDrawerClose() {
       this.drawerVisible = false
       this.currentTemplate = null
     },
-    
+
     // 批量删除
     handleBatchDelete(rows) {
       const ids = rows.map(row => row.id)
@@ -374,7 +374,7 @@ export default {
         })
       })
     },
-    
+
     // 批量启用
     handleBatchEnable(rows) {
       const ids = rows.map(row => row.id)
@@ -391,7 +391,7 @@ export default {
         })
       })
     },
-    
+
     // 批量禁用
     handleBatchDisable(rows) {
       const ids = rows.map(row => row.id)
@@ -408,7 +408,7 @@ export default {
         })
       })
     },
-    
+
     // 导入成功
     handleImportSuccess(response) {
       this.$message({
@@ -417,7 +417,7 @@ export default {
       })
       this.getList()
     },
-    
+
     // 导出成功
     handleExportSuccess() {
       this.$message({

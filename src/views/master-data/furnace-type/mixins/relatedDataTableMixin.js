@@ -12,9 +12,9 @@ export default {
       activeTab: 'equipment'
     }
   },
-  
+
   computed: {
-    
+
     // 设备表格列配置
     equipmentColumns() {
       return [
@@ -22,7 +22,7 @@ export default {
         { prop: 'name', label: '设备名称', minWidth: '300' }
       ]
     },
-    
+
     // 模板表格列配置
     templateColumns() {
       return [
@@ -30,27 +30,27 @@ export default {
         { prop: 'templateName', label: '模板名称', minWidth: '300' }
       ]
     },
-    
+
     // 关联设备数据（直接返回，不过滤）
     filteredEquipment() {
       return this.relatedEquipment || []
     },
-    
+
     // 关联模板数据（直接返回，不过滤）
     filteredTemplates() {
       return this.relatedTemplates || []
     }
   },
-  
+
   methods: {
     // 标签页切换
     handleTabClick(tab) {
       this.activeTab = tab.name
     },
-    
+
     // 重置关联数据状态
     resetRelatedDataState() {
       this.activeTab = 'equipment'
     }
   }
-} 
+}

@@ -4,50 +4,50 @@
  * 创建日期：2023-12-10
  */
 <template>
-  <div class="batch-actions-dropdown" v-if="showToolbar">
+  <div v-if="showToolbar" class="batch-actions-dropdown">
     <!-- 选中行计数显示 -->
     <span v-if="showSelectedCount" class="selected-count">
-      <i class="el-icon-tickets"></i>
+      <i class="el-icon-tickets" />
       已选择 <span class="count">{{ selectedRows.length }}</span> 项
     </span>
-    
+
     <!-- 批量操作下拉菜单 -->
-    <el-dropdown @command="handleBatchCommand" trigger="click">
+    <el-dropdown trigger="click" @command="handleBatchCommand">
       <el-button type="primary" size="mini">
-        批量操作 <i class="el-icon-arrow-down el-icon--right"></i>
+        批量操作 <i class="el-icon-arrow-down el-icon--right" />
       </el-button>
-      
+
       <el-dropdown-menu slot="dropdown">
         <!-- 批量删除 -->
         <el-dropdown-item v-if="!hideDeleteButton" command="delete" :disabled="deleteDisabled">
-          <i :class="deleteIcon"></i> {{ deleteText || '批量删除' }}
+          <i :class="deleteIcon" /> {{ deleteText || '批量删除' }}
         </el-dropdown-item>
-        
+
         <!-- 批量启用/禁用 -->
         <template v-if="!hideStatusButtons">
           <el-dropdown-item command="enable" :disabled="statusDisabled">
-            <i :class="enableIcon"></i> {{ enableText || '批量启用' }}
+            <i :class="enableIcon" /> {{ enableText || '批量启用' }}
           </el-dropdown-item>
           <el-dropdown-item command="disable" :disabled="statusDisabled">
-            <i :class="disableIcon"></i> {{ disableText || '批量禁用' }}
+            <i :class="disableIcon" /> {{ disableText || '批量禁用' }}
           </el-dropdown-item>
         </template>
-        
+
         <!-- 自定义操作按钮 -->
         <template v-for="(action, index) in customActions">
-          <el-dropdown-item 
+          <el-dropdown-item
             v-if="checkActionEnabled(action)"
             :key="index"
-            :command="action.action || action.key || action" 
+            :command="action.action || action.key || action"
             :disabled="!checkActionEnabled(action) || action.disabled"
             :divided="action.divided"
           >
-            <i v-if="action.icon" :class="action.icon"></i> {{ action.label || action.text }}
+            <i v-if="action.icon" :class="action.icon" /> {{ action.label || action.text }}
           </el-dropdown-item>
         </template>
-        
+
         <!-- 自定义下拉菜单项插槽 -->
-        <slot></slot>
+        <slot />
       </el-dropdown-menu>
     </el-dropdown>
   </div>
@@ -191,11 +191,11 @@ export default {
           this.handleCustomCommand(command)
       }
     },
-    
+
     // 处理批量删除
     handleBatchDelete() {
       if (this.deleteDisabled) return
-      
+
       if (this.deleteConfirm) {
         this.$confirm(this.deleteConfirmText, this.deleteConfirmTitle, {
           confirmButtonText: '确定',
@@ -210,16 +210,16 @@ export default {
         this.emitBatchDelete()
       }
     },
-    
+
     // 发送批量删除事件
     emitBatchDelete() {
       this.$emit('batch-delete', this.selectedRows)
     },
-    
+
     // 处理批量启用
     handleBatchEnable() {
       if (this.statusDisabled) return
-      
+
       if (this.statusConfirm) {
         this.$confirm('确认批量启用选中项吗？', '提示', {
           confirmButtonText: '确定',
@@ -234,17 +234,17 @@ export default {
         this.emitBatchEnable()
       }
     },
-    
+
     // 发送批量启用事件
     emitBatchEnable() {
       this.$emit('batch-enable', this.selectedRows)
       this.$emit('batch-status', this.selectedRows, 1)
     },
-    
+
     // 处理批量禁用
     handleBatchDisable() {
       if (this.statusDisabled) return
-      
+
       if (this.statusConfirm) {
         this.$confirm('确认批量禁用选中项吗？', '提示', {
           confirmButtonText: '确定',
@@ -259,41 +259,41 @@ export default {
         this.emitBatchDisable()
       }
     },
-    
+
     // 发送批量禁用事件
     emitBatchDisable() {
       this.$emit('batch-disable', this.selectedRows)
       this.$emit('batch-status', this.selectedRows, 0)
     },
-    
+
     // 检查自定义操作是否启用
     checkActionEnabled(action) {
       // 如果有条件函数，执行条件判断
       if (typeof action.condition === 'function') {
         return action.condition(this.selectedRows)
       }
-      
+
       // 如果有minSelection属性，检查选中行是否达到最小数量
       if (action.minSelection !== undefined) {
         return this.selectedRows.length >= action.minSelection
       }
-      
+
       // 如果有maxSelection属性，检查选中行是否未超过最大数量
       if (action.maxSelection !== undefined) {
         return this.selectedRows.length <= action.maxSelection
       }
-      
+
       // 默认启用
       return true
     },
-    
+
     // 处理自定义命令
     handleCustomCommand(command) {
       // 找到对应的自定义操作
-      const action = this.customActions.find(item => 
+      const action = this.customActions.find(item =>
         (item.action || item.key || item) === command
       )
-      
+
       if (action) {
         this.$emit('custom-action', action, this.selectedRows)
       }
@@ -307,12 +307,12 @@ export default {
   display: inline-flex;
   align-items: center;
   margin-right: 8px;
-  
+
   .selected-count {
     margin-right: 8px;
     font-size: 13px;
     color: #606266;
-    
+
     .count {
       font-weight: bold;
       color: #409EFF;

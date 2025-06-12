@@ -13,7 +13,7 @@
     >
       新增{{ getEquipmentTypeLabel() }}
     </el-button>
-    
+
     <el-button
       type="danger"
       icon="el-icon-delete"
@@ -23,17 +23,17 @@
     >
       批量删除
     </el-button>
-    
+
     <el-dropdown
-      @command="handleBatchStatus"
       :disabled="selectedIds.length === 0"
+      @command="handleBatchStatus"
     >
       <el-button
         type="info"
         size="small"
         :disabled="selectedIds.length === 0"
       >
-        批量操作<i class="el-icon-arrow-down el-icon--right"></i>
+        批量操作<i class="el-icon-arrow-down el-icon--right" />
       </el-button>
       <el-dropdown-menu slot="dropdown">
         <el-dropdown-item command="enable">批量启用</el-dropdown-item>
@@ -69,27 +69,27 @@ export default {
       }
       return typeMap[this.equipmentType] || '设备'
     },
-    
+
     // 新增按钮点击事件
     handleCreate() {
       this.$emit('create')
     },
-    
+
     // 批量删除按钮点击事件
     handleBatchDelete() {
       if (this.selectedIds.length === 0) {
         return
       }
-      
+
       this.$emit('batch-delete', this.selectedIds)
     },
-    
+
     // 批量状态操作
     handleBatchStatus(command) {
       if (this.selectedIds.length === 0) {
         return
       }
-      
+
       const status = command === 'enable' ? 1 : 0
       this.$emit('batch-status', this.selectedIds, status)
     }
@@ -108,4 +108,4 @@ export default {
 .el-dropdown {
   margin-right: 10px;
 }
-</style> 
+</style>

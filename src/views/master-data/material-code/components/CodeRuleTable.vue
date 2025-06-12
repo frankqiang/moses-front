@@ -8,31 +8,56 @@
 <template>
   <div class="code-rule-table">
 
-
     <!-- 使用全局表格工具栏组件 -->
-    <table-toolbar :enable-column-settings="true" :column-options="allColumns" :storage-key="currentStorageKey"
-      :default-visible-columns="visibleColumnsList" :enable-batch-actions="true" :selected-rows="selectedRows"
-      :enable-import="true" :import-api="importApiFunction" :template-api="templateApiFunction" :enable-export="true"
-      :export-api="exportApiFunction" :export-params="exportParams" :status-buttons-mode="'buttons'"
-      :status-confirm="false" :delete-confirm="false" :table-data="data" @refresh="handleRefresh"
-      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable" @import-success="handleImportSuccess" @export-success="handleExportSuccess">
+    <table-toolbar
+      :enable-column-settings="true"
+      :column-options="allColumns"
+      :storage-key="currentStorageKey"
+      :default-visible-columns="visibleColumnsList"
+      :enable-batch-actions="true"
+      :selected-rows="selectedRows"
+      :enable-import="true"
+      :import-api="importApiFunction"
+      :template-api="templateApiFunction"
+      :enable-export="true"
+      :export-api="exportApiFunction"
+      :export-params="exportParams"
+      :status-buttons-mode="'buttons'"
+      :status-confirm="false"
+      :delete-confirm="false"
+      :table-data="data"
+      @refresh="handleRefresh"
+      @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @import-success="handleImportSuccess"
+      @export-success="handleExportSuccess"
+    >
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增规则</el-button>
         <!-- 说明提示 -->
         <div class="description">
           <el-alert title="说明：物料编码规则用于定义料框ID的生成规则及二维码内容。系统将根据配置的规则自动生成料框ID。" type="info" :closable="false" show-icon />
         </div>
-        <slot name="toolbar-left"></slot>
+        <slot name="toolbar-left" />
       </template>
 
       <template #toolbar-right>
-        <slot name="toolbar-right"></slot>
+        <slot name="toolbar-right" />
       </template>
     </table-toolbar>
 
-    <el-table v-loading="loading" :data="data" border highlight-current-row :fit="true" style="width: 100%"
-      @selection-change="handleSelectionChange" :row-class-name="tableRowClassName">
+    <el-table
+      v-loading="loading"
+      :data="data"
+      border
+      highlight-current-row
+      :fit="true"
+      style="width: 100%"
+      :row-class-name="tableRowClassName"
+      @selection-change="handleSelectionChange"
+    >
       <el-table-column type="selection" width="45" align="center" />
 
       <template v-for="col in tableColumns">
@@ -66,15 +91,24 @@
       <el-table-column label="操作" width="150" align="center" fixed="right">
         <template slot-scope="scope">
           <!-- 使用ActionButtons组件替代原来的按钮组 -->
-          <action-buttons :buttons="getActionButtons(scope.row)" mode="text" :row="scope.row"
-            @click="handleActionClick" />
+          <action-buttons
+            :buttons="getActionButtons(scope.row)"
+            mode="text"
+            :row="scope.row"
+            @click="handleActionClick"
+          />
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 分页 -->
-    <pagination v-show="total > 0" :total="total" :page.sync="currentPage" :limit.sync="pageSize"
-      @pagination="handlePagination" />
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      :page.sync="currentPage"
+      :limit.sync="pageSize"
+      @pagination="handlePagination"
+    />
   </div>
 </template>
 

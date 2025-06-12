@@ -11,9 +11,9 @@
     :close-on-click-modal="false"
     :close-on-press-escape="closeOnPressEscape"
     :before-close="handleClose"
+    append-to-body
     @open="handleOpen"
     @closed="handleClosed"
-    append-to-body
   >
     <el-form
       ref="form"
@@ -24,8 +24,8 @@
       @submit.native.prevent="submitForm"
     >
       <!-- 表单内容插槽 -->
-      <slot :form="formData"></slot>
-      
+      <slot :form="formData" />
+
       <!-- 默认表单项，如果没有提供自定义插槽 -->
       <template v-if="!$slots.default">
         <el-form-item
@@ -44,7 +44,7 @@
             :show-word-limit="item.showWordLimit"
             :clearable="item.clearable !== false"
           />
-          
+
           <!-- 选择器 -->
           <el-select
             v-else-if="item.type === 'select'"
@@ -77,7 +77,7 @@
             :rows="item.rows || 3"
             :clearable="item.clearable !== false"
           />
-          
+
           <!-- 日期选择器 -->
           <el-date-picker
             v-else-if="item.type === 'date'"
@@ -90,7 +90,7 @@
             :value-format="item.valueFormat"
             style="width: 100%"
           />
-          
+
           <!-- 数字输入框 -->
           <el-input-number
             v-else-if="item.type === 'number'"
@@ -104,7 +104,7 @@
             :placeholder="item.placeholder"
             style="width: 100%"
           />
-          
+
           <!-- 单选框组 -->
           <el-radio-group
             v-else-if="item.type === 'radio'"
@@ -120,7 +120,7 @@
               {{ opt.label }}
             </el-radio>
           </el-radio-group>
-          
+
           <!-- 复选框组 -->
           <el-checkbox-group
             v-else-if="item.type === 'checkbox'"
@@ -136,7 +136,7 @@
               {{ opt.label }}
             </el-checkbox>
           </el-checkbox-group>
-          
+
           <!-- 开关 -->
           <el-switch
             v-else-if="item.type === 'switch'"
@@ -147,7 +147,7 @@
             :active-value="item.activeValue"
             :inactive-value="item.inactiveValue"
           />
-          
+
           <!-- 上传 -->
           <el-upload
             v-else-if="item.type === 'upload'"
@@ -168,21 +168,21 @@
             :on-progress="item.onProgress"
             :on-remove="file => handleRemoveFile(file, item)"
           >
-            <i v-if="item.drag" class="el-icon-upload"></i>
+            <i v-if="item.drag" class="el-icon-upload" />
             <div v-if="item.drag" class="el-upload__text">
               将文件拖到此处，或<em>点击上传</em>
             </div>
             <el-button v-else size="small" type="primary">点击上传</el-button>
             <div v-if="item.tip" class="el-upload__tip">{{ item.tip }}</div>
           </el-upload>
-          
+
           <!-- 自定义插槽 -->
           <slot
             v-else-if="item.type === 'slot'"
             :name="item.slotName || item.prop"
             :form="formData"
           />
-          
+
           <!-- 默认为输入框 -->
           <el-input
             v-else
@@ -196,12 +196,12 @@
         </el-form-item>
       </template>
     </el-form>
-    
+
     <div slot="footer" class="dialog-footer">
       <!-- 表单按钮插槽 -->
       <slot name="footer">
         <el-button @click="handleCancel">取 消</el-button>
-        <el-button type="primary" @click="submitForm" :loading="loading">{{ confirmButtonText }}</el-button>
+        <el-button type="primary" :loading="loading" @click="submitForm">{{ confirmButtonText }}</el-button>
       </slot>
     </div>
   </el-dialog>
@@ -293,13 +293,13 @@ export default {
     // 表单标题
     formTitle() {
       if (this.title) return this.title
-      
+
       const modeMap = {
         add: '新增',
         edit: '编辑',
         view: '查看'
       }
-      
+
       return modeMap[this.mode] || '表单'
     }
   },
@@ -333,7 +333,7 @@ export default {
         this.dialogVisible = false
         return
       }
-      
+
       this.$refs.form.validate(valid => {
         if (valid) {
           this.$emit('submit', cloneDeep(this.formData))
@@ -342,25 +342,25 @@ export default {
         }
       })
     },
-    
+
     // 取消表单
     handleCancel() {
       this.dialogVisible = false
       this.$emit('cancel')
     },
-    
+
     // 关闭弹窗
     handleClose(done) {
       this.$emit('before-close')
       done()
     },
-    
+
     // 弹窗打开时
     handleOpen() {
       this.formData = cloneDeep(this.data)
       this.originFormData = cloneDeep(this.data)
       this.$emit('open')
-      
+
       // 表单处于查看模式时禁用所有输入框
       if (this.mode === 'view') {
         this.$nextTick(() => {
@@ -373,14 +373,14 @@ export default {
         })
       }
     },
-    
+
     // 弹窗关闭后
     handleClosed() {
       this.$refs.form.resetFields()
       this.formData = {}
       this.$emit('closed')
     },
-    
+
     // 处理上传成功
     handleUploadSuccess(response, item) {
       if (typeof item.onSuccess === 'function') {
@@ -393,7 +393,7 @@ export default {
         }
       }
     },
-    
+
     // 处理移除文件
     handleRemoveFile(file, item) {
       if (typeof item.onRemove === 'function') {
@@ -425,4 +425,4 @@ export default {
   color: #F56C6C;
   margin-right: 4px;
 }
-</style> 
+</style>

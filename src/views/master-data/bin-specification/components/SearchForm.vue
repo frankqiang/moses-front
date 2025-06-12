@@ -86,7 +86,7 @@ export default {
           ]
         }
       ]
-      
+
       // 高级搜索表单项（折叠状态下不显示）
       const advancedItems = [
         {
@@ -103,7 +103,7 @@ export default {
           placeholder: '输入供应商信息'
         }
       ]
-      
+
       // 合并所有表单项
       return [
         ...baseItems,
@@ -140,14 +140,14 @@ export default {
       }
       return params
     },
-    
+
     // 搜索操作
     handleSearch(model) {
       const params = this.prepareSearchParams(model)
       // 向父组件发送搜索事件
       this.$emit('search', params)
     },
-    
+
     // 重置搜索
     handleReset() {
       // 全局组件会将表单重置为空值，这里直接发出重置事件
@@ -158,10 +158,10 @@ export default {
         material: '',
         supplier: ''
       }
-      
+
       // 重置本地表单模型（确保下次搜索时不会回显旧值）
       this.formModel = { ...emptyModel }
-      
+
       // 向父组件发送重置事件
       this.$emit('reset', {})
     }
@@ -175,4 +175,4 @@ export default {
 .search-item-name {
   width: 220px;
 }
-</style> 
+</style>

@@ -6,16 +6,16 @@
  */
 <template>
   <el-dropdown
+    ref="columnDropdown"
     trigger="click"
     @command="handleCommand"
-    ref="columnDropdown"
   >
     <el-button :size="size" :type="type" :plain="plain">
-      <i class="el-icon-s-operation"></i>
+      <i class="el-icon-s-operation" />
       {{ text }}
-      <i class="el-icon-arrow-down el-icon--right"></i>
+      <i class="el-icon-arrow-down el-icon--right" />
     </el-button>
-    
+
     <el-dropdown-menu slot="dropdown" class="column-dropdown">
       <div class="column-dropdown-header">
         <el-checkbox
@@ -30,14 +30,15 @@
           <el-button type="text" :size="size" @click="resetSettings">重置</el-button>
         </div>
       </div>
-      
-      <el-dropdown-item divided></el-dropdown-item>
-      
-      <div class="column-item"
-        v-for="col in columnOptions" 
+
+      <el-dropdown-item divided />
+
+      <div
+        v-for="col in columnOptions"
         :key="col.prop"
+        class="column-item"
       >
-        <el-checkbox 
+        <el-checkbox
           v-model="tempColumnVisibility[col.prop]"
           @change="handleTempColumnChange"
         >
@@ -121,7 +122,7 @@ export default {
     handleCommand(command) {
       // 可以用于处理特殊命令
     },
-    
+
     // 初始化临时列可见性状态
     initTempColumnVisibility() {
       // 从配置存储服务获取可见列
@@ -131,29 +132,29 @@ export default {
           ? [...this.visibleColumns]
           : [...this.defaultVisibleColumns]
       )
-      
+
       // 初始化临时列可见性状态
       const tempVisibility = {}
       this.columnOptions.forEach(col => {
         tempVisibility[col.prop] = visibleColumns.includes(col.prop)
       })
-      
+
       this.tempColumnVisibility = tempVisibility
       this.updateTempCheckAllState()
     },
-    
+
     // 更新临时全选状态
     updateTempCheckAllState() {
       const selectedCount = Object.values(this.tempColumnVisibility).filter(v => v).length
       this.tempCheckAll = selectedCount === this.columnOptions.length
       this.tempIndeterminate = selectedCount > 0 && selectedCount < this.columnOptions.length
     },
-    
+
     // 临时列变化处理
     handleTempColumnChange() {
       this.updateTempCheckAllState()
     },
-    
+
     // 临时全选变化处理
     handleTempCheckAllChange(val) {
       Object.keys(this.tempColumnVisibility).forEach(key => {
@@ -161,22 +162,22 @@ export default {
       })
       this.tempIndeterminate = false
     },
-    
+
     // 应用列设置
     applySettings() {
       // 通过配置存储服务保存设置
       tableConfigStore.saveColumnConfig(this.storageKey, this.computedVisibleColumns)
-      
+
       // 发送列设置变更事件
       this.$emit('change', this.computedVisibleColumns)
-      
+
       // 提示用户
       this.$message.success('列设置已应用')
-      
+
       // 关闭下拉菜单
       this.$refs.columnDropdown.hide()
     },
-    
+
     // 重置列设置
     resetSettings() {
       // 重置为默认列配置
@@ -184,19 +185,19 @@ export default {
       this.columnOptions.forEach(col => {
         tempVisibility[col.prop] = this.defaultVisibleColumns.includes(col.prop)
       })
-      
+
       this.tempColumnVisibility = tempVisibility
       this.updateTempCheckAllState()
-      
+
       // 清除存储中保存的设置
       tableConfigStore.removeColumnConfig(this.storageKey)
-      
+
       // 发送列设置变更事件
       this.$emit('change', [...this.defaultVisibleColumns])
-      
+
       // 提示用户
       this.$message.success('列设置已重置为默认')
-      
+
       // 关闭下拉菜单
       this.$refs.columnDropdown.hide()
     }
@@ -218,7 +219,7 @@ export default {
     border-bottom: 1px solid #ebeef5;
     margin-bottom: 5px;
     background-color: #f5f7fa;
-    
+
     .column-dropdown-actions {
       .el-button {
         padding: 2px 5px;
@@ -226,12 +227,12 @@ export default {
       }
     }
   }
-  
+
   .column-item {
     padding: 8px 16px;
     line-height: 1.5;
     cursor: pointer;
-    
+
     .el-checkbox {
       width: 100%;
       display: flex;
@@ -250,4 +251,4 @@ export default {
     height: 1px;
   }
 }
-</style> 
+</style>

@@ -146,4 +146,4 @@ export function downloadLocationTemplate() {
     method: 'get',
     responseType: 'blob'
   })
-} 
+}

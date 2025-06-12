@@ -4,4 +4,4 @@ EnhancedForm.install = function(Vue) {
   Vue.component(EnhancedForm.name, EnhancedForm)
 }
 
-export default EnhancedForm 
+export default EnhancedForm

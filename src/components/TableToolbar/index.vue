@@ -7,9 +7,9 @@
   <div class="table-toolbar">
     <!-- 左侧工具栏区域 - 新增按钮 -->
     <div class="toolbar-left">
-      <slot name="toolbar-left"></slot>
+      <slot name="toolbar-left" />
     </div>
-    
+
     <!-- 右侧工具栏区域 - 其他所有功能按钮 -->
     <div class="toolbar-right">
       <!-- 批量操作工具栏 -->
@@ -41,9 +41,9 @@
         @batch-status="handleBatchStatus"
         @custom-action="handleCustomAction"
       >
-        <slot name="batch-actions"></slot>
+        <slot name="batch-actions" />
       </batch-action>
-      
+
       <!-- 导入按钮 -->
       <import-button
         v-if="enableImport"
@@ -59,10 +59,10 @@
         @import-error="handleImportError"
       >
         <template slot="tips">
-          <slot name="import-tips"></slot>
+          <slot name="import-tips" />
         </template>
       </import-button>
-      
+
       <!-- 导出按钮 -->
       <export-button
         v-if="enableExport"
@@ -77,14 +77,14 @@
         :need-confirm="exportConfirm"
         @export-success="handleExportSuccess"
         @export-error="handleExportError"
-      ></export-button>
-      
+      />
+
       <!-- 刷新按钮 -->
       <refresh-button
         size="mini"
         @refresh="handleRefresh"
       />
-      
+
       <!-- 列设置组件 -->
       <column-settings
         v-if="enableColumnSettings"
@@ -94,8 +94,8 @@
         :size="size"
         @change="handleColumnChange"
       />
-      
-      <slot name="toolbar-right"></slot>
+
+      <slot name="toolbar-right" />
     </div>
   </div>
 </template>
@@ -140,13 +140,13 @@ export default {
       type: Array,
       default: () => []
     },
-    
+
     // 表格数据
     tableData: {
       type: Array,
       default: () => []
     },
-    
+
     // 可见列
     visibleColumns: {
       type: Array,
@@ -323,24 +323,24 @@ export default {
     handleRefresh() {
       this.$emit('refresh')
     },
-    
+
     // BatchAction 相关方法
     handleBatchDelete() {
       this.$emit('batch-delete', this.selectedRows)
     },
-    
+
     handleBatchEnable() {
       this.$emit('batch-enable', this.selectedRows)
     },
-    
+
     handleBatchDisable() {
       this.$emit('batch-disable', this.selectedRows)
     },
-    
+
     handleBatchStatus(status) {
       this.$emit('batch-status', this.selectedRows, status)
     },
-    
+
     handleCustomAction(action) {
       this.$emit('custom-action', action, this.selectedRows)
     },
@@ -349,7 +349,7 @@ export default {
     handleImportSuccess(result) {
       this.$emit('import-success', result)
     },
-    
+
     handleImportError(error) {
       this.$emit('import-error', error)
     },
@@ -358,7 +358,7 @@ export default {
     handleExportSuccess(result) {
       this.$emit('export-success', result)
     },
-    
+
     handleExportError(error) {
       this.$emit('export-error', error)
     },
@@ -391,4 +391,4 @@ export default {
     flex-wrap: wrap;
   }
 }
-</style> 
+</style>

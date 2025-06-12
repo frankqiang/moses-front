@@ -11,28 +11,28 @@
     </div>
 
     <!-- 搜索表单 -->
-    <search-form 
-      :init-query="listQuery" 
+    <search-form
+      :init-query="listQuery"
       :loading="listLoading"
-      @search="handleSearch" 
+      @search="handleSearch"
       @reset="handleReset"
     />
 
     <!-- 表格组件 -->
-    <specification-table 
+    <specification-table
       ref="specTable"
-      :data="list" 
-      :total="total" 
-      :loading="listLoading" 
-      :page="listQuery.page" 
-      :limit="listQuery.limit" 
+      :data="list"
+      :total="total"
+      :loading="listLoading"
+      :page="listQuery.page"
+      :limit="listQuery.limit"
       :import-api="'/vue-admin-template/mes/bin-specification/import'"
       :template-api="'/vue-admin-template/mes/bin-specification/download-template'"
       :export-api="'/vue-admin-template/mes/bin-specification/export'"
-      @selection-change="handleSelectionChange" 
-      @size-change="handleSizeChange" 
-      @current-change="handleCurrentChange" 
-      @update="handleUpdate" 
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      @update="handleUpdate"
       @view="handleView"
       @status-change="handleStatusChange"
       @add="handleCreate"
@@ -313,15 +313,15 @@ export default {
         this.$message.warning('请至少选择一条记录')
         return
       }
-      
+
       // 只选择需要操作的行
       const targetRows = rows.filter(row => row.status !== targetStatus)
-      
+
       if (targetRows.length === 0) {
         this.$message.info(`所选记录已全部${statusText}，无需操作`)
         return
       }
-      
+
       this.$confirm(`确认批量${statusText}选中的记录吗？`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -363,14 +363,14 @@ export default {
 <style lang="scss" scoped>
 .app-container {
   padding: 24px;
-  
+
   .module-title {
     font-size: 18px;
     font-weight: bold;
     margin-bottom: 24px;
     color: #303133;
   }
-  
+
   .text-danger {
     color: #F56C6C;
     font-weight: bold;

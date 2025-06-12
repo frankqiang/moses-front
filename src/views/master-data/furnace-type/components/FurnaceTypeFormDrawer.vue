@@ -17,20 +17,20 @@
     <!-- 抽屉内容 -->
     <div class="furnace-type-form-container">
       <!-- 表单区域 -->
-              <enhanced-form
-          ref="enhancedForm"
-          :data="formData"
-          :mode="innerType"
-          :rules="formRules"
-          label-width="110px"
-          :loading="loading"
-          :validate-before-submit="true"
-          :show-footer="false"
-          @submit="handleFormSubmit"
-          @validate="handleCustomValidate"
-          @validate-error="handleValidateError"
-          @reset="handleFormReset"
-        >
+      <enhanced-form
+        ref="enhancedForm"
+        :data="formData"
+        :mode="innerType"
+        :rules="formRules"
+        label-width="110px"
+        :loading="loading"
+        :validate-before-submit="true"
+        :show-footer="false"
+        @submit="handleFormSubmit"
+        @validate="handleCustomValidate"
+        @validate-error="handleValidateError"
+        @reset="handleFormReset"
+      >
         <!-- 表单内容 -->
         <template v-slot="{ form, mode }">
           <!-- 一、基本信息 -->
@@ -72,8 +72,8 @@
               <el-col :span="24">
                 <el-form-item label="描述" prop="description">
                   <el-input
-                    type="textarea"
                     v-model="form.description"
+                    type="textarea"
                     placeholder="请输入炉型描述"
                     :rows="3"
                     maxlength="200"
@@ -88,7 +88,7 @@
           <!-- 二、能力参数配置 -->
           <div class="form-section">
             <div class="section-title">二、能力参数配置</div>
-            
+
             <!-- 设备功能开关 -->
             <div class="capability-group">
               <el-row :gutter="20">
@@ -143,7 +143,7 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-            
+
             </div>
 
             <!-- 参数限制 -->
@@ -197,8 +197,8 @@
             <div class="related-section">
               <el-tabs v-model="activeTab" type="card" @tab-click="handleTabClick">
                 <!-- 关联设备标签页 -->
-                <el-tab-pane 
-                  :label="`关联设备列表 (${relatedEquipment.length})`" 
+                <el-tab-pane
+                  :label="`关联设备列表 (${relatedEquipment.length})`"
                   name="equipment"
                 >
                   <div class="tab-content">
@@ -217,10 +217,10 @@
                     />
                   </div>
                 </el-tab-pane>
-                
+
                 <!-- 关联工艺模板标签页 -->
-                <el-tab-pane 
-                  :label="`关联工艺模板列表 (${relatedTemplates.length})`" 
+                <el-tab-pane
+                  :label="`关联工艺模板列表 (${relatedTemplates.length})`"
                   name="templates"
                 >
                   <div class="tab-content">
@@ -250,8 +250,8 @@
     <!-- 抽屉底部按钮 -->
     <template #footer>
       <el-button @click="handleCancel">{{ innerType === 'view' ? '关闭' : '取消' }}</el-button>
-      <el-button v-if="innerType === 'create'" type="primary" @click="handleSubmitAndContinue" :loading="loading">保存并继续</el-button>
-      <el-button v-if="innerType !== 'view'" type="primary" @click="handleSubmit" :loading="loading">{{ innerType === 'create' ? '确认保存' : '保存修改' }}</el-button>
+      <el-button v-if="innerType === 'create'" type="primary" :loading="loading" @click="handleSubmitAndContinue">保存并继续</el-button>
+      <el-button v-if="innerType !== 'view'" type="primary" :loading="loading" @click="handleSubmit">{{ innerType === 'create' ? '确认保存' : '保存修改' }}</el-button>
     </template>
   </base-drawer>
 </template>
@@ -338,7 +338,7 @@ export default {
 
     // 是否显示关联数据
     shouldShowRelatedData() {
-      return (this.innerType === 'update' || this.innerType === 'view') && 
+      return (this.innerType === 'update' || this.innerType === 'view') &&
              this.formData.furnaceTypeCode
     }
   },
@@ -352,7 +352,7 @@ export default {
     type(val) {
       this.innerType = val
     },
-    
+
     // 监听表单数据变化
     'formData.furnaceTypeCode': {
       handler(val) {
@@ -397,7 +397,7 @@ export default {
     // 加载关联数据
     loadRelatedData(id) {
       this.relatedItemsLoading = true
-      
+
       // 如果表单中已经有关联数据，直接使用
       if (this.formData.relatedEquipment && this.formData.relatedTemplates) {
         this.relatedEquipment = this.formData.relatedEquipment || []
@@ -405,7 +405,7 @@ export default {
         this.relatedItemsLoading = false
         return
       }
-      
+
       // 否则通过API获取
       Promise.all([
         getRelatedEquipment(id).catch(() => ({ data: [] })),
@@ -433,18 +433,18 @@ export default {
     // 处理表单提交
     handleFormSubmit(formData, continueEdit) {
       console.log('表单提交:', formData, continueEdit)
-      
+
       // 处理表单数据，转换为API需要的格式
       const submitData = {
         ...formData
       }
-      
+
       // 炉型代码字段统一使用furnaceTypeCode
       if (!submitData.furnaceTypeCode) {
         this.$message.error('炉型代码不能为空')
         return
       }
-      
+
       // 触发提交事件，传递 continueEdit 标志
       this.$emit('submit', submitData, continueEdit)
     },
@@ -466,7 +466,7 @@ export default {
       if (this.$refs.enhancedForm) {
         // 获取表单数据
         const formData = this.$refs.enhancedForm.getFormData()
-        
+
         // 手动验证
         this.$refs.enhancedForm.validate((valid) => {
           if (valid) {
@@ -481,7 +481,7 @@ export default {
       if (this.$refs.enhancedForm) {
         // 获取表单数据
         const formData = this.$refs.enhancedForm.getFormData()
-        
+
         // 手动验证
         this.$refs.enhancedForm.validate((valid) => {
           if (valid) {
@@ -512,10 +512,10 @@ export default {
     handleCancel() {
       this.$emit('close')
       this.$emit('update:visible', false)
-      
+
       // 重置表单数据
       this.formData = this.initFormData()
-      
+
       // 重置关联数据状态
       this.resetRelatedDataState()
     },
@@ -523,10 +523,10 @@ export default {
     // 打开抽屉表单
     open(type = 'create', data = null) {
       this.innerType = type
-      
+
       // 重置表单数据
       this.formData = this.initFormData()
-      
+
       // 设置数据（用于编辑和查看）
       if (data && (type === 'update' || type === 'view')) {
         this.formData = {
@@ -547,16 +547,16 @@ export default {
           relatedEquipment: data.relatedEquipment || [],
           relatedTemplates: data.relatedTemplates || []
         }
-        
+
         // 编辑或查看模式下加载关联数据
         if ((type === 'update' || type === 'view') && data.furnaceTypeCode) {
           this.loadRelatedData(data.furnaceTypeCode)
         }
       }
-      
+
       // 重置关联数据状态
       this.resetRelatedDataState()
-      
+
       // 打开抽屉
       this.drawerVisible = true
     },
@@ -564,12 +564,12 @@ export default {
     // 重置表单
     resetForm() {
       this.formData = this.initFormData()
-      
+
       // 清除表单验证
       if (this.$refs.enhancedForm) {
         this.$refs.enhancedForm.clearValidate()
       }
-      
+
       // 重置关联数据状态
       this.resetRelatedDataState()
     },
@@ -592,7 +592,7 @@ export default {
 // 表单分段样式
 .form-section {
   margin-bottom: 32px;
-  
+
   .section-title {
     font-size: 16px;
     font-weight: bold;
@@ -606,7 +606,7 @@ export default {
 // 能力配置组样式
 .capability-group {
   margin-bottom: 20px;
-  
+
   .group-title {
     font-size: 14px;
     font-weight: 600;
@@ -617,15 +617,15 @@ export default {
     border-radius: 4px;
     border-left: 3px solid #409EFF;
   }
-  
+
   .el-form-item {
     margin-bottom: 16px;
-    
+
     :deep(.el-form-item__label) {
       font-weight: 500;
       color: #606266;
     }
-    
+
     :deep(.el-switch) {
       margin-left: 10px;
     }
@@ -635,31 +635,31 @@ export default {
 // 关联数据区域样式
 .related-section {
   margin-top: 20px;
-  
+
   .el-tabs {
     :deep(.el-tabs__header) {
       margin-bottom: 20px;
-      
+
       .el-tabs__nav {
         border: 1px solid #e4e7ed;
         border-radius: 6px;
-        
+
         .el-tabs__item {
           border: none;
           padding: 12px 20px;
           font-weight: 500;
           color: #606266;
           transition: all 0.3s ease;
-          
+
           &.is-active {
             background: #409EFF;
             color: white;
-            
+
             &::before {
               display: none;
             }
           }
-          
+
           &:hover:not(.is-active) {
             background: #f5f7fa;
             color: #409EFF;
@@ -667,12 +667,12 @@ export default {
         }
       }
     }
-    
+
     :deep(.el-tabs__content) {
       padding: 0;
     }
   }
-  
+
   .tab-content {
     // 表格内容区域样式
   }
@@ -684,7 +684,7 @@ export default {
   padding-top: 16px;
   border-top: 1px solid #e6e6e6;
   text-align: right;
-  
+
   .el-button {
     margin-left: 12px;
   }
@@ -698,7 +698,7 @@ export default {
       color: #606266;
       font-weight: 600;
     }
-    
+
     .el-table__row {
       &:hover {
         background-color: #f5f7fa;
@@ -710,7 +710,7 @@ export default {
 // 表格内容为空时的样式
 :deep(.el-table__empty-block) {
   padding: 40px 0;
-  
+
   .el-table__empty-text {
     color: #909399;
     font-size: 14px;
@@ -724,4 +724,4 @@ export default {
     overflow-y: auto;
   }
 }
-</style> 
+</style>

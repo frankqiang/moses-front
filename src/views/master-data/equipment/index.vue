@@ -6,12 +6,11 @@
  */
 <template>
   <div class="app-container">
-    
 
     <!-- 设备类型导航 - Segmented Control -->
     <div class="equipment-type-navigation">
-      <div 
-        v-for="type in equipmentTypes" 
+      <div
+        v-for="type in equipmentTypes"
         :key="type.value"
         :class="['equipment-type-item', currentEquipmentType === type.value ? 'active' : '']"
         @click="handleEquipmentTypeChange(type.value)"
@@ -26,30 +25,30 @@
     </div>
 
     <!-- 搜索表单 -->
-    <search-form 
-      :init-query="listQuery" 
+    <search-form
+      :init-query="listQuery"
       :equipment-type="currentEquipmentType"
       :loading="listLoading"
-      @search="handleSearch" 
+      @search="handleSearch"
       @reset="handleReset"
     />
 
     <!-- 表格组件 -->
-    <equipment-table 
+    <equipment-table
       ref="equipmentTable"
-      :data="list" 
-      :total="total" 
-      :loading="listLoading" 
-      :page="listQuery.page" 
-      :limit="listQuery.limit" 
+      :data="list"
+      :total="total"
+      :loading="listLoading"
+      :page="listQuery.page"
+      :limit="listQuery.limit"
       :equipment-type="currentEquipmentType"
       :import-api="apiBaseUrl + '/import'"
       :template-api="apiBaseUrl + '/template'"
       :export-api="apiBaseUrl + '/export'"
-      @selection-change="handleSelectionChange" 
-      @size-change="handleSizeChange" 
-      @current-change="handleCurrentChange" 
-      @update="handleUpdate" 
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      @update="handleUpdate"
       @view="handleView"
       @status-change="handleStatusChange"
       @add="handleCreate"
@@ -140,17 +139,17 @@ export default {
     apiBaseUrl() {
       return `/api/equipment/${this.currentEquipmentType.toLowerCase()}`
     },
-    
+
     // 是否有禁用的设备（用于批量启用按钮）
     hasDisabledItems() {
-      return this.selectedRows && this.selectedRows.length > 0 && 
-             this.selectedRows.some(row => row.status === 0);
+      return this.selectedRows && this.selectedRows.length > 0 &&
+             this.selectedRows.some(row => row.status === 0)
     },
-    
+
     // 是否有启用的设备（用于批量禁用按钮）
     hasEnabledItems() {
-      return this.selectedRows && this.selectedRows.length > 0 && 
-             this.selectedRows.some(row => row.status === 1);
+      return this.selectedRows && this.selectedRows.length > 0 &&
+             this.selectedRows.some(row => row.status === 1)
     }
   },
   created() {
@@ -162,7 +161,7 @@ export default {
       const type = this.equipmentTypes.find(t => t.value === this.currentEquipmentType)
       return type ? type.label : ''
     },
-    
+
     // 切换设备类型
     handleEquipmentTypeChange(type) {
       this.currentEquipmentType = type
@@ -173,20 +172,20 @@ export default {
       }
       this.getList()
     },
-    
+
     // 获取设备列表
     getList() {
       this.listLoading = true
       getEquipmentList(this.listQuery).then(response => {
         this.list = response.data.items
         this.total = response.data.total
-        
+
         // 更新设备数量
         const countMap = response.data.countByType || {}
         this.equipmentTypes.forEach(type => {
           type.count = countMap[type.value] || 0
         })
-        
+
         this.listLoading = false
         // 滚动到顶部
         scrollTo(0, 500)
@@ -194,7 +193,7 @@ export default {
         this.listLoading = false
       })
     },
-    
+
     // 搜索
     handleSearch(params) {
       this.listQuery = {
@@ -204,7 +203,7 @@ export default {
       }
       this.getList()
     },
-    
+
     // 重置搜索
     handleReset(params) {
       this.listQuery = {
@@ -214,43 +213,43 @@ export default {
       }
       this.getList()
     },
-    
+
     // 选择行变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
     },
-    
+
     // 每页条数变化
     handleSizeChange(val) {
       this.listQuery.limit = val
       this.getList()
     },
-    
+
     // 页码变化
     handleCurrentChange(val) {
       this.listQuery.page = val
       this.getList()
     },
-    
+
     // 新增设备
     handleCreate() {
       this.drawerType = 'create'
       this.currentEquipment = null
       this.drawerVisible = true
     },
-    
+
     // 编辑设备
     handleUpdate(row) {
       this.drawerType = 'update'
       this.getEquipmentDetail(row.id)
     },
-    
+
     // 查看设备
     handleView(row) {
       this.drawerType = 'view'
       this.getEquipmentDetail(row.id)
     },
-    
+
     // 获取设备详情
     getEquipmentDetail(id) {
       this.listLoading = true
@@ -262,14 +261,14 @@ export default {
         this.listLoading = false
       })
     },
-    
+
     // 表单提交
     handleFormSubmit(formData, continueCreate) {
       this.listLoading = true
-      
+
       // 打印详细表单数据以便诊断
       console.log('父组件接收到的表单数据:', JSON.stringify(formData, null, 2))
-      
+
       // 增加记录，查看表单字段是否被修改
       const fieldsWithValues = Object.entries(formData)
         .filter(([key, value]) => {
@@ -280,47 +279,47 @@ export default {
           return value !== undefined && value !== null
         })
         .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-      
+
       console.log('表单中有效字段:', fieldsWithValues.join(', '))
-      
+
       // 确保数据完整性
       if (!formData || !formData.name || formData.name.trim() === '') {
         this.$message.warning('设备名称不能为空，提交中止')
         this.listLoading = false
         return
       }
-      
+
       // 设备类型特定校验
       if (formData.equipmentType === 'FURNACE' && (!formData.plcAddress || formData.plcAddress.trim() === '')) {
         this.$message.warning('PLC通讯地址不能为空，提交中止')
         this.listLoading = false
         return
       }
-      
+
       if (formData.equipmentType === 'CRANE' && (!formData.controlInterface || formData.controlInterface.trim() === '')) {
         this.$message.warning('控制系统接口不能为空，提交中止')
         this.listLoading = false
         return
       }
-      
+
       // 确保必须字段存在
       if (!formData.equipmentType) {
         formData.equipmentType = this.currentEquipmentType
       }
-      
+
       // 确保status是数字类型
       formData.status = Number(formData.status)
-      
+
       // 打印最终处理后的数据
       console.log('处理后的表单数据:', JSON.stringify(formData, null, 2))
-      
+
       if (this.drawerType === 'create') {
         // 新增
         createEquipment(formData)
           .then(response => {
             this.listLoading = false
             this.$message.success('新增设备成功')
-            
+
             if (continueCreate) {
               // 保存并继续，重置表单
               this.currentEquipment = null
@@ -329,7 +328,7 @@ export default {
               // 关闭抽屉
               this.drawerVisible = false
             }
-            
+
             // 刷新列表
             this.getList()
           })
@@ -345,7 +344,7 @@ export default {
             this.listLoading = false
             this.$message.success('更新设备成功')
             this.drawerVisible = false
-            
+
             // 刷新列表
             this.getList()
           })
@@ -356,17 +355,17 @@ export default {
           })
       }
     },
-    
+
     // 抽屉关闭
     handleDrawerClose() {
       this.currentEquipment = null
     },
-    
+
     // 切换设备状态
     handleStatusChange(row) {
       const newStatus = row.status === 1 ? 0 : 1
       const statusText = newStatus === 1 ? '启用' : '禁用'
-      
+
       this.$confirm(`确认${statusText}该设备吗?`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -382,29 +381,29 @@ export default {
         // 取消操作
       })
     },
-    
+
     // 批量删除
     handleBatchDelete(rows) {
       if (!rows || rows.length === 0) {
         this.$message.warning('请至少选择一条记录')
         return
       }
-      
+
       this.$confirm('确认批量删除选中的设备记录吗？此操作不可恢复', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
         this.listLoading = true
-        
+
         // 获取选中行的ID列表
         const ids = rows.map(row => row.id)
         console.log('批量删除设备IDs:', ids)
-        
+
         batchDeleteEquipment(ids).then(response => {
           this.$message.success(response.data.message || '批量删除成功')
           this.selectedRows = []
-          
+
           // 延迟执行，确保后端处理完成
           setTimeout(() => {
             this.getList()
@@ -419,29 +418,29 @@ export default {
         this.$message.info('已取消删除操作')
       })
     },
-    
+
     // 批量启用
     handleBatchEnable(rows) {
       this.handleBatchStatus(rows, 1, '启用')
     },
-    
+
     // 批量禁用
     handleBatchDisable(rows) {
       this.handleBatchStatus(rows, 0, '禁用')
     },
-    
+
     // 批量更改状态
     handleBatchStatus(rows, targetStatus, statusText) {
       if (!rows || rows.length === 0) return
-      
+
       // 只选择需要操作的行
       const targetRows = rows.filter(row => row.status !== targetStatus)
-      
+
       if (targetRows.length === 0) {
         this.$message.info(`所选记录已全部${statusText}，无需操作`)
         return
       }
-      
+
       this.$confirm(`确认批量${statusText}选中的设备记录吗？`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -469,13 +468,13 @@ export default {
         this.$message.info('操作已取消')
       })
     },
-    
+
     // 导入成功处理
     handleImportSuccess(result) {
       this.$message.success(`导入成功：${result.successCount || 0}条数据`)
       this.getList()
     },
-    
+
     // 导出成功处理
     handleExportSuccess(result) {
       this.$message.success(`导出成功：${result.filename || '文件已下载'}`)
@@ -487,13 +486,13 @@ export default {
 <style lang="scss" scoped>
 .page-header {
   margin-bottom: 20px;
-  
+
   .page-title {
     font-size: 20px;
     margin: 0 0 5px 0;
     color: #303133;
   }
-  
+
   .page-description {
     font-size: 14px;
     color: #606266;
@@ -508,7 +507,7 @@ export default {
   border-radius: 4px;
   margin-bottom: 20px;
   padding: 8px;
-  
+
   .equipment-type-item {
     padding: 8px 16px;
     border-radius: 20px;
@@ -516,11 +515,11 @@ export default {
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s;
-    
+
     &:hover {
       background-color: #e6e8eb;
     }
-    
+
     &.active {
       background-color: #409EFF;
       color: white;
@@ -536,4 +535,4 @@ export default {
   padding-left: 5px;
   border-left: 3px solid #409EFF;
 }
-</style> 
+</style>

@@ -35,11 +35,11 @@
     >
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增设备</el-button>
-        <slot name="toolbar-left"></slot>
+        <slot name="toolbar-left" />
       </template>
-      
+
       <template #toolbar-right>
-        <slot name="toolbar-right"></slot>
+        <slot name="toolbar-right" />
       </template>
     </table-toolbar>
 
@@ -50,12 +50,12 @@
       highlight-current-row
       :fit="true"
       style="width: 100%"
-      @selection-change="handleSelectionChange"
       :row-class-name="tableRowClassName"
+      @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="45" align="center" fixed="left" />
       <el-table-column label="#" type="index" width="50" align="center" fixed="left" />
-      
+
       <template v-for="col in tableColumns">
         <el-table-column
           :key="col.prop"
@@ -97,7 +97,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <!-- 分页 -->
     <pagination
       v-show="total > 0"
@@ -198,7 +198,7 @@ export default {
     currentStorageKey() {
       return `${this.columnSettingsKeyPrefix}_${this.equipmentType}`
     },
-    
+
     // 导入API函数
     importApiFunction() {
       return (file) => {
@@ -215,7 +215,7 @@ export default {
         })
       }
     },
-    
+
     // 模板API函数
     templateApiFunction() {
       return () => {
@@ -227,7 +227,7 @@ export default {
         })
       }
     },
-    
+
     // 导出API函数
     exportApiFunction() {
       return (params) => {
@@ -276,11 +276,11 @@ export default {
         class: row.status === 1 ? 'status-disable' : 'status-enable',
         tooltip: row.status === 1 ? '禁用' : '启用'
       }
-      
+
       // 使用预设按钮生成操作按钮，并添加状态切换按钮
       return [statusToggleButton].concat(generateTableButtons(['edit', 'view']))
     },
-    
+
     // 处理按钮点击事件
     handleActionClick({ action, row }) {
       switch (action) {
@@ -295,7 +295,7 @@ export default {
           break
       }
     },
-    
+
     // 初始化设备列配置
     initEquipmentColumns() {
       // 通用列
@@ -309,7 +309,7 @@ export default {
 
       // 特定设备类型的列
       let specificColumns = []
-      
+
       if (this.equipmentType === 'FURNACE') {
         specificColumns = [
           {
@@ -318,22 +318,22 @@ export default {
             width: '120',
             formatter: (value, row) => {
               if (row.furnaceTypeName) {
-                return row.furnaceTypeCode 
+                return row.furnaceTypeCode
                   ? `${row.furnaceTypeName} (${row.furnaceTypeCode})`
-                  : row.furnaceTypeName;
+                  : row.furnaceTypeName
               }
-              return value || '-';
+              return value || '-'
             }
           },
-          { 
-            prop: 'capacity', 
-            label: '规格(容量)', 
+          {
+            prop: 'capacity',
+            label: '规格(容量)',
             width: '120',
             formatter: (value) => value ? `${value} T` : '-'
           },
-          { 
-            prop: 'maxTemperature', 
-            label: '最大温度', 
+          {
+            prop: 'maxTemperature',
+            label: '最大温度',
             width: '120',
             formatter: (value) => value ? `${value}°C` : '-'
           },
@@ -357,41 +357,41 @@ export default {
         ]
       } else if (this.equipmentType === 'CRANE') {
         specificColumns = [
-          { 
-            prop: 'liftCapacity', 
-            label: '额定起重量', 
+          {
+            prop: 'liftCapacity',
+            label: '额定起重量',
             width: '120',
             formatter: (value) => value ? `${value} T` : '-'
           },
-          { 
-            prop: 'movingSpeed', 
-            label: '运行速度', 
+          {
+            prop: 'movingSpeed',
+            label: '运行速度',
             width: '150'
           },
-          { 
-            prop: 'serviceArea', 
-            label: '服务范围', 
+          {
+            prop: 'serviceArea',
+            label: '服务范围',
             width: '150'
           },
           { prop: 'controlInterface', label: '控制接口', width: '150' }
         ]
       } else if (this.equipmentType === 'AUTO_CART') {
         specificColumns = [
-          { 
-            prop: 'loadCapacity', 
-            label: '载重能力', 
+          {
+            prop: 'loadCapacity',
+            label: '载重能力',
             width: '120',
             formatter: (value) => value ? `${value} T` : '-'
           },
-          { 
-            prop: 'movingSpeed', 
-            label: '移动速度', 
+          {
+            prop: 'movingSpeed',
+            label: '移动速度',
             width: '120',
             formatter: (value) => value ? `${value} m/min` : '-'
           },
-          { 
-            prop: 'navigationMode', 
-            label: '导航方式', 
+          {
+            prop: 'navigationMode',
+            label: '导航方式',
             width: '120',
             formatter: (value) => {
               const modes = {
@@ -403,9 +403,9 @@ export default {
               return modes[value] || value || '-'
             }
           },
-          { 
-            prop: 'chargingType', 
-            label: '充电类型', 
+          {
+            prop: 'chargingType',
+            label: '充电类型',
             width: '120',
             formatter: (value) => {
               const types = {
@@ -419,16 +419,16 @@ export default {
         ]
       } else if (this.equipmentType === 'STAGING_TABLE') {
         specificColumns = [
-          { 
-            prop: 'bearingCapacity', 
-            label: '承载能力', 
+          {
+            prop: 'bearingCapacity',
+            label: '承载能力',
             width: '120',
             formatter: (value) => value ? `${value} T` : '-'
           },
           { prop: 'dimensions', label: '尺寸(m)', width: '120' },
-          { 
-            prop: 'surfaceMaterial', 
-            label: '台面材质', 
+          {
+            prop: 'surfaceMaterial',
+            label: '台面材质',
             width: '120',
             formatter: (value) => {
               const materials = {
@@ -440,9 +440,9 @@ export default {
               return materials[value] || value || '-'
             }
           },
-          { 
-            prop: 'functionType', 
-            label: '功能类型', 
+          {
+            prop: 'functionType',
+            label: '功能类型',
             width: '120',
             formatter: (value) => {
               const types = {
@@ -459,18 +459,18 @@ export default {
 
       // 状态和时间列
       const endColumns = [
-        { 
-          prop: 'status', 
-          label: '状态', 
+        {
+          prop: 'status',
+          label: '状态',
           width: '80',
           formatter: (value) => {
-            const status = parseInt(value);
-            return status === 1 ? '启用' : '禁用';
+            const status = parseInt(value)
+            return status === 1 ? '启用' : '禁用'
           }
         },
-        { 
-          prop: 'updateTime', 
-          label: '更新时间', 
+        {
+          prop: 'updateTime',
+          label: '更新时间',
           width: '120',
           formatter: this.formatDate
         },
@@ -496,7 +496,7 @@ export default {
     // 格式化日期
     formatDate(date) {
       if (!date) return '-'
-      
+
       try {
         const d = new Date(date)
         return d.toLocaleDateString('zh-CN', {
@@ -508,7 +508,7 @@ export default {
         return date || '-'
       }
     },
-    
+
     // 行样式
     tableRowClassName({ row }) {
       if (row.status === 0) {
@@ -516,33 +516,33 @@ export default {
       }
       return ''
     },
-    
+
     // 选择行变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
       this.$emit('selection-change', selection)
     },
-    
+
     // 新增按钮点击事件
     handleAdd() {
       this.$emit('add')
     },
-    
+
     // 编辑按钮点击事件
     handleUpdate(row) {
       this.$emit('update', row)
     },
-    
+
     // 状态切换按钮点击事件
     handleStatusChange(row) {
       this.$emit('status-change', row)
     },
-    
+
     // 查看按钮点击事件
     handleView(row) {
       this.$emit('view', row)
     },
-    
+
     // 分页变化
     handlePagination({ page, limit }) {
       this.$emit('size-change', limit)
@@ -553,28 +553,28 @@ export default {
     handleRefresh() {
       this.$emit('current-change', this.currentPage)
     },
-    
+
     // 批量删除
     handleBatchDelete(rows) {
       this.$emit('batch-delete', rows || this.selectedRows)
     },
-    
+
     // 批量启用
     handleBatchEnable(rows) {
       this.$emit('batch-enable', rows || this.selectedRows)
     },
-    
+
     // 批量禁用
     handleBatchDisable(rows) {
       this.$emit('batch-disable', rows || this.selectedRows)
     },
-    
+
     // 导入成功
     handleImportSuccess(result) {
       this.$emit('import-success', result)
       this.handleRefresh()
     },
-    
+
     // 导出成功
     handleExportSuccess(result) {
       this.$emit('export-success', result)
@@ -586,12 +586,12 @@ export default {
 <style lang="scss">
 .equipment-table {
   margin-bottom: 20px;
-  
+
   .disabled-row {
     background-color: #f9f9f9;
     color: #909399;
   }
-  
+
   .el-table {
     .cell {
       padding: 0 5px;
@@ -607,13 +607,13 @@ export default {
       width: 100% !important;
     }
   }
-  
+
   .status-enable {
     color: #67c23a;
   }
-  
+
   .status-disable {
     color: #f56c6c;
   }
 }
-</style> 
+</style>

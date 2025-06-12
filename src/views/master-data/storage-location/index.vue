@@ -6,21 +6,49 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <search-form ref="searchForm" :init-query="listQuery" :warehouse-options="warehouseOptions" :loading="listLoading"
-      @search="handleSearch" @reset="handleReset" />
+    <search-form
+      ref="searchForm"
+      :init-query="listQuery"
+      :warehouse-options="warehouseOptions"
+      :loading="listLoading"
+      @search="handleSearch"
+      @reset="handleReset"
+    />
 
     <!-- 库位表格 -->
-    <location-table ref="locationTable" :data="list" :total="total" :loading="listLoading" :page="listQuery.page"
-      :limit="listQuery.limit" :import-api="'/api/master-data/storage-location/import'"
+    <location-table
+      ref="locationTable"
+      :data="list"
+      :total="total"
+      :loading="listLoading"
+      :page="listQuery.page"
+      :limit="listQuery.limit"
+      :import-api="'/api/master-data/storage-location/import'"
       :template-api="'/api/master-data/storage-location/template'"
-      :export-api="'/api/master-data/storage-location/export'" @selection-change="handleSelectionChange"
-      @pagination="handlePagination" @add="handleCreate" @update="handleUpdate" @status-change="handleStatusChange"
-      @refresh="getList" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable" @import-success="handleImportSuccess" @export-success="handleExportSuccess" />
+      :export-api="'/api/master-data/storage-location/export'"
+      @selection-change="handleSelectionChange"
+      @pagination="handlePagination"
+      @add="handleCreate"
+      @update="handleUpdate"
+      @status-change="handleStatusChange"
+      @refresh="getList"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @import-success="handleImportSuccess"
+      @export-success="handleExportSuccess"
+    />
 
     <!-- 编辑/新增对话框 -->
-    <location-form ref="locationForm" :type="dialogType" :visible.sync="dialogVisible" :edit-data="currentRowData"
-      :warehouse-options="warehouseOptions" @submit="submitForm" @closed="handleDrawerClosed" />
+    <location-form
+      ref="locationForm"
+      :type="dialogType"
+      :visible.sync="dialogVisible"
+      :edit-data="currentRowData"
+      :warehouse-options="warehouseOptions"
+      @submit="submitForm"
+      @closed="handleDrawerClosed"
+    />
   </div>
 </template>
 
@@ -240,14 +268,14 @@ export default {
         type: 'warning'
       }).then(() => {
         this.listLoading = true
-        
+
         // 获取选中行的ID列表
         const ids = rows.map(row => row.id)
-        
+
         batchDeleteLocation(ids).then(response => {
           this.$message.success(response.data.message || '批量删除成功')
           this.selectedRows = []
-          
+
           // 延迟执行，确保后端处理完成
           setTimeout(() => {
             this.getList()
@@ -276,14 +304,14 @@ export default {
         type: 'warning'
       }).then(() => {
         this.listLoading = true
-        
+
         // 获取选中行的ID列表
         const ids = rows.map(row => row.id)
-        
+
         batchUpdateLocationStatus({ ids, status: 1 }).then(response => {
           this.$message.success(response.data.message || '批量启用成功')
           this.selectedRows = []
-          
+
           // 延迟执行，确保后端处理完成
           setTimeout(() => {
             this.getList()
@@ -312,14 +340,14 @@ export default {
         type: 'warning'
       }).then(() => {
         this.listLoading = true
-        
+
         // 获取选中行的ID列表
         const ids = rows.map(row => row.id)
-        
+
         batchUpdateLocationStatus({ ids, status: 0 }).then(response => {
           this.$message.success(response.data.message || '批量禁用成功')
           this.selectedRows = []
-          
+
           // 延迟执行，确保后端处理完成
           setTimeout(() => {
             this.getList()
@@ -344,7 +372,7 @@ export default {
       }
       this.getList()
     },
-    
+
     // 导出成功
     handleExportSuccess(result) {
       this.$message.success('导出成功')
@@ -372,4 +400,4 @@ export default {
 .app-container {
   padding: 20px;
 }
-</style> 
+</style>

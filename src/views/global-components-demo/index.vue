@@ -6,75 +6,75 @@
 <template>
   <div class="app-container">
     <h2>全局组件演示</h2>
-    
+
     <el-divider content-position="left">1. 状态标签 (StatusTag)</el-divider>
     <div class="demo-section">
       <h3>基本用法</h3>
       <div class="demo-item">
-        <StatusTag :status="1" :textMap="{ 0: '禁用', 1: '启用' }" :typeMap="{ 0: 'info', 1: 'success' }" />
-        <StatusTag :status="0" :textMap="{ 0: '禁用', 1: '启用' }" :typeMap="{ 0: 'info', 1: 'success' }" />
+        <StatusTag :status="1" :text-map="{ 0: '禁用', 1: '启用' }" :type-map="{ 0: 'info', 1: 'success' }" />
+        <StatusTag :status="0" :text-map="{ 0: '禁用', 1: '启用' }" :type-map="{ 0: 'info', 1: 'success' }" />
       </div>
-      
+
       <h3>使用预设配置</h3>
       <div class="demo-item">
-        <StatusTag :status="'trial'" :textMap="productLifecycle.textMap" :typeMap="productLifecycle.typeMap" />
-        <StatusTag :status="'production'" :textMap="productLifecycle.textMap" :typeMap="productLifecycle.typeMap" />
-        <StatusTag :status="'discontinued'" :textMap="productLifecycle.textMap" :typeMap="productLifecycle.typeMap" />
+        <StatusTag :status="'trial'" :text-map="productLifecycle.textMap" :type-map="productLifecycle.typeMap" />
+        <StatusTag :status="'production'" :text-map="productLifecycle.textMap" :type-map="productLifecycle.typeMap" />
+        <StatusTag :status="'discontinued'" :text-map="productLifecycle.textMap" :type-map="productLifecycle.typeMap" />
       </div>
-      
+
       <h3>自定义颜色</h3>
       <div class="demo-item">
-        <StatusTag 
-          :status="'critical'" 
-          :textMap="{ 'critical': '严重', 'major': '重要', 'minor': '次要' }" 
-          :colorMap="{ 'critical': '#f56c6c', 'major': '#e6a23c', 'minor': '#67c23a' }"
+        <StatusTag
+          :status="'critical'"
+          :text-map="{ 'critical': '严重', 'major': '重要', 'minor': '次要' }"
+          :color-map="{ 'critical': '#f56c6c', 'major': '#e6a23c', 'minor': '#67c23a' }"
         />
-        <StatusTag 
-          :status="'major'" 
-          :textMap="{ 'critical': '严重', 'major': '重要', 'minor': '次要' }" 
-          :colorMap="{ 'critical': '#f56c6c', 'major': '#e6a23c', 'minor': '#67c23a' }"
+        <StatusTag
+          :status="'major'"
+          :text-map="{ 'critical': '严重', 'major': '重要', 'minor': '次要' }"
+          :color-map="{ 'critical': '#f56c6c', 'major': '#e6a23c', 'minor': '#67c23a' }"
         />
-        <StatusTag 
-          :status="'minor'" 
-          :textMap="{ 'critical': '严重', 'major': '重要', 'minor': '次要' }" 
-          :colorMap="{ 'critical': '#f56c6c', 'major': '#e6a23c', 'minor': '#67c23a' }"
+        <StatusTag
+          :status="'minor'"
+          :text-map="{ 'critical': '严重', 'major': '重要', 'minor': '次要' }"
+          :color-map="{ 'critical': '#f56c6c', 'major': '#e6a23c', 'minor': '#67c23a' }"
         />
       </div>
     </div>
-    
+
     <el-divider content-position="left">2. 操作按钮 (ActionButtons)</el-divider>
     <div class="demo-section">
       <h3>基本用法 (文本模式)</h3>
       <div class="demo-item">
         <ActionButtons :buttons="textButtons" mode="text" @click="handleButtonClick" />
       </div>
-      
+
       <h3>基本用法 (普通按钮模式)</h3>
       <div class="demo-item">
         <ActionButtons :buttons="normalButtons" @click="handleButtonClick" />
       </div>
-      
+
       <h3>表格中使用</h3>
       <el-table :data="tableData" border style="width: 100%">
         <el-table-column prop="name" label="姓名" />
         <el-table-column prop="status" label="状态">
           <template slot-scope="scope">
-            <StatusTag :status="scope.row.status" :textMap="{ 0: '禁用', 1: '启用' }" :typeMap="{ 0: 'info', 1: 'success' }" />
+            <StatusTag :status="scope.row.status" :text-map="{ 0: '禁用', 1: '启用' }" :type-map="{ 0: 'info', 1: 'success' }" />
           </template>
         </el-table-column>
         <el-table-column label="操作" width="260">
           <template slot-scope="scope">
-            <ActionButtons 
-              :buttons="getRowButtons(scope.row)" 
-              :row="scope.row" 
-              mode="text" 
-              @click="handleTableAction" 
+            <ActionButtons
+              :buttons="getRowButtons(scope.row)"
+              :row="scope.row"
+              mode="text"
+              @click="handleTableAction"
             />
           </template>
         </el-table-column>
       </el-table>
     </div>
-    
+
     <el-divider content-position="left">3. 高级搜索表单 (SearchForm)</el-divider>
     <div class="demo-section">
       <h3>基本用法</h3>
@@ -88,34 +88,34 @@
           <el-button type="success" icon="el-icon-download" size="small">导出</el-button>
         </template>
       </SearchForm>
-      
-      <div class="search-result" v-if="searchResult">
+
+      <div v-if="searchResult" class="search-result">
         <pre>{{ searchResult }}</pre>
       </div>
     </div>
-    
+
     <el-divider content-position="left">4. 弹窗表单 (DialogForm)</el-divider>
     <div class="demo-section">
       <h3>基本用法</h3>
       <el-button type="primary" @click="showAddDialog">新增用户</el-button>
       <el-button type="warning" @click="showEditDialog">编辑用户</el-button>
       <el-button type="info" @click="showViewDialog">查看用户</el-button>
-      
+
       <DialogForm
         v-model="dialogVisible"
         :mode="dialogMode"
         :title="dialogTitle"
         :data="formData"
         :rules="formRules"
-        :formItems="formItems"
+        :form-items="formItems"
         @submit="handleFormSubmit"
       />
-      
-      <div class="form-result" v-if="formResult">
+
+      <div v-if="formResult" class="form-result">
         <pre>{{ formResult }}</pre>
       </div>
     </div>
-    
+
     <el-divider content-position="left">6. 表格工具栏 (TableToolbar)</el-divider>
     <div class="demo-section">
       <h3>基本用法 - 集成批量操作、导入导出、打印和列设置</h3>
@@ -145,7 +145,7 @@
             <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleToolbarAdd">新增</el-button>
           </template>
         </table-toolbar>
-        
+
         <el-table
           id="demo-table"
           ref="demoTable"
@@ -156,30 +156,30 @@
           :header-cell-style="{ backgroundColor: '#f5f7fa', textAlign: 'center' }"
           @selection-change="handleDemoTableSelectionChange"
         >
-          <el-table-column type="selection" width="55" fixed></el-table-column>
-          <el-table-column v-if="tableColumns.includes('id')" prop="id" label="ID" width="80" align="center"></el-table-column>
-          <el-table-column v-if="tableColumns.includes('name')" prop="name" label="名称" width="120" align="center"></el-table-column>
-          <el-table-column v-if="tableColumns.includes('code')" prop="code" label="编码" width="150" align="center"></el-table-column>
-          <el-table-column v-if="tableColumns.includes('type')" prop="type" label="类型" width="140" align="center"></el-table-column>
+          <el-table-column type="selection" width="55" fixed />
+          <el-table-column v-if="tableColumns.includes('id')" prop="id" label="ID" width="80" align="center" />
+          <el-table-column v-if="tableColumns.includes('name')" prop="name" label="名称" width="120" align="center" />
+          <el-table-column v-if="tableColumns.includes('code')" prop="code" label="编码" width="150" align="center" />
+          <el-table-column v-if="tableColumns.includes('type')" prop="type" label="类型" width="140" align="center" />
           <el-table-column v-if="tableColumns.includes('status')" label="状态" width="100" align="center">
             <template slot-scope="scope">
-              <StatusTag :status="scope.row.status" :textMap="{ 0: '禁用', 1: '启用' }" :typeMap="{ 0: 'info', 1: 'success' }" />
+              <StatusTag :status="scope.row.status" :text-map="{ 0: '禁用', 1: '启用' }" :type-map="{ 0: 'info', 1: 'success' }" />
             </template>
           </el-table-column>
-          <el-table-column v-if="tableColumns.includes('createTime')" prop="createTime" label="创建时间" width="180" align="center"></el-table-column>
+          <el-table-column v-if="tableColumns.includes('createTime')" prop="createTime" label="创建时间" width="180" align="center" />
           <el-table-column v-if="tableColumns.includes('operations')" label="操作" width="170" align="center" fixed="right">
             <template slot-scope="scope">
-              <ActionButtons 
-                :buttons="getRowButtons(scope.row)" 
-                :row="scope.row" 
-                mode="text" 
+              <ActionButtons
+                :buttons="getRowButtons(scope.row)"
+                :row="scope.row"
+                mode="text"
                 @click="handleTableAction"
               />
             </template>
           </el-table-column>
         </el-table>
-        
-        <div class="table-toolbar-result" v-if="toolbarResult">
+
+        <div v-if="toolbarResult" class="table-toolbar-result">
           <h4>操作结果：</h4>
           <pre>{{ toolbarResult }}</pre>
         </div>
@@ -202,7 +202,7 @@ export default {
     return {
       // StatusTag示例数据
       productLifecycle: productLifecycleMap,
-      
+
       // ActionButtons示例数据
       textButtons: [
         { key: 'view', label: '查看', type: 'primary' },
@@ -219,7 +219,7 @@ export default {
         { id: 2, name: '李四', status: 0 },
         { id: 3, name: '王五', status: 1 }
       ],
-      
+
       // SearchForm示例数据
       searchItems: [
         { type: 'input', label: '姓名', prop: 'name', placeholder: '请输入姓名' },
@@ -238,7 +238,7 @@ export default {
         dateRange: []
       },
       searchResult: null,
-      
+
       // DialogForm示例数据
       dialogVisible: false,
       dialogMode: 'add',
@@ -283,7 +283,7 @@ export default {
         ] }
       ],
       formResult: null,
-      
+
       // TableToolbar示例数据
       selectedTableRows: [],
       demoTableData: [
@@ -336,22 +336,22 @@ export default {
       const day = String(now.getDate()).padStart(2, '0')
       return `${year}-${month}-${day}`
     },
-    
+
     // ActionButtons相关方法
     handleButtonClick(data) {
       this.$message.success(`点击了按钮: ${data.action}`)
     },
-    
+
     getRowButtons(row) {
       return [
         CommonButtons.VIEW,
         CommonButtons.EDIT,
-        row.status === 1 
+        row.status === 1
           ? { ...CommonButtons.DISABLE, showText: true }
           : { ...CommonButtons.ENABLE, showText: true }
       ]
     },
-    
+
     handleTableAction({ action, row }) {
       if (action === 'enable' || action === 'disable') {
         const newStatus = action === 'enable' ? 1 : 0
@@ -366,18 +366,18 @@ export default {
         this.$message.info(`对用户 ${row.name} 执行: ${action}`)
       }
     },
-    
+
     // SearchForm相关方法
     handleSearch(formData) {
       this.searchResult = JSON.stringify(formData, null, 2)
       this.$message.success('搜索成功')
     },
-    
+
     handleReset() {
       this.searchResult = null
       this.$message.info('表单已重置')
     },
-    
+
     // DialogForm相关方法
     showAddDialog() {
       this.dialogMode = 'add'
@@ -391,7 +391,7 @@ export default {
         interests: []
       }
     },
-    
+
     showEditDialog() {
       this.dialogMode = 'edit'
       this.dialogTitle = '编辑用户'
@@ -404,7 +404,7 @@ export default {
         interests: ['reading', 'travel']
       }
     },
-    
+
     showViewDialog() {
       this.dialogMode = 'view'
       this.dialogTitle = '查看用户'
@@ -417,58 +417,58 @@ export default {
         interests: ['reading', 'travel']
       }
     },
-    
+
     handleFormSubmit(formData) {
       this.formResult = JSON.stringify(formData, null, 2)
       this.$message.success(`表单提交成功: ${this.dialogMode}`)
       this.dialogVisible = false
     },
-    
+
     // TableToolbar相关方法
     handleDemoTableSelectionChange(selection) {
       this.selectedTableRows = selection
     },
-    
+
     handleToolbarRefresh() {
       this.toolbarResult = '刷新表格数据'
       this.$message.success('已刷新表格数据')
     },
-    
+
     handleToolbarColumnChange(columns) {
       this.tableColumns = columns
       this.toolbarResult = `列设置已更新: ${columns.join(', ')}`
     },
-    
+
     handleToolbarBatchDelete(rows) {
       this.toolbarResult = `批量删除: ${rows.length}条数据`
       this.$message.success(`已删除${rows.length}条数据`)
     },
-    
+
     handleToolbarBatchEnable(rows) {
       this.toolbarResult = `批量启用: ${rows.length}条数据`
       this.$message.success(`已启用${rows.length}条数据`)
     },
-    
+
     handleToolbarBatchDisable(rows) {
       this.toolbarResult = `批量禁用: ${rows.length}条数据`
       this.$message.success(`已禁用${rows.length}条数据`)
     },
-    
+
     handleToolbarImportSuccess(result) {
       this.toolbarResult = `导入成功: ${JSON.stringify(result)}`
       this.$message.success('数据导入成功')
     },
-    
+
     handleToolbarExportSuccess(result) {
       this.toolbarResult = `导出成功: ${JSON.stringify(result)}`
       this.$message.success('数据导出成功')
     },
-    
+
     handleToolbarAdd() {
       this.toolbarResult = '新增数据'
       this.$message.info('点击了新增按钮')
     },
-    
+
     // 模拟API方法
     mockImportApi() {
       return new Promise((resolve) => {
@@ -486,7 +486,7 @@ export default {
         }, 1000)
       })
     },
-    
+
     mockTemplateApi() {
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -494,7 +494,7 @@ export default {
         }, 500)
       })
     },
-    
+
     mockExportApi() {
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -511,37 +511,37 @@ export default {
 <style lang="scss" scoped>
 .app-container {
   padding: 20px;
-  
+
   h2 {
     margin-top: 0;
     margin-bottom: 20px;
     font-weight: 600;
   }
-  
+
   .demo-section {
     margin-bottom: 30px;
     padding: 20px;
     background-color: #fff;
     border-radius: 4px;
-    
+
     h3 {
       margin-top: 0;
       margin-bottom: 15px;
       font-size: 16px;
       font-weight: 500;
     }
-    
+
     .demo-item {
       margin-bottom: 20px;
       padding: 15px;
       background: #f9f9f9;
       border-radius: 4px;
-      
+
       .el-tag + .el-tag {
         margin-left: 10px;
       }
     }
-    
+
     .search-result,
     .form-result {
       margin-top: 20px;
@@ -549,13 +549,13 @@ export default {
       background: #f5f7fa;
       border-radius: 4px;
       border: 1px solid #e6ebf5;
-      
+
       pre {
         margin: 0;
         white-space: pre-wrap;
       }
     }
-    
+
     .el-table {
       margin-top: 15px;
     }
@@ -568,17 +568,17 @@ export default {
   background-color: #f5f7fa;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
-  
+
   h4 {
     margin-top: 0;
     margin-bottom: 10px;
     font-size: 14px;
     font-weight: 500;
   }
-  
+
   pre {
     margin: 0;
     white-space: pre-wrap;
   }
 }
-</style> 
+</style>

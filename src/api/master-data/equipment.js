@@ -100,4 +100,4 @@ export function batchUpdateEquipmentStatus(data) {
     method: 'put',
     data
   })
-} 
+}

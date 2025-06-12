@@ -6,8 +6,8 @@
 <template>
   <div class="search-form-container">
     <el-form
-      :model="formModel"
       ref="form"
+      :model="formModel"
       :inline="inline"
       size="small"
       :label-width="labelWidth"
@@ -32,7 +32,7 @@
             @change="item.onChange && item.onChange(formModel[item.prop])"
             @clear="handleInputClear(item.prop)"
           />
-          
+
           <!-- 选择器 -->
           <el-select
             v-else-if="item.type === 'select'"
@@ -53,7 +53,7 @@
               :disabled="opt.disabled"
             />
           </el-select>
-          
+
           <!-- 日期选择器 -->
           <el-date-picker
             v-else-if="item.type === 'date'"
@@ -68,7 +68,7 @@
             :end-placeholder="item.endPlaceholder"
             @change="item.onChange && item.onChange(formModel[item.prop])"
           />
-          
+
           <!-- 时间选择器 -->
           <el-time-picker
             v-else-if="item.type === 'time'"
@@ -80,7 +80,7 @@
             :value-format="item.valueFormat"
             @change="item.onChange && item.onChange(formModel[item.prop])"
           />
-          
+
           <!-- 单选框组 -->
           <el-radio-group
             v-else-if="item.type === 'radio'"
@@ -97,7 +97,7 @@
               {{ opt.label }}
             </el-radio>
           </el-radio-group>
-          
+
           <!-- 复选框组 -->
           <el-checkbox-group
             v-else-if="item.type === 'checkbox'"
@@ -114,7 +114,7 @@
               {{ opt.label }}
             </el-checkbox>
           </el-checkbox-group>
-          
+
           <!-- 数字输入框 -->
           <el-input-number
             v-else-if="item.type === 'number'"
@@ -128,7 +128,7 @@
             :placeholder="item.placeholder"
             @change="item.onChange && item.onChange(formModel[item.prop])"
           />
-          
+
           <!-- 评分 -->
           <el-rate
             v-else-if="item.type === 'rate'"
@@ -138,14 +138,14 @@
             :allow-half="item.allowHalf"
             @change="item.onChange && item.onChange(formModel[item.prop])"
           />
-          
+
           <!-- 自定义插槽 -->
           <slot
             v-else-if="item.type === 'slot'"
             :name="item.slotName || item.prop"
             :model="formModel"
           />
-          
+
           <!-- 默认为输入框 -->
           <el-input
             v-else
@@ -158,7 +158,7 @@
           />
         </el-form-item>
       </template>
-      
+
       <!-- 折叠的表单项 -->
       <template v-if="showMore && expandedItems.length > 0">
         <template v-for="item in expandedItems">
@@ -178,7 +178,7 @@
               :clearable="item.clearable !== false"
               @change="item.onChange && item.onChange(formModel[item.prop])"
             />
-            
+
             <el-select
               v-else-if="item.type === 'select'"
               v-model="formModel[item.prop]"
@@ -197,7 +197,7 @@
                 :disabled="opt.disabled"
               />
             </el-select>
-            
+
             <el-date-picker
               v-else-if="item.type === 'date'"
               v-model="formModel[item.prop]"
@@ -211,13 +211,13 @@
               :end-placeholder="item.endPlaceholder"
               @change="item.onChange && item.onChange(formModel[item.prop])"
             />
-            
+
             <slot
               v-else-if="item.type === 'slot'"
               :name="item.slotName || item.prop"
               :model="formModel"
             />
-            
+
             <el-input
               v-else
               v-model="formModel[item.prop]"
@@ -230,12 +230,12 @@
           </el-form-item>
         </template>
       </template>
-      
+
       <!-- 表单操作按钮 -->
       <el-form-item class="search-buttons">
-        <el-button type="primary" @click="handleSubmit" :loading="loading" class="form-button">查询</el-button>
-        <el-button @click="handleReset" class="form-button">重置</el-button>
-        
+        <el-button type="primary" :loading="loading" class="form-button" @click="handleSubmit">查询</el-button>
+        <el-button class="form-button" @click="handleReset">重置</el-button>
+
         <!-- 展开/收起按钮 -->
         <el-button
           v-if="expandable && expandedItems.length > 0"
@@ -244,11 +244,11 @@
           @click="showMore = !showMore"
         >
           {{ showMore ? '收起' : '展开' }}
-          <i :class="showMore ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>
+          <i :class="showMore ? 'el-icon-arrow-up' : 'el-icon-arrow-down'" />
         </el-button>
-        
+
         <!-- 更多按钮插槽 -->
-        <slot name="buttons"></slot>
+        <slot name="buttons" />
       </el-form-item>
     </el-form>
   </div>
@@ -341,14 +341,14 @@ export default {
         }
       })
     },
-    
+
     // 处理输入框清除事件
     handleInputClear(prop) {
       // 确保值被清空并同步到父组件
       this.$nextTick(() => {
         this.formModel[prop] = ''
         this.$emit('input', this.formModel)
-        
+
         // 创建一个新对象，移除空值
         const submitData = {}
         Object.keys(this.formModel).forEach(key => {
@@ -356,16 +356,16 @@ export default {
             submitData[key] = this.formModel[key]
           }
         })
-        
+
         // 自动触发搜索
         this.$emit('search', submitData)
       })
     },
-    
+
     // 重置表单
     handleReset() {
       this.$refs.form.resetFields()
-      
+
       // 清空不在表单验证规则中的字段
       const emptyModel = {}
       this.items.forEach(item => {
@@ -378,17 +378,17 @@ export default {
           }
         }
       })
-      
+
       // 更新内部表单模型
       this.formModel = { ...emptyModel }
-      
+
       // 确保更新同步到父组件
       this.$nextTick(() => {
         console.log('重置后的表单数据:', this.formModel)
         // 触发更新事件
         this.$emit('input', this.formModel)
         this.$emit('reset')
-        
+
         // 如果需要重置后自动查询，则触发查询事件
         if (this.searchAfterReset) {
           this.$emit('search', {})
@@ -406,74 +406,74 @@ export default {
   border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   margin-bottom: 18px;
-  
+
   .el-form {
     display: flex;
     flex-wrap: wrap;
-    
+
     .el-form-item {
       margin-right: 18px;
       margin-bottom: 18px;
-      
+
       &.full-width {
         width: 100%;
       }
-      
+
       &.double-width {
         width: calc(50% - 18px);
       }
     }
-    
+
     .search-buttons {
       margin-right: 0;
-      
+
       .form-button {
         min-width: 80px;
         transition: all 0.3s ease;
-        
+
         &:first-child {
           margin-right: 10px;
         }
       }
-      
+
       .expand-button {
         margin-left: 10px;
       }
     }
   }
-  
+
   ::v-deep .el-form--inline .el-form-item__content {
     min-width: 200px;
   }
-  
+
   ::v-deep .el-select {
     width: 100%;
   }
-  
+
   ::v-deep .el-date-editor--daterange.el-input__inner,
   ::v-deep .el-date-editor--datetimerange.el-input__inner,
   ::v-deep .el-date-editor--timerange.el-input__inner {
     width: 350px;
   }
-  
+
   ::v-deep .el-date-editor--date,
   ::v-deep .el-date-editor--datetime {
     width: 100%;
   }
-  
+
   /* 修复按钮loading状态时的样式问题 */
   ::v-deep .el-button.is-loading {
     padding-left: 20px;
     padding-right: 20px;
-    
+
     .el-icon-loading {
       font-size: 14px;
     }
   }
-  
+
   /* 平滑过渡 */
   ::v-deep .el-button {
     transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   }
 }
-</style> 
+</style>

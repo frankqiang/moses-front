@@ -6,27 +6,27 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <search-form 
+    <search-form
       ref="searchForm"
-      :init-query="listQuery" 
+      :init-query="listQuery"
       :warehouse-type-options="warehouseTypeOptions"
       :loading="listLoading"
-      @search="handleSearch" 
+      @search="handleSearch"
       @reset="handleReset"
     />
 
     <!-- 仓库表格 -->
     <warehouse-table
-      ref="warehouseTable" 
-      :data="list" 
-      :total="total" 
-      :loading="listLoading" 
-      :page="listQuery.page" 
+      ref="warehouseTable"
+      :data="list"
+      :total="total"
+      :loading="listLoading"
+      :page="listQuery.page"
       :limit="listQuery.limit"
       :import-api="'/api/warehouse/import'"
       :template-api="'/api/warehouse/template'"
-      :export-api="'/api/warehouse/export'" 
-      @selection-change="handleSelectionChange" 
+      :export-api="'/api/warehouse/export'"
+      @selection-change="handleSelectionChange"
       @pagination="handlePagination"
       @add="handleCreate"
       @update="handleUpdate"
@@ -39,12 +39,12 @@
     />
 
     <!-- 编辑/新增对话框 -->
-    <warehouse-form 
+    <warehouse-form
       ref="warehouseForm"
-      :type="dialogType" 
-      :visible.sync="dialogVisible" 
-      :edit-data="currentRowData" 
-      :warehouse-type-options="warehouseTypeOptions" 
+      :type="dialogType"
+      :visible.sync="dialogVisible"
+      :edit-data="currentRowData"
+      :warehouse-type-options="warehouseTypeOptions"
       @submit="submitForm"
       @closed="handleDrawerClosed"
     />
@@ -64,7 +64,7 @@ import {
   updateWarehouse,
   updateWarehouseStatus,
   batchDeleteWarehouse,
-  batchUpdateWarehouseStatus,
+  batchUpdateWarehouseStatus
 
 } from '@/api/master-data/warehouse'
 
@@ -155,7 +155,7 @@ export default {
     handleCreate() {
       this.dialogType = 'create'
       this.currentRowData = null
-      
+
       // 直接打开对话框，不需要手动重置表单
       // DrawerForm 组件会在打开时自动处理表单数据
       this.dialogVisible = true
@@ -182,7 +182,7 @@ export default {
         createWarehouse(formData).then(response => {
           this.$message.success('新增仓库成功')
           this.dialogVisible = false
-          
+
           // 如果响应中包含最新列表数据，直接使用
           if (response.data && response.data.items) {
             this.list = response.data.items
@@ -191,7 +191,7 @@ export default {
             // 否则重新请求列表数据
             this.getList()
           }
-          
+
           // 滚动到顶部
           scrollTo(0, 800)
         }).catch(() => {
@@ -202,7 +202,7 @@ export default {
         updateWarehouse(formData).then(response => {
           this.$message.success('更新仓库成功')
           this.dialogVisible = false
-          
+
           // 如果响应中包含最新列表数据，直接使用
           if (response.data && response.data.items) {
             this.list = response.data.items
@@ -211,7 +211,7 @@ export default {
             // 否则重新请求列表数据
             this.getList()
           }
-          
+
           // 滚动到顶部
           scrollTo(0, 800)
         }).catch(() => {
@@ -219,12 +219,12 @@ export default {
         })
       }
     },
-    
+
     // 切换状态
     handleStatusChange(row) {
       const newStatus = row.status === 1 ? 0 : 1
       const statusText = newStatus === 1 ? '启用' : '禁用'
-      
+
       this.$confirm(`确认${statusText}该仓库吗?`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -248,7 +248,7 @@ export default {
         this.$message.warning('请选择需要删除的记录')
         return
       }
-      
+
       this.$confirm('确认删除选中的记录吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -265,7 +265,7 @@ export default {
         // 取消删除
       })
     },
-    
+
     // 批量更改状态
     handleBatchStatus(rows, status) {
       const ids = rows.map(row => row.id)
@@ -273,9 +273,9 @@ export default {
         this.$message.warning('请选择需要操作的记录')
         return
       }
-      
+
       const statusText = status === 1 ? '启用' : '禁用'
-      
+
       this.$confirm(`确认将选中的记录状态修改为"${statusText}"吗？`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -291,7 +291,7 @@ export default {
         // 取消操作
       })
     },
-    
+
     // 导入成功
     handleImportSuccess(result) {
       if (result.success === result.total) {
@@ -301,7 +301,7 @@ export default {
       }
       this.getList()
     },
-    
+
     // 导出成功
     handleExportSuccess(result) {
       this.$message.success('导出成功')
@@ -329,4 +329,4 @@ export default {
 .app-container {
   padding: 20px;
 }
-</style> 
+</style>

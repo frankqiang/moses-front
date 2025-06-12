@@ -22,17 +22,17 @@
         <span>{{ title }}</span>
       </slot>
     </template>
-    
+
     <!-- 内容区域 -->
-    <div class="drawer-content" ref="drawerContent">
-      <slot :visible="drawerVisible"></slot>
+    <div ref="drawerContent" class="drawer-content">
+      <slot :visible="drawerVisible" />
     </div>
-    
+
     <!-- 底部区域 -->
     <div v-if="$slots.footer || showFooter" class="drawer-footer">
       <slot name="footer">
         <el-button @click="handleCancel">{{ cancelButtonText }}</el-button>
-        <el-button type="primary" @click="handleConfirm" :loading="loading">{{ confirmButtonText }}</el-button>
+        <el-button type="primary" :loading="loading" @click="handleConfirm">{{ confirmButtonText }}</el-button>
       </slot>
     </div>
   </el-drawer>
@@ -114,7 +114,7 @@ export default {
       this.$emit('update:visible', val)
       if (!val) {
         this.$emit('close')
-      }  
+      }
     }
   },
   methods: {
@@ -122,29 +122,29 @@ export default {
     handleConfirm() {
       this.$emit('confirm')
     },
-    
+
     // 取消按钮点击
     handleCancel() {
       this.drawerVisible = false
       this.$emit('cancel')
     },
-    
+
     // 关闭抽屉
     handleClose(done) {
       this.$emit('before-close')
       done()
     },
-    
+
     // 抽屉打开时
     handleOpen() {
       this.$emit('open')
     },
-    
+
     // 抽屉关闭后
     handleClosed() {
       this.$emit('closed')
     },
-    
+
     // 手动关闭抽屉
     close() {
       this.drawerVisible = false
@@ -160,7 +160,7 @@ export default {
     padding: 16px 20px;
     border-bottom: 1px solid #e6e6e6;
   }
-  
+
   :deep(.el-drawer__body) {
     height: calc(100% - 60px);
     overflow-y: auto;
@@ -188,9 +188,9 @@ export default {
   border-top: 1px solid #e6e6e6;
   text-align: right;
   z-index: 1;
-  
+
   .el-button {
     margin-left: 10px;
   }
 }
-</style> 
+</style>

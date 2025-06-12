@@ -28,8 +28,8 @@
       </div>
       <div class="drawer-footer-buttons">
         <el-button @click="handleClose">取消</el-button>
-        <el-button v-if="type === 'create'" type="primary" @click="handleSubmitAndContinue" :loading="submitLoading">保存并继续</el-button>
-        <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit" :loading="submitLoading">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
+        <el-button v-if="type === 'create'" type="primary" :loading="submitLoading" @click="handleSubmitAndContinue">保存并继续</el-button>
+        <el-button v-if="type !== 'view'" type="primary" :loading="submitLoading" @click="handleSubmit">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
       </div>
     </template>
   </drawer-form>
@@ -105,7 +105,7 @@ export default {
       if (this.apiPreviewCode) {
         return this.apiPreviewCode
       }
-      
+
       // 否则使用本地计算的预览编码
       if (this.formData.type === 'pure_numeric') {
         return String(this.formData.currentValue || 0).padStart(this.formData.sequenceLength || 0, '0')
@@ -275,6 +275,12 @@ export default {
       this.setupFormChangeObserver()
     })
   },
+  // 组件销毁时清理observer
+  beforeDestroy() {
+    if (this.formObserver) {
+      this.formObserver.disconnect()
+    }
+  },
   methods: {
     getDefaultFormData() {
       return {
@@ -300,7 +306,7 @@ export default {
         // 编辑模式使用传入的数据
         this.formData = cloneDeep(this.editData)
       }
-      
+
       // 确保DrawerForm组件内部也更新了数据
       this.$nextTick(() => {
         if (this.$refs.drawerForm) {
@@ -341,19 +347,19 @@ export default {
     },
     submitForm(formData, continueAdd) {
       this.submitLoading = true
-      
+
       try {
         // 获取表单中的实际数据
         const actualFormData = this.$refs.drawerForm.formData
-        
+
         // 根据规则类型，清理不需要的字段
         const submitData = cloneDeep(actualFormData)
-        
+
         // 如果是编辑模式，需要保留ID
         if (this.type === 'update' && this.editData && this.editData.id) {
           submitData.id = this.editData.id
         }
-        
+
         if (submitData.type === 'pure_numeric') {
           submitData.prefix = ''
           submitData.customRule = ''
@@ -368,7 +374,7 @@ export default {
 
         console.log('提交的数据:', submitData)
         this.$emit('submit', submitData, continueAdd)
-        
+
         // 如果不是继续添加，则关闭抽屉
         if (!continueAdd) {
           this.drawerVisible = false
@@ -388,11 +394,11 @@ export default {
       // 确保在DOM渲染完成后执行
       this.$nextTick(() => {
         if (!this.$refs.drawerForm) return
-        
+
         // 获取表单DOM元素
         const formElement = this.$refs.drawerForm.$el.querySelector('.el-form')
         if (!formElement) return
-        
+
         // 创建MutationObserver监听表单内容变化
         const observer = new MutationObserver(mutations => {
           // 当表单内容变化时，获取最新的表单数据并更新预览
@@ -408,18 +414,18 @@ export default {
             }, 0)
           }
         })
-        
+
         // 配置观察选项
-        const config = { 
-          attributes: true, 
-          childList: true, 
+        const config = {
+          attributes: true,
+          childList: true,
           subtree: true,
           characterData: true
         }
-        
+
         // 开始观察
         observer.observe(formElement, config)
-        
+
         // 保存observer引用以便后续清理
         this.formObserver = observer
       })
@@ -431,7 +437,7 @@ export default {
         this.apiPreviewCode = ''
         return
       }
-      
+
       // 调用API获取预览编码
       const previewData = {
         type: this.formData.type,
@@ -439,7 +445,7 @@ export default {
         sequenceLength: this.formData.sequenceLength || 0,
         currentValue: this.formData.currentValue || 0
       }
-      
+
       generatePreviewCode(previewData)
         .then(response => {
           if (response.data && response.data.previewCode) {
@@ -455,7 +461,7 @@ export default {
     // 根据规则类型更新表单验证规则
     updateFormValidation() {
       const type = this.formData.type
-      
+
       // 根据规则类型设置不同字段的必填验证
       if (type === 'pure_numeric') {
         this.rules.prefix[0].required = false
@@ -473,19 +479,13 @@ export default {
         this.rules.currentValue[0].required = false
         this.rules.customRule[0].required = true
       }
-      
+
       // 如果表单已经初始化，需要重新验证
       this.$nextTick(() => {
         if (this.$refs.drawerForm && this.$refs.drawerForm.$refs.form) {
           this.$refs.drawerForm.$refs.form.clearValidate()
         }
       })
-    }
-  },
-  // 组件销毁时清理observer
-  beforeDestroy() {
-    if (this.formObserver) {
-      this.formObserver.disconnect()
     }
   }
 }
@@ -508,7 +508,7 @@ export default {
 
 .drawer-footer-buttons {
   text-align: right;
-  
+
   .el-button {
     margin-left: 10px;
   }

@@ -66,7 +66,7 @@ export default {
         callback()
       }
     }
-    
+
     return {
       drawerVisible: false,
       submitLoading: false,
@@ -138,7 +138,7 @@ export default {
         return '查看铝箔产品'
       }
     },
-    
+
     // 表单分段配置
     formSections() {
       return [
@@ -301,12 +301,12 @@ export default {
         if (val) {
           // 深拷贝编辑数据
           this.formData = JSON.parse(JSON.stringify(val))
-          
+
           // 处理关联对象的id转换
           if (this.formData.processTemplates && Array.isArray(this.formData.processTemplates)) {
             this.formData.processTemplates = this.formData.processTemplates.map(item => item.id)
           }
-          
+
           if (this.formData.qualityStandards && Array.isArray(this.formData.qualityStandards)) {
             this.formData.qualityStandards = this.formData.qualityStandards.map(item => item.id)
           }
@@ -346,7 +346,7 @@ export default {
         qualityStandards: [],
         lifecycleStatus: 'trial'
       }
-      
+
       // 延迟执行以确保表单已经被渲染
       this.$nextTick(() => {
         if (this.$refs.drawerForm && this.$refs.drawerForm.$refs.form) {
@@ -355,7 +355,7 @@ export default {
         }
       })
     },
-    
+
     // 处理关闭
     handleClose() {
       this.drawerVisible = false
@@ -364,7 +364,7 @@ export default {
         this.resetForm()
       })
     },
-    
+
     // 处理DrawerForm的submit事件
     handleSubmitForm(formData) {
       // 使用DrawerForm提供的表单数据
@@ -372,10 +372,10 @@ export default {
         this.drawerVisible = false
         return
       }
-      
+
       // 创建提交数据对象
       const submitData = JSON.parse(JSON.stringify(formData))
-      
+
       // 处理关联对象的id转换回对象
       if (submitData.processTemplates && Array.isArray(submitData.processTemplates)) {
         submitData.processTemplates = submitData.processTemplates.map(id => {
@@ -383,35 +383,35 @@ export default {
           return template || { id }
         })
       }
-      
+
       if (submitData.qualityStandards && Array.isArray(submitData.qualityStandards)) {
         submitData.qualityStandards = submitData.qualityStandards.map(id => {
           const standard = this.qualityStandardOptions.find(item => item.id === id)
           return standard || { id }
         })
       }
-      
+
       // 触发提交事件
       this.$emit('submit', submitData)
     },
-    
+
     // 提交表单
     submitForm() {
       if (this.type === 'view') {
         this.drawerVisible = false
         return
       }
-      
+
       this.$refs.drawerForm.$refs.form.validate(valid => {
         if (valid) {
           this.submitLoading = true
-          
+
           // 获取当前表单数据
           const currentFormData = this.$refs.drawerForm.formData
-          
+
           // 处理关联对象的id转换回对象
           this.handleSubmitForm(currentFormData)
-          
+
           // 模拟异步操作
           setTimeout(() => {
             this.submitLoading = false
@@ -428,4 +428,4 @@ export default {
 
 <style lang="scss" scoped>
 /* 抽屉表单样式已由全局DrawerForm组件提供 */
-</style> 
+</style>

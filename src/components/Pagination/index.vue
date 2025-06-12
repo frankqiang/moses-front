@@ -98,4 +98,4 @@ export default {
 .pagination-container.hidden {
   display: none;
 }
-</style> 
+</style>

@@ -6,8 +6,8 @@
 <template>
   <search-form
     ref="searchForm"
-    :items="formItems"
     v-model="formModel"
+    :items="formItems"
     :loading="loading"
     @search="handleSearch"
     @reset="handleReset"
@@ -85,7 +85,7 @@ export default {
       })
       this.$emit('search', searchParams)
     },
-    
+
     // 重置按钮点击事件
     handleReset() {
       this.formModel = {
@@ -96,4 +96,4 @@ export default {
     }
   }
 }
-</script> 
+</script>

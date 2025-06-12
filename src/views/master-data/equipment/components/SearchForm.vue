@@ -99,7 +99,7 @@ export default {
           ]
         }
       ]
-      
+
       // 根据设备类型添加特定表单项
       let typeSpecificItems = []
       if (this.equipmentType === 'FURNACE') {
@@ -149,7 +149,7 @@ export default {
           }
         ]
       }
-      
+
       // 高级搜索表单项（折叠状态下不显示）
       const advancedItems = [
         {
@@ -172,7 +172,7 @@ export default {
           placeholder: '输入设备型号'
         }
       ]
-      
+
       // 合并所有表单项，显示顺序：基础 -> 特定类型 -> 高级（折叠）
       return [
         ...baseItems,
@@ -206,23 +206,23 @@ export default {
     // 准备搜索参数
     prepareSearchParams(model) {
       const params = { ...model }
-      
+
       // 处理日期范围
       if (params.installDateRange && params.installDateRange.length === 2) {
         params.installDateStart = params.installDateRange[0]
         params.installDateEnd = params.installDateRange[1]
         delete params.installDateRange // 删除原始数组，避免后端困惑
       }
-      
+
       return params
     },
-    
+
     // 搜索事件处理
     handleSearch(model) {
       const params = this.prepareSearchParams(model)
       this.$emit('search', params)
     },
-    
+
     // 重置事件处理
     handleReset() {
       // 全局组件会将表单重置为空值，这里直接发出重置事件
@@ -236,7 +236,7 @@ export default {
         supplier: '',
         model: ''
       }
-      
+
       this.$emit('reset', this.prepareSearchParams(emptyModel))
     }
   }
@@ -248,4 +248,4 @@ export default {
 .search-item-keyword {
   width: 280px;
 }
-</style> 
+</style>

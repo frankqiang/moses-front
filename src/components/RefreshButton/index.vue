@@ -15,7 +15,7 @@
     :title="title || text"
     @click="handleRefresh"
   >
-    <i v-if="!loading && !hideIcon" :class="icon"></i>
+    <i v-if="!loading && !hideIcon" :class="icon" />
     <span v-if="!circle && text">{{ text }}</span>
   </el-button>
 </template>
@@ -127,7 +127,7 @@ export default {
     // 处理刷新点击
     handleRefresh() {
       if (this.disabled || this.isLoading) return
-      
+
       // 如需确认
       if (this.confirmBeforeRefresh) {
         this.$confirm(this.confirmText, this.confirmTitle, {
@@ -144,28 +144,28 @@ export default {
         this.executeRefresh()
       }
     },
-    
+
     // 执行刷新
     executeRefresh() {
       // 如果开启自动加载状态
       if (this.autoLoading) {
         this.startLoading()
       }
-      
+
       // 触发刷新事件
       this.$emit('refresh')
     },
-    
+
     // 开始加载状态
     startLoading() {
       this.clearLoadingTimer()
       this.internalLoading = true
-      
+
       this.loadingTimer = setTimeout(() => {
         this.internalLoading = false
       }, this.autoLoadingDuration)
     },
-    
+
     // 清除加载定时器
     clearLoadingTimer() {
       if (this.loadingTimer) {
@@ -173,7 +173,7 @@ export default {
         this.loadingTimer = null
       }
     },
-    
+
     // 手动停止加载状态
     stopLoading() {
       this.clearLoadingTimer()
@@ -185,4 +185,4 @@ export default {
 
 <style scoped>
 /* 可以添加自定义样式 */
-</style> 
+</style>

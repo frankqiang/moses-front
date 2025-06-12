@@ -10,9 +10,9 @@
       <!-- 直接显示的标签 -->
       <template v-for="(item, index) in visibleItems">
         <slot name="tag" :item="item" :index="index">
-          <el-tag 
-            :key="index" 
-            :size="size" 
+          <el-tag
+            :key="index"
+            :size="size"
             :type="type"
             :effect="effect"
             :class="tagClass"
@@ -21,7 +21,7 @@
           </el-tag>
         </slot>
       </template>
-      
+
       <!-- 溢出标签的弹出框 -->
       <el-popover
         v-if="hasMoreItems"
@@ -31,11 +31,11 @@
         :popper-class="popoverClass"
       >
         <div class="overflow-tags-list">
-          <div class="overflow-tags-header" v-if="title">{{ title }}</div>
+          <div v-if="title" class="overflow-tags-header">{{ title }}</div>
           <div class="overflow-tags-content">
-            <div 
-              v-for="(item, index) in formattedData" 
-              :key="index" 
+            <div
+              v-for="(item, index) in formattedData"
+              :key="index"
               class="overflow-tags-item"
             >
               <slot name="popover-item" :item="item" :index="index">
@@ -44,15 +44,15 @@
             </div>
           </div>
         </div>
-        
+
         <!-- 触发弹出框的标签 -->
-        <slot 
-          name="more-tag" 
-          :count="moreItemsCount" 
+        <slot
           slot="reference"
+          name="more-tag"
+          :count="moreItemsCount"
         >
-          <el-tag 
-            :size="size" 
+          <el-tag
+            :size="size"
             :type="type"
             :effect="effect"
             class="more-tag"
@@ -63,7 +63,7 @@
         </slot>
       </el-popover>
     </template>
-    
+
     <!-- 无数据时显示 -->
     <template v-else>
       <slot name="empty">
@@ -178,11 +178,11 @@ export default {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 4px;
-  
+
   .more-tag {
     cursor: pointer;
   }
-  
+
   .empty-text {
     color: #909399;
   }
@@ -195,19 +195,19 @@ export default {
     padding-bottom: 8px;
     border-bottom: 1px solid #ebeef5;
   }
-  
+
   .overflow-tags-content {
     max-height: 300px;
     overflow-y: auto;
   }
-  
+
   .overflow-tags-item {
     padding: 4px 0;
     border-bottom: 1px dashed #ebeef5;
-    
+
     &:last-child {
       border-bottom: none;
     }
   }
 }
-</style> 
+</style>

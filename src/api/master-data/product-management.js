@@ -127,4 +127,4 @@ export function getAllProductList() {
     url: '/vue-admin-template/mes/product/all-list',
     method: 'get'
   })
-} 
+}

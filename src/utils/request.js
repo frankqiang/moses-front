@@ -55,7 +55,7 @@ service.interceptors.response.use(
           type: 'error',
           duration: 5 * 1000
         })
-        
+
         // to re-login
         MessageBox.confirm('You have been logged out, you can cancel to stay on this page, or log in again', 'Confirm logout', {
           confirmButtonText: 'Re-Login',
@@ -67,7 +67,7 @@ service.interceptors.response.use(
           })
         })
       }
-      
+
       // 直接返回错误对象而不是创建新的Error
       return Promise.reject(res)
     } else {

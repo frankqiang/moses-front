@@ -7,8 +7,8 @@
   <div class="search-form-container">
     <search-form
       ref="searchForm"
-      :items="formItems"
       v-model="form"
+      :items="formItems"
       :loading="loading"
       :collapse-rows="1"
       @search="handleSearch"
@@ -146,4 +146,4 @@ export default {
 .search-form-container {
   margin-bottom: 16px;
 }
-</style> 
+</style>

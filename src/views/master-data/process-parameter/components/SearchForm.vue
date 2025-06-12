@@ -6,13 +6,12 @@
 <template>
   <search-form
     ref="searchForm"
-    :items="formItems"
     v-model="formModel"
+    :items="formItems"
     :loading="loading"
     @search="handleSearch"
     @reset="handleReset"
-  >
-  </search-form>
+  />
 </template>
 
 <script>
@@ -97,15 +96,15 @@ export default {
     getFurnaceTypes() {
       getAllFurnaceTypes().then(response => {
         console.log('获取到的炉型数据:', response)
-        
+
         const furnaceTypeItem = this.formItems.find(item => item.prop === 'furnaceTypeId')
         if (furnaceTypeItem) {
           // 添加"全部"选项
           const options = [{ label: '全部', value: '' }]
-          
+
           // 添加从API获取的选项
           let furnaceTypes = []
-          
+
           // 处理嵌套的API返回结构
           if (response && response.code === 20000) {
             if (response.data && response.data.items) {
@@ -116,7 +115,7 @@ export default {
               furnaceTypes = response.data
             }
           }
-          
+
           if (furnaceTypes.length > 0) {
             const apiOptions = furnaceTypes.map(item => {
               const option = {
@@ -128,7 +127,7 @@ export default {
             })
             options.push(...apiOptions)
           }
-          
+
           // 更新炉型选项
           furnaceTypeItem.options = options
           console.log('最终炉型选项列表:', furnaceTypeItem.options)
@@ -138,7 +137,7 @@ export default {
         this.$message.error('获取炉型列表失败')
       })
     },
-    
+
     // 搜索按钮点击事件
     handleSearch(formData) {
       const searchParams = { ...formData }
@@ -148,11 +147,11 @@ export default {
           delete searchParams[key]
         }
       })
-      
+
       console.log('搜索参数:', searchParams)
       this.$emit('search', searchParams)
     },
-    
+
     // 重置按钮点击事件
     handleReset() {
       // 重置表单数据
@@ -161,16 +160,16 @@ export default {
         status: '',
         furnaceTypeId: ''
       }
-      
+
       // 触发重置事件
       console.log('触发重置事件')
       this.$emit('reset')
-      
+
       // 重置表单验证状态
       if (this.$refs.searchForm && this.$refs.searchForm.$refs && this.$refs.searchForm.$refs.form) {
         this.$refs.searchForm.$refs.form.clearValidate()
       }
-    },
+    }
   }
 }
 </script>

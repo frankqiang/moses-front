@@ -107,7 +107,7 @@ export default {
       }
       return titleMap[this.type]
     },
-    
+
     // 表单分段配置
     formSections() {
       return [
@@ -312,7 +312,7 @@ export default {
         })
       }
     },
-    
+
     // 重置表单
     resetForm() {
       this.formData = {
@@ -333,13 +333,13 @@ export default {
         status: 1,
         remarks: ''
       }
-      
+
       // 如果表单实例存在，调用其 resetForm 方法
       if (this.$refs.drawerForm) {
         this.$refs.drawerForm.resetForm()
       }
     },
-    
+
     // 提交表单
     handleSubmit(formData) {
       // 确保提交前尺寸展示字段已更新
@@ -348,12 +348,12 @@ export default {
       }
       this.$emit('submit', formData)
     },
-    
+
     // 处理抽屉关闭事件
     handleClosed() {
       this.$emit('closed')
     },
-    
+
     // 更新尺寸展示
     updateDimension() {
       if (this.formData.length && this.formData.width && this.formData.height) {
@@ -370,4 +370,4 @@ export default {
 .location-form {
   // 表单样式可以在此处添加
 }
-</style> 
+</style>

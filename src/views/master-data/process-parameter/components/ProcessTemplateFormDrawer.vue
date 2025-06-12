@@ -23,12 +23,12 @@
   >
     <template #footer>
       <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
-      <el-button v-if="type !== 'view'" type="primary" @click="validateAndSubmit" :loading="loading">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
+      <el-button v-if="type !== 'view'" type="primary" :loading="loading" @click="validateAndSubmit">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
     </template>
-    
+
     <!-- 炉型选择器 -->
     <template #furnaceType>
-      <el-form-item  prop="furnaceTypeId" :rules="rules.furnaceTypeId">
+      <el-form-item prop="furnaceTypeId" :rules="rules.furnaceTypeId">
         <furnace-type-selector
           v-model="form.furnaceTypeId"
           :disabled="type === 'view' || loading"
@@ -36,7 +36,7 @@
         />
       </el-form-item>
     </template>
-    
+
     <!-- 工艺段定义区域 -->
     <template #segments>
       <div class="segments-container">
@@ -51,7 +51,7 @@
           :downloadable="true"
           :theme="'light'"
         />
-        
+
         <!-- 工艺段表格 -->
         <process-segment-table
           v-model="form.segments"
@@ -62,7 +62,7 @@
         />
       </div>
     </template>
-    
+
     <!-- 适用产品选择区域 -->
     <template #applicableProducts>
       <el-transfer
@@ -90,7 +90,7 @@
         </template>
       </el-transfer>
     </template>
-    
+
     <!-- 审批记录区域 -->
     <template #approvalLog>
       <div class="approval-log">
@@ -107,13 +107,13 @@
                 {{ activity.action }}
                 <span class="timeline-user">{{ activity.user }}</span>
               </div>
-              <div class="timeline-comment" v-if="activity.comment">
+              <div v-if="activity.comment" class="timeline-comment">
                 {{ activity.comment }}
               </div>
             </div>
           </el-timeline-item>
         </el-timeline>
-        <el-empty v-else description="暂无审批记录" :image-size="80"></el-empty>
+        <el-empty v-else description="暂无审批记录" :image-size="80" />
       </div>
     </template>
   </drawer-form>
@@ -193,7 +193,7 @@ export default {
         ]
       }
     },
-    
+
     // 动态表单分段
     formSections() {
       // 1. 基础信息段
@@ -249,7 +249,7 @@ export default {
           }
         ]
       }
-      
+
       // 2. 工艺段定义段
       const segmentsSection = {
         title: '二、工艺段定义',
@@ -262,7 +262,7 @@ export default {
           }
         ]
       }
-      
+
       // 3. 适用产品范围段
       const productsSection = {
         title: '三、适用产品范围',
@@ -275,10 +275,10 @@ export default {
           }
         ]
       }
-      
+
       // 4. 版本与审批记录段（仅编辑和查看时显示）
       const sections = [baseSection, segmentsSection, productsSection]
-      
+
       if (this.type !== 'create' && this.form.approvalLog) {
         const approvalSection = {
           title: '四、版本与审批记录',
@@ -317,7 +317,7 @@ export default {
         }
         sections.push(approvalSection)
       }
-      
+
       return sections
     }
   },
@@ -342,8 +342,8 @@ export default {
         }
       },
       immediate: true
-    },
-    
+    }
+
     // 不再需要监听furnaceTypeId变化，现在通过capabilities-change事件处理
   },
   created() {
@@ -367,12 +367,12 @@ export default {
         applicableProducts: []
       }
     },
-    
+
     // 初始化数据
     initData() {
       // 无论什么情况都先重置表单
       this.form = this.initFormData()
-      
+
       // 初始化默认炉型能力配置
       this.furnaceCapabilities = {
         hasBackZone: true,
@@ -383,39 +383,39 @@ export default {
         maxHeatingRate: 10,
         supportedAtmosphereTypes: ['纯氮气']
       }
-      
+
       // 如果是新增模式
       if (this.type === 'create') {
         // 获取炉型列表
         this.getFurnaceTypes()
-        
+
         // 创建默认工艺段
         this.createInitialSegment()
       } else if (this.templateData) {
         // 编辑或查看模式，复制传入的数据
         const data = JSON.parse(JSON.stringify(this.templateData))
-        
+
         // 转换适用产品IDs
-        const applicableProductIds = data.applicableProducts ? 
-          data.applicableProducts.map(product => product.id) : []
-        
+        const applicableProductIds = data.applicableProducts
+          ? data.applicableProducts.map(product => product.id) : []
+
         this.form = {
           ...data,
           applicableProductIds
         }
-        
+
         // 如果没有工艺段数据，创建一个默认段
         if (!this.form.segments || !this.form.segments.length) {
           this.createInitialSegment()
         }
       }
     },
-    
+
     // 获取炉型列表
     getFurnaceTypes() {
       getAllFurnaceTypes().then(response => {
         let furnaceTypes = []
-        
+
         // 处理嵌套的API返回结构
         if (response && response.code === 20000) {
           if (response.data && response.data.items) {
@@ -426,7 +426,7 @@ export default {
             furnaceTypes = response.data
           }
         }
-        
+
         this.furnaceTypeOptions = furnaceTypes.map(type => ({
           label: type.furnaceTypeName || type.name,
           value: type.furnaceTypeCode || type.id
@@ -435,7 +435,7 @@ export default {
         this.$message.error('获取炉型列表失败')
       })
     },
-    
+
     // 获取产品列表
     getProducts() {
       getAllProductList().then(response => {
@@ -446,7 +446,7 @@ export default {
           this.productOptions = []
           return
         }
-        
+
         const products = response.data.items
         this.productOptions = products.map(product => ({
           id: product.id,
@@ -463,7 +463,7 @@ export default {
         this.productOptions = []
       })
     },
-    
+
     // 更新炉型能力配置
     handleFurnaceCapabilitiesChange(capabilities) {
       // 更新炉型能力配置
@@ -476,32 +476,32 @@ export default {
         maxHeatingRate: 10,
         supportedAtmosphereTypes: ['纯氮气']
       }
-      
+
       // 映射字段名称，确保与ProcessSegmentTable组件期望的字段名称一致
       if (capabilities) {
         // 映射后区循环风机字段
         if (capabilities.hasRearCirculationFan !== undefined) {
           this.furnaceCapabilities.hasBackZone = capabilities.hasRearCirculationFan
         }
-        
+
         // 映射负压风机字段
         if (capabilities.hasVacuumFan !== undefined) {
           this.furnaceCapabilities.hasNegativePressure = capabilities.hasVacuumFan
         }
-        
+
         // 映射吹洗阀字段
         if (capabilities.hasPurgeValve !== undefined) {
           this.furnaceCapabilities.hasCoolingValve = capabilities.hasPurgeValve
         }
-        
+
         // 映射最高温度字段
         if (capabilities.maxTemperatureLimit !== undefined) {
           this.furnaceCapabilities.maxTemperature = capabilities.maxTemperatureLimit
         }
       }
-      
+
       console.log('工艺模板表单接收到炉型能力配置:', this.furnaceCapabilities)
-      
+
       // 根据新的炉型能力配置更新工艺段
       if (this.form.segments && this.form.segments.length > 0) {
         // 如果工艺段数超过最大限制，截断多余段
@@ -509,7 +509,7 @@ export default {
           this.$message.warning(`根据所选炉型，工艺段数量已自动调整为${this.furnaceCapabilities.maxSegments}段`)
           this.form.segments = this.form.segments.slice(0, this.furnaceCapabilities.maxSegments)
         }
-        
+
         // 强制更新工艺段表格组件
         this.$nextTick(() => {
           // 确保工艺段表格组件能够感知到炉型能力配置的变化
@@ -517,7 +517,7 @@ export default {
         })
       }
     },
-    
+
     // 获取抽屉标题
     getDrawerTitle() {
       if (this.type === 'create') {
@@ -528,7 +528,7 @@ export default {
         return `查看工艺模板: ${this.form.templateId || ''}`
       }
     },
-    
+
     // 处理工艺段变化（通过change事件）
     handleSegmentsChange(segments) {
       console.log('ProcessTemplateFormDrawer: handleSegmentsChange called')
@@ -543,7 +543,7 @@ export default {
         }
       })
     },
-    
+
     // 处理工艺段变化（通过input事件）
     handleSegmentsInput(segments) {
       console.log('ProcessTemplateFormDrawer: handleSegmentsInput called')
@@ -558,7 +558,7 @@ export default {
         }
       })
     },
-    
+
     // 处理表单验证和提交
     validateAndSubmit() {
       // 首先执行默认的表单验证
@@ -571,17 +571,17 @@ export default {
         }
       })
     },
-    
+
     // 自定义校验 - 检查工艺段目标温度是否超过炉型上限
     validateSegmentsTemperature() {
       // 如果没有选择炉型或没有工艺段数据，不执行校验
       if (!this.furnaceCapabilities || !this.form.segments || !this.form.segments.length) {
         return true
       }
-      
+
       const maxTemp = this.furnaceCapabilities.maxTemperature || 1000
       const exceedSegments = this.form.segments.filter(segment => segment.targetTemp > maxTemp)
-      
+
       if (exceedSegments.length > 0) {
         // 找到超出温度限制的段
         const segmentNumbers = exceedSegments.map(s => s.segmentNumber).join('、')
@@ -604,19 +604,19 @@ export default {
           })
           return false
         })
-        
+
         return false // 阻止默认提交
       }
-      
+
       return true // 没有问题，允许提交
     },
-    
+
     // 处理表单数据变化
     handleFormChange(changedFields) {
       // 更新本地表单数据，保留原有数据不被覆盖
       if (changedFields && Object.keys(changedFields).length > 0) {
         console.log('表单数据更新(来自DrawerForm):', JSON.stringify(changedFields, null, 2))
-        
+
         // 比较新旧数据，检查是否有实际变化
         let hasChanged = false
         Object.keys(changedFields).forEach(key => {
@@ -625,19 +625,19 @@ export default {
             hasChanged = true
           }
         })
-        
+
         if (hasChanged) {
           console.log('表单数据已实际更新，当前form数据:', JSON.stringify(this.form, null, 2))
         }
       }
     },
-    
+
     // 处理表单提交（验证通过后）
     handleFormSubmit(formData) {
       // 构建提交数据，合并DrawerForm提交的数据和本地表单数据
       const submitData = { ...formData, ...this.form }
       console.log('合并后的提交数据:', submitData)
-      
+
       // 将适用产品IDs转换为对象数组
       submitData.applicableProducts = submitData.applicableProductIds.map(id => {
         const product = this.productOptions.find(p => p.id === id)
@@ -647,11 +647,11 @@ export default {
           code: product ? product.code : ''
         }
       })
-      
+
       // 触发提交事件
       this.$emit('submit', submitData)
     },
-    
+
     // 处理关闭
     handleClose() {
       this.$emit('close')
@@ -663,7 +663,7 @@ export default {
       // 完全重置表单为初始状态
       this.form = this.initFormData()
     },
-    
+
     // 获取时间线项目类型
     getTimelineItemType(action) {
       if (action === '提交审批') return 'primary'
@@ -671,7 +671,7 @@ export default {
       if (action === '驳回') return 'danger'
       return 'info'
     },
-    
+
     // 获取时间线项目图标
     getTimelineItemIcon(action) {
       if (action === '提交审批') return 'el-icon-s-promotion'
@@ -679,7 +679,7 @@ export default {
       if (action === '驳回') return 'el-icon-close'
       return 'el-icon-more'
     },
-    
+
     // 创建初始工艺段
     createInitialSegment() {
       this.form.segments = [{
@@ -692,7 +692,7 @@ export default {
         vfFySet: this.furnaceCapabilities.hasNegativePressure ? 10 : 0,
         cvSet: this.furnaceCapabilities.hasCoolingValve ? 0 : 0 // 确保吹洗阀被设置为0而不是undefined
       }]
-      
+
       // 清除可能的验证错误
       this.$nextTick(() => {
         if (this.$refs.drawerForm && this.$refs.drawerForm.$refs.form) {
@@ -727,14 +727,14 @@ export default {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  
+
   // 确保子组件能够撑满容器宽度
   :deep(.process-curve-chart),
   :deep(.process-segment-table) {
     width: 100%;
     overflow-x: auto;
   }
-  
+
   :deep(.chart-container) {
     width: 100% !important;
     min-width: 800px;
@@ -749,12 +749,12 @@ export default {
 
 .approval-log {
   padding: 10px 0;
-  
+
   .timeline-content {
     .timeline-title {
       font-weight: bold;
       margin-bottom: 5px;
-      
+
       .timeline-user {
         font-weight: normal;
         font-size: 12px;
@@ -762,7 +762,7 @@ export default {
         margin-left: 10px;
       }
     }
-    
+
     .timeline-comment {
       font-size: 13px;
       color: #606266;
@@ -771,10 +771,9 @@ export default {
   }
 }
 
-::v-deep(.el-transfer__panel) {  
+::v-deep(.el-transfer__panel) {
   width: 500px !important;
   flex: none !important;
 }
 </style>
-
 

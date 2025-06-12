@@ -11,12 +11,12 @@
     :direction="direction"
     :before-close="handleClose"
     custom-class="drawer-form"
-    :wrapperClosable="wrapperClosable"
+    :wrapper-closable="wrapperClosable"
     append-to-body
     @open="handleOpen"
     @closed="handleClosed"
   >
-    <div class="drawer-content" ref="drawerContent">
+    <div ref="drawerContent" class="drawer-content">
       <el-form
         ref="form"
         :model="computedFormData"
@@ -27,15 +27,15 @@
         @submit.native.prevent="submitForm"
       >
         <!-- 表单内容插槽 -->
-        <slot :form="computedFormData"></slot>
-        
+        <slot :form="computedFormData" />
+
         <!-- 默认表单项，如果没有提供自定义插槽 -->
         <template v-if="!$slots.default">
           <!-- 表单分段 -->
           <template v-for="(section, sectionIndex) in formSections">
             <div :key="sectionIndex" class="form-section">
               <h3 v-if="section.title" class="section-title">{{ section.title }}</h3>
-              
+
               <div class="form-row">
                 <el-form-item
                   v-for="item in section.items"
@@ -56,7 +56,7 @@
                     :clearable="item.clearable !== false"
                     @input="val => updateFormField(item.prop, val)"
                   />
-                  
+
                   <!-- 选择器 -->
                   <el-select
                     v-else-if="item.type === 'select'"
@@ -67,7 +67,7 @@
                     :multiple="item.multiple"
                     :collapse-tags="item.collapseTags"
                     style="width: 100%"
-                    @change="val => { 
+                    @change="val => {
                       updateFormField(item.prop, val);
                       // 如果有自定义事件处理器，先调用它
                       if (item.events && typeof item.events.change === 'function') {
@@ -97,7 +97,7 @@
                     :clearable="item.clearable !== false"
                     @input="val => updateFormField(item.prop, val)"
                   />
-                  
+
                   <!-- 日期选择器 -->
                   <el-date-picker
                     v-else-if="item.type === 'date'"
@@ -111,7 +111,7 @@
                     style="width: 100%"
                     @change="val => updateFormField(item.prop, val)"
                   />
-                  
+
                   <!-- 数字输入框 -->
                   <el-input-number
                     v-else-if="item.type === 'number'"
@@ -126,7 +126,7 @@
                     style="width: 100%"
                     @change="val => updateFormField(item.prop, val)"
                   />
-                  
+
                   <template v-else-if="item.type === 'number-with-unit'">
                     <el-input-number
                       v-model="computedFormData[item.prop]"
@@ -142,7 +142,7 @@
                     />
                     <span class="unit-label">{{ item.unit }}</span>
                   </template>
-                  
+
                   <!-- 单选框组 -->
                   <el-radio-group
                     v-else-if="item.type === 'radio'"
@@ -159,7 +159,7 @@
                       {{ opt.label }}
                     </el-radio>
                   </el-radio-group>
-                  
+
                   <!-- 复选框组 -->
                   <el-checkbox-group
                     v-else-if="item.type === 'checkbox'"
@@ -176,7 +176,7 @@
                       {{ opt.label }}
                     </el-checkbox>
                   </el-checkbox-group>
-                  
+
                   <!-- 开关 -->
                   <el-switch
                     v-else-if="item.type === 'switch'"
@@ -188,14 +188,14 @@
                     :inactive-value="item.inactiveValue"
                     @change="val => updateFormField(item.prop, val)"
                   />
-                  
+
                   <!-- 自定义插槽 -->
                   <slot
                     v-else-if="item.type === 'slot'"
                     :name="item.slotName || item.prop"
                     :form="computedFormData"
                   />
-                  
+
                   <!-- 默认为输入框 -->
                   <el-input
                     v-else
@@ -207,7 +207,7 @@
                     :clearable="item.clearable !== false"
                     @input="val => updateFormField(item.prop, val)"
                   />
-                  
+
                   <!-- 表单提示 -->
                   <div v-if="item.tip" class="form-tip">{{ item.tip }}</div>
                 </el-form-item>
@@ -217,13 +217,13 @@
         </template>
       </el-form>
     </div>
-    
+
     <div class="drawer-footer">
       <!-- 表单按钮插槽 -->
       <slot name="footer">
         <el-button @click="handleCancel">{{ cancelButtonText }}</el-button>
-        <el-button v-if="mode === 'create'" type="primary" @click="handleSubmitAndContinue" :loading="loading">保存并继续</el-button>
-        <el-button v-if="mode !== 'view'" type="primary" @click="submitForm" :loading="loading">{{ confirmButtonText }}</el-button>
+        <el-button v-if="mode === 'create'" type="primary" :loading="loading" @click="handleSubmitAndContinue">保存并继续</el-button>
+        <el-button v-if="mode !== 'view'" type="primary" :loading="loading" @click="submitForm">{{ confirmButtonText }}</el-button>
       </slot>
     </div>
   </el-drawer>
@@ -334,17 +334,17 @@ export default {
         this.$emit('form-change', cloneDeep(val))
       }
     },
-    
+
     // 表单标题
     formTitle() {
       if (this.title) return this.title
-      
+
       const modeMap = {
         create: '新增',
         update: '编辑',
         view: '查看'
       }
-      
+
       return modeMap[this.mode] || '表单'
     }
   },
@@ -388,9 +388,9 @@ export default {
         this.drawerVisible = false
         return
       }
-      
+
       console.log('DrawerForm准备提交的数据:', JSON.stringify(this.computedFormData, null, 2))
-      
+
       this.$refs.form.validate(valid => {
         if (valid) {
           // 在提交前确保所有表单项都被同步到formData
@@ -404,7 +404,7 @@ export default {
         }
       })
     },
-    
+
     // 保存并继续
     handleSubmitAndContinue() {
       this.$refs.form.validate(valid => {
@@ -415,59 +415,59 @@ export default {
         }
       })
     },
-    
+
     // 取消表单
     handleCancel() {
       this.drawerVisible = false
       this.$emit('cancel')
     },
-    
+
     // 关闭抽屉
     handleClose(done) {
       this.$emit('before-close')
       done()
     },
-    
+
     // 抽屉打开时获取最新数据
     handleOpen() {
       console.log('DrawerForm打开，接收到的表单数据:', this.data)
       this.formData = cloneDeep(this.data)
       this.originFormData = cloneDeep(this.data)
-      
+
       // 关键：确保表单数据被正确初始化
       this.$nextTick(() => {
         console.log('表单数据已初始化:', this.computedFormData)
         // 强制将从父组件传入的数据更新到表单模型
         this.$emit('form-change', cloneDeep(this.computedFormData))
-        
+
         // 打开时清除验证信息，防止初始就显示错误
         if (this.$refs.form) {
           this.$refs.form.clearValidate()
         }
       })
-      
+
       this.$emit('open')
     },
-    
+
     // 抽屉关闭后
     handleClosed() {
       this.$refs.form && this.$refs.form.resetFields()
       this.formData = {}
       this.$emit('closed')
     },
-    
+
     // 重置表单
     resetForm() {
       this.$refs.form && this.$refs.form.resetFields()
       this.computedFormData = cloneDeep(this.originFormData)
     },
-    
+
     // 监听用户输入并实时更新表单数据
     updateFormField(field, value) {
       if (this.computedFormData) {
         console.log(`表单字段更新: ${field} = `, value)
         // 使用计算属性的setter，它会自动触发通知
-        const newData = {...this.computedFormData}
+        const newData = { ...this.computedFormData }
         newData[field] = value
         this.computedFormData = newData
       }
@@ -483,7 +483,7 @@ export default {
     padding: 16px 20px;
     border-bottom: 1px solid #e6e6e6;
   }
-  
+
   :deep(.el-drawer__body) {
     height: calc(100% - 60px);
     overflow-y: auto;
@@ -497,15 +497,15 @@ export default {
   position: relative;
   width: calc(100% - 40px);
   box-sizing: border-box;
-  
+
   :deep(.el-form) {
     width: 100%;
-    
+
     .el-form-item__content {
       width: calc(100% - 100px);
       box-sizing: border-box;
     }
-    
+
     // 确保插槽内容宽度正确
     [class^="slot-"],
     [slot],
@@ -521,7 +521,7 @@ export default {
   flex-wrap: wrap;
   margin: 0 -10px;
   width: 100%;
-  
+
   .el-form-item {
     padding: 0 10px;
     margin-bottom: 18px;
@@ -531,7 +531,7 @@ export default {
 
 .form-section {
   margin-bottom: 20px;
-  
+
   .section-title {
     font-size: 16px;
     font-weight: 500;
@@ -564,7 +564,7 @@ export default {
   border-top: 1px solid #e6e6e6;
   text-align: right;
   z-index: 1;
-  
+
   .el-button {
     margin-left: 10px;
   }
@@ -583,9 +583,9 @@ export default {
 ::v-deep .el-form-item__content {
   // width: calc(100% - 100px);
   box-sizing: border-box;
-  
+
   > * {
     width: 100%;
   }
 }
-</style> 
+</style>

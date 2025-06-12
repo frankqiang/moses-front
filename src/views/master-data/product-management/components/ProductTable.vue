@@ -33,9 +33,9 @@
     >
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增产品</el-button>
-        <el-dropdown v-if="selectedRows.length > 0" size="mini" @command="handleBatchLifecycleChange" trigger="click">
+        <el-dropdown v-if="selectedRows.length > 0" size="mini" trigger="click" @command="handleBatchLifecycleChange">
           <el-button type="primary" size="mini">
-            生命周期 <i class="el-icon-arrow-down el-icon--right"></i>
+            生命周期 <i class="el-icon-arrow-down el-icon--right" />
           </el-button>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item command="trial">设为试产</el-dropdown-item>
@@ -43,10 +43,9 @@
             <el-dropdown-item command="discontinued">设为停产</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
-        <slot name="toolbar-left"></slot>
+        <slot name="toolbar-left" />
       </template>
-      
-   
+
     </table-toolbar>
 
     <el-table
@@ -56,12 +55,12 @@
       highlight-current-row
       :fit="true"
       style="width: 100%"
-      @selection-change="handleSelectionChange"
       :row-class-name="tableRowClassName"
+      @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="45" align="center" fixed="left" />
       <el-table-column label="#" type="index" width="50" align="center" fixed="left" />
-      
+
       <template v-for="col in tableColumns">
         <el-table-column
           :key="col.prop"
@@ -149,7 +148,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <!-- 分页 -->
     <pagination
       v-show="total > 0"
@@ -246,7 +245,7 @@ export default {
     currentStorageKey() {
       return this.columnSettingsKeyPrefix
     },
-    
+
     // 导入API函数
     importApiFunction() {
       return (file) => {
@@ -262,7 +261,7 @@ export default {
         })
       }
     },
-    
+
     // 模板API函数
     templateApiFunction() {
       return () => {
@@ -273,7 +272,7 @@ export default {
         })
       }
     },
-    
+
     // 导出API函数
     exportApiFunction() {
       return (params) => {
@@ -333,7 +332,7 @@ export default {
           tooltip: '将产品生命周期设置为停产阶段'
         }
       ]
-      
+
       // 使用预设按钮生成操作按钮
       const buttons = [
         {
@@ -353,7 +352,7 @@ export default {
           showText: true
         }
       ]
-      
+
       // 添加状态变更下拉按钮
       const statusButton = {
         text: '状态变更',
@@ -363,10 +362,10 @@ export default {
         tooltip: '修改产品生命周期',
         showText: true
       }
-      
+
       return [...buttons, statusButton]
     },
-    
+
     // 处理按钮点击事件
     handleActionClick({ action, row, parentAction }) {
       // 如果是状态下拉菜单的子项点击
@@ -374,7 +373,7 @@ export default {
         this.handleStatusChange(row, action)
         return
       }
-      
+
       // 处理主要操作
       switch (action) {
         case 'edit':
@@ -390,7 +389,7 @@ export default {
           break
       }
     },
-    
+
     // 初始化产品列配置
     initProductColumns() {
       // 产品列
@@ -404,9 +403,9 @@ export default {
         { prop: 'lifecycleStatus', label: '产品生命周期', width: '120' },
         { prop: 'processTemplates', label: '关联工艺模板', width: '200' },
         { prop: 'qualityStandards', label: '关联质量标准', width: '200' },
-        { 
-          prop: 'updateTime', 
-          label: '更新时间', 
+        {
+          prop: 'updateTime',
+          label: '更新时间',
           width: '120',
           formatter: this.formatDate
         }
@@ -426,7 +425,7 @@ export default {
     // 格式化日期
     formatDate(date) {
       if (!date) return '-'
-      
+
       try {
         const d = new Date(date)
         return d.toLocaleDateString('zh-CN', {
@@ -438,7 +437,7 @@ export default {
         return date || '-'
       }
     },
-    
+
     // 行样式
     tableRowClassName({ row }) {
       if (row.lifecycleStatus === 'discontinued') {
@@ -446,38 +445,38 @@ export default {
       }
       return ''
     },
-    
+
     // 选择行变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
       this.$emit('selection-change', selection)
     },
-    
+
     // 新增按钮点击事件
     handleAdd() {
       this.$emit('add')
     },
-    
+
     // 编辑按钮点击事件
     handleUpdate(row) {
       this.$emit('update', row)
     },
-    
+
     // 状态切换按钮点击事件
     handleStatusChange(row, lifecycleStatus) {
       this.$emit('status-change', row, lifecycleStatus)
     },
-    
+
     // 查看按钮点击事件
     handleView(row) {
       this.$emit('view', row)
     },
-    
+
     // 分页变化
     handlePagination({ page, limit }) {
       // 滚动到顶部
       scrollTo(0, 800)
-      
+
       this.$emit('pagination', { page, limit })
     },
 
@@ -485,28 +484,28 @@ export default {
     handleRefresh() {
       this.$emit('refresh')
     },
-    
+
     // 批量删除
     handleBatchDelete(rows) {
       this.$emit('batch-delete', rows || this.selectedRows)
     },
-    
+
     // 批量状态变更
     handleBatchStatus(rows, status) {
       this.$emit('batch-status', rows || this.selectedRows, status)
     },
-    
+
     // 导入成功
     handleImportSuccess(result) {
       this.$emit('import-success', result)
       this.handleRefresh()
     },
-    
+
     // 导出成功
     handleExportSuccess(result) {
       this.$emit('export-success', result)
     },
-    
+
     // 返回顶部方法，供外部调用
     backToTop() {
       scrollTo(0, 800)
@@ -523,12 +522,12 @@ export default {
 <style lang="scss">
 .product-table {
   margin-bottom: 20px;
-  
+
   .discontinued-row {
     background-color: #f9f9f9;
     color: #909399;
   }
-  
+
   .el-table {
     .cell {
       padding: 0 5px;
@@ -549,18 +548,18 @@ export default {
 .template-list {
   max-height: 300px;
   overflow-y: auto;
-  
+
   &-header {
     font-weight: bold;
     padding-bottom: 8px;
     margin-bottom: 8px;
     border-bottom: 1px solid #ebeef5;
   }
-  
+
   &-item {
     padding: 6px 0;
     border-bottom: 1px solid #f0f0f0;
-    
+
     &:last-child {
       border-bottom: none;
     }
@@ -571,4 +570,4 @@ export default {
   max-width: 80%;
   min-width: 200px;
 }
-</style> 
+</style>

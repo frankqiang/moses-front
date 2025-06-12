@@ -149,4 +149,4 @@ export function getAllFurnaceTypes() {
     method: 'get',
     params: { status: 'enabled', limit: 999 } // 使用已有的list接口获取所有启用状态的炉型
   })
-} 
+}

@@ -90,14 +90,14 @@ export default {
     handleSearch(model) {
       this.$emit('search', { ...model })
     },
-    
+
     // 重置事件处理
     handleReset() {
       const emptyModel = {
         ruleName: '',
         ruleType: ''
       }
-      
+
       this.$emit('reset', emptyModel)
     }
   }
@@ -109,4 +109,4 @@ export default {
 .search-item-name {
   width: 240px;
 }
-</style> 
+</style>

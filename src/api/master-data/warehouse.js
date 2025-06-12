@@ -162,4 +162,4 @@ export function downloadWarehouseTemplate() {
     method: 'get',
     responseType: 'blob'
   })
-} 
+}

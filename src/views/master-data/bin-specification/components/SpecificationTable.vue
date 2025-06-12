@@ -33,11 +33,11 @@
     >
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增料框规格</el-button>
-        <slot name="toolbar-left"></slot>
+        <slot name="toolbar-left" />
       </template>
-      
+
       <template #toolbar-right>
-        <slot name="toolbar-right"></slot>
+        <slot name="toolbar-right" />
       </template>
     </table-toolbar>
 
@@ -48,12 +48,12 @@
       highlight-current-row
       :fit="true"
       style="width: 100%"
-      @selection-change="handleSelectionChange"
       :row-class-name="tableRowClassName"
+      @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="45" align="center" fixed="left" />
       <el-table-column label="#" type="index" width="50" align="center" fixed="left" />
-      
+
       <template v-for="col in tableColumns">
         <el-table-column
           :key="col.prop"
@@ -112,7 +112,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <!-- 分页 -->
     <pagination
       v-show="total > 0"
@@ -208,12 +208,12 @@ export default {
     columnSettingsKey() {
       return `${this.columnSettingsKeyPrefix}_${this.$options.name || 'common'}`
     },
-    
+
     // 默认显示的列
     defaultVisibleColumns() {
       return ['code', 'name', 'dimensions', 'maxWeight', 'material', 'status']
     },
-    
+
     // 导入API函数
     importApiFunction() {
       return (file) => {
@@ -229,7 +229,7 @@ export default {
         })
       }
     },
-    
+
     // 模板API函数
     templateApiFunction() {
       return () => {
@@ -240,7 +240,7 @@ export default {
         })
       }
     },
-    
+
     // 导出API函数
     exportApiFunction() {
       return (params) => {
@@ -281,7 +281,7 @@ export default {
     migrateOldColumnSettings() {
       const oldKey = this.columnSettingsKeyPrefix
       const newKey = `${this.columnSettingsKeyPrefix}_${this.$options.name || 'common'}`
-      
+
       // 检查是否存在旧的配置
       const oldSettings = localStorage.getItem(oldKey)
       if (oldSettings && !localStorage.getItem(newKey)) {
@@ -290,7 +290,7 @@ export default {
         console.log('已迁移列设置配置:', oldKey, '->', newKey)
       }
     },
-    
+
     // 获取操作按钮配置
     getActionButtons(row) {
       // 创建自定义状态切换按钮
@@ -299,14 +299,14 @@ export default {
         action: 'statusToggle',
         icon: row.status === 1 ? 'el-icon-close' : 'el-icon-check',
         type: 'text',
-        class: row.status === 1 ? 'status-disable' : 'status-enable',
+        class: row.status === 1 ? 'status-disable' : 'status-enable'
         // tooltip: row.status === 1 ? '禁用' : '启用'
       }
-      
+
       // 使用预设按钮生成操作按钮，并添加状态切换按钮
       return generateTableButtons(['edit', 'view']).concat([statusToggleButton])
     },
-    
+
     // 处理按钮点击事件
     handleActionClick({ action, row }) {
       switch (action) {
@@ -321,21 +321,21 @@ export default {
           break
       }
     },
-    
+
     // 初始化料框规格列配置
     initSpecificationColumns() {
       // 列配置
       const columns = [
         { prop: 'code', label: '规格代码', width: '120' },
         { prop: 'name', label: '规格名称', width: '150' },
-        { 
-          prop: 'dimensions', 
-          label: '尺寸(cm)', 
+        {
+          prop: 'dimensions',
+          label: '尺寸(cm)',
           width: '150'
         },
-        { 
-          prop: 'maxWeight', 
-          label: '最大载重(kg)', 
+        {
+          prop: 'maxWeight',
+          label: '最大载重(kg)',
           width: '120'
         },
         { prop: 'material', label: '材质', width: '120' },
@@ -355,7 +355,7 @@ export default {
         columns: this.internalVisibleColumns
       }
     },
-    
+
     // 行样式
     tableRowClassName({ row }) {
       if (row.status === 0) {
@@ -363,33 +363,33 @@ export default {
       }
       return ''
     },
-    
+
     // 选择行变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
       this.$emit('selection-change', selection)
     },
-    
+
     // 新增按钮点击事件
     handleAdd() {
       this.$emit('add')
     },
-    
+
     // 编辑按钮点击事件
     handleUpdate(row) {
       this.$emit('update', row)
     },
-    
+
     // 状态切换按钮点击事件
     handleStatusChange(row) {
       this.$emit('status-change', row)
     },
-    
+
     // 查看按钮点击事件
     handleView(row) {
       this.$emit('view', row)
     },
-    
+
     // 分页变化
     handlePagination({ page, limit }) {
       this.$emit('size-change', limit)
@@ -400,33 +400,33 @@ export default {
     handleRefresh() {
       this.$emit('current-change', this.currentPage)
     },
-    
+
     // 批量删除
     handleBatchDelete(rows) {
       this.$emit('batch-delete', rows || this.selectedRows)
     },
-    
+
     // 批量启用
     handleBatchEnable(rows) {
       this.$emit('batch-enable', rows || this.selectedRows)
     },
-    
+
     // 批量禁用
     handleBatchDisable(rows) {
       this.$emit('batch-disable', rows || this.selectedRows)
     },
-    
+
     // 导入成功
     handleImportSuccess(result) {
       this.$emit('import-success', result)
       this.handleRefresh()
     },
-    
+
     // 导出成功
     handleExportSuccess(result) {
       this.$emit('export-success', result)
     },
-    
+
     // 重写columnSettingsMixin中的handleColumnChange方法
     handleColumnChange(columns) {
       // 调用父类方法
@@ -441,17 +441,17 @@ export default {
 <style lang="scss">
 .specification-table {
   margin-bottom: 20px;
-  
+
   .disabled-row {
     background-color: #f9f9f9;
     color: #909399;
   }
-  
+
   .text-muted {
     color: #909399;
     font-style: italic;
   }
-  
+
   .el-table {
     .cell {
       padding: 0 5px;
@@ -467,13 +467,13 @@ export default {
       width: 100% !important;
     }
   }
-  
+
   .status-enable {
     color: #67c23a;
   }
-  
+
   .status-disable {
     color: #f56c6c;
   }
 }
-</style> 
+</style>

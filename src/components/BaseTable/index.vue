@@ -9,14 +9,14 @@
     <!-- 错误状态显示 -->
     <div v-if="loadError" class="load-error">
       <div class="error-content">
-        <i class="el-icon-warning-outline"></i>
+        <i class="el-icon-warning-outline" />
         <p class="error-message">{{ getErrorMessage(loadError) }}</p>
-        <el-button 
-          v-if="allowRetry" 
-          type="primary" 
-          size="small" 
-          @click="handleRetry"
+        <el-button
+          v-if="allowRetry"
+          type="primary"
+          size="small"
           :loading="retrying"
+          @click="handleRetry"
         >
           {{ retrying ? '重试中...' : '重试' }}
         </el-button>
@@ -25,7 +25,7 @@
 
     <!-- 虚拟滚动表格 -->
     <div v-else-if="virtualScroll && safeTableData.length > virtualThreshold" class="virtual-table-wrapper">
-      <div class="virtual-table-header" ref="headerRef">
+      <div ref="headerRef" class="virtual-table-header">
         <!-- 表头 -->
         <el-table
           :data="[]"
@@ -33,19 +33,19 @@
           style="width: 100%"
           show-header
         >
-          <el-table-column 
-            v-if="showSelection" 
-            type="selection" 
-            width="55" 
+          <el-table-column
+            v-if="showSelection"
+            type="selection"
+            width="55"
             align="center"
             fixed="left"
           />
-          
-          <el-table-column 
-            v-if="showIndex" 
-            type="index" 
-            label="序号" 
-            width="60" 
+
+          <el-table-column
+            v-if="showIndex"
+            type="index"
+            label="序号"
+            width="60"
             align="center"
           />
 
@@ -58,10 +58,10 @@
           <slot name="actions" />
         </el-table>
       </div>
-      
-      <div 
-        class="virtual-table-body" 
+
+      <div
         ref="virtualScrollRef"
+        class="virtual-table-body"
         :style="{ height: virtualHeight + 'px' }"
         @scroll="handleVirtualScroll"
       >
@@ -75,19 +75,19 @@
             @row-click="handleRowClick"
             @row-dblclick="handleRowDblClick"
           >
-            <el-table-column 
-              v-if="showSelection" 
-              type="selection" 
-              width="55" 
+            <el-table-column
+              v-if="showSelection"
+              type="selection"
+              width="55"
               align="center"
               fixed="left"
             />
-            
-            <el-table-column 
-              v-if="showIndex" 
-              type="index" 
-              label="序号" 
-              width="60" 
+
+            <el-table-column
+              v-if="showIndex"
+              type="index"
+              label="序号"
+              width="60"
               align="center"
               :index="getVirtualIndex"
             />
@@ -99,16 +99,16 @@
             >
               <template v-if="column.slotName" v-slot="scope">
                 <error-boundary :fallback="getCellFallback(scope.row, column)">
-                  <slot 
-                    :name="column.slotName" 
-                    :row="scope.row" 
-                    :column="scope.column" 
+                  <slot
+                    :name="column.slotName"
+                    :row="scope.row"
+                    :column="scope.column"
                     :$index="scope.$index"
                     :value="safeGetValue(scope.row, column.prop)"
                   />
                 </error-boundary>
               </template>
-              
+
               <template v-else-if="column.type === 'status'" v-slot="scope">
                 <error-boundary :fallback="getCellFallback(scope.row, column)">
                   <status-tag
@@ -123,7 +123,7 @@
                   />
                 </error-boundary>
               </template>
-              
+
               <template v-else-if="column.type === 'datetime'" v-slot="scope">
                 <error-boundary :fallback="getCellFallback(scope.row, column)">
                   <span>{{ safeFormatTime(safeGetValue(scope.row, column.prop), column.format) }}</span>
@@ -139,8 +139,8 @@
     <el-table
       v-else
       ref="elTable"
-      :data="safeTableData"
       v-loading="loading"
+      :data="safeTableData"
       v-bind="tableAttrs"
       style="width: 100%"
       @sort-change="debouncedSortChange"
@@ -149,20 +149,20 @@
       @row-dblclick="handleRowDblClick"
     >
       <!-- 多选列 -->
-      <el-table-column 
-        v-if="showSelection" 
-        type="selection" 
-        width="55" 
+      <el-table-column
+        v-if="showSelection"
+        type="selection"
+        width="55"
         align="center"
         fixed="left"
       />
-      
+
       <!-- 序号列 -->
-      <el-table-column 
-        v-if="showIndex" 
-        type="index" 
-        label="序号" 
-        width="60" 
+      <el-table-column
+        v-if="showIndex"
+        type="index"
+        label="序号"
+        width="60"
         align="center"
         :index="indexMethod"
       />
@@ -176,16 +176,16 @@
         <!-- 使用插槽进行自定义渲染 -->
         <template v-if="column.slotName" v-slot="scope">
           <error-boundary :fallback="getCellFallback(scope.row, column)">
-            <slot 
-              :name="column.slotName" 
-              :row="scope.row" 
-              :column="scope.column" 
+            <slot
+              :name="column.slotName"
+              :row="scope.row"
+              :column="scope.column"
               :$index="scope.$index"
               :value="safeGetValue(scope.row, column.prop)"
             />
           </error-boundary>
         </template>
-        
+
         <!-- 状态列的默认渲染 -->
         <template v-else-if="column.type === 'status'" v-slot="scope">
           <error-boundary :fallback="getCellFallback(scope.row, column)">
@@ -201,7 +201,7 @@
             />
           </error-boundary>
         </template>
-        
+
         <!-- 时间列的默认渲染 -->
         <template v-else-if="column.type === 'datetime'" v-slot="scope">
           <error-boundary :fallback="getCellFallback(scope.row, column)">
@@ -217,12 +217,12 @@
       <template #empty>
         <slot name="empty">
           <div class="empty-block">
-            <i class="el-icon-document"></i>
+            <i class="el-icon-document" />
             <p>暂无数据</p>
           </div>
         </slot>
       </template>
-      
+
       <!-- 附加内容 -->
       <slot name="append" />
 
@@ -389,12 +389,12 @@ export default {
       hasError: false,
       errorMessage: '',
       retrying: false,
-      
+
       // 虚拟滚动状态
       scrollTop: 0,
       visibleStart: 0,
       visibleEnd: 0,
-      
+
       // 防抖函数实例
       debouncedSortChange: null,
       debouncedPaginationChange: null
@@ -408,7 +408,7 @@ export default {
         this.$emit('data-error', { type: 'format', message: 'data必须是数组类型', originalData: this.data })
         return []
       }
-      
+
       return this.data.map((row, index) => {
         if (!row || typeof row !== 'object') {
           console.warn(`BaseTable: 第${index}行数据格式错误:`, row)
@@ -418,13 +418,13 @@ export default {
         return row
       })
     },
-    
+
     // 处理后的列配置 (memoization优化)
     processedColumns() {
       return this.columns.map((column, index) => {
         // 为每一列生成唯一key
         const key = column.prop || column.slotName || `column_${index}`
-        
+
         // 预处理列属性，避免在模板中重复计算
         const attrs = {
           prop: column.prop,
@@ -440,7 +440,7 @@ export default {
           labelClassName: column.labelClassName,
           ...(column.attrs || {})
         }
-        
+
         return {
           key,
           ...column,
@@ -448,7 +448,7 @@ export default {
         }
       })
     },
-    
+
     // 透传给el-table的属性
     tableAttrs() {
       return {
@@ -456,25 +456,25 @@ export default {
         'element-loading-text': this.loading ? '加载中...' : ''
       }
     },
-    
+
     // 虚拟滚动相关计算属性
     visibleCount() {
       return Math.ceil(this.virtualHeight / this.itemHeight)
     },
-    
+
     totalHeight() {
       return this.safeTableData.length * this.itemHeight
     },
-    
+
     visibleData() {
       if (!this.virtualScroll) return this.safeTableData
-      
+
       const start = Math.max(0, this.visibleStart - this.bufferSize)
       const end = Math.min(this.safeTableData.length, this.visibleEnd + this.bufferSize)
-      
+
       return this.safeTableData.slice(start, end)
     },
-    
+
     offsetY() {
       const start = Math.max(0, this.visibleStart - this.bufferSize)
       return start * this.itemHeight
@@ -484,7 +484,7 @@ export default {
     // 初始化防抖函数
     this.debouncedSortChange = debounce(this.handleSortChange, 300)
     this.debouncedPaginationChange = debounce(this.handlePaginationChange, 300)
-    
+
     // 初始化虚拟滚动
     this.updateVisibleRange()
   },
@@ -492,7 +492,7 @@ export default {
     // 安全获取对象属性值
     safeGetValue(obj, prop) {
       if (!obj || !prop) return undefined
-      
+
       try {
         // 支持嵌套属性，如 'user.name'
         return prop.split('.').reduce((current, key) => {
@@ -503,17 +503,17 @@ export default {
         return undefined
       }
     },
-    
+
     // 安全的时间格式化
     safeFormatTime(time, format = '{y}-{m}-{d} {h}:{i}:{s}') {
       if (!time) return ''
-      
+
       try {
         return parseTime(time, format)
       } catch (error) {
         console.warn('BaseTable: 时间格式化失败:', time, error)
         this.$emit('format-error', { type: 'time', value: time, error, format })
-        
+
         // 降级处理：尝试转换为字符串
         try {
           return time.toString()
@@ -522,7 +522,7 @@ export default {
         }
       }
     },
-    
+
     // 获取单元格错误回退内容
     getCellFallback(row, column) {
       if (row._error) {
@@ -530,7 +530,7 @@ export default {
       }
       return column.errorFallback || '-'
     },
-    
+
     // 错误信息处理
     getErrorMessage(error) {
       if (typeof error === 'string') return error
@@ -538,7 +538,7 @@ export default {
       if (typeof error === 'object' && error.message) return error.message
       return '加载失败，请重试'
     },
-    
+
     // 重试处理
     async handleRetry() {
       this.retrying = true
@@ -550,84 +550,84 @@ export default {
         this.retrying = false
       }
     },
-    
+
     // 虚拟滚动处理
     handleVirtualScroll(event) {
       this.scrollTop = event.target.scrollTop
       this.updateVisibleRange()
     },
-    
+
     updateVisibleRange() {
       const start = Math.floor(this.scrollTop / this.itemHeight)
       const end = start + this.visibleCount
-      
+
       this.visibleStart = start
       this.visibleEnd = end
     },
-    
+
     getVirtualIndex(index) {
       const actualIndex = this.visibleStart - this.bufferSize + index
       return this.indexMethod ? this.indexMethod(actualIndex) : actualIndex + 1
     },
-    
+
     // 事件处理方法
     handleSortChange(data) {
       this.$emit('sort-change', data)
     },
-    
+
     handleSelectionChange(selection) {
       this.$emit('selection-change', selection)
     },
-    
+
     handleRowClick(row, column, event) {
       this.$emit('row-click', row, column, event)
     },
-    
+
     handleRowDblClick(row, column, event) {
       this.$emit('row-dblclick', row, column, event)
     },
-    
+
     handlePaginationChange(pagination) {
       this.$emit('pagination-change', pagination)
     },
-    
+
     // 暴露 el-table 的原生方法
     clearSelection() {
       if (this.$refs.elTable) {
         this.$refs.elTable.clearSelection()
       }
     },
-    
+
     toggleRowSelection(row, selected) {
       if (this.$refs.elTable) {
         this.$refs.elTable.toggleRowSelection(row, selected)
       }
     },
-    
+
     toggleAllSelection() {
       if (this.$refs.elTable) {
         this.$refs.elTable.toggleAllSelection()
       }
     },
-    
+
     setCurrentRow(row) {
       if (this.$refs.elTable) {
         this.$refs.elTable.setCurrentRow(row)
       }
     },
-    
+
     clearSort() {
       if (this.$refs.elTable) {
         this.$refs.elTable.clearSort()
       }
     },
-    
+
     clearFilter(columnKey) {
       if (this.$refs.elTable) {
         this.$refs.elTable.clearFilter(columnKey)
       }
     },
-    
+
     doLayout() {
       if (this.$refs.elTable) {
         this.$refs.elTable.doLayout()
@@ -643,19 +643,19 @@ export default {
     padding: 40px 0;
     color: #909399;
     text-align: center;
-    
+
     i {
       font-size: 48px;
       margin-bottom: 16px;
       color: #c0c4cc;
     }
-    
+
     p {
       margin: 0;
       font-size: 14px;
     }
   }
-  
+
   // 错误状态样式
   .load-error {
     padding: 60px 20px;
@@ -663,17 +663,17 @@ export default {
     background-color: #fafafa;
     border: 1px dashed #d9d9d9;
     border-radius: 4px;
-    
+
     .error-content {
       max-width: 400px;
       margin: 0 auto;
-      
+
       i {
         font-size: 48px;
         color: #f56c6c;
         margin-bottom: 16px;
       }
-      
+
       .error-message {
         color: #606266;
         margin: 0 0 20px 0;
@@ -682,34 +682,34 @@ export default {
       }
     }
   }
-  
+
   // 单元格错误样式
   .cell-error {
     color: #f56c6c;
     font-style: italic;
   }
-  
+
   // 虚拟滚动样式
   .virtual-table-wrapper {
     border: 1px solid #ebeef5;
     border-radius: 4px;
     overflow: hidden;
-    
+
     .virtual-table-header {
       border-bottom: 1px solid #ebeef5;
-      
+
       ::v-deep .el-table__body-wrapper {
         display: none;
       }
     }
-    
+
     .virtual-table-body {
       overflow-y: auto;
-      
+
       ::v-deep .el-table__header-wrapper {
         display: none;
       }
-      
+
       ::v-deep .el-table__body {
         position: absolute;
         top: 0;
@@ -719,4 +719,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

@@ -33,11 +33,11 @@
     >
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增工艺模板</el-button>
-        <slot name="toolbar-left"></slot>
+        <slot name="toolbar-left" />
       </template>
-      
+
       <template #toolbar-right>
-        <slot name="toolbar-right"></slot>
+        <slot name="toolbar-right" />
       </template>
     </table-toolbar>
 
@@ -48,12 +48,12 @@
       highlight-current-row
       :fit="true"
       style="width: 100%"
-      @selection-change="handleSelectionChange"
       :row-class-name="tableRowClassName"
+      @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="45" align="center" fixed="left" />
       <el-table-column label="#" type="index" width="50" align="center" fixed="left" />
-      
+
       <el-table-column
         v-for="col in tableColumns"
         :key="col.prop"
@@ -108,7 +108,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <!-- 分页 -->
     <Pagination
       v-show="total > 0"
@@ -209,7 +209,7 @@ export default {
         { prop: 'version', label: '版本号', width: '80' },
         { prop: 'status', label: '状态', width: '100' },
         { prop: 'furnaceTypeName', label: '关联炉型', width: '150' },
-        { prop: 'applicableProducts', label: '适用产品范围', },
+        { prop: 'applicableProducts', label: '适用产品范围' },
         { prop: 'createdBy', label: '创建人', width: '120' },
         { prop: 'createdAt', label: '创建时间', width: '150', formatter: this.formatDateTime },
         { prop: 'updatedBy', label: '最后修改人', width: '120' },
@@ -226,7 +226,7 @@ export default {
     currentStorageKey() {
       return this.columnSettingsKeyPrefix
     },
-    
+
     // 导入API函数
     importApiFunction() {
       return (file) => {
@@ -242,7 +242,7 @@ export default {
         })
       }
     },
-    
+
     // 模板API函数
     templateApiFunction() {
       return () => {
@@ -253,7 +253,7 @@ export default {
         })
       }
     },
-    
+
     // 导出API函数
     exportApiFunction() {
       return (params) => {
@@ -293,30 +293,30 @@ export default {
         // 可添加固定的导出参数
       }
     },
-    
+
     // 格式化日期时间
     formatDateTime(value) {
       if (!value) return '-'
       return value.substring(0, 16).replace('T', ' ')
     },
-    
+
     // 获取适用产品的显示文本
     getProductsDisplay(products) {
       if (!products || !products.length) return '-'
       if (products.length === 1) return products[0].name
       return `${products[0].name} 等 ${products.length} 个产品`
     },
-    
+
     // 获取适用产品的提示文本
     getProductsTooltip(products) {
       if (!products || !products.length) return ''
       return products.map(p => `${p.name} (${p.code})`).join('\n')
     },
-    
+
     // 获取操作按钮配置
     getActionButtons(row) {
       const buttons = []
-      
+
       // 根据状态显示不同的按钮
       if (row.status === 'draft') {
         // 草稿状态
@@ -344,10 +344,10 @@ export default {
           { text: '查看', action: 'view', icon: 'el-icon-view', type: 'text', tooltip: '查看工艺模板详情' }
         )
       }
-      
+
       return buttons
     },
-    
+
     // 处理按钮点击事件
     handleActionClick({ action, row }) {
       switch (action) {
@@ -371,7 +371,7 @@ export default {
           break
       }
     },
-    
+
     // 表格行样式
     tableRowClassName({ row }) {
       if (row.status === 'history') {
@@ -379,29 +379,29 @@ export default {
       }
       return ''
     },
-    
+
     // 处理选择变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
       this.$emit('selection-change', selection)
     },
-    
+
     // 处理分页
     handlePagination({ page, limit }) {
       this.$emit('size-change', limit)
       this.$emit('current-change', page)
     },
-    
+
     // 处理刷新
     handleRefresh() {
       this.$emit('refresh')
     },
-    
+
     // 处理新增
     handleAdd() {
       this.$emit('add')
     },
-    
+
     // 处理编辑
     handleUpdate(row) {
       this.$emit('update', row)
@@ -410,7 +410,7 @@ export default {
     handleView(row) {
       this.$emit('view', row)
     },
-    
+
     // 处理提交审批
     handleSubmitApproval(row) {
       this.$confirm('确认提交该工艺模板进行审批?', '提示', {
@@ -426,7 +426,7 @@ export default {
         })
       })
     },
-    
+
     // 处理批准
     handleApprove(row) {
       this.$prompt('请输入审批意见', '批准工艺模板', {
@@ -442,7 +442,7 @@ export default {
         })
       })
     },
-    
+
     // 处理驳回
     handleReject(row) {
       this.$prompt('请输入驳回原因', '驳回工艺模板', {
@@ -461,7 +461,7 @@ export default {
         })
       })
     },
-    
+
     // 处理创建新版本
     handleNewVersion(row) {
       this.$confirm('确认基于此模板创建新版本?', '提示', {
@@ -477,22 +477,22 @@ export default {
         })
       })
     },
-    
+
     // 处理导入成功
     handleImportSuccess(response) {
       this.$emit('import-success', response)
     },
-    
+
     // 处理导出成功
     handleExportSuccess() {
       this.$emit('export-success')
     },
-    
+
     // 处理批量删除
     handleBatchDelete(selection) {
       this.$emit('batch-delete', selection)
     },
-    
+
     // 处理列变化
     handleColumnChange(columns) {
       this.$emit('column-change', columns)
@@ -507,27 +507,27 @@ export default {
     color: #999;
     background-color: #f9f9f9;
   }
-  
+
   .products-cell {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 180px;
   }
-  
+
   .product-list {
     padding: 5px 0;
-    
+
     &-header {
       font-weight: bold;
       padding: 0 0 10px 0;
       border-bottom: 1px solid #eee;
       margin-bottom: 10px;
     }
-    
+
     &-item {
       padding: 5px 0;
-      
+
       &:not(:last-child) {
         border-bottom: 1px dashed #f0f0f0;
       }

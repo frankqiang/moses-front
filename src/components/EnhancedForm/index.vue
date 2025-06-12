@@ -14,25 +14,25 @@
     @submit.native.prevent="handleSubmit"
   >
     <!-- 默认插槽提供表单内容 -->
-    <slot :form="formModel" :mode="mode" :submit="handleSubmit" :reset="resetForm"></slot>
-    
+    <slot :form="formModel" :mode="mode" :submit="handleSubmit" :reset="resetForm" />
+
     <!-- 底部按钮插槽 -->
     <div v-if="$slots.footer || showFooter" class="form-footer">
       <slot name="footer" :loading="loading" :mode="mode" :submit="handleSubmit" :reset="resetForm">
         <el-button @click="resetForm">{{ resetButtonText }}</el-button>
-        <el-button 
-          v-if="mode === 'create' && showContinueButton" 
-          type="primary" 
-          @click="handleSubmitAndContinue" 
+        <el-button
+          v-if="mode === 'create' && showContinueButton"
+          type="primary"
           :loading="loading"
+          @click="handleSubmitAndContinue"
         >
           {{ continueButtonText }}
         </el-button>
-        <el-button 
-          v-if="mode !== 'view'" 
-          type="primary" 
-          @click="handleSubmit" 
+        <el-button
+          v-if="mode !== 'view'"
+          type="primary"
           :loading="loading"
+          @click="handleSubmit"
         >
           {{ submitButtonText }}
         </el-button>
@@ -132,18 +132,18 @@ export default {
     updateFormModel(val) {
       this.formModel = cloneDeep(val || {})
       this.originFormData = cloneDeep(val || {})
-      
+
       // 通知父组件表单数据已更新
       this.$emit('form-update', this.formModel)
     },
-    
+
     // 处理表单提交
     handleSubmit() {
       // 查看模式不进行提交
       if (this.mode === 'view') {
         return
       }
-      
+
       // 判断是否需要验证
       if (this.validateBeforeSubmit) {
         this.validateAndSubmit(false)
@@ -152,7 +152,7 @@ export default {
         this.$emit('submit', cloneDeep(this.formModel), false)
       }
     },
-    
+
     // 保存并继续
     handleSubmitAndContinue() {
       if (this.validateBeforeSubmit) {
@@ -161,7 +161,7 @@ export default {
         this.$emit('submit', cloneDeep(this.formModel), true)
       }
     },
-    
+
     // 验证并提交表单
     validateAndSubmit(continueEdit) {
       this.$refs.form.validate(valid => {
@@ -181,14 +181,14 @@ export default {
         }
       })
     },
-    
+
     // 重置表单
     resetForm() {
       this.$refs.form && this.$refs.form.resetFields()
       this.formModel = cloneDeep(this.originFormData)
       this.$emit('reset', this.formModel)
     },
-    
+
     // 手动触发表单验证
     validate(callback) {
       if (this.$refs.form) {
@@ -199,17 +199,17 @@ export default {
         callback(false)
       }
     },
-    
+
     // 清除表单验证
     clearValidate(props) {
       this.$refs.form && this.$refs.form.clearValidate(props)
     },
-    
+
     // 获取表单数据
     getFormData() {
       return cloneDeep(this.formModel)
     },
-    
+
     // 设置表单字段值
     setFieldValue(field, value) {
       if (this.formModel) {
@@ -226,9 +226,9 @@ export default {
 .form-footer {
   margin-top: 20px;
   text-align: right;
-  
+
   .el-button {
     margin-left: 10px;
   }
 }
-</style> 
+</style>

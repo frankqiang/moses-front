@@ -34,7 +34,7 @@
     >
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增库位</el-button>
-        <slot name="toolbar-left"></slot>
+        <slot name="toolbar-left" />
       </template>
     </table-toolbar>
 
@@ -45,12 +45,12 @@
       highlight-current-row
       :fit="true"
       style="width: 100%"
-      @selection-change="handleSelectionChange"
       :row-class-name="tableRowClassName"
+      @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="45" align="center" fixed="left" />
       <el-table-column label="#" type="index" width="50" align="center" />
-      
+
       <template v-for="col in tableColumns">
         <el-table-column
           :key="col.prop"
@@ -84,8 +84,8 @@
             <!-- 处理容量列 -->
             <template v-else-if="col.prop === 'capacity'">
               <div class="capacity-info">
-                <el-progress 
-                  :percentage="getCapacityPercentage(scope.row)" 
+                <el-progress
+                  :percentage="getCapacityPercentage(scope.row)"
                   :status="getCapacityStatus(scope.row)"
                   :format="() => ''"
                   class="capacity-progress"
@@ -133,7 +133,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <!-- 分页 -->
     <pagination
       v-show="total > 0"
@@ -248,12 +248,12 @@ export default {
     currentStorageKey() {
       return this.columnSettingsKeyPrefix
     },
-    
+
     // 默认显示的列
     defaultVisibleColumns() {
       return ['code', 'name', 'warehouseName', 'locationType', 'capacity', 'status']
     },
-    
+
     // 导入API函数
     importApiFunction() {
       return (file) => {
@@ -269,7 +269,7 @@ export default {
         })
       }
     },
-    
+
     // 模板API函数
     templateApiFunction() {
       return () => {
@@ -280,7 +280,7 @@ export default {
         })
       }
     },
-    
+
     // 导出API函数
     exportApiFunction() {
       return (params) => {
@@ -288,7 +288,7 @@ export default {
           url: this.exportApi,
           method: 'post',
           data: params,
-          responseType: 'blob' 
+          responseType: 'blob'
         })
       }
     }
@@ -321,7 +321,7 @@ export default {
         ...button,
         tooltip: undefined
       }))
-      
+
       // 添加状态切换按钮
       const statusButton = {
         text: row.status === 1 ? '禁用' : '启用',
@@ -330,10 +330,10 @@ export default {
         type: 'text',
         class: row.status === 1 ? 'status-disable' : 'status-enable'
       }
-      
+
       return buttons.concat([statusButton])
     },
-    
+
     // 处理按钮点击事件
     handleActionClick({ action, row }) {
       switch (action) {
@@ -345,7 +345,7 @@ export default {
           break
       }
     },
-    
+
     // 初始化库位列配置
     initLocationColumns() {
       // 库位列
@@ -379,13 +379,13 @@ export default {
     getLocationTypeName(type) {
       return this.locationTypeMap[type] || type
     },
-    
+
     // 计算容量使用百分比
     getCapacityPercentage(row) {
       if (!row.capacity || row.capacity <= 0) return 0
       return Math.round((row.occupiedCapacity / row.capacity) * 100)
     },
-    
+
     // 根据容量使用百分比获取状态
     getCapacityStatus(row) {
       const percentage = this.getCapacityPercentage(row)
@@ -393,7 +393,7 @@ export default {
       if (percentage >= 70) return 'warning'
       return 'success'
     },
-    
+
     // 行样式
     tableRowClassName({ row }) {
       if (row.status === 0) {
@@ -401,33 +401,33 @@ export default {
       }
       return ''
     },
-    
+
     // 选择行变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
       this.$emit('selection-change', selection)
     },
-    
+
     // 新增按钮点击事件
     handleAdd() {
       this.$emit('add')
     },
-    
+
     // 编辑按钮点击事件
     handleUpdate(row) {
       this.$emit('update', row)
     },
-    
+
     // 状态切换按钮点击事件
     handleStatusChange(row) {
       this.$emit('status-change', row)
     },
-    
+
     // 分页变化
     handlePagination({ page, limit }) {
       // 滚动到顶部
       scrollTo(0, 800)
-      
+
       this.$emit('pagination', { page, limit })
     },
 
@@ -435,33 +435,33 @@ export default {
     handleRefresh() {
       this.$emit('refresh')
     },
-    
+
     // 批量删除
     handleBatchDelete(rows) {
       this.$emit('batch-delete', rows || this.selectedRows)
     },
-    
+
     // 批量启用
     handleBatchEnable(rows) {
       this.$emit('batch-enable', rows || this.selectedRows)
     },
-    
+
     // 批量禁用
     handleBatchDisable(rows) {
       this.$emit('batch-disable', rows || this.selectedRows)
     },
-    
+
     // 导入成功
     handleImportSuccess(result) {
       this.$emit('import-success', result)
       this.handleRefresh()
     },
-    
+
     // 导出成功
     handleExportSuccess(result) {
       this.$emit('export-success', result)
     },
-    
+
     // 返回顶部方法，供外部调用
     backToTop() {
       scrollTo(0, 800)
@@ -473,12 +473,12 @@ export default {
 <style lang="scss">
 .location-table {
   margin-bottom: 20px;
-  
+
   .disabled-row {
     background-color: #f9f9f9;
     color: #909399;
   }
-  
+
   .el-table {
     .cell {
       padding: 0 5px;
@@ -499,34 +499,34 @@ export default {
 .capacity-info {
   display: flex;
   align-items: center;
-  
+
   .capacity-progress {
     width: 120px;
     margin-right: 10px;
   }
-  
+
   .capacity-details {
     flex: 1;
     font-size: 12px;
-    
+
     .capacity-row {
       display: flex;
       align-items: center;
       margin-bottom: 2px;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       .label {
         color: #909399;
         width: 60px;
       }
-      
+
       .value {
         font-weight: bold;
       }
-      
+
       .percentage {
         margin-left: 5px;
         color: #909399;
@@ -534,4 +534,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

@@ -7,16 +7,16 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <search-form 
+    <search-form
       :init-query="listQuery"
       :loading="listLoading"
-      @search="handleSearch" 
+      @search="handleSearch"
       @reset="handleReset"
     />
 
     <!-- 表格数据 -->
-    <code-rule-table 
-      :data="list" 
+    <code-rule-table
+      :data="list"
       :loading="listLoading"
       :total="total"
       :page.sync="listQuery.page"
@@ -24,7 +24,7 @@
       :import-api="'/mes/master-data/material-code/import'"
       :template-api="'/mes/master-data/material-code/template'"
       :export-api="'/mes/master-data/material-code/export'"
-      @update="handleUpdate" 
+      @update="handleUpdate"
       @create="handleCreate"
       @refresh="getList"
       @pagination="handlePagination"
@@ -34,11 +34,11 @@
     />
 
     <!-- 编辑/新增对话框 -->
-    <code-rule-form 
+    <code-rule-form
       ref="codeRuleForm"
-      :type="dialogType" 
-      :visible.sync="dialogVisible" 
-      :edit-data="currentRowData" 
+      :type="dialogType"
+      :visible.sync="dialogVisible"
+      :edit-data="currentRowData"
       @submit="submitForm"
     />
   </div>
@@ -92,7 +92,7 @@ export default {
         this.list = response.data.items
         this.total = response.data.total || this.list.length
         this.listLoading = false
-        
+
         // 列表加载完成后滚动到顶部
         scrollTo(0, 500)
       }).catch(() => {
@@ -220,4 +220,4 @@ export default {
 .app-container {
   padding: 24px;
 }
-</style> 
+</style>

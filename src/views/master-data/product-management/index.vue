@@ -6,29 +6,29 @@
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <search-form 
+    <search-form
       ref="searchForm"
-      :init-query="listQuery" 
-      @search="handleSearch" 
+      :init-query="listQuery"
+      @search="handleSearch"
       @reset="handleReset"
     />
 
     <!-- 产品表格 -->
     <product-table
-      ref="productTable" 
-      :data="list" 
-      :total="total" 
-      :loading="listLoading" 
-      :page="listQuery.page" 
+      ref="productTable"
+      :data="list"
+      :total="total"
+      :loading="listLoading"
+      :page="listQuery.page"
       :limit="listQuery.limit"
       :import-api="'/api/product/import'"
       :template-api="'/api/product/template'"
-      :export-api="'/api/product/export'" 
-      @selection-change="handleSelectionChange" 
+      :export-api="'/api/product/export'"
+      @selection-change="handleSelectionChange"
       @pagination="handlePagination"
       @add="handleCreate"
       @update="handleUpdate"
-      @view="handleView" 
+      @view="handleView"
       @status-change="handleStatusChange"
       @refresh="getList"
       @batch-delete="handleBatchDelete"
@@ -39,13 +39,13 @@
     />
 
     <!-- 编辑/新增对话框 -->
-    <product-form 
+    <product-form
       ref="productForm"
-      :type="dialogType" 
-      :visible.sync="dialogVisible" 
-      :edit-data="currentRowData" 
-      :process-template-options="processTemplateOptions" 
-      :quality-standard-options="qualityStandardOptions" 
+      :type="dialogType"
+      :visible.sync="dialogVisible"
+      :edit-data="currentRowData"
+      :process-template-options="processTemplateOptions"
+      :quality-standard-options="qualityStandardOptions"
       @submit="submitForm"
     />
   </div>
@@ -60,7 +60,7 @@ import {
   batchDeleteProduct,
   batchChangeProductStatus,
   getProcessTemplateList,
-  getQualityStandardList,
+  getQualityStandardList
 } from '@/api/master-data/product-management'
 
 // 引入子组件
@@ -163,14 +163,14 @@ export default {
     handleCreate() {
       this.dialogType = 'create'
       this.currentRowData = null
-      
+
       // 确保在打开对话框前重置表单状态
       if (this.$refs.productForm) {
         this.$nextTick(() => {
           this.$refs.productForm.resetForm()
         })
       }
-      
+
       this.dialogVisible = true
     },
 
@@ -214,7 +214,7 @@ export default {
         })
       }
     },
-    
+
     // 改变产品状态
     handleStatusChange(row, lifecycleStatus) {
       const statusText = {
@@ -222,7 +222,7 @@ export default {
         'production': '量产',
         'discontinued': '停产'
       }
-      
+
       this.$confirm(`确认将该产品状态修改为"${statusText[lifecycleStatus]}"吗？`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -236,7 +236,7 @@ export default {
         // 取消操作
       })
     },
-    
+
     // 批量删除
     handleBatchDelete(rows) {
       const ids = rows.map(row => row.id)
@@ -244,7 +244,7 @@ export default {
         this.$message.warning('请选择需要删除的记录')
         return
       }
-      
+
       this.$confirm('确认删除选中的记录吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -261,7 +261,7 @@ export default {
         // 取消删除
       })
     },
-    
+
     // 批量修改状态
     handleBatchStatus(rows, lifecycleStatus) {
       const ids = rows.map(row => row.id)
@@ -269,13 +269,13 @@ export default {
         this.$message.warning('请选择需要操作的记录')
         return
       }
-      
+
       const statusText = {
         'trial': '试产',
         'production': '量产',
         'discontinued': '停产'
       }
-      
+
       this.$confirm(`确认将选中的记录状态修改为"${statusText[lifecycleStatus]}"吗？`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -291,7 +291,7 @@ export default {
         // 取消操作
       })
     },
-    
+
     // 批量修改产品生命周期
     handleBatchLifecycleChange(lifecycleStatus) {
       const rows = this.selectedRows
@@ -300,13 +300,13 @@ export default {
         this.$message.warning('请选择需要操作的记录')
         return
       }
-      
+
       const statusText = {
         'trial': '试产',
         'production': '量产',
         'discontinued': '停产'
       }
-      
+
       this.$confirm(`确认将选中的${ids.length}个产品生命周期修改为"${statusText[lifecycleStatus]}"吗？`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -322,7 +322,7 @@ export default {
         // 取消操作
       })
     },
-    
+
     // 导入成功
     handleImportSuccess(result) {
       if (result.success === result.total) {
@@ -332,7 +332,7 @@ export default {
       }
       this.getList()
     },
-    
+
     // 导出成功
     handleExportSuccess(result) {
       this.$message.success('导出成功')
@@ -352,4 +352,4 @@ export default {
 .app-container {
   padding: 20px;
 }
-</style> 
+</style>

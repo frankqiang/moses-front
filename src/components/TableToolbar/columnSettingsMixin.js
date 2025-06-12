@@ -49,16 +49,16 @@ export default {
     tableStorageKey() {
       return `table_columns_${this.storageKeySuffix || this.$route.name || 'default'}`
     },
-    
+
     // 可见的列配置（用于el-table的显示）
     visibleColumnsConfig() {
       if (!this.visibleColumns || !this.visibleColumns.length) {
-        return this.defaultVisibleColumns.length > 0 
-          ? this.allColumns.filter(col => this.defaultVisibleColumns.includes(col.prop)) 
+        return this.defaultVisibleColumns.length > 0
+          ? this.allColumns.filter(col => this.defaultVisibleColumns.includes(col.prop))
           : this.allColumns
       }
-      
-      return this.allColumns.filter(col => 
+
+      return this.allColumns.filter(col =>
         this.visibleColumns.includes(col.prop)
       )
     }
@@ -76,7 +76,7 @@ export default {
       this.allColumns = columns
       this.loadColumnSettings()
     },
-    
+
     // 加载列设置
     loadColumnSettings() {
       // 从配置存储服务获取列设置
@@ -85,28 +85,28 @@ export default {
         this.defaultVisibleColumns
       )
     },
-    
+
     // 重置为默认列配置
     resetToDefaultColumns() {
       this.internalVisibleColumns = [...this.defaultVisibleColumns]
     },
-    
+
     // 处理列设置变更
     handleColumnChange(columns) {
       this.internalVisibleColumns = columns
       // 通过配置存储服务保存设置
       tableConfigStore.saveColumnConfig(this.columnSettingsKey, columns)
     },
-    
+
     // 处理多选变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
     },
-    
+
     // 批量删除
     handleBatchDelete() {
       if (!this.hasSelectedRows) return
-      
+
       this.$confirm('确认删除选中的数据吗？此操作不可恢复', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -119,21 +119,21 @@ export default {
         // 用户取消删除，不做任何操作
       })
     },
-    
+
     // 批量启用
     handleBatchEnable() {
       this.handleBatchStatus(1)
     },
-    
+
     // 批量禁用
     handleBatchDisable() {
       this.handleBatchStatus(0)
     },
-    
+
     // 批量更改状态
     handleBatchStatus(status) {
       if (!this.hasSelectedRows) return
-      
+
       const statusText = status === 1 ? '启用' : '禁用'
       this.$confirm(`确认${statusText}选中的数据吗？`, '提示', {
         confirmButtonText: '确定',
@@ -147,18 +147,18 @@ export default {
         // 用户取消操作，不做任何处理
       })
     },
-    
+
     // 处理导入成功
     handleImportSuccess(result) {
       this.$message.success(`导入成功：${result.success}条数据`)
       this.getTableData() // 刷新表格数据
     },
-    
+
     // 处理导出成功
     handleExportSuccess(result) {
       this.$message.success(`导出成功：${result.filename || '数据已导出'}`)
     },
-    
+
     /**
      * 初始化可见列
      */
@@ -169,7 +169,7 @@ export default {
         this.defaultVisibleColumns
       )
     },
-    
+
     /**
      * 处理列变更
      * @param {Array} columns - 新的可见列属性名数组
@@ -179,7 +179,7 @@ export default {
       // 通过配置存储服务保存设置
       tableConfigStore.saveColumnConfig(this.tableStorageKey, columns)
     },
-    
+
     /**
      * 迁移旧版列设置到新版存储
      * 用于从直接使用localStorage的方式迁移到使用配置存储服务
@@ -188,7 +188,7 @@ export default {
       // 检查是否存在旧版本的设置
       const oldKey = this.columnSettingsKeyPrefix
       const newKey = this.columnSettingsKey
-      
+
       try {
         const oldSettings = localStorage.getItem(oldKey)
         if (oldSettings) {
@@ -204,4 +204,4 @@ export default {
       }
     }
   }
-} 
+}

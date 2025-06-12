@@ -21,8 +21,8 @@
   >
     <template #footer>
       <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
-      <el-button v-if="type === 'create'" type="primary" @click="handleSubmitAndContinue" :loading="loading">保存并继续</el-button>
-      <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit" :loading="loading">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
+      <el-button v-if="type === 'create'" type="primary" :loading="loading" @click="handleSubmitAndContinue">保存并继续</el-button>
+      <el-button v-if="type !== 'view'" type="primary" :loading="loading" @click="handleSubmit">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
     </template>
   </drawer-form>
 </template>
@@ -118,7 +118,7 @@ export default {
         ]
       }
     },
-    
+
     // 动态表单分段
     formSections() {
       return [
@@ -272,7 +272,7 @@ export default {
         status: 1
       }
     },
-    
+
     // 初始化表单
     initForm() {
       if (this.type === 'create') {
@@ -281,17 +281,17 @@ export default {
       } else if (this.binData) {
         // 编辑或查看
         const data = JSON.parse(JSON.stringify(this.binData))
-        
+
         // 确保适用产品类型是ID数组形式
         if (data.applicableProducts && Array.isArray(data.applicableProducts)) {
           // 提取产品ID数组
           data.applicableProducts = data.applicableProducts.map(product => product.id)
         }
-        
+
         this.form = Object.assign({}, this.initFormData(), data)
       }
     },
-    
+
     // 获取抽屉标题
     getDrawerTitle() {
       const typeText = {
@@ -301,17 +301,17 @@ export default {
       }
       return `${typeText[this.type]}料框规格`
     },
-    
+
     // 提交表单
     handleSubmit() {
       this.$refs.drawerForm.submitForm()
     },
-    
+
     // 提交并继续
     handleSubmitAndContinue() {
       this.$refs.drawerForm.submitForm(true)
     },
-    
+
     // 表单提交处理
     handleFormSubmit(formData, continueCreate) {
       this.loading = true
@@ -320,13 +320,13 @@ export default {
         this.loading = false
       }, 500)
     },
-    
+
     // 关闭抽屉
     handleClose() {
       this.drawerVisible = false
       this.$emit('close')
     },
-    
+
     // 重置表单
     resetForm() {
       this.form = this.initFormData()
@@ -337,4 +337,4 @@ export default {
 
 <style lang="scss" scoped>
 // 自定义样式
-</style> 
+</style>

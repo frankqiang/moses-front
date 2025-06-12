@@ -42,4 +42,4 @@ export function scrollTo(to, duration = 500, callback) {
     }
   }
   animateScroll()
-} 
+}

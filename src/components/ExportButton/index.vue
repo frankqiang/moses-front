@@ -11,7 +11,7 @@
     :loading="loading"
     @click="handleExport"
   >
-    <i :class="icon" v-if="icon"></i>
+    <i v-if="icon" :class="icon" />
     <span>{{ text }}</span>
   </el-button>
 </template>
@@ -122,12 +122,12 @@ export default {
         this.executeExport()
       }
     },
-    
+
     // 执行导出
     executeExport() {
       this.loading = true
       this.$emit('export-start', this.params)
-      
+
       // 调用导出API
       this.exportApi(this.params).then(response => {
         // 检查是否是Mock数据
@@ -150,12 +150,12 @@ export default {
         this.$emit('export-complete')
       })
     },
-    
+
     // 下载文件
     downloadFile(data) {
       // 创建Blob对象
       const blob = new Blob([data], { type: this.mimeType })
-      
+
       // 创建下载链接
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
@@ -171,4 +171,4 @@ export default {
 
 <style scoped>
 /* 组件样式可根据项目需要调整 */
-</style> 
+</style>

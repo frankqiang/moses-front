@@ -5,4 +5,4 @@ SearchFormV2.install = function(Vue) {
   Vue.component(SearchFormV2.name, SearchFormV2)
 }
 
-export default SearchFormV2 
+export default SearchFormV2

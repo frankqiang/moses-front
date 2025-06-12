@@ -12,10 +12,10 @@
       :disabled="disabled || loading"
       @click="showImportDialog"
     >
-      <i :class="icon" v-if="icon"></i>
+      <i v-if="icon" :class="icon" />
       <span>{{ text }}</span>
     </el-button>
-    
+
     <!-- 导入对话框 -->
     <el-dialog
       :title="dialogTitle"
@@ -38,31 +38,31 @@
           :accept="acceptTypes"
           :disabled="loading"
         >
-          <i class="el-icon-upload"></i>
+          <i class="el-icon-upload" />
           <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-          <div class="el-upload__tip" slot="tip">
+          <div slot="tip" class="el-upload__tip">
             {{ fileTypeTip }}
-            <el-link 
-              v-if="templateApi" 
-              type="primary" 
-              :underline="false" 
+            <el-link
+              v-if="templateApi"
+              type="primary"
+              :underline="false"
               @click.stop="downloadTemplate"
             >
               {{ templateText }}
             </el-link>
           </div>
         </el-upload>
-        
+
         <!-- 已选择的文件信息 -->
         <div v-if="selectedFile" class="file-info">
           <span>已选择文件: {{ selectedFile.name }}</span>
           <el-button type="text" icon="el-icon-delete" @click="selectedFile = null">移除</el-button>
         </div>
-        
+
         <!-- 导入说明 -->
         <div class="import-tips">
           <div class="tips-title">
-            <i class="el-icon-info" style="color: #E6A23C;"></i>
+            <i class="el-icon-info" style="color: #E6A23C;" />
             {{ tipTitle }}
           </div>
           <slot name="tips">
@@ -75,7 +75,7 @@
           </slot>
         </div>
       </div>
-      
+
       <!-- 导入结果展示 -->
       <div v-else class="import-result">
         <el-result
@@ -87,7 +87,7 @@
             <el-button type="primary" @click="resetImport">继续导入</el-button>
             <el-button @click="handleDialogClose">关闭</el-button>
           </template>
-          
+
           <!-- 失败数据展示 -->
           <div v-if="importResult.fail > 0 && importResult.errors" class="error-list">
             <div class="error-title">失败详情：</div>
@@ -105,14 +105,14 @@
           </div>
         </el-result>
       </div>
-      
-      <div slot="footer" class="dialog-footer" v-if="!importResult">
+
+      <div v-if="!importResult" slot="footer" class="dialog-footer">
         <el-button @click="handleDialogClose">{{ cancelText }}</el-button>
-        <el-button 
-          type="primary" 
-          @click="submitImport" 
-          :loading="loading" 
+        <el-button
+          type="primary"
+          :loading="loading"
           :disabled="!selectedFile"
+          @click="submitImport"
         >
           {{ confirmText }}
         </el-button>
@@ -233,32 +233,32 @@ export default {
     showImportDialog() {
       this.dialogVisible = true
     },
-    
+
     // 处理对话框关闭
     handleDialogClose() {
       if (this.loading) return
       this.dialogVisible = false
-      
+
       // 延迟重置，避免视觉跳动
       setTimeout(() => {
         this.resetImport()
       }, 300)
     },
-    
+
     // 处理文件变更
     handleFileChange(file) {
       this.selectedFile = file.raw
     },
-    
+
     // 上传前验证
     beforeUpload(file) {
       // 检查文件类型
-      const isExcel = 
-        file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+      const isExcel =
+        file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
         file.type === 'application/vnd.ms-excel' ||
         file.name.endsWith('.xlsx') ||
         file.name.endsWith('.xls')
-      
+
       // 检查文件大小
       const isValidSize = file.size / 1024 / 1024 < this.maxFileSize
 
@@ -266,36 +266,36 @@ export default {
         this.$message.error('只能上传Excel文件!')
         return false
       }
-      
+
       if (!isValidSize) {
         this.$message.error(`文件大小不能超过${this.maxFileSize}MB!`)
         return false
       }
-      
+
       return true
     },
-    
+
     // 提交导入
     submitImport() {
       if (!this.selectedFile) {
         this.$message.warning('请先选择文件')
         return
       }
-      
+
       this.loading = true
       this.$emit('import-start', this.selectedFile)
-      
+
       // 创建FormData
       const formData = new FormData()
       formData.append('file', this.selectedFile)
-      
+
       // 调用导入API
       this.importApi(formData).then(response => {
         this.importResult = response.data
-        
+
         // 发送导入结果事件
         this.$emit('import-success', this.importResult)
-        
+
         // 显示结果消息
         if (this.importResult.success === this.importResult.total) {
           this.$message.success('导入成功')
@@ -311,13 +311,13 @@ export default {
         this.$emit('import-complete')
       })
     },
-    
+
     // 下载模板
     downloadTemplate() {
       if (!this.templateApi) return
-      
+
       this.$emit('template-download-start')
-      
+
       this.templateApi().then(response => {
         // 判断是否是Mock数据
         if (typeof response.data === 'string' && response.data.includes('template-download-success')) {
@@ -336,14 +336,14 @@ export default {
         this.$emit('template-download-error', error)
       })
     },
-    
+
     // 重置导入状态
     resetImport() {
       this.selectedFile = null
       this.importResult = null
       this.$emit('reset')
     },
-    
+
     // 获取结果标题
     getResultTitle() {
       if (this.importResult.success === this.importResult.total) {
@@ -354,17 +354,17 @@ export default {
         return '导入失败'
       }
     },
-    
+
     // 获取结果子标题
     getResultSubTitle() {
       return `总数据 ${this.importResult.total} 条，成功 ${this.importResult.success} 条，失败 ${this.importResult.fail} 条`
     },
-    
+
     // 下载文件
     downloadFile(data, fileName) {
       // 创建Blob对象
       const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      
+
       // 创建下载链接
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
@@ -389,10 +389,10 @@ export default {
 
 .upload-area {
   width: 100%;
-  
+
   ::v-deep .el-upload {
     width: 100%;
-    
+
     .el-upload-dragger {
       width: 100%;
     }
@@ -411,22 +411,22 @@ export default {
 
 .import-tips {
   margin-top: 20px;
-  
+
   .tips-title {
     font-weight: bold;
     margin-bottom: 8px;
     display: flex;
     align-items: center;
-    
+
     i {
       margin-right: 5px;
     }
   }
-  
+
   ol {
     margin: 0;
     padding-left: 25px;
-    
+
     li {
       line-height: 1.8;
       color: #606266;
@@ -437,11 +437,11 @@ export default {
 .import-result {
   .error-list {
     margin-top: 20px;
-    
+
     .error-title {
       font-weight: bold;
       margin-bottom: 10px;
     }
   }
 }
-</style> 
+</style>
