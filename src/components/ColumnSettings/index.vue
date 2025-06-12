@@ -3,17 +3,28 @@
  * 功能描述：提供表格列显示/隐藏的设置功能，支持全选/反选、应用和重置操作
  * 创建日期：2024-12-15
  * 更新日期：2024-12-16 - 集成表格配置存储服务，实现集中式配置管理
+ * 更新日期：2024-12-16 - 应用现代前端开发范式优化，增强用户体验和代码质量
  */
 <template>
   <el-dropdown
     ref="columnDropdown"
     trigger="click"
     @command="handleCommand"
+    :aria-label="`${text}设置菜单`"
+    role="button"
+    tabindex="0"
   >
-    <el-button :size="size" :type="type" :plain="plain">
-      <i class="el-icon-s-operation" />
+    <el-button 
+      :size="size" 
+      :type="type" 
+      :plain="plain"
+      :loading="loading"
+      :aria-expanded="false"
+      aria-haspopup="true"
+    >
+      <i class="el-icon-s-operation" aria-hidden="true" />
       {{ text }}
-      <i class="el-icon-arrow-down el-icon--right" />
+      <i class="el-icon-arrow-down el-icon--right" aria-hidden="true" />
     </el-button>
 
     <el-dropdown-menu slot="dropdown" class="column-dropdown">
@@ -21,13 +32,30 @@
         <el-checkbox
           v-model="tempCheckAll"
           :indeterminate="tempIndeterminate"
+          :disabled="loading"
           @change="handleTempCheckAllChange"
+          aria-label="全选所有列"
         >
           全选
         </el-checkbox>
         <div class="column-dropdown-actions">
-          <el-button type="text" :size="size" @click="applySettings">应用</el-button>
-          <el-button type="text" :size="size" @click="resetSettings">重置</el-button>
+          <el-button 
+            type="text" 
+            :size="size" 
+            :loading="loading"
+            :disabled="!hasChanges"
+            @click="handleApplyClick"
+          >
+            应用
+          </el-button>
+          <el-button 
+            type="text" 
+            :size="size" 
+            :loading="loading"
+            @click="handleResetClick"
+          >
+            重置
+          </el-button>
         </div>
       </div>
 
@@ -40,7 +68,9 @@
       >
         <el-checkbox
           v-model="tempColumnVisibility[col.prop]"
+          :disabled="loading"
           @change="handleTempColumnChange"
+          :aria-label="`切换${col.label}列显示`"
         >
           {{ col.label }}
         </el-checkbox>
@@ -51,73 +81,149 @@
 
 <script>
 import tableConfigStore from '@/utils/table-config-store'
+import { debounce } from '@/utils'
 
 export default {
   name: 'ColumnSettings',
   props: {
-    // 列选项
+    // 列选项 - 加强验证
     columnOptions: {
       type: Array,
-      required: true
+      required: true,
+      validator(columns) {
+        if (!Array.isArray(columns)) {
+          console.error('[ColumnSettings] columnOptions must be an array')
+          return false
+        }
+        return columns.every(col => {
+          if (!col.prop || typeof col.prop !== 'string') {
+            console.error('[ColumnSettings] Each column must have a valid prop string')
+            return false
+          }
+          if (!col.label || typeof col.label !== 'string') {
+            console.error('[ColumnSettings] Each column must have a valid label string')
+            return false
+          }
+          return true
+        })
+      }
     },
-    // 存储键
+    
+    // 存储键 - 加强验证
     storageKey: {
       type: String,
-      required: true
+      required: true,
+      validator(key) {
+        if (!key || typeof key !== 'string') {
+          console.error('[ColumnSettings] storageKey must be a non-empty string')
+          return false
+        }
+        return true
+      }
     },
+    
     // 默认可见列
     defaultVisibleColumns: {
       type: Array,
       default: () => []
     },
+    
     // 当前可见列
     visibleColumns: {
       type: Array,
       default: () => []
     },
+    
     // 按钮大小
     size: {
       type: String,
       default: 'mini'
     },
+    
     // 按钮类型
     type: {
       type: String,
       default: 'default'
     },
+    
     // 是否为朴素按钮
     plain: {
       type: Boolean,
       default: false
     },
+    
     // 按钮文本
     text: {
       type: String,
       default: '列设置'
     }
   },
+  
   data() {
     return {
+      // 加载状态
+      loading: false,
       // 临时列可见性状态
       tempColumnVisibility: {},
       // 临时全选状态
       tempCheckAll: true,
       // 临时半选状态
-      tempIndeterminate: false
+      tempIndeterminate: false,
+      // 原始列可见性状态 - 用于检测变更
+      originalColumnVisibility: {}
     }
   },
+  
   computed: {
     // 当前可见列
     computedVisibleColumns() {
       return this.columnOptions
         .filter(col => this.tempColumnVisibility[col.prop])
         .map(col => col.prop)
+    },
+    
+    // 检测是否有变更
+    hasChanges() {
+      return JSON.stringify(this.tempColumnVisibility) !== 
+             JSON.stringify(this.originalColumnVisibility)
     }
   },
+  
   created() {
     this.initTempColumnVisibility()
+    this.initDebouncedMethods()
   },
+  
+  beforeDestroy() {
+    this.cleanup()
+  },
+  
   methods: {
+    // 初始化防抖方法
+    initDebouncedMethods() {
+      this.debouncedApply = debounce(this.applySettings, 300)
+      this.debouncedReset = debounce(this.resetSettings, 300)
+    },
+    
+    // 清理资源
+    cleanup() {
+      if (this.debouncedApply?.cancel) {
+        this.debouncedApply.cancel()
+      }
+      if (this.debouncedReset?.cancel) {
+        this.debouncedReset.cancel()
+      }
+    },
+    
+    // 防抖版本的点击处理
+    handleApplyClick() {
+      this.debouncedApply()
+    },
+    
+    handleResetClick() {
+      this.debouncedReset()
+    },
+
     // 处理下拉菜单命令
     handleCommand(command) {
       // 可以用于处理特殊命令
@@ -125,22 +231,28 @@ export default {
 
     // 初始化临时列可见性状态
     initTempColumnVisibility() {
-      // 从配置存储服务获取可见列
-      const visibleColumns = tableConfigStore.getColumnConfig(
-        this.storageKey,
-        this.visibleColumns && this.visibleColumns.length > 0
-          ? [...this.visibleColumns]
-          : [...this.defaultVisibleColumns]
-      )
+      try {
+        // 从配置存储服务获取可见列
+        const visibleColumns = tableConfigStore.getColumnConfig(
+          this.storageKey,
+          this.visibleColumns && this.visibleColumns.length > 0
+            ? [...this.visibleColumns]
+            : [...this.defaultVisibleColumns]
+        )
 
-      // 初始化临时列可见性状态
-      const tempVisibility = {}
-      this.columnOptions.forEach(col => {
-        tempVisibility[col.prop] = visibleColumns.includes(col.prop)
-      })
+        // 初始化临时列可见性状态
+        const tempVisibility = {}
+        this.columnOptions.forEach(col => {
+          tempVisibility[col.prop] = visibleColumns.includes(col.prop)
+        })
 
-      this.tempColumnVisibility = tempVisibility
-      this.updateTempCheckAllState()
+        this.tempColumnVisibility = tempVisibility
+        this.originalColumnVisibility = { ...tempVisibility }
+        this.updateTempCheckAllState()
+      } catch (error) {
+        console.error('[ColumnSettings] Failed to initialize column visibility:', error)
+        this.$message.error('初始化列设置失败')
+      }
     },
 
     // 更新临时全选状态
@@ -163,43 +275,77 @@ export default {
       this.tempIndeterminate = false
     },
 
-    // 应用列设置
-    applySettings() {
-      // 通过配置存储服务保存设置
-      tableConfigStore.saveColumnConfig(this.storageKey, this.computedVisibleColumns)
-
-      // 发送列设置变更事件
-      this.$emit('change', this.computedVisibleColumns)
-
-      // 提示用户
-      this.$message.success('列设置已应用')
-
-      // 关闭下拉菜单
-      this.$refs.columnDropdown.hide()
+    // 应用列设置 - 添加错误边界保护
+    async applySettings() {
+      if (this.loading) return
+      
+      try {
+        this.loading = true
+        
+        // 验证数据有效性
+        if (this.computedVisibleColumns.length === 0) {
+          this.$message.warning('至少需要显示一列')
+          return
+        }
+        
+        // 保存配置
+        await tableConfigStore.saveColumnConfig(this.storageKey, this.computedVisibleColumns)
+        
+        // 更新原始状态
+        this.originalColumnVisibility = { ...this.tempColumnVisibility }
+        
+        // 发送列设置变更事件
+        this.$emit('change', this.computedVisibleColumns)
+        
+        // 提示用户
+        this.$message.success('列设置已应用')
+        
+        // 关闭下拉菜单
+        this.$refs.columnDropdown.hide()
+        
+      } catch (error) {
+        console.error('[ColumnSettings] Failed to apply settings:', error)
+        this.$message.error('保存设置失败，请稍后重试')
+      } finally {
+        this.loading = false
+      }
     },
 
-    // 重置列设置
-    resetSettings() {
-      // 重置为默认列配置
-      const tempVisibility = {}
-      this.columnOptions.forEach(col => {
-        tempVisibility[col.prop] = this.defaultVisibleColumns.includes(col.prop)
-      })
+    // 重置列设置 - 添加错误边界保护
+    async resetSettings() {
+      if (this.loading) return
+      
+      try {
+        this.loading = true
+        
+        // 重置为默认列配置
+        const tempVisibility = {}
+        this.columnOptions.forEach(col => {
+          tempVisibility[col.prop] = this.defaultVisibleColumns.includes(col.prop)
+        })
 
-      this.tempColumnVisibility = tempVisibility
-      this.updateTempCheckAllState()
+        this.tempColumnVisibility = tempVisibility
+        this.originalColumnVisibility = { ...tempVisibility }
+        this.updateTempCheckAllState()
 
-      // 清除存储中保存的设置
-      tableConfigStore.removeColumnConfig(this.storageKey)
+        // 清除存储中保存的设置
+        await tableConfigStore.removeColumnConfig(this.storageKey)
 
-      // 发送列设置变更事件
-      this.$emit('change', [...this.defaultVisibleColumns])
+        // 发送列设置变更事件
+        this.$emit('change', [...this.defaultVisibleColumns])
 
-      // 提示用户
-      this.$message.success('列设置已重置为默认')
-
-      // 关闭下拉菜单
-      this.$refs.columnDropdown.hide()
+        // 提示用户
+        this.$message.success('列设置已重置为默认')
+        
+        // 关闭下拉菜单
+        this.$refs.columnDropdown.hide()
+        
+      } catch (error) {
+        console.error('[ColumnSettings] Failed to reset settings:', error)
+        this.$message.error('重置设置失败，请稍后重试')
+      } finally {
+        this.loading = false
+      }
     }
   }
 }
@@ -224,6 +370,12 @@ export default {
       .el-button {
         padding: 2px 5px;
         margin-left: 8px;
+        
+        // 禁用状态样式
+        &.is-disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
       }
     }
   }
@@ -241,7 +393,7 @@ export default {
     }
 
     &:hover {
-      background-color: transparent;
+      background-color: #f5f7fa;
     }
   }
 
