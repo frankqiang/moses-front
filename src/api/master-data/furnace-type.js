@@ -112,16 +112,30 @@ export function importFurnaceType(file) {
   })
 }
 
-// 获取关联设备列表
+/**
+ * 获取关联设备列表
+ * 数据来源：设备管理模块
+ * 返回格式：{ equipmentId: string, name: string }[]
+ * @param {string} furnaceTypeId - 炉型ID
+ */
 export function getRelatedEquipment(furnaceTypeId) {
+  // 实际项目中，这里可以调用设备管理模块的接口
+  // 例如：/mes/equipment/list?furnaceTypeId=${furnaceTypeId}&fields=equipmentId,name
   return request({
     url: `${baseURL}/related-equipment/${furnaceTypeId}`,
     method: 'get'
   })
 }
 
-// 获取关联工艺模板列表
+/**
+ * 获取关联工艺模板列表
+ * 数据来源：工艺管理模块
+ * 返回格式：{ templateId: string, templateName: string }[]
+ * @param {string} furnaceTypeId - 炉型ID
+ */
 export function getRelatedTemplates(furnaceTypeId) {
+  // 实际项目中，这里可以调用工艺管理模块的接口
+  // 例如：/mes/process/templates?furnaceTypeId=${furnaceTypeId}&fields=templateId,templateName
   return request({
     url: `${baseURL}/related-templates/${furnaceTypeId}`,
     method: 'get'

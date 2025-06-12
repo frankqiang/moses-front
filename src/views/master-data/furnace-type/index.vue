@@ -295,13 +295,8 @@ export default {
             message: '创建成功!'
           })
           
-          if (!continueAdd) {
-            // 普通保存，关闭抽屉
-            this.$refs.formDrawer.handleClose()
-          } else {
-            // 保存并继续，重置表单
-            this.$refs.formDrawer.resetForm()
-          }
+          // 调用子组件的成功处理方法
+          this.$refs.formDrawer.handleSubmitSuccess(continueAdd)
           
           // 刷新列表
           this.getList()
@@ -335,7 +330,8 @@ export default {
             type: 'success',
             message: '更新成功!'
           })
-          this.$refs.formDrawer.handleClose()
+          // 调用子组件的成功处理方法（更新不支持继续编辑）
+          this.$refs.formDrawer.handleSubmitSuccess(false)
           this.getList()
         }).catch(error => {
           // 处理业务错误
