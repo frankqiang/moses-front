@@ -2,121 +2,266 @@
  * 增强表单组件
  * 功能描述：增强的表单组件，专注于表单的数据处理和验证，支持多种模式和自定义验证
  * 创建日期：2024-11-21
+ * 更新日期：2024-12-16 - 应用现代前端开发范式优化，增强用户体验和代码质量
  */
 <template>
   <el-form
     ref="form"
     :model="formModel"
-    :rules="rules"
+    :rules="enhancedRules"
     :label-width="labelWidth"
     :size="size"
-    :disabled="mode === 'view'"
-    @submit.native.prevent="handleSubmit"
+    :disabled="mode === 'view' || actualLoading"
+    :aria-label="`${mode === 'create' ? '创建' : mode === 'update' ? '编辑' : '查看'}表单`"
+    role="form"
+    @submit.native.prevent="handleSubmitClick"
   >
     <!-- 默认插槽提供表单内容 -->
-    <slot :form="formModel" :mode="mode" :submit="handleSubmit" :reset="resetForm" />
+    <slot 
+      :form="formModel" 
+      :mode="mode" 
+      :submit="handleSubmitClick" 
+      :reset="handleResetClick"
+      :loading="actualLoading"
+      :hasChanges="hasFormChanges"
+      :setFieldValue="setFieldValue"
+      :validate="validate"
+    />
 
     <!-- 底部按钮插槽 -->
-    <div v-if="$slots.footer || showFooter" class="form-footer">
-      <slot name="footer" :loading="loading" :mode="mode" :submit="handleSubmit" :reset="resetForm">
-        <el-button @click="resetForm">{{ resetButtonText }}</el-button>
+    <div 
+      v-if="$slots.footer || showFooter" 
+      class="form-footer"
+      role="toolbar"
+      :aria-label="'表单操作按钮区域'"
+    >
+      <slot 
+        name="footer" 
+        :loading="actualLoading" 
+        :mode="mode" 
+        :submit="handleSubmitClick" 
+        :reset="handleResetClick"
+        :hasChanges="hasFormChanges"
+        :isValid="isFormValid"
+      >
+        <el-button 
+          :disabled="actualLoading"
+          :aria-label="`重置表单到初始状态`"
+          @click="handleResetClick"
+        >
+          {{ resetButtonText }}
+        </el-button>
         <el-button
           v-if="mode === 'create' && showContinueButton"
           type="primary"
-          :loading="loading"
-          @click="handleSubmitAndContinue"
+          :loading="actualLoading"
+          :disabled="!isFormValid || !hasFormChanges"
+          :aria-label="`${continueButtonText}操作`"
+          @click="handleContinueClick"
         >
           {{ continueButtonText }}
         </el-button>
         <el-button
           v-if="mode !== 'view'"
           type="primary"
-          :loading="loading"
-          @click="handleSubmit"
+          :loading="actualLoading"
+          :disabled="!isFormValid || (!allowEmptySubmit && !hasFormChanges)"
+          :aria-label="`${submitButtonText}表单`"
+          @click="handleSubmitClick"
         >
           {{ submitButtonText }}
         </el-button>
       </slot>
+    </div>
+
+    <!-- 错误提示区域 -->
+    <div v-if="errorMessage" class="form-error" role="alert" aria-live="polite">
+      <i class="el-icon-warning" aria-hidden="true"></i>
+      <span class="error-text">{{ errorMessage }}</span>
+      <el-button 
+        type="text" 
+        size="mini" 
+        @click="clearError"
+        :aria-label="'清除错误信息'"
+      >
+        <i class="el-icon-close" aria-hidden="true"></i>
+      </el-button>
     </div>
   </el-form>
 </template>
 
 <script>
 import { cloneDeep } from 'lodash'
+import { debounce } from '@/utils'
 
 export default {
   name: 'EnhancedForm',
   props: {
-    // 表单数据
+    // 表单数据 - 加强验证
     data: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
+      validator(value) {
+        if (value !== null && typeof value !== 'object') {
+          console.error('[EnhancedForm] data must be an object')
+          return false
+        }
+        return true
+      }
     },
-    // 表单模式：create/update/view
+    
+    // 表单模式：create/update/view - 已有验证
     mode: {
       type: String,
       default: 'create',
       validator: value => ['create', 'update', 'view'].includes(value)
     },
+    
     // 表单验证规则
     rules: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
+      validator(value) {
+        if (value !== null && typeof value !== 'object') {
+          console.error('[EnhancedForm] rules must be an object')
+          return false
+        }
+        return true
+      }
     },
-    // 表单标签宽度
+    
+    // 表单标签宽度 - 加强验证
     labelWidth: {
       type: String,
-      default: '120px'
+      default: '120px',
+      validator(value) {
+        const cssUnitRegex = /^\d+(\.\d+)?(px|%|rem|em|vw|vh|auto)$/
+        if (!cssUnitRegex.test(value)) {
+          console.error('[EnhancedForm] labelWidth must be a valid CSS unit (e.g., "120px", "10rem", "auto")')
+          return false
+        }
+        return true
+      }
     },
+    
     // 表单尺寸
     size: {
       type: String,
-      default: 'small'
+      default: 'small',
+      validator: value => ['large', 'small', 'mini'].includes(value)
     },
+    
     // 是否显示底部按钮
     showFooter: {
       type: Boolean,
       default: false
     },
+    
     // 提交按钮文本
     submitButtonText: {
       type: String,
       default: '提交'
     },
+    
     // 重置按钮文本
     resetButtonText: {
       type: String,
       default: '重置'
     },
+    
     // 继续按钮文本
     continueButtonText: {
       type: String,
       default: '保存并继续'
     },
+    
     // 是否显示"保存并继续"按钮
     showContinueButton: {
       type: Boolean,
       default: false
     },
+    
     // 加载状态
     loading: {
       type: Boolean,
       default: false
     },
+    
     // 是否在提交前自动验证表单
     validateBeforeSubmit: {
       type: Boolean,
       default: true
+    },
+    
+    // 是否允许空表单提交
+    allowEmptySubmit: {
+      type: Boolean,
+      default: false
+    },
+    
+    // 自动保存间隔(毫秒)，0表示禁用
+    autoSaveInterval: {
+      type: Number,
+      default: 0,
+      validator(value) {
+        if (value < 0) {
+          console.error('[EnhancedForm] autoSaveInterval must be >= 0')
+          return false
+        }
+        return true
+      }
     }
   },
+  
   data() {
     return {
       // 内部表单数据模型
       formModel: {},
-      // 原始表单数据（用于重置）
-      originFormData: {}
+      // 原始表单数据（用于重置和变更检测）
+      originFormData: {},
+      // 内部加载状态
+      internalLoading: false,
+      // 错误信息
+      errorMessage: '',
+      // 表单验证状态
+      isFormValid: false,
+      // 自动保存定时器
+      autoSaveTimer: null,
+      // 深度监听器引用
+      dataWatcher: null
     }
   },
+  
+  computed: {
+    // 实际的加载状态
+    actualLoading() {
+      return this.loading || this.internalLoading
+    },
+    
+    // 表单是否有变更
+    hasFormChanges() {
+      return JSON.stringify(this.formModel) !== JSON.stringify(this.originFormData)
+    },
+    
+    // 增强的验证规则
+    enhancedRules() {
+      const rules = { ...this.rules }
+      
+      // 可以在这里添加通用的验证规则增强
+      Object.keys(rules).forEach(field => {
+        if (Array.isArray(rules[field])) {
+          rules[field] = rules[field].map(rule => ({
+            ...rule,
+            // 增强错误提示
+            message: rule.message || `${field}字段验证失败`
+          }))
+        }
+      })
+      
+      return rules
+    }
+  },
+  
   watch: {
     // 监听外部data变化
     data: {
@@ -125,84 +270,263 @@ export default {
       },
       deep: true,
       immediate: true
+    },
+    
+    // 监听表单数据变化进行验证
+    formModel: {
+      handler() {
+        this.debouncedValidate()
+        if (this.autoSaveInterval > 0) {
+          this.scheduleAutoSave()
+        }
+      },
+      deep: true
     }
   },
+  
+  created() {
+    this.initDebouncedMethods()
+  },
+  
+  mounted() {
+    this.setupKeyboardListeners()
+    if (this.autoSaveInterval > 0) {
+      this.startAutoSave()
+    }
+  },
+  
+  beforeDestroy() {
+    this.cleanup()
+  },
+  
   methods: {
-    // 更新表单数据模型
-    updateFormModel(val) {
-      this.formModel = cloneDeep(val || {})
-      this.originFormData = cloneDeep(val || {})
-
-      // 通知父组件表单数据已更新
-      this.$emit('form-update', this.formModel)
+    // 初始化防抖方法
+    initDebouncedMethods() {
+      this.debouncedSubmit = debounce(this.handleSubmit, 300)
+      this.debouncedReset = debounce(this.resetForm, 300)
+      this.debouncedValidate = debounce(this.validateForm, 300)
+    },
+    
+    // 设置键盘监听
+    setupKeyboardListeners() {
+      this.handleKeydown = (event) => {
+        // Ctrl+S 保存表单
+        if (event.ctrlKey && event.key === 's') {
+          event.preventDefault()
+          if (this.mode !== 'view') {
+            this.handleSubmitClick()
+          }
+        }
+        
+        // Ctrl+R 重置表单
+        if (event.ctrlKey && event.key === 'r') {
+          event.preventDefault()
+          this.handleResetClick()
+        }
+      }
+      
+      document.addEventListener('keydown', this.handleKeydown)
+    },
+    
+    // 清理资源
+    cleanup() {
+      if (this.debouncedSubmit?.cancel) {
+        this.debouncedSubmit.cancel()
+      }
+      if (this.debouncedReset?.cancel) {
+        this.debouncedReset.cancel()
+      }
+      if (this.debouncedValidate?.cancel) {
+        this.debouncedValidate.cancel()
+      }
+      if (this.handleKeydown) {
+        document.removeEventListener('keydown', this.handleKeydown)
+      }
+      if (this.autoSaveTimer) {
+        clearInterval(this.autoSaveTimer)
+      }
+    },
+    
+    // 防抖版本的按钮点击处理
+    handleSubmitClick() {
+      this.debouncedSubmit()
+    },
+    
+    handleResetClick() {
+      this.debouncedReset()
+    },
+    
+    handleContinueClick() {
+      this.debouncedSubmit(true)
     },
 
-    // 处理表单提交
-    handleSubmit() {
-      // 查看模式不进行提交
-      if (this.mode === 'view') {
-        return
-      }
+    // 更新表单数据模型
+    updateFormModel(val) {
+      try {
+        this.formModel = cloneDeep(val || {})
+        this.originFormData = cloneDeep(val || {})
+        this.clearError()
 
-      // 判断是否需要验证
-      if (this.validateBeforeSubmit) {
-        this.validateAndSubmit(false)
-      } else {
-        // 直接提交，不验证
-        this.$emit('submit', cloneDeep(this.formModel), false)
+        // 通知父组件表单数据已更新
+        this.$emit('form-update', this.formModel)
+      } catch (error) {
+        console.error('[EnhancedForm] Failed to update form model:', error)
+        this.setError('更新表单数据失败')
+      }
+    },
+
+    // 处理表单提交 - 增强错误处理
+    async handleSubmit(continueEdit = false) {
+      if (this.actualLoading) return
+      
+      try {
+        // 查看模式不进行提交
+        if (this.mode === 'view') {
+          return
+        }
+
+        this.internalLoading = true
+        this.clearError()
+
+        // 判断是否需要验证
+        if (this.validateBeforeSubmit) {
+          await this.validateAndSubmit(continueEdit)
+        } else {
+          // 直接提交，不验证
+          this.$emit('submit', cloneDeep(this.formModel), continueEdit)
+        }
+        
+      } catch (error) {
+        console.error('[EnhancedForm] Submit failed:', error)
+        this.setError(error.message || '提交失败，请稍后重试')
+        this.$emit('error', error)
+      } finally {
+        this.internalLoading = false
       }
     },
 
     // 保存并继续
     handleSubmitAndContinue() {
-      if (this.validateBeforeSubmit) {
-        this.validateAndSubmit(true)
-      } else {
-        this.$emit('submit', cloneDeep(this.formModel), true)
-      }
+      this.handleSubmit(true)
     },
 
-    // 验证并提交表单
-    validateAndSubmit(continueEdit) {
-      this.$refs.form.validate(valid => {
-        if (valid) {
-          // 触发自定义验证事件，允许父组件进行额外验证
-          this.$emit('validate', this.formModel, isCustomValid => {
-            // 如果没有自定义验证或自定义验证通过
-            if (isCustomValid !== false) {
-              // 提交表单
-              this.$emit('submit', cloneDeep(this.formModel), continueEdit)
-            }
-          })
-        } else {
-          // 验证失败，触发验证失败事件
-          this.$emit('validate-error')
-          return false
+    // 验证并提交表单 - 增强错误处理
+    async validateAndSubmit(continueEdit) {
+      return new Promise((resolve, reject) => {
+        if (!this.$refs.form) {
+          reject(new Error('表单引用不存在'))
+          return
         }
+        
+        this.$refs.form.validate(async (valid, invalidFields) => {
+          try {
+            if (valid) {
+              // 触发自定义验证事件，允许父组件进行额外验证
+              const customValidationResult = await new Promise((resolveCustom) => {
+                this.$emit('validate', this.formModel, (isCustomValid) => {
+                  resolveCustom(isCustomValid)
+                })
+                
+                // 如果父组件没有处理自定义验证，默认通过
+                this.$nextTick(() => {
+                  resolveCustom(true)
+                })
+              })
+              
+              // 如果自定义验证通过
+              if (customValidationResult !== false) {
+                // 提交表单
+                this.$emit('submit', cloneDeep(this.formModel), continueEdit)
+                resolve()
+              } else {
+                reject(new Error('自定义验证失败'))
+              }
+            } else {
+              // 验证失败，触发验证失败事件
+              const errorMsg = this.formatValidationErrors(invalidFields)
+              this.setError(errorMsg)
+              this.$emit('validate-error', invalidFields)
+              reject(new Error(errorMsg))
+            }
+          } catch (error) {
+            reject(error)
+          }
+        })
       })
     },
 
-    // 重置表单
-    resetForm() {
-      this.$refs.form && this.$refs.form.resetFields()
-      this.formModel = cloneDeep(this.originFormData)
-      this.$emit('reset', this.formModel)
+    // 格式化验证错误信息
+    formatValidationErrors(invalidFields) {
+      if (!invalidFields) return '表单验证失败'
+      
+      const errors = Object.keys(invalidFields).map(field => {
+        const fieldErrors = invalidFields[field]
+        return fieldErrors[0]?.message || `${field}验证失败`
+      })
+      
+      return errors.slice(0, 3).join('；') + (errors.length > 3 ? '等' : '')
+    },
+
+    // 重置表单 - 增强错误处理
+    async resetForm() {
+      if (this.actualLoading) return
+      
+      try {
+        // 检查是否有未保存的更改
+        if (this.hasFormChanges) {
+          await this.$confirm('确定要重置表单吗？未保存的更改将丢失。', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          })
+        }
+        
+        this.$refs.form && this.$refs.form.resetFields()
+        this.formModel = cloneDeep(this.originFormData)
+        this.clearError()
+        this.$emit('reset', this.formModel)
+        
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('[EnhancedForm] Reset failed:', error)
+          this.setError('重置表单失败')
+        }
+      }
+    },
+
+    // 验证表单 - 增强版本
+    validateForm() {
+      if (this.$refs.form) {
+        this.$refs.form.validate((valid, invalidFields) => {
+          this.isFormValid = valid
+          if (!valid && invalidFields) {
+            // 可以在这里处理验证失败的逻辑
+            console.debug('[EnhancedForm] Validation failed:', invalidFields)
+          }
+        })
+      }
     },
 
     // 手动触发表单验证
     validate(callback) {
       if (this.$refs.form) {
-        this.$refs.form.validate(valid => {
-          callback(valid)
+        this.$refs.form.validate((valid, invalidFields) => {
+          this.isFormValid = valid
+          if (callback) {
+            callback(valid, invalidFields)
+          }
         })
       } else {
-        callback(false)
+        if (callback) {
+          callback(false, {})
+        }
       }
     },
 
     // 清除表单验证
     clearValidate(props) {
       this.$refs.form && this.$refs.form.clearValidate(props)
+      this.isFormValid = true
     },
 
     // 获取表单数据
@@ -210,13 +534,69 @@ export default {
       return cloneDeep(this.formModel)
     },
 
-    // 设置表单字段值
+    // 设置表单字段值 - 增强版本
     setFieldValue(field, value) {
-      if (this.formModel) {
-        this.$set(this.formModel, field, value)
-        // 通知父组件字段更新
-        this.$emit('field-change', { field, value, formData: this.formModel })
+      try {
+        if (this.formModel) {
+          this.$set(this.formModel, field, value)
+          // 通知父组件字段更新
+          this.$emit('field-change', { field, value, formData: this.formModel })
+        }
+      } catch (error) {
+        console.error('[EnhancedForm] Failed to set field value:', error)
+        this.setError(`设置字段${field}失败`)
       }
+    },
+    
+    // 设置错误信息
+    setError(message) {
+      this.errorMessage = message
+    },
+    
+    // 清除错误信息
+    clearError() {
+      this.errorMessage = ''
+    },
+    
+    // 获取表单变更状态
+    getChanges() {
+      if (!this.hasFormChanges) return null
+      
+      const changes = {}
+      Object.keys(this.formModel).forEach(key => {
+        if (JSON.stringify(this.formModel[key]) !== JSON.stringify(this.originFormData[key])) {
+          changes[key] = {
+            from: this.originFormData[key],
+            to: this.formModel[key]
+          }
+        }
+      })
+      
+      return changes
+    },
+    
+    // 启动自动保存
+    startAutoSave() {
+      if (this.autoSaveInterval > 0) {
+        this.autoSaveTimer = setInterval(() => {
+          if (this.hasFormChanges && this.isFormValid && !this.actualLoading) {
+            this.$emit('auto-save', cloneDeep(this.formModel))
+          }
+        }, this.autoSaveInterval)
+      }
+    },
+    
+    // 调度自动保存
+    scheduleAutoSave() {
+      if (this.autoSaveTimer) {
+        clearInterval(this.autoSaveTimer)
+        this.startAutoSave()
+      }
+    },
+    
+    // 手动设置加载状态
+    setLoading(loading) {
+      this.internalLoading = loading
     }
   }
 }
@@ -229,6 +609,93 @@ export default {
 
   .el-button {
     margin-left: 10px;
+    
+    // 改善按钮的可访问性
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.3);
+    }
+    
+    // 禁用状态样式
+    &.is-disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// 错误提示区域
+.form-error {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background-color: #fef0f0;
+  border: 1px solid #fbc4c4;
+  border-radius: 4px;
+  color: #f56c6c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  .error-text {
+    flex: 1;
+    margin-left: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .el-icon-warning {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  
+  .el-button {
+    margin-left: 8px;
+    color: #f56c6c;
+    
+    &:hover {
+      color: #f78989;
+    }
+  }
+}
+
+// 加载状态下的表单样式
+:deep(.el-form.is-disabled) {
+  .el-form-item__content {
+    opacity: 0.6;
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .form-footer {
+    text-align: center;
+    
+    .el-button {
+      margin: 4px;
+      display: block;
+      width: 100%;
+      max-width: 200px;
+    }
+  }
+  
+  .form-error {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+// 表单动画
+.form-error {
+  animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>
