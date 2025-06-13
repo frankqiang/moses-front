@@ -261,8 +261,7 @@ export default {
         { prop: 'updateTime', label: '更新时间', width: '150px' }
       ],
 
-      // 默认可见列
-      defaultVisibleColumns: ['name', 'code', 'category', 'price', 'status'],
+
 
       // 基础示例数据
       basicTableData: [
@@ -321,7 +320,10 @@ export default {
 
       // 事件日志
       eventLogs: [],
-      maxLogs: 20
+      maxLogs: 20,
+
+      // 默认可见列
+      defaultVisibleColumns: ['name', 'code', 'category', 'price', 'status']
     }
   },
 

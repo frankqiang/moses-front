@@ -45,7 +45,7 @@ export default {
       return `${this.columnSettingsKeyPrefix}_${this.$options.name || 'common'}`
     },
     // 默认可见列
-    defaultVisibleColumns() {
+    computedDefaultVisibleColumns() {
       return this.allColumns.map(col => col.prop)
     },
     // 是否有选中行
@@ -64,8 +64,8 @@ export default {
     // 可见的列配置（用于el-table的显示）
     visibleColumnsConfig() {
       if (!this.visibleColumns || !this.visibleColumns.length) {
-        return this.defaultVisibleColumns.length > 0
-          ? this.allColumns.filter(col => this.defaultVisibleColumns.includes(col.prop))
+        return this.computedDefaultVisibleColumns.length > 0
+          ? this.allColumns.filter(col => this.computedDefaultVisibleColumns.includes(col.prop))
           : this.allColumns
       }
 
@@ -75,9 +75,6 @@ export default {
     }
   },
   created() {
-    // 初始化防抖函数
-    this.initDebouncedMethods()
-    
     // 如果allColumns已在组件中初始化，则直接加载列设置
     if (this.allColumns.length > 0) {
       this.loadColumnSettings()
@@ -88,14 +85,36 @@ export default {
     this.detectLargeDataset()
   },
 
+  mounted() {
+    // 在 mounted 阶段初始化防抖函数，确保所有方法都已绑定
+    this.initDebouncedMethods()
+  },
+
   beforeDestroy() {
     this.cleanupDebouncedMethods()
   },
   methods: {
     // 初始化防抖方法
     initDebouncedMethods() {
-      this.debouncedColumnChange = debounce(this.handleColumnChangeInternal, 300)
-      this.debouncedBatchOperation = debounce(this.handleBatchOperationInternal, 500)
+      // 确保方法存在再创建防抖版本
+      if (typeof this.handleColumnChangeInternal === 'function') {
+        this.debouncedColumnChange = debounce(this.handleColumnChangeInternal, 300)
+      }
+      if (typeof this.handleBatchOperationInternal === 'function') {
+        this.debouncedBatchOperation = debounce(this.handleBatchOperationInternal, 500)
+      }
+    },
+
+    // 处理列变更 - 内部方法
+    handleColumnChangeInternal(columns) {
+      this.recordColumnChange('column-change', { columns })
+      this.$emit('column-change', columns)
+    },
+
+    // 处理批量操作 - 内部方法
+    handleBatchOperationInternal(operation, data = {}) {
+      this.recordColumnChange('batch-operation', { operation, data })
+      this.$emit('batch-operation', operation, data)
     },
 
     // 清理防抖方法
@@ -180,20 +199,22 @@ export default {
       // 从配置存储服务获取列设置
       this.internalVisibleColumns = tableConfigStore.getColumnConfig(
         this.columnSettingsKey,
-        this.defaultVisibleColumns
+        this.computedDefaultVisibleColumns
       )
     },
 
     // 重置为默认列配置
     resetToDefaultColumns() {
-      this.internalVisibleColumns = [...this.defaultVisibleColumns]
+      this.internalVisibleColumns = [...this.computedDefaultVisibleColumns]
     },
 
     // 处理列设置变更
     handleColumnChange(columns) {
       this.internalVisibleColumns = columns
+      this.visibleColumns = columns
       // 通过配置存储服务保存设置
       tableConfigStore.saveColumnConfig(this.columnSettingsKey, columns)
+      tableConfigStore.saveColumnConfig(this.tableStorageKey, columns)
     },
 
     // 处理多选变化
@@ -212,7 +233,12 @@ export default {
       }).then(() => {
         // 实际删除逻辑，通常是调用API
         this.$message.success(`已删除${this.selectedRows.length}条数据`)
-        this.getTableData() // 刷新表格数据
+        // 刷新表格数据 - 如果父组件有此方法才调用
+        if (typeof this.getTableData === 'function') {
+          this.getTableData()
+        } else {
+          this.$emit('refresh')
+        }
       }).catch(() => {
         // 用户取消删除，不做任何操作
       })
@@ -240,7 +266,12 @@ export default {
       }).then(() => {
         // 实际更新状态逻辑，通常是调用API
         this.$message.success(`已${statusText}${this.selectedRows.length}条数据`)
-        this.getTableData() // 刷新表格数据
+        // 刷新表格数据 - 如果父组件有此方法才调用
+        if (typeof this.getTableData === 'function') {
+          this.getTableData()
+        } else {
+          this.$emit('refresh')
+        }
       }).catch(() => {
         // 用户取消操作，不做任何处理
       })
@@ -249,7 +280,12 @@ export default {
     // 处理导入成功
     handleImportSuccess(result) {
       this.$message.success(`导入成功：${result.success}条数据`)
-      this.getTableData() // 刷新表格数据
+      // 刷新表格数据 - 如果父组件有此方法才调用
+      if (typeof this.getTableData === 'function') {
+        this.getTableData()
+      } else {
+        this.$emit('refresh')
+      }
     },
 
     // 处理导出成功
@@ -264,19 +300,11 @@ export default {
       // 从配置存储服务获取列设置
       this.visibleColumns = tableConfigStore.getColumnConfig(
         this.tableStorageKey,
-        this.defaultVisibleColumns
+        this.computedDefaultVisibleColumns
       )
     },
 
-    /**
-     * 处理列变更
-     * @param {Array} columns - 新的可见列属性名数组
-     */
-    handleColumnChange(columns) {
-      this.visibleColumns = columns
-      // 通过配置存储服务保存设置
-      tableConfigStore.saveColumnConfig(this.tableStorageKey, columns)
-    },
+
 
     /**
      * 迁移旧版列设置到新版存储
