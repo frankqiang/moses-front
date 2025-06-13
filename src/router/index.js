@@ -158,6 +158,12 @@ export const constantRoutes = [
         name: 'PaginationDemo',
         component: () => import('@/components/Pagination/demo.vue'),
         meta: { title: 'Pagination 分页组件' }
+      },
+      {
+        path: 'refresh-button',
+        name: 'RefreshButtonDemo',
+        component: () => import('@/components/RefreshButton/demo.vue'),
+        meta: { title: 'RefreshButton 刷新按钮组件' }
       }
     ]
   },
