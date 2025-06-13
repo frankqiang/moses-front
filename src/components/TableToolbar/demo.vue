@@ -19,28 +19,28 @@
       <el-row :gutter="20">
         <el-col :span="6">
           <div class="feature-item">
-            <i class="el-icon-s-operation feature-icon primary"></i>
+            <i class="el-icon-s-operation feature-icon primary" />
             <h4>批量操作</h4>
             <p>支持批量删除、启用/禁用等操作</p>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="feature-item">
-            <i class="el-icon-upload feature-icon success"></i>
+            <i class="el-icon-upload feature-icon success" />
             <h4>导入/导出</h4>
             <p>内置Excel导入导出功能</p>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="feature-item">
-            <i class="el-icon-setting feature-icon warning"></i>
+            <i class="el-icon-setting feature-icon warning" />
             <h4>列设置</h4>
             <p>动态控制表格列显示/隐藏</p>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="feature-item">
-            <i class="el-icon-refresh feature-icon info"></i>
+            <i class="el-icon-refresh feature-icon info" />
             <h4>刷新控制</h4>
             <p>一键刷新表格数据</p>
           </div>
@@ -152,7 +152,7 @@
         >
           <el-table-column type="selection" width="55" />
           <el-table-column type="index" label="#" width="50" />
-          
+
           <template v-for="col in fullVisibleColumns">
             <el-table-column
               v-if="col.type === 'status'"
@@ -187,9 +187,9 @@
               <el-button type="text" size="mini" @click="handleView(scope.row)">
                 查看
               </el-button>
-              <el-button 
-                type="text" 
-                size="mini" 
+              <el-button
+                type="text"
+                size="mini"
                 style="color: #f56c6c"
                 @click="handleDelete(scope.row)"
               >
@@ -220,9 +220,9 @@
             <el-button size="mini" @click="clearEventLogs">清空日志</el-button>
           </div>
           <div class="event-logs">
-            <div 
-              v-for="(log, index) in eventLogs.slice(-maxLogs)" 
-              :key="index" 
+            <div
+              v-for="(log, index) in eventLogs.slice(-maxLogs)"
+              :key="index"
               :class="getLogClass(log.type)"
             >
               <span class="log-time">{{ formatLogTime(log.timestamp) }}</span>
@@ -261,8 +261,6 @@ export default {
         { prop: 'updateTime', label: '更新时间', width: '150px' }
       ],
 
-
-
       // 基础示例数据
       basicTableData: [
         { id: 1, name: '智能手机A', code: 'SP001', category: '电子产品', status: 1 },
@@ -275,30 +273,30 @@ export default {
 
       // 完整功能示例数据
       fullTableData: [
-        { 
-          id: 1, name: '智能手机Pro', code: 'SP001', category: '电子产品', 
-          price: 3999, stock: 100, status: 1, 
-          createTime: '2024-01-15 09:30:00', updateTime: '2024-12-19 14:20:00' 
+        {
+          id: 1, name: '智能手机Pro', code: 'SP001', category: '电子产品',
+          price: 3999, stock: 100, status: 1,
+          createTime: '2024-01-15 09:30:00', updateTime: '2024-12-19 14:20:00'
         },
-        { 
-          id: 2, name: '游戏笔记本', code: 'NB002', category: '电子产品', 
+        {
+          id: 2, name: '游戏笔记本', code: 'NB002', category: '电子产品',
           price: 8999, stock: 50, status: 1,
-          createTime: '2024-02-20 10:15:00', updateTime: '2024-12-18 16:45:00' 
+          createTime: '2024-02-20 10:15:00', updateTime: '2024-12-18 16:45:00'
         },
-        { 
-          id: 3, name: '无线耳机', code: 'HP003', category: '电子产品', 
+        {
+          id: 3, name: '无线耳机', code: 'HP003', category: '电子产品',
           price: 299, stock: 200, status: 0,
-          createTime: '2024-03-10 11:20:00', updateTime: '2024-12-17 09:10:00' 
+          createTime: '2024-03-10 11:20:00', updateTime: '2024-12-17 09:10:00'
         },
-        { 
-          id: 4, name: '智能手表', code: 'SW004', category: '电子产品', 
+        {
+          id: 4, name: '智能手表', code: 'SW004', category: '电子产品',
           price: 1299, stock: 80, status: 1,
-          createTime: '2024-04-05 14:30:00', updateTime: '2024-12-19 11:30:00' 
+          createTime: '2024-04-05 14:30:00', updateTime: '2024-12-19 11:30:00'
         },
-        { 
-          id: 5, name: '运动背包', code: 'BP005', category: '户外用品', 
+        {
+          id: 5, name: '运动背包', code: 'BP005', category: '户外用品',
           price: 199, stock: 150, status: 1,
-          createTime: '2024-05-12 16:45:00', updateTime: '2024-12-16 13:20:00' 
+          createTime: '2024-05-12 16:45:00', updateTime: '2024-12-16 13:20:00'
         }
       ],
       fullVisibleColumns: [],
@@ -329,10 +327,10 @@ export default {
 
   created() {
     // 初始化可见列
-    this.basicVisibleColumns = this.allColumns.filter(col => 
+    this.basicVisibleColumns = this.allColumns.filter(col =>
       ['name', 'code', 'status'].includes(col.prop)
     )
-    this.fullVisibleColumns = this.allColumns.filter(col => 
+    this.fullVisibleColumns = this.allColumns.filter(col =>
       this.defaultVisibleColumns.includes(col.prop)
     )
   },
@@ -355,7 +353,7 @@ export default {
     },
 
     handleBasicColumnChange(columns) {
-      this.basicVisibleColumns = this.allColumns.filter(col => 
+      this.basicVisibleColumns = this.allColumns.filter(col =>
         columns.includes(col.prop)
       )
       this.logEvent('column-change', `基础工具栏：列设置变更 - ${columns.join(', ')}`)
@@ -370,7 +368,7 @@ export default {
     handleFullRefresh() {
       this.tableLoading = true
       this.logEvent('refresh', '完整工具栏：刷新数据')
-      
+
       setTimeout(() => {
         this.tableLoading = false
         this.fullResult = '数据已刷新 - ' + new Date().toLocaleTimeString()
@@ -378,7 +376,7 @@ export default {
     },
 
     handleFullColumnChange(columns) {
-      this.fullVisibleColumns = this.allColumns.filter(col => 
+      this.fullVisibleColumns = this.allColumns.filter(col =>
         columns.includes(col.prop)
       )
       this.logEvent('column-change', `完整工具栏：列设置变更 - ${columns.join(', ')}`)
@@ -417,18 +415,18 @@ export default {
     // 导入/导出相关方法
     async mockImportApi(file) {
       this.logEvent('import', `开始导入文件: ${file.name}`)
-      
+
       // 模拟导入API
       return new Promise((resolve) => {
         setTimeout(() => {
           resolve({
             success: true,
             message: '导入成功',
-            data: { 
-              total: 100, 
-              success: 95, 
+            data: {
+              total: 100,
+              success: 95,
               failed: 5,
-              filename: file.name 
+              filename: file.name
             }
           })
         }, 2000)
@@ -437,7 +435,7 @@ export default {
 
     async mockTemplateApi() {
       this.logEvent('template-download', '下载模板文件')
-      
+
       // 模拟模板下载
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -452,7 +450,7 @@ export default {
 
     async mockExportApi(params) {
       this.logEvent('export', '开始导出数据', params)
-      
+
       // 模拟导出API
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -718,4 +716,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

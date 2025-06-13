@@ -60,7 +60,7 @@
                       v-model="modernConfig.maxFileCount"
                       :min="1"
                       :max="20"
-                      :disabled="!modernConfig.enableM  ultiple"
+                      :disabled="!modernConfig.enableMultiple"
                     />
                   </el-form-item>
                 </el-form>

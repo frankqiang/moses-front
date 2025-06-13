@@ -24,12 +24,12 @@ export default {
       storageKeyPrefix: 'table_columns_',
       // 当前可见列
       visibleColumns: [],
-      
+
       // 现代化特性状态
       columnSettingsLoading: false,
       columnSettingsError: null,
       columnChangeHistory: [],
-      
+
       // 性能优化状态
       isLargeDataset: false,
       virtualizedConfig: null
@@ -80,7 +80,7 @@ export default {
       this.loadColumnSettings()
     }
     this.initVisibleColumns()
-    
+
     // 检测大数据集
     this.detectLargeDataset()
   },
@@ -131,7 +131,7 @@ export default {
     detectLargeDataset() {
       // 检测表格数据量，如果超过1000条则认为是大数据集
       this.isLargeDataset = (this.tableData?.length || 0) > 1000
-      
+
       if (this.isLargeDataset) {
         this.setupVirtualizedConfig()
       }
@@ -155,7 +155,7 @@ export default {
       }
 
       console.error(`列设置操作失败 [${operation}]:`, error)
-      
+
       // 可选的错误上报
       if (window.errorReporter) {
         window.errorReporter.captureException({
@@ -303,8 +303,6 @@ export default {
         this.computedDefaultVisibleColumns
       )
     },
-
-
 
     /**
      * 迁移旧版列设置到新版存储

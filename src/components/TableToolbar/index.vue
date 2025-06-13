@@ -5,7 +5,7 @@
  * 现代化升级：2024-12-19 - 增强错误处理、防抖保护、响应式设计等现代化特性
  */
 <template>
-  <div 
+  <div
     class="table-toolbar"
     :class="{
       'mobile-layout': isMobile,
