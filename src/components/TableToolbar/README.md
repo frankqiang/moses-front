@@ -1,351 +1,506 @@
-# 表格工具栏组件 (TableToolbar)
+# TableToolbar 表格工具栏组件
 
-## 简介
+## 概述
 
-表格工具栏组件是一个用于表格操作的通用工具栏，集成了批量操作、导入/导出、刷新和列设置等功能，为表格提供了统一的操作界面。该组件主要用于增强表格的用户体验和功能性，提供了丰富的配置选项和事件回调。
+TableToolbar 是一个功能丰富的表格工具栏组件，为数据表格提供完整的操作界面。组件集成了搜索、刷新、导入导出、列设置、批量操作等常用功能，并具备现代化的用户体验特性。
 
-## 更新日志
+## 功能特性
 
-- 2024-12-16: 集成表格配置存储服务，实现集中式配置管理、版本控制和自动清理
-- 2024-12-15: 重构列设置功能，使用独立的ColumnSettings组件替代内置实现
-- 2024-07-21: 增加自定义批量操作功能
-- 2023-12-01: 初始版本发布
+### 🔍 搜索功能
+- **实时搜索**：支持输入即搜索，提升用户体验
+- **防抖保护**：300ms 防抖机制，避免频繁API调用
+- **搜索历史**：记录用户搜索历史，支持快速重用
+- **清空功能**：一键清空搜索条件
 
-## 功能特点
+### 🔄 刷新功能
+- **手动刷新**：支持点击刷新按钮
+- **自动刷新**：可配置自动刷新间隔
+- **加载状态**：显示刷新进度和加载动画
+- **错误重试**：网络错误时提供重试机制
 
-- 批量操作功能：删除、启用/禁用等
-- 导入/导出功能：支持Excel导入/导出
-- 刷新功能：刷新表格数据
-- 列设置功能：配置表格显示的列，支持集中式存储和自动清理
-- 左右布局：左侧用于新增按钮，右侧用于功能操作
-- 丰富的插槽：支持自定义内容
+### 📥📤 导入导出功能
+- **文件上传**：支持拖拽上传和点击选择
+- **模板下载**：提供标准模板下载
+- **数据验证**：导入时进行数据格式验证
+- **多格式导出**：支持Excel、CSV等多种格式
+- **筛选导出**：仅导出当前筛选条件下的数据
 
-## 使用说明
+### ⚙️ 列设置功能
+- **显示/隐藏**：动态控制列的显示状态
+- **列排序**：支持拖拽调整列顺序
+- **宽度调整**：可调整列宽度
+- **配置保存**：用户配置自动保存到本地存储
+- **重置功能**：一键重置为默认配置
 
-### 基本使用
+### ✅ 批量操作功能
+- **批量删除**：支持批量删除选中记录
+- **批量状态变更**：批量修改记录状态
+- **自定义操作**：支持扩展自定义批量操作
+- **操作确认**：危险操作提供二次确认
 
-```vue
-<template>
-  <div class="app-container">
-    <!-- 表格工具栏 -->
-    <table-toolbar
-      :column-options="allColumns"
-      :default-visible-columns="defaultColumns"
-      :storage-key="tableStorageKey"
-      :enable-batch-actions="true"
-      :selected-rows="selectedRows"
-      @refresh="fetchData"
-      @column-change="handleColumnChange"
-      @batch-delete="handleBatchDelete"
-    >
-      <!-- 左侧插槽内容 -->
-      <template slot="toolbar-left">
-        <el-button type="primary" size="mini" @click="handleAdd">新增</el-button>
-      </template>
-    </table-toolbar>
-    
-    <!-- 表格 -->
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="55" />
-      
-      <template v-for="col in visibleColumns">
-        <el-table-column
-          :key="col.prop"
-          v-bind="col"
-        />
-      </template>
-    </el-table>
-  </div>
-</template>
+### 📱 响应式设计
+- **移动端适配**：自动适配不同屏幕尺寸
+- **抽屉式菜单**：移动端使用抽屉式操作面板
+- **触摸友好**：优化移动设备触摸交互
 
-<script>
-import { fetchList, batchDelete } from '@/api/example'
-import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
+### 🛡️ 错误处理
+- **错误边界**：组件级错误隔离
+- **重试机制**：自动或手动重试失败操作
+- **错误提示**：友好的错误消息显示
+- **日志记录**：操作日志和错误追踪
 
-export default {
-  mixins: [columnSettingsMixin],
-  data() {
-    return {
-      loading: false,
-      tableData: [],
-      selectedRows: [],
-      allColumns: [
-        { prop: 'name', label: '名称', width: '120px' },
-        { prop: 'code', label: '编码', width: '120px' },
-        { prop: 'type', label: '类型', width: '100px' },
-        { prop: 'status', label: '状态', width: '80px' },
-        { prop: 'createTime', label: '创建时间', width: '150px' },
-      ],
-      defaultVisibleColumns: ['name', 'code', 'status'],
-      // 表格存储键前缀，用于区分不同表格
-      columnSettingsKeyPrefix: 'example_table_columns'
-    }
-  },
-  created() {
-    this.fetchData()
-    // 可选：迁移旧的配置到新的存储服务
-    this.migrateOldColumnSettings()
-  },
-  methods: {
-    // 获取表格数据
-    fetchData() {
-      this.loading = true
-      fetchList().then(response => {
-        this.tableData = response.data.items
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
-    },
-    
-    // 选择行变化
-    handleSelectionChange(selection) {
-      this.selectedRows = selection
-    },
-    
-    // 批量删除
-    handleBatchDelete(rows) {
-      const ids = rows.map(row => row.id)
-      batchDelete(ids).then(() => {
-        this.$message.success('批量删除成功')
-        this.fetchData()
-      })
-    },
-    
-    // 新增记录
-    handleAdd() {
-      // 处理新增逻辑
-    }
-  }
-}
-</script>
-```
+### ⚡ 性能优化
+- **防抖节流**：用户交互防抖和滚动节流
+- **虚拟化支持**：大数据量表格性能优化
+- **操作历史**：记录和分析用户操作
+- **资源管理**：自动清理事件监听器和定时器
 
-## 组件配置
+## 使用方法
 
-### Props
-
-#### 通用配置
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|-------|------|
-| size | String | 'mini' | 按钮大小 |
-
-#### 列设置相关
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|-------|------|
-| enableColumnSettings | Boolean | true | 是否启用列设置 |
-| columnOptions | Array | [] | 列选项，每个选项需包含prop和label属性 |
-| storageKey | String | 'table_visible_columns' | 存储键名 |
-| defaultVisibleColumns | Array | [] | 默认可见列 |
-
-#### 批量操作相关
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|-------|------|
-| enableBatchActions | Boolean | false | 是否启用批量操作 |
-| selectedRows | Array | [] | 选中的行数据 |
-| minSelection | Number | 1 | 最小选择数量 |
-| showSelectedCount | Boolean | true | 是否显示选中数量 |
-| showDefaultActions | Boolean | true | 是否显示默认操作 |
-| hideDeleteButton | Boolean | false | 是否隐藏删除按钮 |
-| hideStatusButtons | Boolean | false | 是否隐藏状态按钮 |
-| deleteText | String | '' | 删除按钮文本 |
-| deleteIcon | String | 'el-icon-delete' | 删除按钮图标 |
-| statusText | String | '' | 状态按钮文本 |
-| enableText | String | '' | 启用按钮文本 |
-| enableIcon | String | 'el-icon-check' | 启用按钮图标 |
-| disableText | String | '' | 禁用按钮文本 |
-| disableIcon | String | 'el-icon-close' | 禁用按钮图标 |
-| statusButtonsMode | String | 'dropdown' | 状态按钮模式，可选值：'dropdown'、'buttons' |
-| customActions | Array | [] | 自定义操作，每项包含name、text和icon属性 |
-| deleteConfirm | Boolean | true | 是否需要删除确认 |
-| deleteConfirmText | String | '确认批量删除选中项吗？此操作不可恢复' | 删除确认文本 |
-| deleteConfirmTitle | String | '警告' | 删除确认标题 |
-| statusConfirm | Boolean | true | 是否需要状态变更确认 |
-
-#### 导入按钮相关
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|-------|------|
-| enableImport | Boolean | false | 是否启用导入 |
-| importApi | Function | null | 导入API函数 |
-| templateApi | Function | null | 模板下载API函数 |
-| importText | String | '导入' | 导入按钮文本 |
-| importIcon | String | 'el-icon-upload2' | 导入按钮图标 |
-| importType | String | 'default' | 导入按钮类型 |
-| importDisabled | Boolean | false | 是否禁用导入按钮 |
-| importDialogTitle | String | '导入数据' | 导入对话框标题 |
-
-#### 导出按钮相关
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|-------|------|
-| enableExport | Boolean | false | 是否启用导出 |
-| exportApi | Function | null | 导出API函数 |
-| exportParams | Object | {} | 导出参数 |
-| exportFilename | String | '导出数据' | 导出文件名 |
-| exportText | String | '导出' | 导出按钮文本 |
-| exportIcon | String | 'el-icon-download' | 导出按钮图标 |
-| exportType | String | 'default' | 导出按钮类型 |
-| exportDisabled | Boolean | false | 是否禁用导出按钮 |
-| exportConfirm | Boolean | true | 是否需要导出确认 |
-
-### 事件
-
-| 事件名称 | 说明 | 参数 |
-|---------|------|------|
-| refresh | 刷新按钮点击时触发 | 无 |
-| column-change | 列设置变更时触发 | columns: Array (可见列prop数组) |
-| batch-delete | 批量删除时触发 | rows: Array (选中的行数据) |
-| batch-enable | 批量启用时触发 | rows: Array (选中的行数据) |
-| batch-disable | 批量禁用时触发 | rows: Array (选中的行数据) |
-| batch-status | 批量状态变更时触发 | rows: Array (选中的行数据), status: String/Number (状态值) |
-| custom-action | 自定义批量操作时触发 | action: Object (操作定义), rows: Array (选中的行数据) |
-| import-success | 导入成功时触发 | result: Object (导入结果) |
-| import-error | 导入失败时触发 | error: Object (错误信息) |
-| export-success | 导出成功时触发 | result: Object (导出结果) |
-| export-error | 导出失败时触发 | error: Object (错误信息) |
-
-### 插槽
-
-| 插槽名称 | 说明 |
-|---------|------|
-| toolbar-left | 工具栏左侧内容，通常用于放置新增按钮 |
-| toolbar-right | 工具栏右侧内容，在所有功能按钮之后 |
-| batch-actions | 批量操作区域的自定义内容 |
-| import-tips | 导入对话框中的提示信息 |
-
-## 列设置功能
-
-### 集中式配置存储
-
-从2024-12-16版本开始，表格工具栏组件集成了表格配置存储服务，提供以下增强功能：
-
-1. **集中式配置管理** - 所有表格配置存储在统一的JSON对象中，避免localStorage碎片化
-2. **配置版本控制** - 支持配置格式升级和向下兼容
-3. **自动清理机制** - 定期清理过期的配置和不常用配置
-4. **配置访问跟踪** - 记录配置使用情况，优化存储策略
-
-更多详细信息请参考[表格配置存储服务文档](mdc:src/utils/table-config-store.md)。
-
-### 组件集成
-
-从2024-12-15版本开始，表格工具栏组件使用了独立的`ColumnSettings`组件来提供列设置功能，通过以下方式集成：
-
-1. 表格组件应使用`columnSettingsMixin`混入，该混入提供了列设置相关的基础方法
-2. 表格工具栏组件内部使用`ColumnSettings`组件处理列设置UI和交互
-3. 通过`column-change`事件将列设置变更通知给表格组件
-
-### 列设置配置和用法
+### 基础用法
 
 ```vue
 <template>
   <div>
-    <!-- 表格工具栏 -->
     <table-toolbar
-      :column-options="allColumns"
-      :storage-key="columnSettingsKey" 
-      :default-visible-columns="defaultVisibleColumns"
-      @column-change="handleColumnChange"
+      :columns="columns"
+      :selected-rows="selectedRows"
+      @search="handleSearch"
+      @refresh="handleRefresh"
     />
     
-    <!-- 表格 -->
-    <el-table :data="tableData">
-      <template v-for="col in visibleColumnsConfig">
-        <el-table-column
-          :key="col.prop"
-          v-bind="col"
-        />
-      </template>
+    <el-table
+      :data="tableData"
+      @selection-change="handleSelectionChange"
+    >
+      <!-- 表格列定义 -->
     </el-table>
   </div>
 </template>
 
 <script>
-import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
+import TableToolbar from '@/components/TableToolbar'
 
 export default {
-  mixins: [columnSettingsMixin],
+  components: {
+    TableToolbar
+  },
   data() {
     return {
-      // 设置特定的存储键前缀，区分不同模块
-      columnSettingsKeyPrefix: 'your_module_columns'
+      tableData: [],
+      selectedRows: [],
+      columns: [
+        { prop: 'name', label: '名称', width: 120 },
+        { prop: 'status', label: '状态', width: 100 }
+      ]
     }
   },
-  mounted() {
-    // 可选：迁移旧配置
-    this.migrateOldColumnSettings()
+  methods: {
+    handleSearch(keyword) {
+      // 搜索逻辑
+      console.log('搜索关键词:', keyword)
+    },
+    handleRefresh() {
+      // 刷新逻辑
+      this.loadData()
+    },
+    handleSelectionChange(selection) {
+      this.selectedRows = selection
+    }
   }
 }
 </script>
 ```
 
-通过`columnSettingsMixin`，表格组件会自动获得：
+### 完整配置示例
 
-1. 存储键的生成和管理
-2. 列设置的初始化和加载
-3. 列设置变更的处理
-4. 列配置的过滤和应用
-5. 旧配置迁移工具方法
+```vue
+<template>
+  <table-toolbar
+    v-bind="toolbarProps"
+    @search="handleSearch"
+    @refresh="handleRefresh"
+    @import="handleImport"
+    @export="handleExport"
+    @batch-action="handleBatchAction"
+    @column-change="handleColumnChange"
+  />
+</template>
 
-### 自定义存储键
-
-默认情况下，存储键会基于`columnSettingsKeyPrefix`和组件名自动生成。您可以通过以下方式自定义存储键：
-
-```javascript
+<script>
 export default {
-  mixins: [columnSettingsMixin],
-  data() {
-    return {
-      columnSettingsKeyPrefix: 'custom_module'
+  computed: {
+    toolbarProps() {
+      return {
+        // 基础配置
+        columns: this.columns,
+        selectedRows: this.selectedRows,
+        
+        // 功能开关
+        enableRefresh: true,
+        enableImport: true,
+        enableExport: true,
+        enableColumnSettings: true,
+        enableBatchActions: true,
+        
+        // 搜索配置
+        searchPlaceholder: '请输入搜索关键词',
+        searchDebounce: 300,
+        
+        // 刷新配置
+        refreshInterval: 0, // 0表示禁用自动刷新
+        refreshTooltip: '刷新数据',
+        
+        // 导入配置
+        importAccept: '.xlsx,.xls,.csv',
+        importMaxSize: 10, // MB
+        importTemplateUrl: '/api/template/download',
+        
+        // 导出配置
+        exportFormats: ['excel', 'csv'],
+        exportFilename: '数据导出',
+        
+        // 批量操作配置
+        batchActions: [
+          { key: 'delete', label: '批量删除', type: 'danger' },
+          { key: 'enable', label: '批量启用', type: 'success' },
+          { key: 'disable', label: '批量禁用', type: 'warning' }
+        ],
+        
+        // 列设置配置
+        columnStorageKey: 'table-columns-config',
+        
+        // 主题配置
+        theme: 'default', // default | compact | minimal
+        
+        // 移动端配置
+        mobileBreakpoint: 768,
+        
+        // 性能配置
+        enableVirtualization: this.tableData.length > 1000,
+        
+        // 错误处理配置
+        enableErrorBoundary: true,
+        maxRetries: 3,
+        
+        // 无障碍配置
+        enableA11y: true
+      }
     }
   },
-  computed: {
-    // 自定义存储键
-    columnSettingsKey() {
-      return `${this.columnSettingsKeyPrefix}_${this.someId || 'default'}`
+  
+  methods: {
+    async handleSearch(keyword) {
+      try {
+        this.loading = true
+        const response = await this.api.search({ keyword })
+        this.tableData = response.data
+      } catch (error) {
+        this.$message.error('搜索失败: ' + error.message)
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async handleRefresh() {
+      await this.loadData()
+      this.$message.success('数据已刷新')
+    },
+    
+    async handleImport(file) {
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        
+        const response = await this.api.import(formData)
+        this.$message.success(`导入成功，共${response.count}条记录`)
+        await this.loadData()
+      } catch (error) {
+        this.$message.error('导入失败: ' + error.message)
+      }
+    },
+    
+    async handleExport(format) {
+      try {
+        const response = await this.api.export({
+          format,
+          query: this.query
+        })
+        
+        // 下载文件
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `数据导出.${format}`
+        a.click()
+        window.URL.revokeObjectURL(url)
+        
+        this.$message.success('导出完成')
+      } catch (error) {
+        this.$message.error('导出失败: ' + error.message)
+      }
+    },
+    
+    async handleBatchAction({ action, rows }) {
+      const confirm = await this.$confirm(
+        `确定要${action.label}选中的${rows.length}条记录吗？`,
+        '确认操作',
+        { type: 'warning' }
+      )
+      
+      if (confirm) {
+        try {
+          const ids = rows.map(row => row.id)
+          await this.api.batchAction(action.key, ids)
+          this.$message.success(`${action.label}成功`)
+          await this.loadData()
+        } catch (error) {
+          this.$message.error(`${action.label}失败: ` + error.message)
+        }
+      }
+    },
+    
+    handleColumnChange(columns) {
+      this.columns = columns
+      // 可选：保存到服务器
+      // this.api.saveColumnConfig(columns)
+    }
+  }
+}
+</script>
+```
+
+## Props 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| columns | Array | [] | 表格列配置 |
+| selectedRows | Array | [] | 选中的行数据 |
+| enableRefresh | Boolean | true | 是否启用刷新功能 |
+| enableImport | Boolean | false | 是否启用导入功能 |
+| enableExport | Boolean | false | 是否启用导出功能 |
+| enableColumnSettings | Boolean | false | 是否启用列设置功能 |
+| enableBatchActions | Boolean | false | 是否启用批量操作功能 |
+| searchPlaceholder | String | '请输入搜索关键词' | 搜索框占位符 |
+| searchDebounce | Number | 300 | 搜索防抖延迟(ms) |
+| refreshInterval | Number | 0 | 自动刷新间隔(ms)，0表示禁用 |
+| refreshTooltip | String | '刷新' | 刷新按钮提示文本 |
+| importAccept | String | '.xlsx,.xls,.csv' | 导入文件类型限制 |
+| importMaxSize | Number | 10 | 导入文件最大大小(MB) |
+| importTemplateUrl | String | '' | 导入模板下载地址 |
+| exportFormats | Array | ['excel'] | 支持的导出格式 |
+| exportFilename | String | '数据导出' | 导出文件名 |
+| batchActions | Array | [] | 批量操作配置 |
+| columnStorageKey | String | 'table-columns' | 列配置存储键名 |
+| theme | String | 'default' | 主题样式 |
+| mobileBreakpoint | Number | 768 | 移动端断点(px) |
+| enableVirtualization | Boolean | false | 是否启用虚拟化 |
+| enableErrorBoundary | Boolean | true | 是否启用错误边界 |
+| maxRetries | Number | 3 | 最大重试次数 |
+| enableA11y | Boolean | true | 是否启用无障碍功能 |
+
+## Events 事件
+
+| 事件名 | 参数 | 说明 |
+|--------|------|------|
+| search | keyword: String | 搜索事件 |
+| refresh | - | 刷新事件 |
+| import | file: File | 导入文件事件 |
+| export | format: String | 导出事件 |
+| batch-action | { action: Object, rows: Array } | 批量操作事件 |
+| column-change | columns: Array | 列配置变更事件 |
+| error | error: Error | 错误事件 |
+
+## 插槽 Slots
+
+| 插槽名 | 说明 |
+|--------|------|
+| left | 左侧自定义内容 |
+| right | 右侧自定义内容 |
+| search | 自定义搜索区域 |
+| actions | 自定义操作区域 |
+
+## 样式变量
+
+```scss
+// 主题颜色
+$toolbar-primary-color: #409EFF;
+$toolbar-success-color: #67C23A;
+$toolbar-warning-color: #E6A23C;
+$toolbar-danger-color: #F56C6C;
+
+// 尺寸
+$toolbar-height: 56px;
+$toolbar-padding: 16px;
+$toolbar-border-radius: 4px;
+
+// 字体
+$toolbar-font-size: 14px;
+$toolbar-font-weight: 400;
+
+// 间距
+$toolbar-gap: 8px;
+$toolbar-button-gap: 12px;
+
+// 阴影
+$toolbar-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+// 移动端
+$toolbar-mobile-height: 48px;
+$toolbar-mobile-padding: 12px;
+```
+
+## 最佳实践
+
+### 1. 性能优化
+
+```javascript
+// 使用防抖处理搜索
+created() {
+  this.debouncedSearch = debounce(this.handleSearch, 300)
+},
+
+// 大数据量时启用虚拟化
+computed: {
+  enableVirtualization() {
+    return this.tableData.length > 1000
+  }
+}
+```
+
+### 2. 错误处理
+
+```javascript
+// 统一错误处理
+async handleOperation(operation) {
+  try {
+    await operation()
+  } catch (error) {
+    this.$message.error(this.getErrorMessage(error))
+    this.$emit('error', error)
+  }
+},
+
+getErrorMessage(error) {
+  if (error.response?.data?.message) {
+    return error.response.data.message
+  }
+  return error.message || '操作失败'
+}
+```
+
+### 3. 响应式设计
+
+```javascript
+// 检测移动端
+computed: {
+  isMobile() {
+    return window.innerWidth < this.mobileBreakpoint
+  }
+},
+
+// 移动端优化
+methods: {
+  handleMobileAction() {
+    if (this.isMobile) {
+      // 使用抽屉式菜单
+      this.showMobileDrawer = true
     }
   }
 }
 ```
 
-### 表格配置存储服务
+### 4. 无障碍支持
 
-表格工具栏组件和列设置组件现在使用统一的配置存储服务，提供以下好处：
-
-1. **减少存储碎片** - 所有配置集中在一个localStorage键中
-2. **自动过期清理** - 长期未使用的配置会被自动清理
-3. **智能存储管理** - 当存储空间接近上限时，会优先清理不常用配置
-4. **配置版本控制** - 在配置结构变更时能够平滑迁移
-
-配置存储服务可单独使用：
-
-```javascript
-import tableConfigStore from '@/utils/table-config-store'
-
-// 获取配置
-const columns = tableConfigStore.getColumnConfig('your_key', defaultColumns)
-
-// 保存配置
-tableConfigStore.saveColumnConfig('your_key', columns)
-
-// 获取统计信息
-const stats = tableConfigStore.getStats()
+```vue
+<template>
+  <!-- 添加ARIA属性 -->
+  <div
+    class="table-toolbar"
+    role="toolbar"
+    :aria-label="$t('toolbar.label')"
+  >
+    <el-input
+      v-model="searchKeyword"
+      :placeholder="searchPlaceholder"
+      :aria-label="$t('search.label')"
+      @input="debouncedSearch"
+    />
+  </div>
+</template>
 ```
 
-## 最佳实践
+## 常见问题
 
-1. **使用mixin** - 始终在表格组件中使用`columnSettingsMixin`
-2. **合理命名** - 为每个表格设置唯一的`columnSettingsKeyPrefix`
-3. **默认列** - 设置合理的`defaultVisibleColumns`，避免初次使用时显示过多或过少列
-4. **自定义存储键** - 对于动态表格，根据上下文定制`columnSettingsKey`
-5. **迁移旧配置** - 在组件挂载时调用`migrateOldColumnSettings()`，确保用户配置不丢失
-6. **及时处理变更** - 监听`column-change`事件，及时更新表格显示
+### Q: 如何自定义批量操作？
 
-## 注意事项
+A: 通过 `batchActions` 属性配置：
 
-1. 组件会自动将列设置保存到localStorage中，用户关闭页面后设置仍然保留
-2. 对于有多个表格的页面，应通过storageKeySuffix区分不同表格的设置
-3. 批量操作需要表格开启selection功能
-4. 导入/导出功能需要提供对应的API函数 
+```javascript
+batchActions: [
+  {
+    key: 'custom-action',
+    label: '自定义操作',
+    type: 'primary',
+    icon: 'el-icon-setting',
+    disabled: (rows) => rows.length === 0
+  }
+]
+```
+
+### Q: 如何保存列配置到服务器？
+
+A: 监听 `column-change` 事件：
+
+```javascript
+async handleColumnChange(columns) {
+  try {
+    await this.api.saveColumnConfig({
+      key: this.columnStorageKey,
+      columns
+    })
+  } catch (error) {
+    console.error('保存列配置失败:', error)
+  }
+}
+```
+
+### Q: 如何集成第三方导入导出库？
+
+A: 可以通过事件监听器集成：
+
+```javascript
+async handleExport(format) {
+  if (format === 'excel') {
+    // 使用 xlsx 库
+    const XLSX = await import('xlsx')
+    const wb = XLSX.utils.json_to_sheet(this.tableData)
+    XLSX.writeFile(wb, 'export.xlsx')
+  }
+}
+```
+
+## 更新日志
+
+### v1.2.0 (2024-01-15)
+- ✨ 新增批量操作功能
+- ✨ 新增列设置功能
+- 🎨 优化移动端响应式设计
+- 🛡️ 增强错误处理机制
+- ⚡ 性能优化和虚拟化支持
+
+### v1.1.0 (2024-01-10)
+- ✨ 新增导入导出功能
+- 🎨 改进搜索体验
+- 🐛 修复刷新状态问题
+- 📱 移动端适配优化
+
+### v1.0.0 (2024-01-05)
+- 🎉 初始版本发布
+- ✨ 基础搜索和刷新功能
+- 📱 响应式设计
+- 🛡️ 错误边界保护
+
+## 许可证
+
+MIT License 

@@ -147,6 +147,15 @@ npm run build:stage
 │   │   │   ├── index.vue     # 分页组件主文件 (支持现代化功能)
 │   │   │   ├── demo.vue      # 分页组件演示页面
 │   │   │   └── README.md     # 分页组件文档
+│   │   ├── TableToolbar/     # 表格工具栏组件 (已优化)
+│   │   │   ├── index.vue     # 工具栏主组件 (支持现代化特性)
+│   │   │   ├── demo.vue      # 工具栏演示页面
+│   │   │   ├── columnSettingsMixin.js # 列设置混入
+│   │   │   ├── BatchAction/  # 批量操作组件
+│   │   │   ├── ColumnSettings/ # 列设置组件
+│   │   │   ├── ExportButton/ # 导出按钮组件
+│   │   │   ├── ImportButton/ # 导入按钮组件
+│   │   │   └── RefreshButton/ # 刷新按钮组件
 │   │   ├── ActionButtons/    # 操作按钮组件 (已优化)
 │   │   ├── OverflowTagsPopover/ # 标签弹窗组件 (已优化)
 │   │   ├── ImportButton/     # 导入按钮组件 (已优化)

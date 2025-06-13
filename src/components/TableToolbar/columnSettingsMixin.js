@@ -3,9 +3,11 @@
  * 功能描述：为表格组件提供列设置功能，配合ColumnSettings组件使用
  * 创建日期：2024-12-15
  * 更新日期：2024-12-16 - 集成表格配置存储服务，实现集中式配置管理
+ * 现代化升级：2024-12-19 - 增强错误处理、防抖保护、虚拟化支持等现代化特性
  */
 
 import tableConfigStore from '@/utils/table-config-store'
+import { debounce } from '@/utils'
 
 export default {
   data() {
@@ -21,7 +23,16 @@ export default {
       // 存储键前缀
       storageKeyPrefix: 'table_columns_',
       // 当前可见列
-      visibleColumns: []
+      visibleColumns: [],
+      
+      // 现代化特性状态
+      columnSettingsLoading: false,
+      columnSettingsError: null,
+      columnChangeHistory: [],
+      
+      // 性能优化状态
+      isLargeDataset: false,
+      virtualizedConfig: null
     }
   },
   computed: {
@@ -64,17 +75,104 @@ export default {
     }
   },
   created() {
+    // 初始化防抖函数
+    this.initDebouncedMethods()
+    
     // 如果allColumns已在组件中初始化，则直接加载列设置
     if (this.allColumns.length > 0) {
       this.loadColumnSettings()
     }
     this.initVisibleColumns()
+    
+    // 检测大数据集
+    this.detectLargeDataset()
+  },
+
+  beforeDestroy() {
+    this.cleanupDebouncedMethods()
   },
   methods: {
+    // 初始化防抖方法
+    initDebouncedMethods() {
+      this.debouncedColumnChange = debounce(this.handleColumnChangeInternal, 300)
+      this.debouncedBatchOperation = debounce(this.handleBatchOperationInternal, 500)
+    },
+
+    // 清理防抖方法
+    cleanupDebouncedMethods() {
+      if (this.debouncedColumnChange?.cancel) {
+        this.debouncedColumnChange.cancel()
+      }
+      if (this.debouncedBatchOperation?.cancel) {
+        this.debouncedBatchOperation.cancel()
+      }
+    },
+
+    // 检测大数据集
+    detectLargeDataset() {
+      // 检测表格数据量，如果超过1000条则认为是大数据集
+      this.isLargeDataset = (this.tableData?.length || 0) > 1000
+      
+      if (this.isLargeDataset) {
+        this.setupVirtualizedConfig()
+      }
+    },
+
+    // 设置虚拟化配置
+    setupVirtualizedConfig() {
+      this.virtualizedConfig = {
+        itemHeight: 40,
+        visibleItemCount: Math.ceil(window.innerHeight / 40),
+        bufferSize: 10
+      }
+    },
+
+    // 错误处理
+    handleColumnSettingsError(error, operation = 'unknown') {
+      this.columnSettingsError = {
+        message: this.extractErrorMessage(error),
+        operation,
+        timestamp: Date.now()
+      }
+
+      console.error(`列设置操作失败 [${operation}]:`, error)
+      
+      // 可选的错误上报
+      if (window.errorReporter) {
+        window.errorReporter.captureException({
+          component: 'ColumnSettingsMixin',
+          operation,
+          error: error.message
+        })
+      }
+    },
+
+    // 提取错误信息
+    extractErrorMessage(error) {
+      if (typeof error === 'string') return error
+      if (error.message) return error.message
+      return '操作失败，请稍后重试'
+    },
+
+    // 记录列变更历史
+    recordColumnChange(operation, data = {}) {
+      this.columnChangeHistory.push({
+        operation,
+        timestamp: Date.now(),
+        data: { ...data }
+      })
+
+      // 保持历史记录在合理范围内
+      if (this.columnChangeHistory.length > 50) {
+        this.columnChangeHistory = this.columnChangeHistory.slice(-30)
+      }
+    },
+
     // 初始化列配置
     initColumns(columns) {
       this.allColumns = columns
       this.loadColumnSettings()
+      this.detectLargeDataset()
     },
 
     // 加载列设置

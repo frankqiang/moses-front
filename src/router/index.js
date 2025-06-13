@@ -170,6 +170,12 @@ export const constantRoutes = [
         name: 'StatusTagDemo',
         component: () => import('@/components/StatusTag/demo.vue'),
         meta: { title: 'StatusTag 状态标签组件' }
+      },
+      {
+        path: 'table-toolbar',
+        name: 'TableToolbarDemo',
+        component: () => import('@/components/TableToolbar/demo.vue'),
+        meta: { title: 'TableToolbar 表格工具栏组件' }
       }
     ]
   },
