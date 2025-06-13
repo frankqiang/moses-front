@@ -12,7 +12,7 @@
     @command="handleCommand"
     :aria-label="`${text}设置菜单`"
     role="button"
-    tabindex="0"
+    :tabindex="0"
   >
     <el-button 
       :size="size" 

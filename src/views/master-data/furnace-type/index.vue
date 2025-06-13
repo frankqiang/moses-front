@@ -116,42 +116,28 @@ export default {
     this.getList()
   },
   methods: {
-    // 获取炉型列表
+    // 获取列表数据
     getList() {
       this.listLoading = true
       getFurnaceTypeList(this.listQuery).then(response => {
-        console.log('API原始返回数据:', response)
-
-        // 处理不同的API返回结构
-        let items = []
-        if (Array.isArray(response.data)) {
-          // 处理直接返回数组的情况
-          items = response.data
-        } else if (response.data && Array.isArray(response.data.items)) {
-          // 处理标准格式 {data: {total: number, items: array}} 的情况
-          items = response.data.items
+        if (response.code === 20000) {
+          this.list = response.data.items.map(item => {
+            // 确保关联数据是数组
+            return {
+              ...item,
+              supportedAtmosphereTypes: Array.isArray(item.supportedAtmosphereTypes) ? item.supportedAtmosphereTypes : [],
+              relatedEquipment: Array.isArray(item.relatedEquipment) ? item.relatedEquipment : [],
+              relatedTemplates: Array.isArray(item.relatedTemplates) ? item.relatedTemplates : []
+            }
+          })
           this.total = response.data.total
         } else {
-          // 无法识别的格式
-          console.error('无法识别的API返回数据格式:', response.data)
-          items = []
-          this.total = 0
+          this.$message.error(response.message || '获取列表失败')
         }
-
-        // 直接使用API返回的数据，无需结构转换
-        this.list = items
-
-        console.log('炉型数据:', this.list)
-
-        if (!this.total) {
-          this.total = this.list.length // 如果没有明确的total字段，使用数组长度
-        }
-
-        this.listLoading = false
-        // 滚动到顶部
-        scrollTo(0, 500)
       }).catch(error => {
-        console.error('获取炉型数据失败:', error)
+        console.error('获取列表失败:', error)
+        this.$message.error('获取列表失败')
+      }).finally(() => {
         this.listLoading = false
       })
     },

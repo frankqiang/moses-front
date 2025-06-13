@@ -89,7 +89,7 @@ export default {
       type: String,
       default: 'primary',
       validator(value) {
-        const validTypes = ['primary', 'success', 'warning', 'danger', 'info', 'text']
+        const validTypes = ['default', 'primary', 'success', 'warning', 'danger', 'info', 'text']
         return validTypes.includes(value)
       }
     },

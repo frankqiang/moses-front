@@ -340,8 +340,10 @@ export default {
     this.checkMobileDevice()
   },
   mounted() {
-    // 设置响应式监听
-    this.setupResponsiveListener()
+    // 确保DOM渲染完成后再设置响应式监听
+    this.$nextTick(() => {
+      this.setupResponsiveListener()
+    })
   },
   beforeDestroy() {
     // 清理资源
@@ -636,11 +638,16 @@ export default {
       window.addEventListener('resize', this.throttledResize)
 
       // 使用ResizeObserver监听容器大小变化
-      if (window.ResizeObserver && this.$el) {
-        this.resizeObserver = new ResizeObserver(() => {
-          this.checkMobileDevice()
-        })
-        this.resizeObserver.observe(this.$el)
+      if (window.ResizeObserver && this.$el && this.$el instanceof Element) {
+        try {
+          this.resizeObserver = new ResizeObserver(() => {
+            this.checkMobileDevice()
+          })
+          this.resizeObserver.observe(this.$el)
+        } catch (error) {
+          console.warn('BatchAction: 设置ResizeObserver失败', error)
+          // 如果ResizeObserver失败，降级为仅使用window resize事件
+        }
       }
     },
 

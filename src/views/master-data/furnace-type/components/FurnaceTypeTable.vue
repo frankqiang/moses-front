@@ -129,29 +129,50 @@
           <template v-else-if="col.prop === 'supportedAtmosphereTypes'">
             <overflow-tags-popover
               :data="scope.row.supportedAtmosphereTypes"
-              :max-show="1"
+              :max-show="2"
+              :enable-modern-features="true"
               title="支持的气氛类型"
+              type="success"
+              effect="light"
+              @error="handleError"
             />
+            <div v-if="!scope.row.supportedAtmosphereTypes || !scope.row.supportedAtmosphereTypes.length" class="debug-info">
+              无气氛类型数据
+            </div>
           </template>
 
           <!-- 关联设备列表 -->
           <template v-else-if="col.prop === 'relatedEquipment'">
             <overflow-tags-popover
               :data="scope.row.relatedEquipment || []"
-              :max-show="1"
+              :max-show="2"
+              :enable-modern-features="true"
               label-key="name"
               title="关联设备列表"
+              type="primary"
+              effect="light"
+              @error="handleError"
             />
+            <div v-if="!scope.row.relatedEquipment || !scope.row.relatedEquipment.length" class="debug-info">
+              无关联设备数据
+            </div>
           </template>
 
           <!-- 关联工艺模板列表 -->
           <template v-else-if="col.prop === 'relatedTemplates'">
             <overflow-tags-popover
               :data="scope.row.relatedTemplates || []"
-              :max-show="1"
+              :max-show="2"
+              :enable-modern-features="true"
               label-key="templateName"
               title="关联工艺模板列表"
+              type="warning"
+              effect="light"
+              @error="handleError"
             />
+            <div v-if="!scope.row.relatedTemplates || !scope.row.relatedTemplates.length" class="debug-info">
+              无关联工艺模板数据
+            </div>
           </template>
 
           <!-- 其他列的默认渲染 -->
@@ -638,6 +659,11 @@ export default {
       this.searchParams = { ...params }
       this.currentPage = 1 // 重置为第一页
       this.getList()
+    },
+
+    // 处理错误事件
+    handleError(error) {
+      console.error('OverflowTagsPopover错误:', error)
     }
   }
 }
@@ -665,6 +691,12 @@ export default {
         border-bottom: none;
       }
     }
+  }
+
+  .debug-info {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 4px;
   }
 }
 </style>
