@@ -143,7 +143,15 @@ npm run build:stage
 │   │       └── warehouse.js  # 仓库管理API
 │   ├── assets/               # 主题、字体等静态资源
 │   ├── components/           # 全局公用组件
-│   │   └── Pagination/       # 分页组件
+│   │   ├── Pagination/       # 分页组件 (已优化)
+│   │   │   ├── index.vue     # 分页组件主文件 (支持现代化功能)
+│   │   │   ├── demo.vue      # 分页组件演示页面
+│   │   │   └── README.md     # 分页组件文档
+│   │   ├── ActionButtons/    # 操作按钮组件 (已优化)
+│   │   ├── OverflowTagsPopover/ # 标签弹窗组件 (已优化)
+│   │   ├── ImportButton/     # 导入按钮组件 (已优化)
+│   │   ├── ExportButton/     # 导出按钮组件 (已优化)
+│   │   └── BaseTable/        # 基础表格组件 (已优化)
 │   ├── layout/               # 全局布局
 │   ├── router/               # 路由
 │   ├── store/                # 全局状态管理

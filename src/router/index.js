@@ -152,6 +152,12 @@ export const constantRoutes = [
         name: 'OverflowTagsDemo',
         component: () => import('@/components/OverflowTagsPopover/example.vue'),
         meta: { title: 'OverflowTagsPopover 溢出标签组件' }
+      },
+      {
+        path: 'pagination',
+        name: 'PaginationDemo',
+        component: () => import('@/components/Pagination/demo.vue'),
+        meta: { title: 'Pagination 分页组件' }
       }
     ]
   },
