@@ -7,39 +7,93 @@
   <div class="app-container">
     <h2>全局组件演示</h2>
 
-    <el-divider content-position="left">1. 状态标签 (StatusTag)</el-divider>
+    <el-divider content-position="left">1. 状态标签 (StatusTag) - 已现代化优化</el-divider>
     <div class="demo-section">
       <h3>基本用法</h3>
       <div class="demo-item">
-        <StatusTag :status="1" :text-map="{ 0: '禁用', 1: '启用' }" :type-map="{ 0: 'info', 1: 'success' }" />
-        <StatusTag :status="0" :text-map="{ 0: '禁用', 1: '启用' }" :type-map="{ 0: 'info', 1: 'success' }" />
+        <StatusTag
+          :status="1"
+          :text-map="{ 0: '禁用', 1: '启用' }"
+          :type-map="{ 0: 'info', 1: 'success' }"
+          :icon-map="{ 0: 'el-icon-circle-close', 1: 'el-icon-circle-check' }"
+        />
+        <StatusTag
+          :status="0"
+          :text-map="{ 0: '禁用', 1: '启用' }"
+          :type-map="{ 0: 'info', 1: 'success' }"
+          :icon-map="{ 0: 'el-icon-circle-close', 1: 'el-icon-circle-check' }"
+        />
       </div>
 
       <h3>使用预设配置</h3>
       <div class="demo-item">
-        <StatusTag :status="'trial'" :text-map="productLifecycle.textMap" :type-map="productLifecycle.typeMap" />
-        <StatusTag :status="'production'" :text-map="productLifecycle.textMap" :type-map="productLifecycle.typeMap" />
-        <StatusTag :status="'discontinued'" :text-map="productLifecycle.textMap" :type-map="productLifecycle.typeMap" />
+        <StatusTag
+          :status="'trial'"
+          :text-map="productLifecycle.textMap"
+          :type-map="productLifecycle.typeMap"
+          :icon-map="productLifecycle.iconMap"
+        />
+        <StatusTag
+          :status="'production'"
+          :text-map="productLifecycle.textMap"
+          :type-map="productLifecycle.typeMap"
+          :icon-map="productLifecycle.iconMap"
+        />
+        <StatusTag
+          :status="'discontinued'"
+          :text-map="productLifecycle.textMap"
+          :type-map="productLifecycle.typeMap"
+          :icon-map="productLifecycle.iconMap"
+        />
       </div>
 
-      <h3>自定义颜色</h3>
+      <h3>现代化特性演示</h3>
+      <div class="demo-item">
+        <StatusTag
+          :status="'clickable'"
+          :text-map="{ 'clickable': '点击我试试' }"
+          :type-map="{ 'clickable': 'primary' }"
+          :icon-map="{ 'clickable': 'el-icon-mouse' }"
+          :enable-modern-features="true"
+          :clickable="true"
+          @click="handleStatusTagClick"
+        />
+        <StatusTag
+          :status="'closable'"
+          :text-map="{ 'closable': '可关闭标签' }"
+          :type-map="{ 'closable': 'warning' }"
+          :closable="true"
+          @close="handleStatusTagClose"
+        />
+      </div>
+
+      <h3>自定义颜色和样式</h3>
       <div class="demo-item">
         <StatusTag
           :status="'critical'"
           :text-map="{ 'critical': '严重', 'major': '重要', 'minor': '次要' }"
           :color-map="{ 'critical': '#f56c6c', 'major': '#e6a23c', 'minor': '#67c23a' }"
+          :icon-map="{ 'critical': 'el-icon-warning' }"
         />
         <StatusTag
           :status="'major'"
           :text-map="{ 'critical': '严重', 'major': '重要', 'minor': '次要' }"
           :color-map="{ 'critical': '#f56c6c', 'major': '#e6a23c', 'minor': '#67c23a' }"
+          :icon-map="{ 'major': 'el-icon-warning-outline' }"
         />
         <StatusTag
           :status="'minor'"
           :text-map="{ 'critical': '严重', 'major': '重要', 'minor': '次要' }"
           :color-map="{ 'critical': '#f56c6c', 'major': '#e6a23c', 'minor': '#67c23a' }"
+          :icon-map="{ 'minor': 'el-icon-check' }"
         />
       </div>
+
+      <p class="demo-note">
+        <el-button size="mini" type="text" @click="goToStatusTagDemo">
+          查看完整演示 →
+        </el-button>
+      </p>
     </div>
 
     <el-divider content-position="left">2. 操作按钮 (ActionButtons)</el-divider>
@@ -444,6 +498,19 @@ export default {
       this.$message.success(`已删除${rows.length}条数据`)
     },
 
+    // StatusTag相关方法
+    handleStatusTagClick(data) {
+      this.$message.success(`点击了状态标签: ${data.displayText}`)
+    },
+
+    handleStatusTagClose(data) {
+      this.$message.info(`关闭了状态标签: ${data.displayText}`)
+    },
+
+    goToStatusTagDemo() {
+      this.$router.push('/components/status-tag')
+    },
+
     handleToolbarBatchEnable(rows) {
       this.toolbarResult = `批量启用: ${rows.length}条数据`
       this.$message.success(`已启用${rows.length}条数据`)
@@ -580,5 +647,14 @@ export default {
     margin: 0;
     white-space: pre-wrap;
   }
+}
+
+.demo-note {
+  margin-top: 15px;
+  padding: 10px;
+  background: #f0f9ff;
+  border-radius: 6px;
+  border-left: 4px solid #409eff;
+  color: #409eff;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="batch-action-demo">
     <h1>BatchAction 现代化组件演示</h1>
-    
+
     <!-- 功能说明卡片 -->
     <el-card class="demo-info" shadow="hover">
       <div slot="header">
@@ -10,28 +10,28 @@
       <el-row :gutter="20">
         <el-col :span="6">
           <div class="feature-item">
-            <i class="el-icon-lightning feature-icon success"></i>
+            <i class="el-icon-lightning feature-icon success" />
             <h4>防抖保护</h4>
             <p>300ms防抖机制防止误操作</p>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="feature-item">
-            <i class="el-icon-shield feature-icon warning"></i>
+            <i class="el-icon-shield feature-icon warning" />
             <h4>错误边界</h4>
             <p>组件级错误隔离和恢复</p>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="feature-item">
-            <i class="el-icon-mobile-phone feature-icon info"></i>
+            <i class="el-icon-mobile-phone feature-icon info" />
             <h4>响应式设计</h4>
             <p>完美适配各种设备</p>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="feature-item">
-            <i class="el-icon-data-line feature-icon primary"></i>
+            <i class="el-icon-data-line feature-icon primary" />
             <h4>虚拟化支持</h4>
             <p>大数据量性能优化</p>
           </div>
@@ -47,10 +47,10 @@
       <el-row :gutter="20">
         <el-col :span="8">
           <el-form-item label="模拟数据量">
-            <el-slider 
-              v-model="dataSize" 
-              :min="10" 
-              :max="5000" 
+            <el-slider
+              v-model="dataSize"
+              :min="10"
+              :max="5000"
               :step="100"
               show-input
             />
@@ -58,10 +58,10 @@
         </el-col>
         <el-col :span="8">
           <el-form-item label="防抖延迟(ms)">
-            <el-input-number 
-              v-model="debounceDelay" 
-              :min="100" 
-              :max="1000" 
+            <el-input-number
+              v-model="debounceDelay"
+              :min="100"
+              :max="1000"
               :step="100"
             />
           </el-form-item>
@@ -93,7 +93,7 @@
           当前选中: {{ selectedRows.length }} / {{ tableData.length }}
         </span>
       </div>
-      
+
       <!-- BatchAction组件 -->
       <batch-action
         :selected-rows="selectedRows"
@@ -112,10 +112,10 @@
       <!-- 数据表格 -->
       <el-table
         ref="dataTable"
-        :data="paginatedData"
-        @selection-change="handleSelectionChange"
         v-loading="tableLoading"
+        :data="paginatedData"
         style="margin-top: 20px;"
+        @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
@@ -148,9 +148,9 @@
         :page-size="pageSize"
         :total="tableData.length"
         layout="total, sizes, prev, pager, next, jumper"
+        style="margin-top: 20px; text-align: right;"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        style="margin-top: 20px; text-align: right;"
       />
     </el-card>
 
@@ -247,7 +247,7 @@ export default {
     generateMockData() {
       this.tableLoading = true
       this.selectedRows = []
-      
+
       // 模拟异步加载
       setTimeout(() => {
         this.tableData = Array.from({ length: this.dataSize }, (_, index) => ({
@@ -274,13 +274,13 @@ export default {
     async handleBatchDelete(data) {
       try {
         this.addLog('warning', `开始批量删除操作...`)
-        
+
         // 模拟API调用
         await this.simulateApiCall(1000)
-        
+
         const deleteCount = data.isVirtualized ? data.length : data.length
         this.addLog('success', `成功删除 ${deleteCount} 项`)
-        
+
         // 模拟删除数据
         if (data.isVirtualized) {
           const ids = data.getIds()
@@ -289,9 +289,8 @@ export default {
           const ids = data.map(item => item.id)
           this.tableData = this.tableData.filter(item => !ids.includes(item.id))
         }
-        
+
         this.selectedRows = []
-        
       } catch (error) {
         this.addLog('error', `批量删除失败: ${error.message}`)
       }
@@ -301,13 +300,13 @@ export default {
     async handleBatchStatus(data, status) {
       try {
         this.addLog('info', `开始批量${status === 1 ? '启用' : '禁用'}操作...`)
-        
+
         // 模拟API调用
         await this.simulateApiCall(800)
-        
+
         const updateCount = data.isVirtualized ? data.length : data.length
         this.addLog('success', `成功${status === 1 ? '启用' : '禁用'} ${updateCount} 项`)
-        
+
         // 模拟更新数据
         if (data.isVirtualized) {
           const ids = data.getIds()
@@ -324,7 +323,6 @@ export default {
             }
           })
         }
-        
       } catch (error) {
         this.addLog('error', `批量状态变更失败: ${error.message}`)
       }
@@ -334,7 +332,7 @@ export default {
     async handleCustomAction(action, data) {
       try {
         this.addLog('info', `开始执行 ${action.label} 操作...`)
-        
+
         switch (action.action) {
           case 'batchApprove':
             await this.simulateApiCall(1200)
@@ -348,10 +346,9 @@ export default {
           case 'simulateError':
             throw new Error('这是一个模拟的错误')
         }
-        
+
         const count = data.isVirtualized ? data.length : data.length
         this.addLog('success', `${action.label} 操作完成，处理了 ${count} 项`)
-        
       } catch (error) {
         this.addLog('error', `${action.label} 操作失败: ${error.message}`)
       }
@@ -379,14 +376,14 @@ export default {
       this.$refs.dataTable.clearSelection()
       const randomCount = Math.floor(Math.random() * Math.min(50, this.paginatedData.length)) + 1
       const randomIndices = []
-      
+
       while (randomIndices.length < randomCount) {
         const index = Math.floor(Math.random() * this.paginatedData.length)
         if (!randomIndices.includes(index)) {
           randomIndices.push(index)
         }
       }
-      
+
       randomIndices.forEach(index => {
         this.$refs.dataTable.toggleRowSelection(this.paginatedData[index], true)
       })
@@ -434,7 +431,7 @@ export default {
         message,
         timestamp
       })
-      
+
       // 限制日志数量
       if (this.operationLog.length > 50) {
         this.operationLog = this.operationLog.slice(0, 50)
@@ -481,7 +478,7 @@ export default {
     .el-card__header {
       background: #fafafa;
       border-bottom: 1px solid #ebeef5;
-      
+
       span {
         font-weight: 500;
         color: #303133;
@@ -628,4 +625,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

@@ -3,7 +3,7 @@
  * 功能描述：用于在表格单元格中显示多个标签，当标签数量超过设定值时，以弹出框形式显示全部标签
  * 创建日期：2024-11-18
  * 优化日期：2024-11-18
- * 
+ *
  * 主要优化：
  * - 添加严格的Props验证和错误处理
  * - 实现虚拟滚动支持大数据集
@@ -17,10 +17,10 @@
     <div v-if="hasError" class="error-state">
       <slot name="error" :error="errorInfo" :retry="handleRetry">
         <span class="error-text">数据加载失败</span>
-        <el-button 
-          v-if="enableModernFeatures && errorInfo.retryable" 
-          size="mini" 
-          type="text" 
+        <el-button
+          v-if="enableModernFeatures && errorInfo.retryable"
+          size="mini"
+          type="text"
           @click="handleRetry"
         >
           重试
@@ -31,7 +31,7 @@
     <!-- 加载状态 -->
     <div v-else-if="loading" class="loading-state">
       <slot name="loading">
-        <i class="el-icon-loading"></i>
+        <i class="el-icon-loading" />
         <span class="loading-text">加载中...</span>
       </slot>
     </div>
@@ -56,12 +56,12 @@
       <!-- 溢出标签的弹出框 -->
       <el-popover
         v-if="hasMoreItems"
+        ref="popover"
         :placement="placement"
         :width="popoverWidth"
         :trigger="trigger"
         :popper-class="[popoverClass, 'overflow-tags-popover-panel'].join(' ')"
         :disabled="loading || hasError"
-        ref="popover"
       >
         <div class="overflow-tags-list">
           <!-- 弹出框头部 -->
@@ -85,16 +85,16 @@
           </div>
 
           <!-- 标签内容区域 -->
-          <div 
-            class="overflow-tags-content"
+          <div
             ref="scrollContainer"
+            class="overflow-tags-content"
             @scroll="handleScroll"
           >
             <!-- 虚拟滚动容器 -->
             <div v-if="enableModernFeatures && shouldVirtualize" class="virtual-scroll-container">
               <div :style="{ height: totalHeight + 'px' }" class="virtual-total">
-                <div 
-                  :style="{ transform: `translateY(${startOffset}px)` }" 
+                <div
+                  :style="{ transform: `translateY(${startOffset}px)` }"
                   class="virtual-items"
                 >
                   <div
@@ -134,18 +134,18 @@
 
           <!-- 弹出框底部 -->
           <div v-if="enableModernFeatures && (enableExport || enableSelectAll)" class="overflow-tags-footer">
-            <el-button 
-              v-if="enableSelectAll" 
-              size="mini" 
-              type="text" 
+            <el-button
+              v-if="enableSelectAll"
+              size="mini"
+              type="text"
               @click="handleSelectAll"
             >
               全选
             </el-button>
-            <el-button 
-              v-if="enableExport" 
-              size="mini" 
-              type="text" 
+            <el-button
+              v-if="enableExport"
+              size="mini"
+              type="text"
               @click="handleExport"
             >
               导出
@@ -169,7 +169,7 @@
             @click="handleMoreTagClick"
           >
             <span>+{{ moreItemsCount }}</span>
-            <i v-if="enableModernFeatures" class="el-icon-arrow-down more-icon"></i>
+            <i v-if="enableModernFeatures" class="el-icon-arrow-down more-icon" />
           </el-tag>
         </slot>
       </el-popover>
@@ -203,7 +203,7 @@ export default {
         return true
       }
     },
-    
+
     // 最大显示数量
     maxShow: {
       type: Number,
@@ -216,7 +216,7 @@ export default {
         return true
       }
     },
-    
+
     // 对象数组时的标签文本字段
     labelKey: {
       type: String,
@@ -229,7 +229,7 @@ export default {
       type: String,
       default: ''
     },
-    
+
     // 弹出框宽度
     popoverWidth: {
       type: Number,
@@ -238,7 +238,7 @@ export default {
         return value >= 100 && value <= 800
       }
     },
-    
+
     // 弹出框位置
     placement: {
       type: String,
@@ -253,7 +253,7 @@ export default {
         return validPlacements.includes(value)
       }
     },
-    
+
     // 触发方式
     trigger: {
       type: String,
@@ -262,7 +262,7 @@ export default {
         return ['click', 'focus', 'hover', 'manual'].includes(value)
       }
     },
-    
+
     // 弹出框类名
     popoverClass: {
       type: String,
@@ -278,7 +278,7 @@ export default {
         return ['medium', 'small', 'mini'].includes(value)
       }
     },
-    
+
     // 标签类型
     type: {
       type: String,
@@ -287,7 +287,7 @@ export default {
         return ['success', 'info', 'warning', 'danger', 'primary'].includes(value)
       }
     },
-    
+
     // 标签效果
     effect: {
       type: String,
@@ -296,7 +296,7 @@ export default {
         return ['dark', 'light', 'plain'].includes(value)
       }
     },
-    
+
     // 标签类名
     tagClass: {
       type: String,
@@ -308,7 +308,7 @@ export default {
       type: String,
       default: 'info'
     },
-    
+
     // 空数据文本
     emptyText: {
       type: String,
@@ -321,61 +321,61 @@ export default {
       type: Boolean,
       default: false
     },
-    
+
     // 加载状态
     loading: {
       type: Boolean,
       default: false
     },
-    
+
     // 启用搜索功能
     enableSearch: {
       type: Boolean,
       default: true
     },
-    
+
     // 搜索触发阈值
     searchThreshold: {
       type: Number,
       default: 10
     },
-    
+
     // 启用虚拟滚动
     enableVirtualScroll: {
       type: Boolean,
       default: true
     },
-    
+
     // 虚拟滚动触发阈值
     virtualThreshold: {
       type: Number,
       default: 100
     },
-    
+
     // 虚拟滚动项高度
     virtualItemHeight: {
       type: Number,
       default: 32
     },
-    
+
     // 虚拟滚动缓冲区大小
     virtualBuffer: {
       type: Number,
       default: 5
     },
-    
+
     // 启用全选功能
     enableSelectAll: {
       type: Boolean,
       default: false
     },
-    
+
     // 启用导出功能
     enableExport: {
       type: Boolean,
       default: false
     },
-    
+
     // 自定义标签类型映射函数
     tagTypeMapper: {
       type: Function,
@@ -423,7 +423,7 @@ export default {
       if (!this.enableModernFeatures || !this.searchKeyword) {
         return this.formattedData
       }
-      
+
       try {
         const keyword = this.searchKeyword.toLowerCase()
         return this.formattedData.filter(item => {
@@ -435,7 +435,7 @@ export default {
         return this.formattedData
       }
     },
-    
+
     // 可见的标签项
     visibleItems() {
       try {
@@ -447,12 +447,12 @@ export default {
         return []
       }
     },
-    
+
     // 是否有更多标签
     hasMoreItems() {
       return this.formattedData.length > this.maxShow && this.maxShow >= 0
     },
-    
+
     // 更多标签的数量
     moreItemsCount() {
       return Math.max(0, this.formattedData.length - this.maxShow)
@@ -460,25 +460,25 @@ export default {
 
     // 是否启用虚拟滚动
     shouldVirtualize() {
-      return this.enableModernFeatures && 
-             this.enableVirtualScroll && 
+      return this.enableModernFeatures &&
+             this.enableVirtualScroll &&
              this.filteredData.length > this.virtualThreshold
     },
 
     // 虚拟滚动相关计算
     visibleVirtualItems() {
       if (!this.shouldVirtualize) return []
-      
+
       const itemHeight = this.virtualItemHeight
       const containerHeight = this.containerHeight || 300
       const buffer = this.virtualBuffer
-      
+
       const startIndex = Math.max(0, Math.floor(this.scrollTop / itemHeight) - buffer)
       const endIndex = Math.min(
         this.filteredData.length,
         Math.ceil((this.scrollTop + containerHeight) / itemHeight) + buffer
       )
-      
+
       return this.filteredData.slice(startIndex, endIndex).map((data, i) => ({
         data,
         index: startIndex + i
@@ -496,10 +496,33 @@ export default {
     }
   },
 
+  watch: {
+    // 监听数据变化，重置错误状态
+    data: {
+      handler() {
+        this.resetError()
+        this.retryCount = 0
+      },
+      immediate: false
+    },
+
+    // 监听现代化特性开关
+    enableModernFeatures: {
+      handler(newVal) {
+        if (newVal) {
+          this.$nextTick(() => {
+            this.updateContainerHeight()
+          })
+        }
+      },
+      immediate: false
+    }
+  },
+
   created() {
     // 创建防抖搜索函数
     this.debouncedSearch = debounce(this.performSearch, 300)
-    
+
     // 初始化错误状态
     this.resetError()
   },
@@ -526,12 +549,12 @@ export default {
         if (item && item._error) {
           return '[数据错误]'
         }
-        
+
         if (this.labelKey && typeof item === 'object' && item !== null) {
           const label = item[this.labelKey]
           return label !== undefined && label !== null ? String(label) : '[无标签]'
         }
-        
+
         return item !== undefined && item !== null ? String(item) : '[空值]'
       } catch (error) {
         console.warn('[OverflowTagsPopover] Error getting item label:', error)
@@ -591,7 +614,7 @@ export default {
     performSearch(keyword) {
       this.searchKeyword = keyword
       this.$emit('search', keyword)
-      
+
       // 重置滚动位置
       if (this.$refs.scrollContainer) {
         this.$refs.scrollContainer.scrollTop = 0
@@ -627,7 +650,7 @@ export default {
           label: this.safeGetItemLabel(item),
           raw: item
         }))
-        
+
         this.$emit('export', data)
       } catch (error) {
         this.handleError(error, 'export')
@@ -638,7 +661,7 @@ export default {
     // 处理错误
     handleError(error, context = 'unknown') {
       console.error(`[OverflowTagsPopover] Error in ${context}:`, error)
-      
+
       if (this.enableModernFeatures) {
         this.hasError = true
         this.errorInfo = {
@@ -647,7 +670,7 @@ export default {
           retryable: this.retryCount < this.maxRetries,
           timestamp: new Date().toISOString()
         }
-        
+
         this.$emit('error', this.errorInfo)
       }
     },
@@ -658,7 +681,7 @@ export default {
         this.$message.warning('重试次数已达上限')
         return
       }
-      
+
       this.retryCount++
       this.resetError()
       this.$emit('retry', this.retryCount)
@@ -668,29 +691,6 @@ export default {
     resetError() {
       this.hasError = false
       this.errorInfo = null
-    }
-  },
-
-  watch: {
-    // 监听数据变化，重置错误状态
-    data: {
-      handler() {
-        this.resetError()
-        this.retryCount = 0
-      },
-      immediate: false
-    },
-
-    // 监听现代化特性开关
-    enableModernFeatures: {
-      handler(newVal) {
-        if (newVal) {
-          this.$nextTick(() => {
-            this.updateContainerHeight()
-          })
-        }
-      },
-      immediate: false
     }
   }
 }
@@ -706,7 +706,7 @@ export default {
   &.modern-mode {
     .more-tag-modern {
       transition: all 0.2s ease;
-      
+
       &:hover {
         transform: translateY(-1px);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

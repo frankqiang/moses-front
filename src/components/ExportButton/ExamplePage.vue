@@ -69,10 +69,10 @@
                     @export-complete="longExportStarted = false"
                     @export-error="onExportError"
                   />
-                  
-                  <el-button 
-                    v-if="longExportStarted" 
-                    type="danger" 
+
+                  <el-button
+                    v-if="longExportStarted"
+                    type="danger"
                     size="small"
                     @click="cancelExport"
                   >
@@ -217,7 +217,7 @@
             @export-complete="onExportComplete"
             @cancel="onExportCancel"
           />
-          
+
           <div class="event-log">
             <h4>事件日志</h4>
             <div class="log-container">
@@ -296,16 +296,16 @@ export default {
       // 控制参数
       debounceDelay: 500,
       longExportStarted: false,
-      
+
       // 统计数据
       exportCount: 0,
       successCount: 0,
       errorCount: 0,
       cancelCount: 0,
-      
+
       // 事件日志
       eventLogs: [],
-      
+
       // 验证结果
       validationResults: []
     }
@@ -314,10 +314,10 @@ export default {
     // Mock导出API - 基础版本
     async mockExportApi(params) {
       console.log('Mock导出API调用:', params)
-      
+
       // 模拟API延迟
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       return {
         data: 'export-success',
         headers: {
@@ -325,17 +325,17 @@ export default {
         }
       }
     },
-    
+
     // Mock长时间运行的导出API
     async longRunningExportApi(params) {
       console.log('长时间运行导出API:', params)
-      
+
       // 模拟长时间操作
       for (let i = 0; i < 10; i++) {
         await new Promise(resolve => setTimeout(resolve, 1000))
         console.log(`导出进度: ${(i + 1) * 10}%`)
       }
-      
+
       return {
         data: 'export-success',
         headers: {
@@ -343,32 +343,32 @@ export default {
         }
       }
     },
-    
+
     // Mock容易出错的导出API
     async errorProneExportApi(params) {
       console.log('错误测试API:', params)
-      
+
       await new Promise(resolve => setTimeout(resolve, 500))
-      
+
       // 随机产生不同类型的错误
       const errorTypes = [
         { name: 'NetworkError', code: 'NETWORK_ERROR', message: '网络连接失败' },
         { name: 'TimeoutError', message: 'Export timeout' },
-        { response: { status: 500, data: { message: '服务器内部错误' } } },
-        { response: { status: 403, data: { message: '没有导出权限' } } },
-        { response: { status: 404, data: { message: '导出接口不存在' } } }
+        { response: { status: 500, data: { message: '服务器内部错误' }}},
+        { response: { status: 403, data: { message: '没有导出权限' }}},
+        { response: { status: 404, data: { message: '导出接口不存在' }}}
       ]
-      
+
       const randomError = errorTypes[Math.floor(Math.random() * errorTypes.length)]
       throw randomError
     },
-    
+
     // 事件处理方法
     onExportStart(params) {
       this.exportCount++
       this.addLog('start', `开始导出，参数: ${JSON.stringify(params)}`)
     },
-    
+
     onExportSuccess({ filename, size, isMock }) {
       this.successCount++
       let message = `导出成功: ${filename}`
@@ -380,42 +380,42 @@ export default {
       }
       this.addLog('success', message)
     },
-    
+
     onExportError(error) {
       this.errorCount++
       this.addLog('error', `导出失败: ${error.message || error}`)
     },
-    
+
     onExportComplete() {
       this.addLog('complete', '导出操作完成')
     },
-    
+
     onExportCancel() {
       this.cancelCount++
       this.addLog('cancel', '用户取消导出')
     },
-    
+
     // 取消导出
     cancelExport() {
       this.$refs.cancellableExport.cancelExport()
     },
-    
+
     // 添加日志
     addLog(type, message) {
       const time = new Date().toLocaleTimeString()
       this.eventLogs.unshift({ time, type, message })
-      
+
       // 只保留最近20条日志
       if (this.eventLogs.length > 20) {
         this.eventLogs = this.eventLogs.slice(0, 20)
       }
     },
-    
+
     // 清空日志
     clearLogs() {
       this.eventLogs = []
     },
-    
+
     // 格式化文件大小
     formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes'
@@ -424,11 +424,11 @@ export default {
       const i = Math.floor(Math.log(bytes) / Math.log(k))
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
     },
-    
+
     // 测试Props验证
     testValidation() {
       this.validationResults = []
-      
+
       // 模拟一些验证场景
       const testCases = [
         { prop: 'filename', value: 'test<file>', expected: '包含非法字符，验证失败' },
@@ -437,7 +437,7 @@ export default {
         { prop: 'timeout', value: 400000, expected: '超出范围(1-300000)，验证失败' },
         { prop: 'type', value: 'invalid', expected: '无效的按钮类型，验证失败' }
       ]
-      
+
       testCases.forEach(testCase => {
         this.validationResults.push(
           `${testCase.prop}: "${testCase.value}" - ${testCase.expected}`
@@ -458,12 +458,12 @@ export default {
 .page-header {
   text-align: center;
   margin-bottom: 40px;
-  
+
   h1 {
     color: #303133;
     margin-bottom: 10px;
   }
-  
+
   p {
     color: #606266;
     font-size: 16px;
@@ -472,14 +472,14 @@ export default {
 
 .example-section {
   margin-bottom: 40px;
-  
+
   h2 {
     color: #409EFF;
     margin-bottom: 15px;
     border-bottom: 2px solid #409EFF;
     padding-bottom: 10px;
   }
-  
+
   p {
     color: #606266;
     margin-bottom: 20px;
@@ -495,10 +495,10 @@ export default {
 
 .feature-card {
   height: 280px;
-  
+
   .control-item {
     margin-top: 15px;
-    
+
     label {
       display: block;
       color: #606266;
@@ -529,7 +529,7 @@ export default {
 .event-log {
   flex: 1;
   max-width: 400px;
-  
+
   h4 {
     margin-bottom: 10px;
     color: #303133;
@@ -565,27 +565,27 @@ export default {
   border-radius: 3px;
   font-weight: bold;
   text-align: center;
-  
+
   &.log-start {
     background: #e1f3d8;
     color: #67c23a;
   }
-  
+
   &.log-success {
     background: #e1f3d8;
     color: #67c23a;
   }
-  
+
   &.log-error {
     background: #fde2e2;
     color: #f56c6c;
   }
-  
+
   &.log-complete {
     background: #e6f7ff;
     color: #409EFF;
   }
-  
+
   &.log-cancel {
     background: #f5f7fa;
     color: #909399;
@@ -606,16 +606,16 @@ export default {
   padding: 15px;
   background: #f8f9fa;
   border-radius: 4px;
-  
+
   h4 {
     margin-bottom: 10px;
     color: #303133;
   }
-  
+
   ul {
     margin: 0;
     padding-left: 20px;
-    
+
     li {
       margin-bottom: 5px;
       color: #606266;
@@ -630,7 +630,7 @@ export default {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 8px;
   color: white;
-  
+
   h3 {
     text-align: center;
     margin-bottom: 20px;
@@ -643,13 +643,13 @@ export default {
   padding: 20px;
   border-radius: 8px;
   backdrop-filter: blur(10px);
-  
+
   .stat-number {
     font-size: 32px;
     font-weight: bold;
     margin-bottom: 5px;
   }
-  
+
   .stat-label {
     font-size: 14px;
     opacity: 0.8;
@@ -661,14 +661,14 @@ export default {
   .export-button-example {
     padding: 10px;
   }
-  
+
   .event-demo {
     flex-direction: column;
   }
-  
+
   .feature-card {
     height: auto;
     margin-bottom: 20px;
   }
 }
-</style> 
+</style>

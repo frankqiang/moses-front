@@ -75,11 +75,11 @@
         <div v-if="selectedFiles.length > 0" class="file-info-list">
           <div class="file-info-header">
             <span>已选择{{ selectedFiles.length }}个文件</span>
-            <el-button 
-              type="text" 
-              icon="el-icon-delete" 
-              @click="clearSelectedFiles"
+            <el-button
+              type="text"
+              icon="el-icon-delete"
               :disabled="loading"
+              @click="clearSelectedFiles"
             >
               全部移除
             </el-button>
@@ -89,11 +89,11 @@
               <span class="file-name">{{ file.name }}</span>
               <span class="file-size">{{ formatFileSize(file.size) }}</span>
             </div>
-            <el-button 
-              type="text" 
-              icon="el-icon-delete" 
-              @click="removeFile(index)"
+            <el-button
+              type="text"
+              icon="el-icon-delete"
               :disabled="loading"
+              @click="removeFile(index)"
             >
               移除
             </el-button>
@@ -128,7 +128,7 @@
           <template slot="extra">
             <el-button type="primary" @click="resetImport">继续导入</el-button>
             <el-button @click="handleDialogClose">关闭</el-button>
-            <el-button 
+            <el-button
               v-if="importResult.errors && importResult.errors.length > 0"
               type="warning"
               @click="exportErrorData"
@@ -154,7 +154,7 @@
               <el-table-column prop="message" label="错误原因" min-width="250" />
               <el-table-column v-if="showFileName" prop="fileName" label="文件名" width="150" />
             </el-table>
-            
+
             <!-- 分页 -->
             <div v-if="importResult.errors.length > pageSize" class="error-pagination">
               <el-pagination
@@ -171,7 +171,7 @@
       </div>
 
       <div v-if="!importResult" slot="footer" class="dialog-footer">
-        <el-button @click="handleDialogClose" :disabled="loading">{{ cancelText }}</el-button>
+        <el-button :disabled="loading" @click="handleDialogClose">{{ cancelText }}</el-button>
         <el-button
           v-if="loading && enableModernFeatures"
           type="danger"
@@ -388,11 +388,11 @@ export default {
     selectedFile() {
       return this.selectedFiles.length > 0 ? this.selectedFiles[0] : null
     },
-    
+
     // 分页后的错误数据
     paginatedErrors() {
       if (!this.importResult || !this.importResult.errors) return []
-      
+
       const start = (this.currentPage - 1) * this.pageSize
       const end = start + this.pageSize
       return this.importResult.errors.slice(start, end)
@@ -421,7 +421,7 @@ export default {
         this.$message.warning('导入进行中，请稍候...')
         return
       }
-      
+
       this.dialogVisible = false
 
       // 延迟重置，避免视觉跳动
@@ -468,16 +468,16 @@ export default {
       try {
         // 检查文件类型
         const isValidType = this.validateFileType(file)
-        
+
         // 检查文件大小
         const isValidSize = this.validateFileSize(file)
-        
+
         // 检查文件内容（现代化特性）
         if (this.enableModernFeatures) {
           const isValidContent = this.validateFileContent(file)
           return isValidType && isValidSize && isValidContent
         }
-        
+
         return isValidType && isValidSize
       } catch (error) {
         console.error('文件验证错误:', error)
@@ -500,19 +500,19 @@ export default {
         this.$message.error(`只能上传 ${acceptedTypes.join(', ')} 格式的文件!`)
         return false
       }
-      
+
       return true
     },
 
     // 验证文件大小
     validateFileSize(file) {
       const fileSizeMB = file.size / 1024 / 1024
-      
+
       if (fileSizeMB > this.maxFileSize) {
         this.$message.error(`文件大小不能超过 ${this.maxFileSize}MB! 当前文件: ${fileSizeMB.toFixed(2)}MB`)
         return false
       }
-      
+
       return true
     },
 
@@ -548,7 +548,7 @@ export default {
 
         // 创建FormData
         const formData = new FormData()
-        
+
         if (this.enableMultipleFiles && this.selectedFiles.length > 1) {
           // 多文件模式
           this.selectedFiles.forEach((file, index) => {
@@ -562,9 +562,9 @@ export default {
 
         // 创建可取消的请求
         const importPromise = this.createCancellableImport(formData)
-        
+
         const response = await importPromise
-        
+
         // 验证响应数据
         this.importResult = this.validateImportResult(response.data)
 
@@ -573,7 +573,6 @@ export default {
 
         // 显示结果消息
         this.showImportResultMessage()
-
       } catch (error) {
         this.handleImportError(error)
       } finally {
@@ -589,7 +588,7 @@ export default {
       if (this.enableModernFeatures && typeof AbortController !== 'undefined') {
         // 现代化：使用AbortController
         this.importController = new AbortController()
-        
+
         return this.importApi(formData, {
           signal: this.importController.signal,
           timeout: this.timeout,
@@ -631,7 +630,7 @@ export default {
     // 显示导入结果消息
     showImportResultMessage() {
       const { total, success, fail } = this.importResult
-      
+
       if (success === total) {
         this.$message.success(`导入成功，共处理 ${total} 条数据`)
       } else if (success > 0) {
@@ -644,9 +643,9 @@ export default {
     // 处理导入错误
     handleImportError(error) {
       console.error('导入错误:', error)
-      
+
       let errorMessage = '导入失败'
-      
+
       if (error.name === 'AbortError') {
         errorMessage = '导入已取消'
       } else if (error.message === 'Import timeout') {
@@ -688,7 +687,7 @@ export default {
         this.$emit('template-download-start')
 
         const response = await this.templateApi()
-        
+
         // 判断是否是Mock数据
         if (typeof response.data === 'string' && response.data.includes('template-download-success')) {
           // Mock环境处理
@@ -717,7 +716,7 @@ export default {
         // 构造错误数据CSV格式
         const headers = ['序号', '行号', '错误原因']
         if (this.showFileName) headers.push('文件名')
-        
+
         const csvContent = [
           headers.join(','),
           ...this.importResult.errors.map((error, index) => {
@@ -734,10 +733,10 @@ export default {
         // 添加BOM以支持中文
         const BOM = '\uFEFF'
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' })
-        
+
         const fileName = `导入错误数据_${new Date().toLocaleDateString('zh-CN')}.csv`
         this.downloadFileModern(blob, fileName)
-        
+
         this.$message.success('错误数据导出成功')
       } catch (error) {
         console.error('导出错误数据失败:', error)
@@ -757,7 +756,7 @@ export default {
     // 获取结果图标
     getResultIcon() {
       if (!this.importResult) return 'info'
-      
+
       const { total, success } = this.importResult
       if (success === total) return 'success'
       if (success > 0) return 'warning'
@@ -767,7 +766,7 @@ export default {
     // 获取结果标题
     getResultTitle() {
       if (!this.importResult) return '导入完成'
-      
+
       const { total, success } = this.importResult
       if (success === total) return '导入成功'
       if (success > 0) return '部分导入成功'
@@ -777,7 +776,7 @@ export default {
     // 获取结果子标题
     getResultSubTitle() {
       if (!this.importResult) return ''
-      
+
       const { total, success, fail } = this.importResult
       return `总数据 ${total} 条，成功 ${success} 条，失败 ${fail} 条`
     },
@@ -810,28 +809,28 @@ export default {
         // 检查浏览器支持
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           // IE浏览器
-          const blob = data instanceof Blob ? data : new Blob([data], { 
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+          const blob = data instanceof Blob ? data : new Blob([data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
           })
           window.navigator.msSaveOrOpenBlob(blob, fileName)
         } else {
           // 现代浏览器
-          const blob = data instanceof Blob ? data : new Blob([data], { 
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+          const blob = data instanceof Blob ? data : new Blob([data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
           })
-          
+
           const url = URL.createObjectURL(blob)
           this.downloadUrls.add(url) // 跟踪URL
-          
+
           const link = document.createElement('a')
           link.href = url
           link.download = fileName
           link.style.display = 'none'
-          
+
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
-          
+
           // 延迟清理URL，确保下载完成
           setTimeout(() => {
             URL.revokeObjectURL(url)
@@ -865,7 +864,7 @@ export default {
       if (this.importController) {
         this.importController.abort()
       }
-      
+
       // 清理防抖函数
       if (this.debouncedShowImportDialog && this.debouncedShowImportDialog.cancel) {
         this.debouncedShowImportDialog.cancel()
@@ -876,7 +875,7 @@ export default {
       if (this.debouncedDownloadTemplate && this.debouncedDownloadTemplate.cancel) {
         this.debouncedDownloadTemplate.cancel()
       }
-      
+
       // 清理所有创建的URL
       this.downloadUrls.forEach(url => {
         URL.revokeObjectURL(url)
@@ -916,7 +915,7 @@ export default {
 
 .upload-progress {
   margin: 15px 0;
-  
+
   .progress-text {
     text-align: center;
     margin-top: 8px;
@@ -927,7 +926,7 @@ export default {
 
 .file-info-list {
   margin-top: 15px;
-  
+
   .file-info-header {
     display: flex;
     justify-content: space-between;
@@ -947,21 +946,21 @@ export default {
   justify-content: space-between;
   align-items: center;
   transition: all 0.3s ease;
-  
+
   &:hover {
     background-color: #eef4fb;
   }
-  
+
   .file-details {
     flex: 1;
     display: flex;
     flex-direction: column;
-    
+
     .file-name {
       font-weight: 500;
       color: #303133;
     }
-    
+
     .file-size {
       font-size: 12px;
       color: #909399;
@@ -1005,7 +1004,7 @@ export default {
       margin-bottom: 10px;
       color: #303133;
     }
-    
+
     .error-pagination {
       margin-top: 15px;
       text-align: center;
@@ -1022,12 +1021,12 @@ export default {
 // 现代化样式增强
 .el-button {
   transition: all 0.3s ease;
-  
+
   &:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
-  
+
   &:active:not(:disabled) {
     transform: translateY(0);
   }
@@ -1041,7 +1040,7 @@ export default {
       margin: 5vh auto !important;
     }
   }
-  
+
   .file-info {
     .file-details {
       .file-name {
@@ -1050,4 +1049,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

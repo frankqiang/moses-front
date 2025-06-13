@@ -164,6 +164,12 @@ export const constantRoutes = [
         name: 'RefreshButtonDemo',
         component: () => import('@/components/RefreshButton/demo.vue'),
         meta: { title: 'RefreshButton 刷新按钮组件' }
+      },
+      {
+        path: 'status-tag',
+        name: 'StatusTagDemo',
+        component: () => import('@/components/StatusTag/demo.vue'),
+        meta: { title: 'StatusTag 状态标签组件' }
       }
     ]
   },

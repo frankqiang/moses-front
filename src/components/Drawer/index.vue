@@ -28,8 +28,8 @@
     </template>
 
     <!-- 内容区域 -->
-    <div 
-      ref="drawerContent" 
+    <div
+      ref="drawerContent"
       class="drawer-content"
       :aria-busy="loading"
       role="main"
@@ -38,22 +38,22 @@
     </div>
 
     <!-- 底部区域 -->
-    <div 
-      v-if="$slots.footer || showFooter" 
+    <div
+      v-if="$slots.footer || showFooter"
       class="drawer-footer"
       role="toolbar"
       :aria-label="'抽屉操作按钮区域'"
     >
       <slot name="footer">
-        <el-button 
+        <el-button
           :disabled="loading"
           :aria-label="`${cancelButtonText}并关闭抽屉`"
           @click="handleCancelClick"
         >
           {{ cancelButtonText }}
         </el-button>
-        <el-button 
-          type="primary" 
+        <el-button
+          type="primary"
           :loading="loading"
           :disabled="loading"
           :aria-label="`${confirmButtonText}操作`"
@@ -81,7 +81,7 @@ export default {
       type: Boolean,
       default: false
     },
-    
+
     // 抽屉标题 - 加强验证
     title: {
       type: String,
@@ -97,7 +97,7 @@ export default {
         return true
       }
     },
-    
+
     // 抽屉宽度 - 加强验证
     width: {
       type: String,
@@ -112,63 +112,63 @@ export default {
         return true
       }
     },
-    
+
     // 抽屉方向
     direction: {
       type: String,
       default: 'rtl',
       validator: value => ['ltr', 'rtl', 'ttb', 'btt'].includes(value)
     },
-    
+
     // 自定义类名
     customClass: {
       type: String,
       default: 'base-drawer'
     },
-    
+
     // 是否点击遮罩关闭
     wrapperClosable: {
       type: Boolean,
       default: false
     },
-    
+
     // 是否显示底部区域
     showFooter: {
       type: Boolean,
       default: true
     },
-    
+
     // 确认按钮文本
     confirmButtonText: {
       type: String,
       default: '确 定'
     },
-    
+
     // 取消按钮文本
     cancelButtonText: {
       type: String,
       default: '取 消'
     },
-    
+
     // 加载状态
     loading: {
       type: Boolean,
       default: false
     },
-    
+
     // 关闭前确认
     confirmBeforeClose: {
       type: Boolean,
       default: false
     },
-    
+
     // 关闭确认消息
     closeConfirmMessage: {
       type: String,
       default: '确定要关闭抽屉吗？未保存的更改将丢失。'
     }
   },
-  
+
   data() {
     return {
       // 内部抽屉可见状态
@@ -179,20 +179,20 @@ export default {
       internalLoading: false
     }
   },
-  
+
   computed: {
     // 实际的加载状态
     actualLoading() {
       return this.loading || this.internalLoading
     }
   },
-  
+
   watch: {
     // 监听外部visible变化
     visible(val) {
       this.drawerVisible = val
     },
-    
+
     // 监听内部drawerVisible变化
     drawerVisible(val) {
       this.$emit('update:visible', val)
@@ -201,19 +201,19 @@ export default {
       }
     }
   },
-  
+
   created() {
     this.initDebouncedMethods()
   },
-  
+
   mounted() {
     this.setupKeyboardListeners()
   },
-  
+
   beforeDestroy() {
     this.cleanup()
   },
-  
+
   methods: {
     // 初始化防抖方法
     initDebouncedMethods() {
@@ -221,28 +221,28 @@ export default {
       this.debouncedCancel = debounce(this.handleCancel, 300)
       this.debouncedClose = debounce(this.handleCloseConfirm, 300)
     },
-    
+
     // 设置键盘监听
     setupKeyboardListeners() {
       this.handleKeydown = (event) => {
         if (!this.drawerVisible) return
-        
+
         // ESC键关闭抽屉
         if (event.key === 'Escape') {
           event.preventDefault()
           this.handleCancelClick()
         }
-        
+
         // Enter键确认（当焦点不在表单元素上时）
         if (event.key === 'Enter' && event.ctrlKey) {
           event.preventDefault()
           this.handleConfirmClick()
         }
       }
-      
+
       document.addEventListener('keydown', this.handleKeydown)
     },
-    
+
     // 清理资源
     cleanup() {
       if (this.debouncedConfirm?.cancel) {
@@ -258,12 +258,12 @@ export default {
         document.removeEventListener('keydown', this.handleKeydown)
       }
     },
-    
+
     // 防抖版本的按钮点击处理
     handleConfirmClick() {
       this.debouncedConfirm()
     },
-    
+
     handleCancelClick() {
       this.debouncedCancel()
     },
@@ -271,15 +271,15 @@ export default {
     // 确认按钮点击 - 添加错误处理
     async handleConfirm() {
       if (this.actualLoading || this.hasError) return
-      
+
       try {
         this.internalLoading = true
         this.hasError = false
-        
+
         // 发送确认事件并等待处理
         const result = await new Promise((resolve, reject) => {
           this.$emit('confirm', { resolve, reject })
-          
+
           // 如果没有异步处理，默认成功
           this.$nextTick(() => {
             if (!this.actualLoading) {
@@ -287,10 +287,9 @@ export default {
             }
           })
         })
-        
+
         // 成功后可能需要关闭抽屉（由父组件决定）
         // this.drawerVisible = false
-        
       } catch (error) {
         console.error('[BaseDrawer] Confirm operation failed:', error)
         this.hasError = true
@@ -304,7 +303,7 @@ export default {
     // 取消按钮点击 - 添加错误处理
     async handleCancel() {
       if (this.internalLoading) return
-      
+
       try {
         // 检查是否需要确认关闭
         if (this.confirmBeforeClose) {
@@ -314,11 +313,10 @@ export default {
             type: 'warning'
           })
         }
-        
+
         this.drawerVisible = false
         this.hasError = false
         this.$emit('cancel')
-        
       } catch (error) {
         if (error !== 'cancel') {
           console.error('[BaseDrawer] Cancel operation failed:', error)
@@ -331,13 +329,13 @@ export default {
     async handleClose(done) {
       try {
         this.$emit('before-close', done)
-        
+
         // 如果需要确认关闭
         if (this.confirmBeforeClose && !this.hasError) {
           await this.debouncedClose(done)
           return
         }
-        
+
         done()
       } catch (error) {
         console.error('[BaseDrawer] Close operation failed:', error)
@@ -346,7 +344,7 @@ export default {
         done()
       }
     },
-    
+
     // 关闭确认处理
     async handleCloseConfirm(done) {
       try {
@@ -355,7 +353,7 @@ export default {
           cancelButtonText: '取消',
           type: 'warning'
         })
-        
+
         done()
       } catch (error) {
         // 用户取消关闭，不执行done()
@@ -370,7 +368,7 @@ export default {
     handleOpen() {
       this.hasError = false
       this.$emit('open')
-      
+
       // 设置焦点到抽屉内容区域，提升可访问性
       this.$nextTick(() => {
         if (this.$refs.drawerContent) {
@@ -390,12 +388,12 @@ export default {
     close() {
       this.drawerVisible = false
     },
-    
+
     // 手动设置加载状态
     setLoading(loading) {
       this.internalLoading = loading
     },
-    
+
     // 重置错误状态
     resetError() {
       this.hasError = false
@@ -427,12 +425,12 @@ export default {
   width: calc(100% - 40px);
   box-sizing: border-box;
   min-height: calc(100% - 40px);
-  
+
   // 改善焦点可访问性
   &:focus {
     outline: none;
   }
-  
+
   // 错误状态样式
   &[aria-busy="true"] {
     opacity: 0.8;
@@ -453,12 +451,12 @@ export default {
 
   .el-button {
     margin-left: 10px;
-    
+
     // 改善按钮的可访问性
     &:focus {
       box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.3);
     }
-    
+
     // 禁用状态样式
     &.is-disabled {
       opacity: 0.6;
@@ -474,7 +472,7 @@ export default {
   padding: 8px 12px;
   margin-bottom: 16px;
   border-radius: 4px;
-  
+
   .error-message {
     color: #f56c6c;
     font-size: 14px;
@@ -501,10 +499,10 @@ export default {
     padding: 16px;
     width: calc(100% - 32px);
   }
-  
+
   .drawer-footer {
     padding: 12px 16px;
-    
+
     .el-button {
       font-size: 14px;
       padding: 8px 16px;

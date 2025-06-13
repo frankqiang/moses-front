@@ -17,10 +17,10 @@
     @submit.native.prevent="handleSubmitClick"
   >
     <!-- 默认插槽提供表单内容 -->
-    <slot 
-      :form="formModel" 
-      :mode="mode" 
-      :submit="handleSubmitClick" 
+    <slot
+      :form="formModel"
+      :mode="mode"
+      :submit="handleSubmitClick"
       :reset="handleResetClick"
       :loading="actualLoading"
       :hasChanges="hasFormChanges"
@@ -29,22 +29,22 @@
     />
 
     <!-- 底部按钮插槽 -->
-    <div 
-      v-if="$slots.footer || showFooter" 
+    <div
+      v-if="$slots.footer || showFooter"
       class="form-footer"
       role="toolbar"
       :aria-label="'表单操作按钮区域'"
     >
-      <slot 
-        name="footer" 
-        :loading="actualLoading" 
-        :mode="mode" 
-        :submit="handleSubmitClick" 
+      <slot
+        name="footer"
+        :loading="actualLoading"
+        :mode="mode"
+        :submit="handleSubmitClick"
         :reset="handleResetClick"
         :hasChanges="hasFormChanges"
         :isValid="isFormValid"
       >
-        <el-button 
+        <el-button
           :disabled="actualLoading"
           :aria-label="`重置表单到初始状态`"
           @click="handleResetClick"
@@ -76,15 +76,15 @@
 
     <!-- 错误提示区域 -->
     <div v-if="errorMessage" class="form-error" role="alert" aria-live="polite">
-      <i class="el-icon-warning" aria-hidden="true"></i>
+      <i class="el-icon-warning" aria-hidden="true" />
       <span class="error-text">{{ errorMessage }}</span>
-      <el-button 
-        type="text" 
-        size="mini" 
-        @click="clearError"
+      <el-button
+        type="text"
+        size="mini"
         :aria-label="'清除错误信息'"
+        @click="clearError"
       >
-        <i class="el-icon-close" aria-hidden="true"></i>
+        <i class="el-icon-close" aria-hidden="true" />
       </el-button>
     </div>
   </el-form>
@@ -109,14 +109,14 @@ export default {
         return true
       }
     },
-    
+
     // 表单模式：create/update/view - 已有验证
     mode: {
       type: String,
       default: 'create',
       validator: value => ['create', 'update', 'view'].includes(value)
     },
-    
+
     // 表单验证规则
     rules: {
       type: Object,
@@ -129,7 +129,7 @@ export default {
         return true
       }
     },
-    
+
     // 表单标签宽度 - 加强验证
     labelWidth: {
       type: String,
@@ -143,62 +143,62 @@ export default {
         return true
       }
     },
-    
+
     // 表单尺寸
     size: {
       type: String,
       default: 'small',
       validator: value => ['large', 'small', 'mini'].includes(value)
     },
-    
+
     // 是否显示底部按钮
     showFooter: {
       type: Boolean,
       default: false
     },
-    
+
     // 提交按钮文本
     submitButtonText: {
       type: String,
       default: '提交'
     },
-    
+
     // 重置按钮文本
     resetButtonText: {
       type: String,
       default: '重置'
     },
-    
+
     // 继续按钮文本
     continueButtonText: {
       type: String,
       default: '保存并继续'
     },
-    
+
     // 是否显示"保存并继续"按钮
     showContinueButton: {
       type: Boolean,
       default: false
     },
-    
+
     // 加载状态
     loading: {
       type: Boolean,
       default: false
     },
-    
+
     // 是否在提交前自动验证表单
     validateBeforeSubmit: {
       type: Boolean,
       default: true
     },
-    
+
     // 是否允许空表单提交
     allowEmptySubmit: {
       type: Boolean,
       default: false
     },
-    
+
     // 自动保存间隔(毫秒)，0表示禁用
     autoSaveInterval: {
       type: Number,
@@ -212,7 +212,7 @@ export default {
       }
     }
   },
-  
+
   data() {
     return {
       // 内部表单数据模型
@@ -231,22 +231,22 @@ export default {
       dataWatcher: null
     }
   },
-  
+
   computed: {
     // 实际的加载状态
     actualLoading() {
       return this.loading || this.internalLoading
     },
-    
+
     // 表单是否有变更
     hasFormChanges() {
       return JSON.stringify(this.formModel) !== JSON.stringify(this.originFormData)
     },
-    
+
     // 增强的验证规则
     enhancedRules() {
       const rules = { ...this.rules }
-      
+
       // 可以在这里添加通用的验证规则增强
       Object.keys(rules).forEach(field => {
         if (Array.isArray(rules[field])) {
@@ -257,11 +257,11 @@ export default {
           }))
         }
       })
-      
+
       return rules
     }
   },
-  
+
   watch: {
     // 监听外部data变化
     data: {
@@ -271,7 +271,7 @@ export default {
       deep: true,
       immediate: true
     },
-    
+
     // 监听表单数据变化进行验证
     formModel: {
       handler() {
@@ -283,22 +283,22 @@ export default {
       deep: true
     }
   },
-  
+
   created() {
     this.initDebouncedMethods()
   },
-  
+
   mounted() {
     this.setupKeyboardListeners()
     if (this.autoSaveInterval > 0) {
       this.startAutoSave()
     }
   },
-  
+
   beforeDestroy() {
     this.cleanup()
   },
-  
+
   methods: {
     // 初始化防抖方法
     initDebouncedMethods() {
@@ -306,7 +306,7 @@ export default {
       this.debouncedReset = debounce(this.resetForm, 300)
       this.debouncedValidate = debounce(this.validateForm, 300)
     },
-    
+
     // 设置键盘监听
     setupKeyboardListeners() {
       this.handleKeydown = (event) => {
@@ -317,17 +317,17 @@ export default {
             this.handleSubmitClick()
           }
         }
-        
+
         // Ctrl+R 重置表单
         if (event.ctrlKey && event.key === 'r') {
           event.preventDefault()
           this.handleResetClick()
         }
       }
-      
+
       document.addEventListener('keydown', this.handleKeydown)
     },
-    
+
     // 清理资源
     cleanup() {
       if (this.debouncedSubmit?.cancel) {
@@ -346,16 +346,16 @@ export default {
         clearInterval(this.autoSaveTimer)
       }
     },
-    
+
     // 防抖版本的按钮点击处理
     handleSubmitClick() {
       this.debouncedSubmit()
     },
-    
+
     handleResetClick() {
       this.debouncedReset()
     },
-    
+
     handleContinueClick() {
       this.debouncedSubmit(true)
     },
@@ -378,7 +378,7 @@ export default {
     // 处理表单提交 - 增强错误处理
     async handleSubmit(continueEdit = false) {
       if (this.actualLoading) return
-      
+
       try {
         // 查看模式不进行提交
         if (this.mode === 'view') {
@@ -395,7 +395,6 @@ export default {
           // 直接提交，不验证
           this.$emit('submit', cloneDeep(this.formModel), continueEdit)
         }
-        
       } catch (error) {
         console.error('[EnhancedForm] Submit failed:', error)
         this.setError(error.message || '提交失败，请稍后重试')
@@ -417,8 +416,8 @@ export default {
           reject(new Error('表单引用不存在'))
           return
         }
-        
-        this.$refs.form.validate(async (valid, invalidFields) => {
+
+        this.$refs.form.validate(async(valid, invalidFields) => {
           try {
             if (valid) {
               // 触发自定义验证事件，允许父组件进行额外验证
@@ -426,13 +425,13 @@ export default {
                 this.$emit('validate', this.formModel, (isCustomValid) => {
                   resolveCustom(isCustomValid)
                 })
-                
+
                 // 如果父组件没有处理自定义验证，默认通过
                 this.$nextTick(() => {
                   resolveCustom(true)
                 })
               })
-              
+
               // 如果自定义验证通过
               if (customValidationResult !== false) {
                 // 提交表单
@@ -458,19 +457,19 @@ export default {
     // 格式化验证错误信息
     formatValidationErrors(invalidFields) {
       if (!invalidFields) return '表单验证失败'
-      
+
       const errors = Object.keys(invalidFields).map(field => {
         const fieldErrors = invalidFields[field]
         return fieldErrors[0]?.message || `${field}验证失败`
       })
-      
+
       return errors.slice(0, 3).join('；') + (errors.length > 3 ? '等' : '')
     },
 
     // 重置表单 - 增强错误处理
     async resetForm() {
       if (this.actualLoading) return
-      
+
       try {
         // 检查是否有未保存的更改
         if (this.hasFormChanges) {
@@ -480,12 +479,11 @@ export default {
             type: 'warning'
           })
         }
-        
+
         this.$refs.form && this.$refs.form.resetFields()
         this.formModel = cloneDeep(this.originFormData)
         this.clearError()
         this.$emit('reset', this.formModel)
-        
       } catch (error) {
         if (error !== 'cancel') {
           console.error('[EnhancedForm] Reset failed:', error)
@@ -547,21 +545,21 @@ export default {
         this.setError(`设置字段${field}失败`)
       }
     },
-    
+
     // 设置错误信息
     setError(message) {
       this.errorMessage = message
     },
-    
+
     // 清除错误信息
     clearError() {
       this.errorMessage = ''
     },
-    
+
     // 获取表单变更状态
     getChanges() {
       if (!this.hasFormChanges) return null
-      
+
       const changes = {}
       Object.keys(this.formModel).forEach(key => {
         if (JSON.stringify(this.formModel[key]) !== JSON.stringify(this.originFormData[key])) {
@@ -571,10 +569,10 @@ export default {
           }
         }
       })
-      
+
       return changes
     },
-    
+
     // 启动自动保存
     startAutoSave() {
       if (this.autoSaveInterval > 0) {
@@ -585,7 +583,7 @@ export default {
         }, this.autoSaveInterval)
       }
     },
-    
+
     // 调度自动保存
     scheduleAutoSave() {
       if (this.autoSaveTimer) {
@@ -593,7 +591,7 @@ export default {
         this.startAutoSave()
       }
     },
-    
+
     // 手动设置加载状态
     setLoading(loading) {
       this.internalLoading = loading
@@ -609,12 +607,12 @@ export default {
 
   .el-button {
     margin-left: 10px;
-    
+
     // 改善按钮的可访问性
     &:focus {
       box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.3);
     }
-    
+
     // 禁用状态样式
     &.is-disabled {
       opacity: 0.6;
@@ -634,23 +632,23 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  
+
   .error-text {
     flex: 1;
     margin-left: 8px;
     font-size: 14px;
     line-height: 1.4;
   }
-  
+
   .el-icon-warning {
     font-size: 16px;
     flex-shrink: 0;
   }
-  
+
   .el-button {
     margin-left: 8px;
     color: #f56c6c;
-    
+
     &:hover {
       color: #f78989;
     }
@@ -668,7 +666,7 @@ export default {
 @media (max-width: 768px) {
   .form-footer {
     text-align: center;
-    
+
     .el-button {
       margin: 4px;
       display: block;
@@ -676,7 +674,7 @@ export default {
       max-width: 200px;
     }
   }
-  
+
   .form-error {
     padding: 8px 12px;
     font-size: 13px;

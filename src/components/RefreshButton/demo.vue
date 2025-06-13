@@ -15,7 +15,7 @@
         <h2>1. 基本用法</h2>
         <p>最简单的刷新按钮使用方式</p>
       </div>
-      
+
       <div class="demo-group">
         <div class="demo-item">
           <h3>默认样式</h3>
@@ -54,7 +54,7 @@
         <h2>2. 现代化特性</h2>
         <p>启用现代化特性后，支持防抖、错误重试、动画效果等高级功能</p>
       </div>
-      
+
       <div class="demo-group">
         <div class="demo-item">
           <h3>现代化按钮（防抖保护）</h3>
@@ -121,7 +121,7 @@
         <h2>3. 样式变化</h2>
         <p>不同的按钮样式和形状</p>
       </div>
-      
+
       <div class="demo-group">
         <div class="demo-item">
           <h3>朴素按钮</h3>
@@ -149,7 +149,7 @@
         <h2>4. 自动加载状态</h2>
         <p>点击后自动显示加载状态</p>
       </div>
-      
+
       <div class="demo-group">
         <div class="demo-item">
           <h3>不同加载时长</h3>
@@ -199,7 +199,7 @@
         <h2>5. 确认对话框</h2>
         <p>刷新前显示确认对话框</p>
       </div>
-      
+
       <div class="demo-group">
         <div class="demo-item">
           <h3>基本确认</h3>
@@ -234,7 +234,7 @@
         <h2>6. 禁用状态</h2>
         <p>不同的禁用状态演示</p>
       </div>
-      
+
       <div class="demo-group">
         <div class="demo-item">
           <h3>禁用控制</h3>
@@ -258,7 +258,7 @@
         <h2>7. 自定义样式</h2>
         <p>使用自定义CSS类和现代化效果</p>
       </div>
-      
+
       <div class="demo-group">
         <div class="demo-item">
           <h3>自定义样式</h3>
@@ -287,7 +287,7 @@
         <h2>8. 与表格集成演示</h2>
         <p>在实际表格场景中的使用</p>
       </div>
-      
+
       <div class="demo-group">
         <div class="demo-item">
           <div class="table-toolbar">
@@ -307,7 +307,7 @@
               />
             </div>
           </div>
-          
+
           <el-table
             v-loading="tableLoading"
             :data="tableData"
@@ -325,7 +325,7 @@
             </el-table-column>
             <el-table-column prop="updateTime" label="更新时间" width="180" />
           </el-table>
-          
+
           <div v-if="tableRefreshLog.length > 0" class="table-log">
             <h4>表格刷新日志：</h4>
             <p>{{ tableRefreshLog[tableRefreshLog.length - 1] }}</p>
@@ -349,23 +349,23 @@ export default {
       // 基本用法
       basicRefreshCount: 0,
       basicLastRefreshTime: '',
-      
+
       // 现代化特性
       modernRefreshEvents: [],
-      
+
       // 错误处理
       errorLog: [],
       errorRefreshCount: 0,
-      
+
       // 确认对话框
       confirmResult: '',
-      
+
       // 禁用状态
       isDisabled: false,
-      
+
       // 手动加载状态
       manualLoading: false,
-      
+
       // 表格演示
       tableLoading: false,
       tableRefreshLog: [],
@@ -384,7 +384,7 @@ export default {
       this.basicLastRefreshTime = new Date().toLocaleTimeString()
       this.$message.success(`第 ${this.basicRefreshCount} 次刷新完成`)
     },
-    
+
     // 现代化刷新处理
     handleModernRefresh() {
       this.addModernEvent('触发现代化刷新')
@@ -392,22 +392,22 @@ export default {
         this.$message.success('现代化刷新完成')
       }, 800)
     },
-    
+
     // 刷新开始事件
     handleRefreshStart(eventData) {
       this.addModernEvent(`刷新开始，重试次数：${eventData.retryCount}`)
     },
-    
+
     // 刷新完成事件
     handleRefreshComplete(eventData) {
       const duration = eventData.manual ? '手动停止' : `${eventData.duration}ms`
       this.addModernEvent(`刷新完成，耗时：${duration}`)
     },
-    
+
     // 错误刷新处理（模拟错误）
     handleErrorRefresh() {
       this.errorRefreshCount++
-      
+
       // 模拟有50%的概率发生错误
       if (Math.random() < 0.6) {
         this.addErrorLog('success', `模拟刷新成功 (第${this.errorRefreshCount}次)`)
@@ -418,40 +418,40 @@ export default {
         throw error
       }
     },
-    
+
     // 刷新错误处理
     handleRefreshError(errorData) {
       this.addErrorLog('error', `刷新失败：${errorData.error.message}，重试次数：${errorData.retryCount}`)
     },
-    
+
     // 重试处理
     handleRetry(retryData) {
       this.addErrorLog('warning', `正在重试，第 ${retryData.retryCount} 次重试`)
     },
-    
+
     // 重试耗尽处理
     handleRetryExhausted(data) {
       this.addErrorLog('error', `重试耗尽，最大重试次数：${data.maxRetries}`)
       this.$message.error('刷新失败，已达到最大重试次数')
     },
-    
+
     // 重置错误按钮
     resetErrorButton() {
       this.$refs.errorButton.reset()
       this.errorRefreshCount = 0
       this.addErrorLog('info', '错误状态已重置')
     },
-    
+
     // 自动加载刷新处理
     handleAutoLoadingRefresh() {
       this.$message.info('自动加载刷新中...')
     },
-    
+
     // 手动加载刷新处理
     handleManualLoadingRefresh() {
       this.manualLoading = true
       this.$message.info('开始手动加载...')
-      
+
       // 模拟异步操作
       setTimeout(() => {
         if (this.manualLoading) { // 检查是否已被手动停止
@@ -460,26 +460,26 @@ export default {
         }
       }, 3000)
     },
-    
+
     // 停止手动加载
     stopManualLoading() {
       this.manualLoading = false
       this.$refs.manualLoadingButton.stopLoading()
       this.$message.info('手动停止加载')
     },
-    
+
     // 确认刷新处理
     handleConfirmRefresh() {
       this.confirmResult = `确认刷新完成，时间：${new Date().toLocaleTimeString()}`
       this.$message.success('确认刷新完成')
     },
-    
+
     // 取消刷新处理
     handleRefreshCancel() {
       this.confirmResult = `用户取消刷新，时间：${new Date().toLocaleTimeString()}`
       this.$message.info('用户取消了刷新操作')
     },
-    
+
     // 表格刷新处理
     handleTableRefresh() {
       // 模拟异步获取数据
@@ -493,17 +493,17 @@ export default {
         this.tableLoading = false
       }, 800)
     },
-    
+
     // 表格刷新开始
     handleTableRefreshStart() {
       this.tableRefreshLog.push(`表格开始刷新 - ${new Date().toLocaleTimeString()}`)
     },
-    
+
     // 表格刷新完成
     handleTableRefreshComplete() {
       this.tableRefreshLog.push(`表格刷新完成 - ${new Date().toLocaleTimeString()}`)
     },
-    
+
     // 添加现代化事件
     addModernEvent(message) {
       this.modernRefreshEvents.push({
@@ -511,7 +511,7 @@ export default {
         message
       })
     },
-    
+
     // 添加错误日志
     addErrorLog(type, message) {
       this.errorLog.push({
@@ -520,7 +520,7 @@ export default {
         message
       })
     },
-    
+
     // 格式化事件时间
     formatEventTime(time) {
       return time.toLocaleTimeString()
@@ -685,20 +685,20 @@ export default {
   .refresh-button-demo {
     padding: 10px;
   }
-  
+
   .button-group {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .table-toolbar {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .toolbar-left,
   .toolbar-right {
     justify-content: center;
   }
 }
-</style> 
+</style>

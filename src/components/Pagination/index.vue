@@ -38,7 +38,7 @@
 
     <!-- 加载指示器 (仅现代模式) -->
     <div v-if="enableModernFeatures && isLoading" class="pagination-loading">
-      <i class="el-icon-loading"></i>
+      <i class="el-icon-loading" />
       <span>{{ loadingText }}</span>
     </div>
   </div>
@@ -237,14 +237,14 @@ export default {
       errorMessage: '',
       errorTimer: null,
       retryCount: 0,
-      
+
       // 加载状态
       isLoading: false,
       loadingTimer: null,
-      
+
       // 防抖处理器
       debouncedHandlers: new Map(),
-      
+
       // 性能监控
       performanceMetrics: {
         startTime: 0,
@@ -305,7 +305,7 @@ export default {
       },
       immediate: true
     },
-    
+
     // 监听页码变化，校验合法性
     currentPage: {
       handler(newVal) {
@@ -335,7 +335,7 @@ export default {
       // 创建防抖处理器
       this.debouncedHandlers.set('sizeChange', debounce(this.handleSizeChangeInternal, this.debounceDelay))
       this.debouncedHandlers.set('currentChange', debounce(this.handleCurrentChangeInternal, this.debounceDelay))
-      
+
       // 创建节流滚动处理器
       this.throttledScroll = throttle(this.performScroll, 100)
     },
@@ -366,15 +366,15 @@ export default {
         // 重置到第一页
         const newPage = 1
         this.$emit('pagination', { page: newPage, limit: val })
-        
+
         if (this.autoScroll) {
           this.handleAutoScroll()
         }
-        
+
         // 发出额外事件用于分析
         if (this.enableModernFeatures) {
-          this.$emit('size-change', { 
-            newSize: val, 
+          this.$emit('size-change', {
+            newSize: val,
             oldSize: this.pageSize,
             page: newPage,
             timestamp: Date.now()
@@ -389,15 +389,15 @@ export default {
     handleCurrentChangeInternal(val) {
       try {
         this.$emit('pagination', { page: val, limit: this.pageSize })
-        
+
         if (this.autoScroll) {
           this.handleAutoScroll()
         }
-        
+
         // 发出额外事件用于分析
         if (this.enableModernFeatures) {
-          this.$emit('current-change', { 
-            newPage: val, 
+          this.$emit('current-change', {
+            newPage: val,
             oldPage: this.currentPage,
             limit: this.pageSize,
             timestamp: Date.now()
@@ -421,7 +421,7 @@ export default {
     performScroll() {
       const options = this.scrollOptions
       const target = this.scrollTarget
-      
+
       if (target) {
         // 滚动到指定目标
         const element = typeof target === 'string' ? document.querySelector(target) : target
@@ -443,7 +443,7 @@ export default {
 
       this.hasError = true
       this.errorMessage = error.message || `${action} 操作失败`
-      
+
       // 发出错误事件
       this.$emit('error', {
         error,
@@ -452,7 +452,7 @@ export default {
         limit: this.pageSize,
         timestamp: Date.now()
       })
-      
+
       // 自动清除错误消息
       if (this.errorTimer) {
         clearTimeout(this.errorTimer)
@@ -481,7 +481,7 @@ export default {
 
       this.retryCount++
       this.clearError()
-      
+
       // 发出重试事件
       this.$emit('retry', {
         retryCount: this.retryCount,
@@ -506,7 +506,7 @@ export default {
     endPerformanceMonitoring() {
       this.performanceMetrics.endTime = performance.now()
       this.performanceMetrics.duration = this.performanceMetrics.endTime - this.performanceMetrics.startTime
-      
+
       // 发出性能指标事件
       this.$emit('performance', {
         duration: this.performanceMetrics.duration,
@@ -582,10 +582,10 @@ export default {
       if (this.loadingTimer) {
         clearTimeout(this.loadingTimer)
       }
-      
+
       // 清理防抖处理器
       this.debouncedHandlers.clear()
-      
+
       // 重置状态
       this.hasError = false
       this.isLoading = false
@@ -659,11 +659,11 @@ export default {
   .pagination-container {
     padding: 8px 12px;
   }
-  
+
   .pagination-container ::v-deep .el-pagination {
     text-align: center;
   }
-  
+
   .pagination-container ::v-deep .el-pagination .el-pager {
     margin-left: 0;
   }

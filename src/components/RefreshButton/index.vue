@@ -76,133 +76,133 @@ export default {
       default: '刷新',
       validator: value => typeof value === 'string' && value.length <= 20
     },
-    
+
     // 按钮图标
     icon: {
       type: String,
       default: 'el-icon-refresh',
       validator: value => typeof value === 'string' && value.includes('icon')
     },
-    
+
     // 是否隐藏图标
     hideIcon: {
       type: Boolean,
       default: false
     },
-    
+
     // 按钮大小
     size: {
       type: String,
       default: 'mini',
       validator: value => ['large', 'medium', 'small', 'mini'].includes(value)
     },
-    
+
     // 按钮类型
     type: {
       type: String,
       default: 'default',
       validator: value => ['primary', 'success', 'warning', 'danger', 'info', 'text', 'default'].includes(value)
     },
-    
+
     // 是否为朴素按钮
     plain: {
       type: Boolean,
       default: false
     },
-    
+
     // 是否为圆角按钮
     round: {
       type: Boolean,
       default: false
     },
-    
+
     // 是否为圆形按钮
     circle: {
       type: Boolean,
       default: false
     },
-    
+
     // 按钮标题（tooltip）
     title: {
       type: String,
       default: ''
     },
-    
+
     // 是否禁用
     disabled: {
       type: Boolean,
       default: false
     },
-    
+
     // 手动控制加载状态
     loading: {
       type: Boolean,
       default: false
     },
-    
+
     // 点击后是否自动显示加载状态
     autoLoading: {
       type: Boolean,
       default: false
     },
-    
+
     // 自动加载状态持续时间（毫秒）
     autoLoadingDuration: {
       type: Number,
       default: 500,
       validator: value => value >= 0 && value <= 10000
     },
-    
+
     // 刷新前确认
     confirmBeforeRefresh: {
       type: Boolean,
       default: false
     },
-    
+
     // 刷新确认文本
     confirmText: {
       type: String,
       default: '确定刷新数据吗？'
     },
-    
+
     // 刷新确认标题
     confirmTitle: {
       type: String,
       default: '刷新确认'
     },
-    
+
     // 防抖延迟时间（毫秒）
     debounceDelay: {
       type: Number,
       default: 300,
       validator: value => value >= 0 && value <= 5000
     },
-    
+
     // 是否启用现代化特性
     enableModernFeatures: {
       type: Boolean,
       default: false
     },
-    
+
     // 是否显示提示
     showTooltip: {
       type: Boolean,
       default: true
     },
-    
+
     // 自定义CSS类
     customClass: {
       type: String,
       default: ''
     },
-    
+
     // 最大重试次数
     maxRetries: {
       type: Number,
       default: 3,
       validator: value => value >= 0 && value <= 10
     },
-    
+
     // 重试延迟（毫秒）
     retryDelay: {
       type: Number,
@@ -210,7 +210,7 @@ export default {
       validator: value => value >= 0 && value <= 10000
     }
   },
-  
+
   data() {
     return {
       // 内部加载状态
@@ -227,70 +227,70 @@ export default {
       debouncedRefresh: null
     }
   },
-  
+
   computed: {
     // 组合加载状态
     currentLoading() {
       return this.loading || this.internalLoading
     },
-    
+
     // 当前图标
     currentIcon() {
       if (this.hasError) return 'el-icon-warning'
       return this.icon
     },
-    
+
     // 按钮样式类
     buttonClass() {
       const classes = []
-      
+
       if (this.customClass) {
         classes.push(this.customClass)
       }
-      
+
       if (this.enableModernFeatures) {
         classes.push('modern-refresh-button')
       }
-      
+
       if (this.hasError) {
         classes.push('error-state')
       }
-      
+
       return classes.join(' ')
     },
-    
+
     // 无障碍标签
     ariaLabel() {
       if (this.currentLoading) return '正在刷新数据'
       if (this.hasError) return '刷新出错，点击重试'
       return this.title || `${this.text}数据`
     },
-    
+
     // 提示内容
     tooltipContent() {
       if (!this.showTooltip) return ''
-      
+
       if (this.hasError) return '刷新出错，点击重试'
       if (this.currentLoading) return '正在刷新数据...'
       if (this.title) return this.title
-      
+
       const baseText = `${this.text}数据`
       if (this.lastRefreshTime && this.enableModernFeatures) {
         return `${baseText}（上次刷新：${this.formatTime(this.lastRefreshTime)}）`
       }
-      
+
       return baseText
     }
   },
-  
+
   created() {
     this.initializeDebounce()
   },
-  
+
   beforeDestroy() {
     this.cleanup()
   },
-  
+
   methods: {
     // 初始化防抖函数
     initializeDebounce() {
@@ -300,7 +300,7 @@ export default {
         }, this.debounceDelay)
       }
     },
-    
+
     // 处理刷新点击
     handleRefresh() {
       if (this.disabled || this.currentLoading) return
@@ -348,20 +348,20 @@ export default {
         // 清除错误状态
         this.hasError = false
         this.retryCount = 0
-        
+
         // 记录刷新时间
         if (this.enableModernFeatures) {
           this.lastRefreshTime = new Date()
         }
-        
+
         // 如果开启自动加载状态
         if (this.autoLoading) {
           this.startLoading()
         }
-        
+
         // 触发刷新事件
         this.$emit('refresh')
-        
+
         // 现代化特性：触发成功事件
         if (this.enableModernFeatures) {
           this.$nextTick(() => {
@@ -371,7 +371,6 @@ export default {
             })
           })
         }
-        
       } catch (error) {
         this.handleRefreshError(error)
       }
@@ -384,7 +383,7 @@ export default {
 
       this.loadingTimer = setTimeout(() => {
         this.internalLoading = false
-        
+
         // 现代化特性：触发完成事件
         if (this.enableModernFeatures) {
           this.$emit('refresh-complete', {
@@ -407,7 +406,7 @@ export default {
     stopLoading() {
       this.clearLoadingTimer()
       this.internalLoading = false
-      
+
       if (this.enableModernFeatures) {
         this.$emit('refresh-complete', {
           timestamp: new Date(),
@@ -415,37 +414,37 @@ export default {
         })
       }
     },
-    
+
     // 重试刷新
     async retryRefresh() {
       if (this.retryCount >= this.maxRetries) {
         this.$emit('retry-exhausted', { maxRetries: this.maxRetries })
         return
       }
-      
+
       this.retryCount++
-      
+
       if (this.retryDelay > 0) {
         await new Promise(resolve => setTimeout(resolve, this.retryDelay))
       }
-      
+
       this.$emit('retry', { retryCount: this.retryCount })
       this.executeRefresh()
     },
-    
+
     // 处理刷新错误
     handleRefreshError(error) {
       console.error('RefreshButton: 刷新失败', error)
       this.hasError = true
       this.internalLoading = false
       this.clearLoadingTimer()
-      
+
       this.$emit('refresh-error', {
         error,
         retryCount: this.retryCount,
         canRetry: this.retryCount < this.maxRetries
       })
-      
+
       // 现代化特性：自动重试
       if (this.enableModernFeatures && this.retryCount < this.maxRetries) {
         setTimeout(() => {
@@ -453,21 +452,21 @@ export default {
         }, this.retryDelay)
       }
     },
-    
+
     // 处理组件错误
     handleError(errorInfo) {
       console.error('RefreshButton: 组件错误', errorInfo)
       this.hasError = true
       this.$emit('component-error', errorInfo)
     },
-    
+
     // 格式化时间
     formatTime(date) {
       if (!date) return ''
-      
+
       const now = new Date()
       const diff = now - date
-      
+
       if (diff < 60000) { // 1分钟内
         return '刚刚'
       } else if (diff < 3600000) { // 1小时内
@@ -478,7 +477,7 @@ export default {
         return date.toLocaleTimeString()
       }
     },
-    
+
     // 重置状态
     reset() {
       this.hasError = false
@@ -487,7 +486,7 @@ export default {
       this.clearLoadingTimer()
       this.internalLoading = false
     },
-    
+
     // 清理资源
     cleanup() {
       this.clearLoadingTimer()

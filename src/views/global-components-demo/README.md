@@ -2,33 +2,71 @@
 
 本文档介绍了项目中开发的全局组件的使用方法和示例。这些组件已在`main.js`中全局注册，可以在任何Vue组件中直接使用，无需导入。
 
-## 1. 状态标签 (StatusTag)
+## 1. 状态标签 (StatusTag) - 已现代化优化
 
-`StatusTag`组件用于展示各种状态信息，支持自定义文本、类型和颜色。
+`StatusTag`组件用于展示各种状态信息，支持自定义文本、类型、颜色和图标，内置现代化优化功能。
 
 ### 基本用法
 
 ```vue
 <StatusTag 
   :status="1" 
-  :textMap="{ 0: '禁用', 1: '启用' }" 
-  :typeMap="{ 0: 'info', 1: 'success' }"
+  :text-map="{ 0: '禁用', 1: '启用' }" 
+  :type-map="{ 0: 'info', 1: 'success' }"
+  :icon-map="{ 0: 'el-icon-circle-close', 1: 'el-icon-circle-check' }"
 />
 ```
 
-### 属性
+### 现代化特性
+
+```vue
+<!-- 可点击的状态标签 -->
+<StatusTag 
+  :status="'clickable'" 
+  :text-map="{ 'clickable': '点击我' }" 
+  :type-map="{ 'clickable': 'primary' }"
+  :enable-modern-features="true"
+  :clickable="true"
+  @click="handleStatusClick"
+  @error="handleStatusError"
+/>
+
+<!-- 可关闭的状态标签 -->
+<StatusTag 
+  :status="'closable'" 
+  :text-map="{ 'closable': '可关闭' }" 
+  :type-map="{ 'closable': 'warning' }"
+  :closable="true"
+  @close="handleStatusClose"
+/>
+```
+
+### 核心属性
 
 | 属性名 | 说明 | 类型 | 默认值 |
 |------|------|------|------|
-| status | 状态值 | String/Number/Boolean | - |
+| status | 状态值（必填） | String/Number/Boolean | - |
 | textMap | 状态文本映射 | Object | {} |
 | typeMap | 状态类型映射 | Object | {} |
 | colorMap | 状态颜色映射 | Object | {} |
+| iconMap | 状态图标映射 | Object | {} |
 | effect | 标签效果 | String | 'light' |
 | size | 标签大小 | String | 'small' |
 | hit | 是否有边框描边 | Boolean | false |
+| closable | 是否可关闭 | Boolean | false |
+| clickable | 是否可点击 | Boolean | false |
+| enableModernFeatures | 是否启用现代化特性 | Boolean | false |
+| clickDebounceDelay | 点击防抖延迟(ms) | Number | 300 |
 | defaultText | 默认文本 | String | '' |
 | defaultType | 默认类型 | String | 'info' |
+
+### 事件
+
+| 事件名 | 说明 | 回调参数 |
+|------|------|------|
+| click | 点击标签时触发 | { status, displayText, tagType, event, clickCount } |
+| close | 点击关闭按钮时触发 | { status, displayText, event } |
+| error | 组件发生错误时触发 | { message, context, timestamp, status } |
 
 ### 预设配置
 

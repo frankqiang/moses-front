@@ -60,13 +60,13 @@
           <!-- 状态指示器 -->
           <div class="status-indicators">
             <el-tag v-if="hasChanges" type="warning" size="small">
-              <i class="el-icon-edit"></i> 有未保存的更改
+              <i class="el-icon-edit" /> 有未保存的更改
             </el-tag>
             <el-tag v-if="isValid" type="success" size="small">
-              <i class="el-icon-check"></i> 表单验证通过
+              <i class="el-icon-check" /> 表单验证通过
             </el-tag>
             <el-tag v-else type="info" size="small">
-              <i class="el-icon-warning"></i> 表单验证待完成
+              <i class="el-icon-warning" /> 表单验证待完成
             </el-tag>
           </div>
 
@@ -75,8 +75,8 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="用户名" prop="username">
-                <el-input 
-                  v-model="form.username" 
+                <el-input
+                  v-model="form.username"
                   placeholder="请输入用户名"
                   :disabled="mode === 'view'"
                   @blur="() => demoValidateField('username')"
@@ -85,8 +85,8 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="真实姓名" prop="realName">
-                <el-input 
-                  v-model="form.realName" 
+                <el-input
+                  v-model="form.realName"
                   placeholder="请输入真实姓名"
                   :disabled="mode === 'view'"
                 />
@@ -97,8 +97,8 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="邮箱" prop="email">
-                <el-input 
-                  v-model="form.email" 
+                <el-input
+                  v-model="form.email"
                   placeholder="请输入邮箱地址"
                   :disabled="mode === 'view' || autoGenerateEmail"
                 />
@@ -106,8 +106,8 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="手机号" prop="phone">
-                <el-input 
-                  v-model="form.phone" 
+                <el-input
+                  v-model="form.phone"
                   placeholder="请输入手机号"
                   :disabled="mode === 'view'"
                 />
@@ -120,7 +120,7 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="自动生成邮箱">
-                <el-switch 
+                <el-switch
                   v-model="autoGenerateEmail"
                   :disabled="mode === 'view'"
                   @change="(value) => handleAutoEmailChange(value, setFieldValue)"
@@ -130,15 +130,15 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="部门" prop="department">
-                <el-select 
-                  v-model="form.department" 
+                <el-select
+                  v-model="form.department"
                   placeholder="请选择部门"
                   :disabled="mode === 'view'"
                   @change="(value) => handleDepartmentChange(value, setFieldValue)"
                 >
-                  <el-option label="技术部" value="tech"></el-option>
-                  <el-option label="产品部" value="product"></el-option>
-                  <el-option label="运营部" value="operation"></el-option>
+                  <el-option label="技术部" value="tech" />
+                  <el-option label="产品部" value="product" />
+                  <el-option label="运营部" value="operation" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -147,17 +147,17 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="角色" prop="role">
-                <el-select 
-                  v-model="form.role" 
+                <el-select
+                  v-model="form.role"
                   placeholder="请选择角色"
                   :disabled="mode === 'view'"
                 >
-                  <el-option 
-                    v-for="option in roleOptions" 
-                    :key="option.value" 
-                    :label="option.label" 
+                  <el-option
+                    v-for="option in roleOptions"
+                    :key="option.value"
+                    :label="option.label"
                     :value="option.value"
-                  ></el-option>
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -174,9 +174,9 @@
           <!-- 其他信息 -->
           <h4>其他信息</h4>
           <el-form-item label="备注" prop="remark">
-            <el-input 
-              v-model="form.remark" 
-              type="textarea" 
+            <el-input
+              v-model="form.remark"
+              type="textarea"
               :rows="3"
               placeholder="请输入备注信息"
               :disabled="mode === 'view'"
@@ -188,48 +188,48 @@
         <template #footer="{ loading, submit, reset, hasChanges, isValid }">
           <div class="custom-footer">
             <div class="left-actions">
-              <el-button 
+              <el-button
                 v-if="mode !== 'view'"
-                @click="handleSaveDraft" 
                 :disabled="!hasChanges"
                 icon="el-icon-document"
+                @click="handleSaveDraft"
               >
                 保存草稿
               </el-button>
-              <el-button 
+              <el-button
                 v-if="mode !== 'view'"
-                @click="handlePreview" 
                 :disabled="!isValid"
                 icon="el-icon-view"
+                @click="handlePreview"
               >
                 预览
               </el-button>
             </div>
             <div class="right-actions">
-              <el-button 
-                @click="reset" 
+              <el-button
                 :disabled="!hasChanges"
                 icon="el-icon-refresh"
+                @click="reset"
               >
                 重置
               </el-button>
-              <el-button 
+              <el-button
                 v-if="mode === 'create'"
-                type="primary" 
-                @click="submit" 
+                type="primary"
                 :loading="loading"
                 :disabled="!isValid || !hasChanges"
                 icon="el-icon-check"
+                @click="submit"
               >
                 创建并继续
               </el-button>
-              <el-button 
+              <el-button
                 v-if="mode !== 'view'"
-                type="primary" 
-                @click="submit" 
+                type="primary"
                 :loading="loading"
                 :disabled="!isValid || !hasChanges"
                 icon="el-icon-check"
+                @click="submit"
               >
                 {{ mode === 'create' ? '创建' : '保存' }}
               </el-button>
@@ -244,9 +244,9 @@
       <el-col :span="12">
         <el-card header="操作日志">
           <div class="log-container">
-            <div 
-              v-for="(log, index) in operationLogs" 
-              :key="index" 
+            <div
+              v-for="(log, index) in operationLogs"
+              :key="index"
               class="log-item"
               :class="log.type"
             >
@@ -329,10 +329,10 @@ export default {
         username: [
           { required: true, message: '请输入用户名', trigger: 'blur' },
           { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' },
-          { 
-            pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, 
-            message: '用户名必须以字母开头，只能包含字母、数字和下划线', 
-            trigger: 'blur' 
+          {
+            pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
+            message: '用户名必须以字母开头，只能包含字母、数字和下划线',
+            trigger: 'blur'
           }
         ],
         realName: [
@@ -375,11 +375,25 @@ export default {
       return modeMap[this.mode] || '未知模式'
     }
   },
+
+  mounted() {
+    this.addLog('EnhancedForm示例页面已加载', 'success')
+
+    // 监听表单状态变化
+    setInterval(() => {
+      if (this.$refs.enhancedForm) {
+        const formRef = this.$refs.enhancedForm
+        this.hasChanges = formRef.hasFormChanges
+        this.isFormValid = formRef.isFormValid
+        this.actualLoading = formRef.actualLoading
+      }
+    }, 1000)
+  },
   methods: {
     // 模式切换处理
     handleModeChange(newMode) {
       this.addLog(`切换到${this.modeText}`, 'info')
-      
+
       // 切换到编辑模式时填充示例数据
       if (newMode === 'update') {
         this.formData = {
@@ -429,10 +443,10 @@ export default {
     handleDepartmentChange(department, setFieldValue) {
       const departmentRoleMap = {
         tech: 'user',
-        product: 'user', 
+        product: 'user',
         operation: 'admin'
       }
-      
+
       if (departmentRoleMap[department]) {
         setFieldValue('role', departmentRoleMap[department])
         this.addLog(`根据部门自动设置角色`, 'info')
@@ -442,19 +456,18 @@ export default {
     // 表单提交处理
     async handleSubmit(formData, continueEdit) {
       this.addLog(`开始提交表单 ${continueEdit ? '(保存并继续)' : ''}`, 'info')
-      
+
       try {
         // 模拟API请求
         await new Promise(resolve => setTimeout(resolve, 2000))
-        
+
         this.addLog('表单提交成功', 'success')
         this.$message.success(`${this.mode === 'create' ? '创建' : '保存'}成功`)
-        
+
         if (continueEdit) {
           // 继续编辑逻辑
           this.addLog('准备创建下一个', 'info')
         }
-        
       } catch (error) {
         this.addLog(`提交失败: ${error.message}`, 'error')
         throw error
@@ -475,7 +488,7 @@ export default {
         callback(false)
         return
       }
-      
+
       this.addLog('自定义验证通过', 'success')
       callback(true)
     },
@@ -489,7 +502,7 @@ export default {
     // 字段变更处理
     handleFieldChange({ field, value }) {
       this.addLog(`字段 ${field} 更新为: ${value}`, 'info')
-      
+
       // 自动邮箱生成
       if (field === 'username' && this.autoGenerateEmail && value) {
         this.$refs.enhancedForm.setFieldValue('email', `${value}@company.com`)
@@ -541,32 +554,18 @@ export default {
     addLog(content, type = 'info') {
       const now = new Date()
       const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`
-      
+
       this.operationLogs.unshift({
         time,
         content,
         type
       })
-      
+
       // 只保留最近50条日志
       if (this.operationLogs.length > 50) {
         this.operationLogs = this.operationLogs.slice(0, 50)
       }
     }
-  },
-  
-  mounted() {
-    this.addLog('EnhancedForm示例页面已加载', 'success')
-    
-    // 监听表单状态变化
-    setInterval(() => {
-      if (this.$refs.enhancedForm) {
-        const formRef = this.$refs.enhancedForm
-        this.hasChanges = formRef.hasFormChanges
-        this.isFormValid = formRef.isFormValid
-        this.actualLoading = formRef.actualLoading
-      }
-    }, 1000)
   }
 }
 </script>
@@ -581,12 +580,12 @@ export default {
 .demo-header {
   text-align: center;
   margin-bottom: 20px;
-  
+
   h2 {
     color: #303133;
     margin-bottom: 8px;
   }
-  
+
   p {
     color: #606266;
     margin: 0;
@@ -595,7 +594,7 @@ export default {
 
 .control-panel {
   margin-bottom: 20px;
-  
+
   .el-form-item {
     margin-bottom: 0;
   }
@@ -607,7 +606,7 @@ export default {
 
 .status-indicators {
   margin-bottom: 20px;
-  
+
   .el-tag {
     margin-right: 10px;
   }
@@ -624,7 +623,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  
+
   .left-actions,
   .right-actions {
     display: flex;
@@ -640,23 +639,23 @@ export default {
   height: 200px;
   overflow-y: auto;
   font-size: 12px;
-  
+
   .log-item {
     padding: 4px 0;
     border-bottom: 1px solid #f0f0f0;
-    
+
     &.success {
       color: #67C23A;
     }
-    
+
     &.error {
       color: #F56C6C;
     }
-    
+
     &.info {
       color: #409EFF;
     }
-    
+
     .log-time {
       margin-right: 8px;
       color: #909399;
@@ -666,10 +665,10 @@ export default {
 
 .status-info {
   font-size: 14px;
-  
+
   p {
     margin: 8px 0;
-    
+
     strong {
       color: #303133;
     }
@@ -681,7 +680,7 @@ export default {
     display: flex;
     align-items: center;
     margin-bottom: 8px;
-    
+
     kbd {
       background-color: #f0f0f0;
       border: 1px solid #ccc;
@@ -691,7 +690,7 @@ export default {
       font-size: 12px;
       color: #333;
     }
-    
+
     span {
       color: #606266;
       font-size: 14px;
@@ -704,11 +703,11 @@ export default {
   .enhanced-form-example {
     padding: 10px;
   }
-  
+
   .custom-footer {
     flex-direction: column;
     gap: 10px;
-    
+
     .left-actions,
     .right-actions {
       width: 100%;
@@ -716,4 +715,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

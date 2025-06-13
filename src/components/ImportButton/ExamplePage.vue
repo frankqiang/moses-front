@@ -43,7 +43,7 @@
                 </el-form>
               </el-card>
             </el-col>
-            
+
             <el-col :span="8">
               <el-card class="feature-card">
                 <div slot="header">
@@ -66,7 +66,7 @@
                 </el-form>
               </el-card>
             </el-col>
-            
+
             <el-col :span="8">
               <el-card class="feature-card">
                 <div slot="header">
@@ -188,7 +188,7 @@
         <div class="event-monitor">
           <div class="event-list">
             <h4>事件日志</h4>
-            <div class="event-item" v-for="(event, index) in eventLog" :key="index">
+            <div v-for="(event, index) in eventLog" :key="index" class="event-item">
               <span class="event-time">{{ event.time }}</span>
               <span class="event-type" :class="event.type">{{ event.type }}</span>
               <span class="event-message">{{ event.message }}</span>
@@ -353,7 +353,7 @@ export default {
     async serverErrorApi() {
       await this.delay(1500)
       const error = new Error('服务器内部错误')
-      error.response = { status: 500, data: { message: '服务器繁忙，请稍后重试' } }
+      error.response = { status: 500, data: { message: '服务器繁忙，请稍后重试' }}
       error.retryable = true
       throw error
     },
@@ -390,7 +390,7 @@ export default {
       return Array.from({ length: count }, (_, index) => ({
         row: Math.floor(Math.random() * 1000) + 1,
         message: errorTypes[Math.floor(Math.random() * errorTypes.length)],
-        fileName: this.modernConfig.enableMultiple 
+        fileName: this.modernConfig.enableMultiple
           ? fileNames[Math.floor(Math.random() * fileNames.length)]
           : undefined
       }))
@@ -420,7 +420,7 @@ export default {
         type,
         message
       })
-      
+
       // 限制日志数量
       if (this.eventLog.length > 50) {
         this.eventLog = this.eventLog.slice(0, 50)
@@ -432,10 +432,10 @@ export default {
     },
 
     exportEventLog() {
-      const content = this.eventLog.map(event => 
+      const content = this.eventLog.map(event =>
         `${event.time}\t${event.type}\t${event.message}`
       ).join('\n')
-      
+
       const blob = new Blob([`时间\t事件类型\t消息\n${content}`], { type: 'text/plain;charset=utf-8' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -462,12 +462,12 @@ export default {
   .page-header {
     text-align: center;
     margin-bottom: 40px;
-    
+
     h1 {
       color: #303133;
       margin-bottom: 10px;
     }
-    
+
     p {
       color: #606266;
       font-size: 16px;
@@ -496,16 +496,16 @@ export default {
     .example-content {
       .modern-controls {
         margin-bottom: 20px;
-        
+
         .feature-card {
           margin-bottom: 15px;
-          
+
           .el-card__header {
             padding: 10px 20px;
             font-weight: bold;
             color: #303133;
           }
-          
+
           .unit {
             margin-left: 5px;
             color: #909399;
@@ -525,12 +525,12 @@ export default {
         border: 1px solid #dcdfe6;
         border-radius: 6px;
         overflow: hidden;
-        
+
         .event-list {
           max-height: 300px;
           overflow-y: auto;
           background: #f9f9f9;
-          
+
           h4 {
             margin: 0;
             padding: 15px 20px;
@@ -538,24 +538,24 @@ export default {
             color: white;
             font-size: 14px;
           }
-          
+
           .event-item {
             padding: 10px 20px;
             border-bottom: 1px solid #ebeef5;
             display: flex;
             align-items: center;
             font-size: 13px;
-            
+
             &:hover {
               background: #ecf5ff;
             }
-            
+
             .event-time {
               width: 80px;
               color: #909399;
               font-family: monospace;
             }
-            
+
             .event-type {
               width: 120px;
               padding: 2px 8px;
@@ -564,34 +564,34 @@ export default {
               font-weight: bold;
               text-align: center;
               margin: 0 10px;
-              
+
               &.import-start {
                 background: #e1f3d8;
                 color: #67c23a;
               }
-              
+
               &.import-success {
                 background: #e1f3d8;
                 color: #67c23a;
               }
-              
+
               &.import-error {
                 background: #fde2e2;
                 color: #f56c6c;
               }
-              
+
               &.import-complete {
                 background: #e6f7ff;
                 color: #409eff;
               }
             }
-            
+
             .event-message {
               flex: 1;
               color: #303133;
             }
           }
-          
+
           .no-events {
             padding: 40px 20px;
             text-align: center;
@@ -599,7 +599,7 @@ export default {
             font-style: italic;
           }
         }
-        
+
         .event-controls {
           padding: 15px 20px;
           background: white;
@@ -615,18 +615,18 @@ export default {
 @media (max-width: 768px) {
   .import-button-example {
     padding: 10px;
-    
+
     .modern-controls {
       .el-col {
         margin-bottom: 15px;
       }
     }
-    
+
     .event-item {
       .event-time {
         display: none;
       }
-      
+
       .event-type {
         width: 100px;
         margin: 0 5px;

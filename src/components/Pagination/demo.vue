@@ -18,7 +18,7 @@
       <div class="demo-description">
         <p>最基本的分页功能，保持向后兼容。</p>
       </div>
-      
+
       <div class="demo-content">
         <div class="table-mock">
           <div v-for="item in basicData" :key="item.id" class="table-row">
@@ -27,7 +27,7 @@
             <span>状态: {{ item.status }}</span>
           </div>
         </div>
-        
+
         <pagination
           :total="basicPagination.total"
           :page.sync="basicPagination.page"
@@ -44,7 +44,7 @@
         <p>启用现代化功能，包括防抖保护、错误处理、重试机制等。</p>
         <p class="tip">💡 快速点击分页按钮测试防抖效果</p>
       </div>
-      
+
       <div class="demo-controls">
         <el-button size="small" @click="simulateError">模拟错误</el-button>
         <el-button size="small" @click="clearModernError">清除错误</el-button>
@@ -52,7 +52,7 @@
           {{ modernLoading ? '停止加载' : '开始加载' }}
         </el-button>
       </div>
-      
+
       <div class="demo-content">
         <div class="table-mock">
           <div v-for="item in modernData" :key="item.id" class="table-row">
@@ -62,7 +62,7 @@
             <span>时间: {{ formatTime(item.createTime) }}</span>
           </div>
         </div>
-        
+
         <pagination
           :total="modernPagination.total"
           :page.sync="modernPagination.page"
@@ -90,7 +90,7 @@
       <div class="demo-description">
         <p>演示各种配置选项和自定义功能。</p>
       </div>
-      
+
       <div class="demo-controls">
         <el-form inline size="small">
           <el-form-item label="每页选项:">
@@ -102,7 +102,7 @@
               <el-option :value="100" label="100条/页" />
             </el-select>
           </el-form-item>
-          
+
           <el-form-item label="布局:">
             <el-select v-model="customLayout" style="width: 300px;">
               <el-option value="total, sizes, prev, pager, next, jumper" label="完整布局" />
@@ -111,17 +111,17 @@
               <el-option value="sizes, prev, pager, next" label="无总数布局" />
             </el-select>
           </el-form-item>
-          
+
           <el-form-item>
             <el-checkbox v-model="customBackground">背景色</el-checkbox>
           </el-form-item>
-          
+
           <el-form-item>
             <el-checkbox v-model="customAutoScroll">自动滚动</el-checkbox>
           </el-form-item>
         </el-form>
       </div>
-      
+
       <div class="demo-content">
         <div class="table-mock">
           <div v-for="item in customData" :key="item.id" class="table-row">
@@ -131,7 +131,7 @@
             <span>销量: {{ item.sales }}</span>
           </div>
         </div>
-        
+
         <pagination
           :total="customPagination.total"
           :page.sync="customPagination.page"
@@ -152,7 +152,7 @@
       <div class="demo-description">
         <p>通过组件引用调用方法进行编程式控制。</p>
       </div>
-      
+
       <div class="demo-controls">
         <el-button size="small" @click="goToFirstPage">第一页</el-button>
         <el-button size="small" @click="goToPrevPage">上一页</el-button>
@@ -162,7 +162,7 @@
         <el-button size="small" type="success" @click="setPageSize(30)">设置30条/页</el-button>
         <el-button size="small" type="info" @click="showCurrentState">显示状态</el-button>
       </div>
-      
+
       <div class="demo-content">
         <div class="table-mock">
           <div v-for="item in programData" :key="item.id" class="table-row">
@@ -172,7 +172,7 @@
             <span>角色: {{ item.role }}</span>
           </div>
         </div>
-        
+
         <pagination
           ref="programPagination"
           :total="programPagination.total"
@@ -190,7 +190,7 @@
       <div class="demo-description">
         <p>在不同屏幕尺寸下的分页组件表现。调整浏览器窗口大小查看效果。</p>
       </div>
-      
+
       <div class="demo-content responsive-demo">
         <div class="table-mock">
           <div v-for="item in responsiveData" :key="item.id" class="table-row">
@@ -199,7 +199,7 @@
             <span>状态: {{ item.status }}</span>
           </div>
         </div>
-        
+
         <pagination
           :total="responsivePagination.total"
           :page.sync="responsivePagination.page"
@@ -217,7 +217,7 @@
       <div class="demo-description">
         <p>展示分页操作的性能指标（仅现代模式）。</p>
       </div>
-      
+
       <div class="performance-info">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -267,7 +267,7 @@
         <p>实时显示分页组件触发的各种事件。</p>
         <el-button size="small" @click="clearEventLogs">清空日志</el-button>
       </div>
-      
+
       <div class="event-logs">
         <div v-for="(log, index) in eventLogs" :key="index" :class="getLogClass(log.type)">
           <span class="log-time">{{ formatLogTime(log.timestamp) }}</span>
@@ -287,7 +287,7 @@ export default {
   components: {
     Pagination
   },
-  
+
   data() {
     return {
       // 基础示例数据
@@ -297,7 +297,7 @@ export default {
         limit: 5,
         total: 50
       },
-      
+
       // 现代化功能示例数据
       modernData: [],
       modernPagination: {
@@ -307,7 +307,7 @@ export default {
       },
       modernLoading: false,
       modernDisabled: false,
-      
+
       // 自定义配置示例数据
       customData: [],
       customPagination: {
@@ -319,7 +319,7 @@ export default {
       customLayout: 'total, sizes, prev, pager, next, jumper',
       customBackground: true,
       customAutoScroll: true,
-      
+
       // 编程式控制示例数据
       programData: [],
       programPagination: {
@@ -327,7 +327,7 @@ export default {
         limit: 12,
         total: 150
       },
-      
+
       // 响应式示例数据
       responsiveData: [],
       responsivePagination: {
@@ -335,7 +335,7 @@ export default {
         limit: 6,
         total: 80
       },
-      
+
       // 性能统计
       performanceStats: {
         totalOperations: 0,
@@ -346,17 +346,17 @@ export default {
         retryCount: 0,
         times: []
       },
-      
+
       // 事件日志
       eventLogs: [],
       maxLogs: 50
     }
   },
-  
+
   created() {
     this.generateAllData()
   },
-  
+
   methods: {
     // 生成所有示例数据
     generateAllData() {
@@ -366,12 +366,12 @@ export default {
       this.generateProgramData()
       this.generateResponsiveData()
     },
-    
+
     // 生成基础示例数据
     generateBasicData() {
       const start = (this.basicPagination.page - 1) * this.basicPagination.limit
       const end = start + this.basicPagination.limit
-      
+
       this.basicData = []
       for (let i = start; i < end && i < this.basicPagination.total; i++) {
         this.basicData.push({
@@ -381,13 +381,13 @@ export default {
         })
       }
     },
-    
+
     // 生成现代化功能示例数据
     generateModernData() {
       const start = (this.modernPagination.page - 1) * this.modernPagination.limit
       const end = start + this.modernPagination.limit
       const types = ['用户', '订单', '产品', '报告']
-      
+
       this.modernData = []
       for (let i = start; i < end && i < this.modernPagination.total; i++) {
         this.modernData.push({
@@ -398,13 +398,13 @@ export default {
         })
       }
     },
-    
+
     // 生成自定义配置示例数据
     generateCustomData() {
       const start = (this.customPagination.page - 1) * this.customPagination.limit
       const end = start + this.customPagination.limit
       const products = ['手机', '电脑', '平板', '耳机', '音箱']
-      
+
       this.customData = []
       for (let i = start; i < end && i < this.customPagination.total; i++) {
         this.customData.push({
@@ -415,14 +415,14 @@ export default {
         })
       }
     },
-    
+
     // 生成编程式控制示例数据
     generateProgramData() {
       const start = (this.programPagination.page - 1) * this.programPagination.limit
       const end = start + this.programPagination.limit
       const departments = ['技术部', '产品部', '设计部', '运营部', '市场部']
       const roles = ['开发', '测试', '产品经理', '设计师', '运营']
-      
+
       this.programData = []
       for (let i = start; i < end && i < this.programPagination.total; i++) {
         this.programData.push({
@@ -434,7 +434,7 @@ export default {
         })
       }
     },
-    
+
     // 生成响应式示例数据
     generateResponsiveData() {
       const start = (this.responsivePagination.page - 1) * this.responsivePagination.limit
@@ -442,7 +442,7 @@ export default {
       const devices = ['服务器', '交换机', '路由器', '防火墙']
       const models = ['A型', 'B型', 'C型', 'D型']
       const statuses = ['运行中', '维护中', '离线']
-      
+
       this.responsiveData = []
       for (let i = start; i < end && i < this.responsivePagination.total; i++) {
         this.responsiveData.push({
@@ -453,13 +453,13 @@ export default {
         })
       }
     },
-    
+
     // 分页处理方法
     handleBasicPagination() {
       this.addEventLog('基础分页', `跳转到第${this.basicPagination.page}页，每页${this.basicPagination.limit}条`)
       this.generateBasicData()
     },
-    
+
     handleModernPagination() {
       this.addEventLog('现代分页', `跳转到第${this.modernPagination.page}页，每页${this.modernPagination.limit}条`)
       // 模拟异步加载
@@ -469,54 +469,54 @@ export default {
         this.modernLoading = false
       }, 800)
     },
-    
+
     handleCustomPagination() {
       this.addEventLog('自定义分页', `跳转到第${this.customPagination.page}页，每页${this.customPagination.limit}条`)
       this.generateCustomData()
     },
-    
+
     handleProgramPagination() {
       this.addEventLog('编程式分页', `跳转到第${this.programPagination.page}页，每页${this.programPagination.limit}条`)
       this.generateProgramData()
     },
-    
+
     handleResponsivePagination() {
       this.addEventLog('响应式分页', `跳转到第${this.responsivePagination.page}页，每页${this.responsivePagination.limit}条`)
       this.generateResponsiveData()
     },
-    
+
     // 现代化功能事件处理
     handlePaginationError(errorInfo) {
       this.performanceStats.errorCount++
       this.addEventLog('错误', `分页操作失败: ${errorInfo.error.message}`, 'error')
     },
-    
+
     handlePaginationRetry(retryInfo) {
       this.performanceStats.retryCount++
       this.addEventLog('重试', `第${retryInfo.retryCount}次重试`, 'warning')
     },
-    
+
     handlePerformanceMetrics(metrics) {
       this.performanceStats.totalOperations++
       this.performanceStats.times.push(metrics.duration)
-      
+
       // 计算统计数据
       const times = this.performanceStats.times
       this.performanceStats.averageTime = Math.round(times.reduce((a, b) => a + b, 0) / times.length)
       this.performanceStats.minTime = Math.round(Math.min(...times))
       this.performanceStats.maxTime = Math.round(Math.max(...times))
-      
+
       this.addEventLog('性能', `操作耗时: ${Math.round(metrics.duration)}ms`, 'info')
     },
-    
+
     handleSizeChange(changeInfo) {
       this.addEventLog('页面大小变化', `从${changeInfo.oldSize}条/页 变更为 ${changeInfo.newSize}条/页`, 'info')
     },
-    
+
     handleCurrentChange(changeInfo) {
       this.addEventLog('当前页变化', `从第${changeInfo.oldPage}页 跳转到 第${changeInfo.newPage}页`, 'info')
     },
-    
+
     // 模拟功能
     simulateError() {
       this.modernDisabled = true
@@ -525,17 +525,17 @@ export default {
         this.modernDisabled = false
       }, 3000)
     },
-    
+
     clearModernError() {
       this.modernDisabled = false
       this.addEventLog('清除错误', '手动清除错误状态', 'success')
     },
-    
+
     toggleModernLoading() {
       this.modernLoading = !this.modernLoading
       this.addEventLog('加载状态', `切换加载状态: ${this.modernLoading ? '开始' : '结束'}`, 'info')
     },
-    
+
     // 编程式控制方法
     goToFirstPage() {
       if (this.$refs.programPagination) {
@@ -543,28 +543,28 @@ export default {
         this.addEventLog('编程控制', '跳转到第一页', 'success')
       }
     },
-    
+
     goToPrevPage() {
       if (this.$refs.programPagination) {
         this.$refs.programPagination.prevPage()
         this.addEventLog('编程控制', '跳转到上一页', 'success')
       }
     },
-    
+
     goToNextPage() {
       if (this.$refs.programPagination) {
         this.$refs.programPagination.nextPage()
         this.addEventLog('编程控制', '跳转到下一页', 'success')
       }
     },
-    
+
     goToLastPage() {
       if (this.$refs.programPagination) {
         this.$refs.programPagination.goToLast()
         this.addEventLog('编程控制', '跳转到最后一页', 'success')
       }
     },
-    
+
     goToRandomPage() {
       if (this.$refs.programPagination) {
         const totalPages = Math.ceil(this.programPagination.total / this.programPagination.limit)
@@ -573,14 +573,14 @@ export default {
         this.addEventLog('编程控制', `跳转到随机页: ${randomPage}`, 'success')
       }
     },
-    
+
     setPageSize(size) {
       if (this.$refs.programPagination) {
         this.$refs.programPagination.setPageSize(size)
         this.addEventLog('编程控制', `设置页面大小: ${size}`, 'success')
       }
     },
-    
+
     showCurrentState() {
       if (this.$refs.programPagination) {
         const state = this.$refs.programPagination.getCurrentState()
@@ -590,16 +590,16 @@ export default {
         this.addEventLog('编程控制', '获取当前状态', 'info')
       }
     },
-    
+
     // 工具方法
     formatTime(time) {
       return new Date(time).toLocaleDateString()
     },
-    
+
     formatLogTime(timestamp) {
       return new Date(timestamp).toLocaleTimeString()
     },
-    
+
     addEventLog(type, message, level = 'default') {
       this.eventLogs.unshift({
         type,
@@ -607,18 +607,18 @@ export default {
         level,
         timestamp: Date.now()
       })
-      
+
       // 限制日志数量
       if (this.eventLogs.length > this.maxLogs) {
         this.eventLogs = this.eventLogs.slice(0, this.maxLogs)
       }
     },
-    
+
     clearEventLogs() {
       this.eventLogs = []
       this.addEventLog('系统', '清空事件日志', 'info')
     },
-    
+
     getLogClass(level) {
       return `event-log event-log-${level}`
     }
@@ -842,30 +842,30 @@ export default {
   .pagination-demo {
     padding: 10px;
   }
-  
+
   .demo-section {
     padding: 10px;
   }
-  
+
   .table-row {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .table-row span {
     margin-bottom: 5px;
   }
-  
+
   .demo-controls .el-form-item {
     display: block;
     margin-bottom: 10px;
   }
-  
+
   .event-log {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .log-time,
   .log-type {
     width: auto;

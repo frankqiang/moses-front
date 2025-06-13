@@ -294,7 +294,7 @@ export default {
     // 处理导出错误
     handleExportError(error) {
       console.error('导出错误:', error)
-      
+
       let errorMessage = this.errorText
       let shouldRetry = false
 
@@ -349,7 +349,7 @@ export default {
 
         // 创建Blob对象
         const blob = new Blob([data], { type: this.mimeType })
-        
+
         // 检查浏览器支持
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           // IE浏览器
@@ -358,16 +358,16 @@ export default {
           // 现代浏览器
           const url = URL.createObjectURL(blob)
           this.downloadUrls.add(url) // 跟踪URL
-          
+
           const link = document.createElement('a')
           link.href = url
           link.download = this.fullFilename
           link.style.display = 'none'
-          
+
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
-          
+
           // 延迟清理URL，确保下载完成
           setTimeout(() => {
             URL.revokeObjectURL(url)
@@ -409,12 +409,12 @@ export default {
       if (this.exportController) {
         this.exportController.abort()
       }
-      
+
       // 清理防抖函数
       if (this.debouncedHandleExport && this.debouncedHandleExport.cancel) {
         this.debouncedHandleExport.cancel()
       }
-      
+
       // 清理所有创建的URL
       this.downloadUrls.forEach(url => {
         URL.revokeObjectURL(url)
