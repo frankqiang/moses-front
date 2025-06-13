@@ -1,0 +1,221 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Cursor Rules 优化指南
+
+## 规则文件优化最佳实践
+
+### 1. 文件大小控制原则
+
+**建议文件大小限制**：
+- 核心规则文件：≤ 5KB (约150行)
+- 专项规则文件：≤ 8KB (约250行)  
+- 综合规则文件：≤ 12KB (约400行)
+
+**超出限制时的处理策略**：
+- 拆分为多个子规则文件
+- 将详细示例移至独立的示例文件
+- 使用文件引用替代完整代码复制
+
+### 2. 代码示例优化策略
+
+#### 2.1 精简原则
+```markdown
+<!-- ❌ 避免：冗长的完整组件示例 -->
+```vue
+<template>
+  <div class="user-management">
+    <el-card>
+      <div slot="header">
+        <span>用户管理</span>
+        <el-button style="float: right;" type="primary" @click="handleAdd">新增用户</el-button>
+      </div>
+      <!-- 50+ 行的完整组件代码... -->
+    </el-card>
+  </div>
+</template>
+<script>
+export default {
+  name: 'UserManagement',
+  data() {
+    return {
+      // 大量数据定义...
+    }
+  },
+  methods: {
+    // 大量方法定义...
+  }
+}
+</script>
+```
+
+<!-- ✅ 推荐：关键模式示例 -->
+```vue
+<!-- 使用全局组件的标准模式 -->
+<search-form-v2 :items="formItems" @search="handleSearch" />
+<table-toolbar @refresh="getList" @add="handleAdd" />
+<base-table :data="list" :columns="columns" />
+<pagination :total="total" @pagination="getList" />
+```
+```
+
+#### 2.2 引用优先原则
+```markdown
+<!-- ❌ 避免：在规则中复制完整代码 -->
+
+<!-- ✅ 推荐：使用文件引用 -->
+参考标准实现：[设备管理模块](mdc:src/views/master-data/equipment/index.vue)
+
+关键模式：
+- 搜索表单配置：[formItems](mdc:src/views/master-data/equipment/config/form-config.js)
+- 表格列配置：[columns](mdc:src/views/master-data/equipment/config/table-config.js)
+- API调用：[equipment API](mdc:src/api/modules/master-data/equipment.js)
+```
+
+#### 2.3 模式展示优先
+```markdown
+<!-- ✅ 重点展示使用模式而非实现细节 -->
+
+## 错误处理标准模式
+
+### 基础模式
+```javascript
+async handleAction() {
+  try {
+    this.loading = true
+    await this.validateForm()
+    const result = await api.action(this.data)
+    this.$message.success('操作成功')
+    this.$emit('success', result)
+  } catch (error) {
+    this.handleError(error)
+  } finally {
+    this.loading = false
+  }
+}
+```
+
+### 扩展阅读
+详细实现参考：[错误处理工具](mdc:src/utils/error-handler.js)
+```
+
+### 3. 规则文件结构优化
+
+#### 3.1 分层架构
+```
+.cursor/rules/
+├── 00-overview.mdc              # 总览和导航 (≤2KB)
+├── core/                        # 核心规则
+│   ├── development-workflow.mdc # 开发流程 (≤5KB)
+│   ├── code-standards.mdc       # 代码规范 (≤5KB)
+│   └── project-structure.mdc    # 项目结构 (≤5KB)
+├── components/                  # 组件规范
+│   ├── global-components.mdc    # 全局组件使用 (≤6KB)
+│   ├── form-patterns.mdc        # 表单模式 (≤4KB)
+│   └── table-patterns.mdc       # 表格模式 (≤4KB)
+├── patterns/                    # 设计模式
+│   ├── api-patterns.mdc         # API设计模式 (≤4KB)
+│   ├── error-handling.mdc       # 错误处理模式 (≤4KB)
+│   └── state-management.mdc     # 状态管理模式 (≤4KB)
+└── examples/                    # 完整示例（仅引用）
+    ├── complete-module.mdc      # 完整模块示例
+    └── best-practices.mdc       # 最佳实践集合
+```
+
+#### 3.2 内容组织原则
+```markdown
+## 规则文件标准结构
+
+### 1. 文件头部（必需）
+- 规则说明与适用范围
+- 关键概念定义
+- 参考示例文件
+
+### 2. 核心规范（重点）
+- 必须遵循的规则
+- 关键模式和最佳实践
+- 常见错误和避免方法
+
+### 3. 实用示例（精简）
+- 1-2个核心使用模式
+- 关键代码片段（≤10行）
+- 完整示例的文件引用
+
+### 4. 扩展资源（可选）
+- 相关文档链接
+- 深入学习资源
+- 工具和插件推荐
+```
+
+### 4. 代码示例质量标准
+
+#### 4.1 示例选择标准
+- **代表性**：能代表80%的使用场景
+- **完整性**：包含关键要素但不冗余
+- **实用性**：可直接应用到实际项目
+- **清晰性**：逻辑清晰，易于理解
+
+#### 4.2 示例编写规范
+```markdown
+## 好的代码示例特征
+
+### ✅ 优秀示例
+```javascript
+// 清晰的注释说明用途
+const handleSearch = debounce(async () => {
+  this.listQuery.page = 1  // 重置页码
+  await this.getList()     // 执行搜索
+}, 300)
+```
+
+**使用场景**：搜索防抖处理
+**关键要点**：重置页码、防抖延迟
+**扩展**：[完整搜索组件示例](mdc:src/components/SearchForm/index.vue)
+
+### ❌ 避免的示例
+```javascript
+// 过于复杂的完整实现
+const handleComplexSearch = async (params, options, callbacks) => {
+  // 50+ 行的复杂逻辑...
+}
+```
+```
+
+### 5. 优化实施计划
+
+#### 阶段一：文件重构
+1. 拆分过大的规则文件（>12KB）
+2. 提取共用的代码示例到独立文件
+3. 建立清晰的文件引用关系
+
+#### 阶段二：内容精简
+1. 保留核心模式，移除冗余示例
+2. 将完整代码示例改为文件引用
+3. 强化关键概念和最佳实践描述
+
+#### 阶段三：结构优化
+1. 建立分层的规则文件架构
+2. 优化规则间的关联和导航
+3. 添加快速查找索引
+
+### 6. 效果评估标准
+
+**优化成功的标志**：
+- 单个规则文件加载时间 < 2秒
+- 开发者能在30秒内找到所需规范
+- AI助手能更准确理解和应用规则
+- 规则维护成本降低50%以上
+
+**持续监控指标**：
+- 规则文件平均大小
+- 代码示例与引用的比例
+- 开发者规则使用频率
+- 规则更新和维护频次
+
+## 总结
+
+通过合理控制代码示例的数量和质量，建立清晰的文件结构，可以显著提升 Cursor Rules 的效率和可维护性。关键是找到**示例丰富度**与**文件简洁性**之间的平衡点。
+
+

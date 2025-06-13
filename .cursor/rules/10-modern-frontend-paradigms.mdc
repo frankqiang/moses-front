@@ -1,21 +1,35 @@
 ---
 description: 
-globs: 
-alwaysApply: true
+globs: **/*.vue,**/*.js
+alwaysApply: false
 ---
-# 现代前端开发范式指南
+# 现代前端开发范式与组件复用规范
 
 ## 规则说明
-本规则专门针对现代前端开发的最佳范式，重点关注性能优化、错误处理、用户体验和代码健壮性。所有组件开发必须遵循这些现代化标准，确保应用的高性能、高可用性和优秀的用户体验。
+本规则专门针对现代前端开发的最佳范式，重点关注性能优化、错误处理、用户体验、代码健壮性和组件复用。所有组件开发必须遵循这些现代化标准，确保应用的高性能、高可用性和优秀的用户体验。
 
-## 核心范式原则
+## 🎯 核心范式原则
+
+### 🔄 组件复用优先原则
+**避免重复造轮子，优先使用已有的全局组件**
+
+1. **开发前必须检查**: 在开发新功能前，必须先检查 [src/components](mdc:src/components) 目录下的全局组件
+2. **功能扩展**: 如果现有组件功能接近但不完全匹配，优先考虑扩展现有组件而不是新建
+3. **决策树**: 全局组件 → 扩展现有组件 → 第三方库 → 自实现（需评审）
+
+### 📦 第三方库优先原则
+**成熟的第三方库优于自实现**
+
+- **工具函数**: 使用 `lodash.*`、`dayjs` 等成熟库而不是自己实现
+- **UI组件**: 基于 Element UI 扩展，而非完全自定义
+- **专用功能**: 图表用 `echarts`，拖拽用 `vue-draggable`，时间处理用 `dayjs`
+- **统一导入**: 从 `@/utils` 统一导入第三方工具
 
 ### 🚀 性能优先范式
-- **虚拟化渲染**：大数据集合必须实现虚拟滚动（阈值：1000+项）
+- **虚拟化渲染**：大数据集合（>1000项）必须实现虚拟滚动
 - **防抖节流机制**：用户交互必须添加防抖保护（300ms标准）
 - **懒加载策略**：按需加载资源和组件
 - **缓存优化**：计算结果和API响应智能缓存
-- **第三方库优化**：使用成熟的专用库而非自实现（如lodash.debounce、echarts等）
 
 ### 🛡️ 容错设计范式
 - **错误边界保护**：每个功能模块实现错误隔离
@@ -31,24 +45,42 @@ alwaysApply: true
 - **响应式适配**：多设备尺寸完美适配
 - **向后兼容**：新功能通过特性开关渐进式启用
 
-## 第三方库集成标准
+## 📋 必须使用的全局组件清单
 
-### 依赖管理最佳实践
+### 表格系统
+- **[BaseTable](mdc:src/components/BaseTable/index.vue)** - 替代 `el-table`，支持虚拟滚动、响应式、错误处理
+- **[TableToolbar](mdc:src/components/TableToolbar/index.vue)** - 表格工具栏，包含搜索、刷新、导入导出、列设置、批量操作
+- **[Pagination](mdc:src/components/Pagination/index.vue)** - 替代 `el-pagination`，支持响应式、自动滚动
+
+### 操作组件
+- **[ActionButtons](mdc:src/components/ActionButtons/index.vue)** - 操作按钮组，支持预设配置、权限控制、防抖保护
+- **[StatusTag](mdc:src/components/StatusTag/index.vue)** - 替代 `el-tag` 显示业务状态，支持预设配置、自定义映射
+- **[RefreshButton](mdc:src/components/RefreshButton/index.vue)** - 刷新功能，支持防抖保护、加载状态、错误重试
+
+### 数据交换
+- **[ImportButton](mdc:src/components/ImportButton/index.vue)** - 数据导入，支持文件验证、模板下载、进度显示
+- **[ExportButton](mdc:src/components/ExportButton/index.vue)** - 数据导出，支持多格式、筛选导出、下载管理
+- **[BatchAction](mdc:src/components/BatchAction/index.vue)** - 批量操作，支持多选确认、操作分组、错误处理
+- **[ColumnSettings](mdc:src/components/ColumnSettings/index.vue)** - 列设置，支持拖拽排序、显示隐藏、配置保存
+
+## 🛠️ 第三方库集成标准
+
+### 必须使用的工具库
 参考项目中[utils/index.js](mdc:src/utils/index.js)的实现标准：
 
 ```javascript
-// 第三方库工具函数统一导出
-import debounce from 'lodash.debounce'
-import throttle from 'lodash.throttle'
-import cloneDeep from 'lodash.clonedeep'
-import * as echarts from 'echarts'
+// ✅ 正确：从统一入口导入
+import { debounce, throttle, cloneDeep, echarts } from '@/utils'
 
-// 统一导出，便于项目内使用
-export { debounce, throttle, cloneDeep, echarts }
-
-// 项目内任何地方都可以这样使用
-// import { debounce, throttle } from '@/utils'
+// ❌ 错误：自实现工具函数
+function myDebounce(fn, delay) { /* 禁止 */ }
 ```
+
+**核心工具库**:
+- `lodash.debounce/throttle` - 防抖节流
+- `echarts` - 图表组件
+- `dayjs` - 时间处理
+- `vue-draggable` - 拖拽功能
 
 ### 第三方库选择原则
 1. **优先使用专用库**：如lodash.debounce而非完整lodash
@@ -57,728 +89,160 @@ export { debounce, throttle, cloneDeep, echarts }
 4. **兼容性检查**：确保与项目Vue版本兼容
 5. **文档齐全**：选择有完善文档和社区支持的库
 
-## 虚拟滚动标准实现
+## 💻 技术实现标准
 
-### 基础虚拟滚动模式
-参考 [BaseTable组件](mdc:src/components/BaseTable/index.vue) 的实现标准：
+### 虚拟滚动实现
+大数据列表（>1000项）必须使用虚拟滚动，参考 [BaseTable组件](mdc:src/components/BaseTable/index.vue)：
 
 ```javascript
-// 虚拟滚动核心逻辑
-const VirtualScrollCore = {
-  props: {
-    virtualThreshold: { type: Number, default: 1000 },
-    virtualHeight: { type: Number, default: 400 },
-    itemHeight: { type: Number, default: 40 },
-    bufferSize: { type: Number, default: 5 }
-  },
-  
-  data() {
-    return {
-      scrollTop: 0,
-      startIndex: 0,
-      endIndex: 0
-    }
-  },
-  
-  computed: {
-    shouldVirtualize() {
-      return this.data.length > this.virtualThreshold
-    },
-    
-    visibleCount() {
-      return Math.ceil(this.virtualHeight / this.itemHeight)
-    },
-    
-    visibleData() {
-      if (!this.shouldVirtualize) return this.data
-      
-      const start = Math.max(0, this.startIndex - this.bufferSize)
-      const end = Math.min(this.data.length, this.endIndex + this.bufferSize)
-      
-      return this.data.slice(start, end).map((item, index) => ({
-        ...item,
-        _virtualIndex: start + index
-      }))
-    }
+computed: {
+  shouldVirtualize() {
+    return this.data.length > 1000
   }
 }
 ```
 
-### 高性能渲染优化
+### 防抖节流优化策略
 ```javascript
-// 渲染性能优化技巧
-const RenderOptimization = {
-  methods: {
-    // 使用Object.freeze冻结大量只读数据
-    freezeStaticData(data) {
-      return Object.freeze(data.map(item => Object.freeze(item)))
-    },
-    
-    // 使用Vue.set进行响应式更新
-    updateListItem(index, newData) {
-      this.$set(this.list, index, { ...this.list[index], ...newData })
-    },
-    
-    // 避免深度侦听大对象
-    watchShallow() {
-      return {
-        data: {
-          handler: 'handleDataChange',
-          immediate: true
-          // 注意：不使用deep: true
-        }
-      }
-    }
-  }
-}
-```
-
-## 错误边界与容错机制
-
-### ErrorBoundary组件标准
-参考[ActionButtons组件](mdc:src/components/ActionButtons/index.vue)的ErrorBoundary实现：
-
-```javascript
-// 标准错误边界组件实现
-const ErrorBoundary = {
-  name: 'ErrorBoundary',
-  
-  props: {
-    fallbackComponent: { type: String, default: 'ErrorFallback' },
-    onError: { type: Function },
-    maxRetries: { type: Number, default: 3 },
-    retryDelay: { type: Number, default: 1000 }
-  },
-  
-  data() {
-    return {
-      hasError: false,
-      errorInfo: null,
-      retryCount: 0,
-      isRetrying: false
-    }
-  },
-  
-  errorCaptured(err, vm, info) {
-    this.hasError = true
-    this.errorInfo = {
-      message: err.message,
-      stack: err.stack,
-      componentStack: info,
-      timestamp: new Date().toISOString()
-    }
-    
-    // 错误上报
-    this.reportError(this.errorInfo)
-    
-    // 触发父组件错误处理
-    if (this.onError) {
-      this.onError(this.errorInfo)
-    }
-    
-    return false // 阻止错误传播
-  },
-  
-  methods: {
-    async retry() {
-      if (this.retryCount >= this.maxRetries) return
-      
-      this.isRetrying = true
-      this.retryCount++
-      
-      await new Promise(resolve => setTimeout(resolve, this.retryDelay))
-      
-      this.hasError = false
-      this.errorInfo = null
-      this.isRetrying = false
-      
-      this.$emit('retry', this.retryCount)
-    },
-    
-    reset() {
-      this.hasError = false
-      this.errorInfo = null
-      this.retryCount = 0
-      this.isRetrying = false
-    },
-    
-    reportError(errorInfo) {
-      // 发送错误信息到监控系统
-      if (window.errorReporter) {
-        window.errorReporter.captureException(errorInfo)
-      }
-    }
-  }
-}
-```
-
-### 数据安全访问模式
-```javascript
-// 安全的数据访问工具
-const SafeDataAccess = {
-  methods: {
-    // 安全获取嵌套属性
-    safeGet(obj, path, defaultValue = null) {
-      try {
-        return path.split('.').reduce((current, key) => {
-          if (current === null || current === undefined) {
-            return defaultValue
-          }
-          return current[key] !== undefined ? current[key] : defaultValue
-        }, obj)
-      } catch (error) {
-        console.warn(`SafeGet failed for path: ${path}`, error)
-        return defaultValue
-      }
-    },
-    
-    // 安全的时间格式化
-    safeFormatTime(time, format = 'YYYY-MM-DD HH:mm:ss') {
-      try {
-        if (!time) return ''
-        
-        const date = new Date(time)
-        if (isNaN(date.getTime())) return ''
-        
-        return this.formatDate(date, format)
-      } catch (error) {
-        console.warn('Time formatting error:', error)
-        return ''
-      }
-    },
-    
-    // 数据类型验证
-    validateDataType(data, expectedType, fieldName = 'data') {
-      const actualType = typeof data
-      if (actualType !== expectedType) {
-        console.warn(`Type mismatch for ${fieldName}: expected ${expectedType}, got ${actualType}`)
-        return false
-      }
-      return true
-    }
-  }
-}
-```
-
-## 防抖节流优化策略
-
-### 智能防抖实现
-项目已集成lodash.debounce，使用方式参考[ActionButtons组件](mdc:src/components/ActionButtons/index.vue)：
-
-```javascript
-// 从统一工具函数导入
-import { debounce, throttle } from '@/utils'
-
 // 组件防抖使用标准
-export default {
-  created() {
-    // 搜索防抖 - 标准300ms延迟
-    this.debouncedSearch = debounce(this.handleSearch, 300)
-    
-    // 保存防抖 - 较长延迟避免误操作
-    this.debouncedSave = debounce(this.handleSave, 500)
-    
-    // 滚动节流 - 高频操作使用节流
-    this.throttledScroll = throttle(this.handleScroll, 16) // 60fps
-  },
-  
-  beforeDestroy() {
-    // 清理防抖函数（如果支持）
-    if (this.debouncedSearch.cancel) {
-      this.debouncedSearch.cancel()
-    }
-  },
-  
-  methods: {
-    handleButtonClick(button) {
-      // 所有按钮点击都应该有防抖保护
-      const debouncedHandler = debounce(() => {
-        this.$emit(button.event || 'click', button)
-      }, 300)
-      
-      debouncedHandler()
-    }
-  }
+created() {
+  this.debouncedSearch = debounce(this.handleSearch, 300)
+  this.debouncedSave = debounce(this.handleSave, 500)
 }
 ```
 
-### 防抖节流应用场景
-- **搜索输入**：300ms防抖，避免频繁API调用
-- **按钮点击**：300ms防抖，防止重复提交
-- **表单保存**：500ms防抖，给用户确认时间
-- **滚动事件**：16ms节流，保持60fps流畅度
-- **窗口大小调整**：100ms节流，避免频繁重计算
-
-## 用户体验优化模式
-
-### 加载状态管理
+### 错误处理模式
 ```javascript
-// 统一加载状态管理
-const LoadingManager = {
-  data() {
-    return {
-      loadingStates: new Map(),
-      loadingMessages: new Map()
-    }
-  },
-  
-  methods: {
-    setLoading(key, loading, message = '加载中...') {
-      this.loadingStates.set(key, loading)
-      if (loading && message) {
-        this.loadingMessages.set(key, message)
-      } else if (!loading) {
-        this.loadingMessages.delete(key)
-      }
-    },
-    
-    isLoading(key) {
-      return this.loadingStates.get(key) || false
-    },
-    
-    getLoadingMessage(key) {
-      return this.loadingMessages.get(key) || '加载中...'
-    },
-    
-    isAnyLoading() {
-      return Array.from(this.loadingStates.values()).some(Boolean)
-    }
+// 安全的API调用
+async handleOperation() {
+  try {
+    await this.apiCall()
+    this.$message.success('操作成功')
+  } catch (error) {
+    this.$message.error('操作失败: ' + error.message)
   }
 }
 ```
 
-### 操作反馈标准
-```javascript
-// 操作反馈系统
-const FeedbackSystem = {
-  methods: {
-    // 成功操作反馈
-    showSuccess(message, options = {}) {
-      const config = {
-        type: 'success',
-        message,
-        duration: 3000,
-        showClose: true,
-        ...options
-      }
-      
-      this.$message(config)
-    },
-    
-    // 错误操作反馈
-    showError(error, allowRetry = false) {
-      const message = this.extractErrorMessage(error)
-      
-      if (allowRetry && this.isRetryableError(error)) {
-        return this.$confirm(message, '操作失败', {
-          confirmButtonText: '重试',
-          cancelButtonText: '取消',
-          type: 'error',
-          closeOnClickModal: false
-        })
-      } else {
-        this.$message.error({
-          message,
-          duration: 5000,
-          showClose: true
-        })
-      }
-    },
-    
-    // 提取错误信息
-    extractErrorMessage(error) {
-      if (typeof error === 'string') return error
-      if (error.message) return error.message
-      if (error.response?.data?.message) return error.response.data.message
-      return '操作失败，请稍后重试'
-    },
-    
-    // 判断是否可重试错误
-    isRetryableError(error) {
-      if (error.retryable !== undefined) return error.retryable
-      if (error.response?.status >= 500) return true
-      if (error.code === 'NETWORK_ERROR') return true
-      return false
-    }
-  }
-}
-```
-
-## 图表组件标准化
-
-### ECharts集成规范
-参考[ProcessCurveChart组件](mdc:src/views/master-data/process-parameter/components/ProcessCurveChart.vue)的实现：
-
-```javascript
-// ECharts组件标准实现
-import { echarts } from '@/utils'
-
-export default {
-  name: 'ChartComponent',
-  
-  props: {
-    // 图表数据
-    data: { type: Array, required: true },
-    // 图表配置
-    options: { type: Object, default: () => ({}) },
-    // 主题
-    theme: { type: String, default: 'light' },
-    // 尺寸
-    height: { type: [String, Number], default: '400px' },
-    width: { type: [String, Number], default: '100%' }
-  },
-  
-  data() {
-    return {
-      chart: null,
-      resizeObserver: null
-    }
-  },
-  
-  mounted() {
-    this.initChart()
-    this.setupResize()
-  },
-  
-  beforeDestroy() {
-    this.cleanup()
-  },
-  
-  methods: {
-    initChart() {
-      try {
-        // 初始化图表实例
-        this.chart = echarts.init(this.$refs.chartContainer, this.theme)
-        
-        // 设置图表配置
-        this.updateChart()
-        
-        // 添加事件监听
-        this.chart.on('click', this.handleChartClick)
-      } catch (error) {
-        console.error('图表初始化失败:', error)
-        this.$emit('error', error)
-      }
-    },
-    
-    updateChart() {
-      if (!this.chart) return
-      
-      try {
-        const option = this.generateOption()
-        this.chart.setOption(option, true)
-      } catch (error) {
-        console.error('图表更新失败:', error)
-        this.$emit('error', error)
-      }
-    },
-    
-    setupResize() {
-      // 使用ResizeObserver监听容器大小变化
-      if (window.ResizeObserver) {
-        this.resizeObserver = new ResizeObserver(() => {
-          if (this.chart) {
-            this.chart.resize()
-          }
-        })
-        this.resizeObserver.observe(this.$refs.chartContainer)
-      }
-    },
-    
-    cleanup() {
-      // 清理图表实例
-      if (this.chart) {
-        this.chart.dispose()
-        this.chart = null
-      }
-      
-      // 清理观察者
-      if (this.resizeObserver) {
-        this.resizeObserver.disconnect()
-        this.resizeObserver = null
-      }
-    }
-  }
-}
-```
-
-## 代码质量保证
-
-### 类型安全检查
-```javascript
-// Props类型安全验证
-const TypeSafeProps = {
-  props: {
-    data: {
-      type: Array,
-      required: true,
-      validator(value) {
-        // 数组类型检查
-        if (!Array.isArray(value)) {
-          console.error('Data prop must be an array')
-          return false
-        }
-        
-        // 数组项结构检查
-        if (value.length > 0 && !this.validateDataStructure(value[0])) {
-          console.error('Invalid data structure in array items')
-          return false
-        }
-        
-        return true
-      }
-    },
-    
-    columns: {
-      type: Array,
-      required: true,
-      validator(columns) {
-        return columns.every(col => {
-          if (!col.prop || typeof col.prop !== 'string') {
-            console.error('Column must have a valid prop string')
-            return false
-          }
-          return true
-        })
-      }
-    }
-  },
-  
-  methods: {
-    validateDataStructure(item) {
-      return item && 
-             typeof item === 'object' && 
-             !Array.isArray(item) &&
-             Object.keys(item).length > 0
-    }
-  }
-}
-```
-
-### 内存泄漏防护
-```javascript
-// 内存管理最佳实践
-const MemoryManagement = {
-  data() {
-    return {
-      timers: new Set(),
-      observers: new Set(),
-      eventListeners: new Map()
-    }
-  },
-  
-  methods: {
-    // 安全的定时器
-    safeSetTimeout(callback, delay) {
-      const timerId = setTimeout(() => {
-        callback()
-        this.timers.delete(timerId)
-      }, delay)
-      
-      this.timers.add(timerId)
-      return timerId
-    },
-    
-    // 安全的事件监听
-    safeAddEventListener(element, event, handler, options) {
-      element.addEventListener(event, handler, options)
-      
-      const key = `${element}_${event}`
-      this.eventListeners.set(key, { element, event, handler, options })
-    },
-    
-    // 安全的观察者
-    safeCreateObserver(target, callback, options) {
-      const observer = new IntersectionObserver(callback, options)
-      observer.observe(target)
-      
-      this.observers.add(observer)
-      return observer
-    }
-  },
-  
-  beforeDestroy() {
-    // 清理定时器
-    this.timers.forEach(timerId => clearTimeout(timerId))
-    this.timers.clear()
-    
-    // 清理事件监听器
-    this.eventListeners.forEach(({ element, event, handler, options }) => {
-      element.removeEventListener(event, handler, options)
-    })
-    this.eventListeners.clear()
-    
-    // 清理观察者
-    this.observers.forEach(observer => observer.disconnect())
-    this.observers.clear()
-  }
-}
-```
-
-## 向后兼容性设计
-
-### 特性开关模式
+### 向后兼容性设计
 参考[ActionButtons组件](mdc:src/components/ActionButtons/index.vue)的兼容性设计：
 
 ```javascript
 // 向后兼容的特性开关
-export default {
-  props: {
-    // 启用现代化特性
-    enableModernFeatures: {
-      type: Boolean,
-      default: false // 默认关闭，确保向后兼容
-    },
-    
-    // 传统模式配置
-    buttons: { type: Array, required: true },
-    
-    // 现代模式配置
-    preset: { type: String, default: '' },
-    theme: { type: String, default: 'default' }
-  },
-  
-  computed: {
-    // 根据特性开关决定使用哪种模式
-    effectiveButtons() {
-      if (this.enableModernFeatures && this.preset) {
-        return this.getPresetButtons(this.preset)
-      }
-      return this.buttons // 兼容传统用法
-    }
-  },
-  
-  methods: {
-    handleClick(button) {
-      if (this.enableModernFeatures) {
-        // 现代模式：添加防抖、错误处理等
-        this.modernClickHandler(button)
-      } else {
-        // 传统模式：保持原有行为
-        this.legacyClickHandler(button)
-      }
-    }
+props: {
+  enableModernFeatures: { type: Boolean, default: false }
+},
+computed: {
+  effectiveButtons() {
+    return this.enableModernFeatures && this.preset 
+      ? this.getPresetButtons(this.preset)
+      : this.buttons // 兼容传统用法
   }
 }
 ```
 
-## ESLint代码质量标准
+## 📊 代码实现规范
 
-### 必须解决的ESLint错误类型
-基于项目当前存在的问题，重点关注：
+### ✅ 正确示例
+```vue
+<template>
+  <div class="product-list">
+    <!-- 使用全局组件 -->
+    <table-toolbar :enable-batch-actions="true" @refresh="getList" />
+    <base-table :data="tableData" :columns="columns" />
+    <pagination :total="total" :page.sync="query.page" @pagination="getList" />
+  </div>
+</template>
 
-1. **未使用变量清理**：删除或注释未使用的导入和变量
-2. **重复键检查**：避免对象中的重复键定义
-3. **原型方法访问**：使用Object.prototype.hasOwnProperty.call()替代直接访问
-4. **组件注册检查**：确保注册的组件都被使用
+<script>
+import { debounce } from '@/utils'
 
-```javascript
-// ESLint问题修复示例
-
-// ❌ 错误：未使用的导入
-import { CommonButtons, generateTableButtons } from '@/utils/button-helper'
-
-// ✅ 正确：删除未使用的导入
-// 如果确实需要，添加eslint-disable注释
-// eslint-disable-next-line no-unused-vars
-import { CommonButtons } from '@/utils/button-helper'
-
-// ❌ 错误：重复键
-const methods = {
-  formatPrice() { return 'old' },
-  formatPrice() { return 'new' } // 重复键
+export default {
+  created() {
+    this.debouncedSearch = debounce(this.handleSearch, 300)
+  }
 }
-
-// ✅ 正确：移除重复键
-const methods = {
-  formatPrice() { return 'new' }
-}
-
-// ❌ 错误：直接访问原型方法
-if (obj.hasOwnProperty('key')) {}
-
-// ✅ 正确：安全的原型方法访问
-if (Object.prototype.hasOwnProperty.call(obj, 'key')) {}
+</script>
 ```
 
-## 现代化质量检查清单
+### ❌ 错误示例
+```vue
+<template>
+  <!-- 错误：自实现已有组件功能 -->
+  <div class="custom-toolbar">
+    <el-button @click="refresh">刷新</el-button>
+  </div>
+  <!-- 错误：直接使用el-table而不是BaseTable -->
+  <el-table :data="tableData"></el-table>
+</template>
 
-### 必须检查项（强制性）
-- [ ] **依赖管理**：所有第三方库已正确安装（如echarts、lodash.*）
-- [ ] **ESLint合规**：代码通过ESLint检查，无错误警告
-- [ ] **错误边界**：关键组件实现了ErrorBoundary保护
-- [ ] **防抖保护**：用户交互操作添加了防抖/节流
-- [ ] **类型验证**：Props进行了严格的类型验证
-- [ ] **内存清理**：定时器、事件监听器、观察者正确清理
+<script>
+export default {
+  methods: {
+    // 错误：自实现工具函数
+    debounce(fn, delay) { /* 禁止 */ }
+  }
+}
+</script>
+```
 
-### 性能检查项
-- [ ] 大数据列表（>1000项）实现了虚拟滚动
-- [ ] 组件和路由实现了懒加载
-- [ ] 图片和媒体资源实现了懒加载
-- [ ] 复杂计算使用了计算属性缓存
-- [ ] 大对象使用了Object.freeze优化
+## 🔧 质量检查清单
 
-### 体验检查项
-- [ ] 所有异步操作有loading状态提示
-- [ ] 用户操作有及时的成功/失败反馈
-- [ ] 支持键盘导航和无障碍访问
-- [ ] 在不同设备尺寸上表现良好
-- [ ] 交互动画流畅自然（60fps）
+### 强制检查项
+- [ ] **组件复用**: 使用了合适的全局组件
+- [ ] **第三方库**: 优先使用了成熟的第三方库
+- [ ] **防抖保护**: 用户交互添加了防抖机制
+- [ ] **错误处理**: 实现了完善的错误处理
+- [ ] **性能优化**: 大数据使用了虚拟滚动
+- [ ] **ESLint合规**: 代码通过ESLint检查
 
-### 兼容性检查项
-- [ ] 新功能通过特性开关控制
-- [ ] 现有代码无需修改即可工作
-- [ ] 提供平滑的迁移路径
-- [ ] 详细的升级文档和示例
-
-## 性能基准要求
-
-### 渲染性能指标
+### 性能基准要求
 - **首屏渲染（FCP）**：< 1.5秒
-- **最大内容绘制（LCP）**：< 2.5秒
-- **累积布局偏移（CLS）**：< 0.1
-- **首次输入延迟（FID）**：< 100ms
-
-### 运行时性能指标
-- **列表滚动帧率**：保持60fps
 - **交互响应时间**：< 100ms
+- **列表滚动帧率**：保持60fps
 - **内存使用增长**：< 10MB/小时
-- **JavaScript执行时间**：< 50ms per frame
 
-### 网络性能指标
-- **API响应时间**：< 500ms
-- **静态资源加载**：< 3秒
-- **图片优化率**：> 70%
-- **代码分割效果**：初始包 < 250KB
+## 🚫 违规行为与例外
 
-## 实际应用指导
+### 常见违规行为
+1. **重复造轮子**：实现已有的工具函数或组件功能
+2. **忽略全局组件**：自实现已有的全局组件功能
+3. **直接使用基础组件**：用 `el-table` 而不是 `BaseTable`
+4. **自实现通用功能**：防抖、节流、时间处理等
 
-### 组件开发流程
-1. **需求分析**：明确组件功能和性能要求
-2. **技术选型**：选择合适的第三方库和技术方案
-3. **架构设计**：设计组件API和内部结构
-4. **编码实现**：遵循本规范进行开发
-5. **质量检查**：使用检查清单验证质量
-6. **测试验证**：功能测试、性能测试、兼容性测试
-7. **文档完善**：编写使用文档和示例
+### 允许例外的情况
+1. **性能关键**: 第三方库性能不足
+2. **特殊业务**: 业务逻辑过于复杂
+3. **依赖冲突**: 与现有技术栈冲突
+4. **安全考虑**: 第三方库存在安全风险
 
-### 代码评审要点
-1. **依赖检查**：确认所有依赖已正确安装
-2. **ESLint合规**：代码无ESLint错误和警告
-3. **性能评估**：是否满足性能基准要求
-4. **错误处理**：是否有完善的错误处理机制
-5. **用户体验**：是否提供良好的交互反馈
-6. **兼容性**：是否保持向后兼容
+**申请例外需要**: 技术分析报告 + 成本评估 + 技术负责人审批
 
-### 最佳实践总结
+## 🔄 组件扩展指南
 
-1. **始终考虑边界情况**：空数据、网络错误、用户权限等
-2. **优先考虑用户体验**：加载状态、错误提示、操作反馈
-3. **保持代码的可维护性**：清晰的命名、合理的抽象、充分的文档
-4. **持续性能监控**：建立性能基准，定期检查和优化
-5. **渐进式增强**：核心功能稳定可用，增强功能按需加载
-6. **拥抱第三方生态**：使用成熟的第三方库而非重复造轮子
-7. **确保项目质量**：所有组件都应通过质量检查清单验证
+### 扩展 vs 新建决策
+- **扩展现有组件**: 功能相似度 > 70%
+- **新建组件**: 功能完全不同且无合适第三方库
 
-通过遵循这些现代前端开发范式，我们可以确保项目中的每个组件都达到最佳实践标准，提供出色的用户体验和可维护的代码质量。
+### 扩展方式
+1. **属性扩展**: 添加新props支持新功能
+2. **插槽扩展**: 使用slot提供自定义区域
+3. **事件扩展**: 添加新事件支持新交互
+4. **混入扩展**: 通过mixin添加通用功能
+
+## 📈 持续改进
+
+### 定期维护
+- **月度评估**: 检查新的优秀第三方库
+- **季度优化**: 整理全局组件，移除冗余功能
+- **年度升级**: 升级主要依赖到最新稳定版
+
+### 反馈机制
+- 发现更好的第三方库时，及时更新规范
+- 全局组件功能不足时，优先扩展而不是新建
+- 收集开发者反馈，持续优化组件API
+
+---
+
+**核心理念：好的代码不是写出来的，而是组合出来的。优先使用成熟的组件和库，把精力集中在业务逻辑的实现上。**
 

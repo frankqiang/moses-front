@@ -65,7 +65,7 @@ alwaysApply: true
 
 ### 设计规范
 - **[现代UI设计](mdc:.cursor/rules/06-modern-ui-design.mdc)** - UI设计指导原则
-- **[组件复用与第三方库优先原则](mdc:.cursor/rules/07-component-reuse-and-third-party-priority.mdc)** - 全局组件使用和第三方库优先规范
+- **[现代前端开发范式](mdc:.cursor/rules/10-modern-frontend-paradigms.mdc)** - 现代前端开发最佳实践和组件复用规范
 
 ## 规则使用建议
 
