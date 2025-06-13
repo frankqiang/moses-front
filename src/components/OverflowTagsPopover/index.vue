@@ -39,7 +39,7 @@
     <!-- 正常显示状态 -->
     <template v-else-if="formattedData.length > 0">
       <!-- 直接显示的标签 -->
-      <template v-for="(item, index) in visibleItems" :key="getItemKey(item, index)">
+      <div v-for="(item, index) in visibleItems" :key="getItemKey(item, index)" style="display: inline-block; margin-right: 8px;">
         <slot name="tag" :item="item" :index="index">
           <el-tag
             :size="size"
@@ -51,7 +51,7 @@
             {{ safeGetItemLabel(item) }}
           </el-tag>
         </slot>
-      </template>
+      </div>
 
       <!-- 溢出标签的弹出框 -->
       <el-popover
@@ -112,7 +112,7 @@
             </div>
 
             <!-- 普通滚动模式 -->
-            <template v-else>
+            <div v-else>
               <div
                 v-for="(item, index) in filteredData"
                 :key="getItemKey(item, index)"
@@ -122,7 +122,7 @@
                   <span>{{ index + 1 }}. {{ safeGetItemLabel(item) }}</span>
                 </slot>
               </div>
-            </template>
+            </div>
 
             <!-- 无搜索结果 -->
             <div v-if="filteredData.length === 0 && searchKeyword" class="no-results">

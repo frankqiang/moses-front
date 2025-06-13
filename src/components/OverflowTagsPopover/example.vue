@@ -38,7 +38,7 @@
       <div slot="header">
         <span>1. 基础用法对比</span>
       </div>
-      
+
       <div class="demo-row">
         <div class="demo-item">
           <h4>传统模式</h4>
@@ -46,12 +46,13 @@
             <overflow-tags-popover
               :data="basicTags"
               :max-show="2"
+              :enable-modern-features="false"
               title="基础标签"
               type="primary"
             />
           </div>
         </div>
-        
+
         <div class="demo-item">
           <h4>现代化模式</h4>
           <div class="demo-content">
@@ -78,7 +79,7 @@
           {{ largeTags.length }} 个标签
         </el-tag>
       </div>
-      
+
       <div class="demo-content">
         <overflow-tags-popover
           :data="largeTags"
@@ -88,7 +89,7 @@
           :virtual-item-height="36"
           enable-virtual-scroll
           title="大数据集标签"
-          popover-width="400"
+          :popover-width="400"
         />
       </div>
     </el-card>
@@ -98,7 +99,7 @@
       <div slot="header">
         <span>3. 搜索和筛选功能</span>
       </div>
-      
+
       <div class="demo-content">
         <overflow-tags-popover
           :data="productTags"
@@ -128,7 +129,7 @@
       <div slot="header">
         <span>4. 自定义标签类型映射</span>
       </div>
-      
+
       <div class="demo-content">
         <overflow-tags-popover
           :data="statusTags"
@@ -144,14 +145,14 @@
               size="small"
               :class="{'premium-tag': item.premium}"
             >
-              <i :class="item.icon" style="margin-right: 4px;"></i>
+              <i :class="item.icon" style="margin-right: 4px;" />
               {{ item.name }}
             </el-tag>
           </template>
-          
+
           <template #popover-item="{ item, index }">
             <div class="status-item">
-              <i :class="item.icon"></i>
+              <i :class="item.icon" />
               <span class="status-name">{{ item.name }}</span>
               <span class="status-desc">{{ item.description }}</span>
             </div>
@@ -165,7 +166,7 @@
       <div slot="header">
         <span>5. 错误处理和重试机制</span>
       </div>
-      
+
       <div class="demo-content">
         <overflow-tags-popover
           :data="simulateError ? null : errorDemoTags"
@@ -179,7 +180,7 @@
         >
           <template #error="{ error, retry }">
             <div class="custom-error">
-              <i class="el-icon-warning-outline"></i>
+              <i class="el-icon-warning-outline" />
               <span>{{ error.message }}</span>
               <el-button size="mini" type="text" @click="retry">
                 重新加载
@@ -195,7 +196,7 @@
       <div slot="header">
         <span>6. 完整功能演示</span>
       </div>
-      
+
       <div class="demo-content">
         <overflow-tags-popover
           :data="fullFeatureTags"
@@ -209,7 +210,7 @@
           enable-export
           :search-threshold="3"
           title="完整功能演示"
-          popover-width="450"
+          :popover-width="450"
           @tag-click="handleTagClick"
           @more-click="handleMoreClick"
           @search="handleSearch"
@@ -224,7 +225,7 @@
               effect="dark"
             >
               {{ item.name }}
-              <i v-if="item.featured" class="el-icon-star-on" style="margin-left: 4px;"></i>
+              <i v-if="item.featured" class="el-icon-star-on" style="margin-left: 4px;" />
             </el-tag>
           </template>
 
@@ -260,7 +261,7 @@
         <span>事件日志</span>
         <el-button size="mini" style="float: right;" @click="clearLogs">清空</el-button>
       </div>
-      
+
       <div class="event-logs">
         <div v-if="eventLogs.length === 0" class="no-logs">
           暂无事件日志
@@ -287,25 +288,25 @@ export default {
   components: {
     OverflowTagsPopover
   },
-  
+
   data() {
     return {
       // 全局控制
       globalEnableModern: true,
       simulateLoading: false,
       simulateError: false,
-      
+
       // 事件日志
       eventLogs: [],
-      
+
       // 基础标签数据
       basicTags: [
         '前端开发', 'Vue.js', 'JavaScript', 'TypeScript', 'CSS3', 'HTML5'
       ],
-      
+
       // 大数据集
       largeTags: [],
-      
+
       // 产品标签
       productTags: [
         { id: 1, name: '智能手机', code: 'SP001', status: 'active' },
@@ -317,48 +318,48 @@ export default {
         { id: 7, name: '游戏手柄', code: 'GC001', status: 'active' },
         { id: 8, name: '充电器', code: 'CH001', status: 'active' }
       ],
-      
+
       // 状态标签
       statusTags: [
-        { 
-          id: 1, 
-          name: '运行中', 
-          description: '系统正常运行', 
+        {
+          id: 1,
+          name: '运行中',
+          description: '系统正常运行',
           status: 'running',
           icon: 'el-icon-success',
           premium: false
         },
-        { 
-          id: 2, 
-          name: '维护中', 
-          description: '系统维护升级', 
+        {
+          id: 2,
+          name: '维护中',
+          description: '系统维护升级',
           status: 'maintenance',
           icon: 'el-icon-warning',
           premium: false
         },
-        { 
-          id: 3, 
-          name: '故障', 
-          description: '系统出现故障', 
+        {
+          id: 3,
+          name: '故障',
+          description: '系统出现故障',
           status: 'error',
           icon: 'el-icon-error',
           premium: false
         },
-        { 
-          id: 4, 
-          name: '高级功能', 
-          description: '付费用户专享', 
+        {
+          id: 4,
+          name: '高级功能',
+          description: '付费用户专享',
           status: 'premium',
           icon: 'el-icon-star-on',
           premium: true
         }
       ],
-      
+
       // 错误演示数据
       errorDemoTags: [
         '正常标签1', '正常标签2', '正常标签3'
       ],
-      
+
       // 完整功能演示数据
       fullFeatureTags: [
         {
@@ -412,18 +413,18 @@ export default {
       ]
     }
   },
-  
+
   created() {
     this.generateLargeTags()
   },
-  
+
   methods: {
     // 生成大数据集
     generateLargeTags() {
       const categories = ['技术', '工具', '框架', '库', '语言', '平台', '服务', '产品']
       const prefixes = ['现代', '高效', '智能', '快速', '强大', '灵活', '安全', '可靠']
       const suffixes = ['系统', '工具', '平台', '服务', '框架', '组件', '模块', '应用']
-      
+
       this.largeTags = Array.from({ length: 500 }, (_, index) => {
         const category = categories[index % categories.length]
         const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]
@@ -431,7 +432,7 @@ export default {
         return `${category}-${prefix}${suffix}${index + 1}`
       })
     },
-    
+
     // 获取状态标签类型
     getStatusTagType(item) {
       switch (item.status) {
@@ -442,13 +443,13 @@ export default {
         default: return 'info'
       }
     },
-    
+
     // 获取功能标签类型
     getFeatureTagType(item) {
       if (item.featured) return 'danger'
       return item.category === 'premium' ? 'warning' : 'success'
     },
-    
+
     // 记录事件日志
     logEvent(event, data) {
       this.eventLogs.unshift({
@@ -456,47 +457,47 @@ export default {
         event,
         data: typeof data === 'object' ? JSON.stringify(data) : data
       })
-      
+
       // 限制日志数量
       if (this.eventLogs.length > 50) {
         this.eventLogs = this.eventLogs.slice(0, 50)
       }
     },
-    
+
     // 清空日志
     clearLogs() {
       this.eventLogs = []
     },
-    
+
     // === 事件处理器 ===
     handleTagClick(data) {
       this.logEvent('标签点击', data)
       this.$message.success(`点击了标签: ${JSON.stringify(data)}`)
     },
-    
+
     handleMoreClick(data) {
       this.logEvent('更多标签点击', data)
       this.$message.info(`点击了更多标签: 总共${data.totalCount}个，隐藏${data.hiddenCount}个`)
     },
-    
+
     handleSearch(keyword) {
       this.logEvent('搜索', keyword)
       console.log('搜索关键词:', keyword)
     },
-    
+
     handleSelectAll(data) {
       this.logEvent('全选', `选中${data.length}项`)
       this.$message.success(`已选中 ${data.length} 项`)
     },
-    
+
     handleExport(data) {
       this.logEvent('导出', `导出${data.length}项`)
-      
+
       // 模拟导出功能
-      const csvContent = data.map(item => 
+      const csvContent = data.map(item =>
         `${item.index},${item.label.replace(/,/g, ';')}`
       ).join('\n')
-      
+
       const blob = new Blob([`序号,标签\n${csvContent}`], { type: 'text/csv;charset=utf-8;' })
       const link = document.createElement('a')
       const url = URL.createObjectURL(blob)
@@ -506,19 +507,19 @@ export default {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      
+
       this.$message.success('导出成功！')
     },
-    
+
     handleError(error) {
       this.logEvent('错误', error)
       console.error('组件错误:', error)
     },
-    
+
     handleRetry(retryCount) {
       this.logEvent('重试', `第${retryCount}次重试`)
       this.$message.info(`正在进行第 ${retryCount} 次重试...`)
-      
+
       // 模拟重试逻辑
       setTimeout(() => {
         this.simulateError = false
@@ -539,12 +540,12 @@ export default {
 .page-header {
   text-align: center;
   margin-bottom: 30px;
-  
+
   h1 {
     color: #303133;
     margin-bottom: 10px;
   }
-  
+
   p {
     color: #606266;
     font-size: 14px;
@@ -553,7 +554,7 @@ export default {
 
 .feature-controls {
   margin-bottom: 20px;
-  
+
   .controls {
     display: flex;
     gap: 20px;
@@ -563,24 +564,24 @@ export default {
 
 .demo-section {
   margin-bottom: 20px;
-  
+
   .demo-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
-    
+
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
     }
   }
-  
+
   .demo-item {
     h4 {
       margin-bottom: 10px;
       color: #409EFF;
     }
   }
-  
+
   .demo-content {
     padding: 15px;
     background: #f8f9fa;
@@ -601,12 +602,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   .product-name {
     font-weight: bold;
     flex: 1;
   }
-  
+
   .product-code {
     color: #909399;
     font-size: 12px;
@@ -621,12 +622,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   .status-name {
     font-weight: bold;
     min-width: 60px;
   }
-  
+
   .status-desc {
     color: #666;
     font-size: 12px;
@@ -641,20 +642,20 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 4px;
-    
+
     .item-name {
       font-weight: bold;
       font-size: 14px;
     }
   }
-  
+
   .item-desc {
     color: #666;
     font-size: 12px;
     margin-bottom: 8px;
     line-height: 1.4;
   }
-  
+
   .item-tags {
     display: flex;
     gap: 4px;
@@ -672,7 +673,7 @@ export default {
   border: 1px solid #fbc4c4;
   border-radius: 4px;
   color: #f56c6c;
-  
+
   i {
     font-size: 16px;
   }
@@ -682,13 +683,13 @@ export default {
 .event-logs {
   max-height: 300px;
   overflow-y: auto;
-  
+
   .no-logs {
     text-align: center;
     color: #909399;
     padding: 20px;
   }
-  
+
   .log-item {
     display: flex;
     align-items: center;
@@ -696,22 +697,22 @@ export default {
     padding: 8px 0;
     border-bottom: 1px solid #f0f0f0;
     font-size: 12px;
-    
+
     &:last-child {
       border-bottom: none;
     }
-    
+
     .log-time {
       color: #909399;
       min-width: 80px;
     }
-    
+
     .log-event {
       color: #409EFF;
       font-weight: bold;
       min-width: 100px;
     }
-    
+
     .log-data {
       color: #606266;
       flex: 1;
@@ -725,14 +726,14 @@ export default {
   .overflow-tags-example {
     padding: 10px;
   }
-  
+
   .feature-controls .controls {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .demo-section .demo-content {
     padding: 10px;
   }
 }
-</style> 
+</style>

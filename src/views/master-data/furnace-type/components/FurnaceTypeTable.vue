@@ -129,23 +129,20 @@
           <template v-else-if="col.prop === 'supportedAtmosphereTypes'">
             <overflow-tags-popover
               :data="scope.row.supportedAtmosphereTypes"
-              :max-show="2"
+              :max-show="1"
               :enable-modern-features="true"
               title="支持的气氛类型"
               type="success"
               effect="light"
               @error="handleError"
             />
-            <div v-if="!scope.row.supportedAtmosphereTypes || !scope.row.supportedAtmosphereTypes.length" class="debug-info">
-              无气氛类型数据
-            </div>
           </template>
 
           <!-- 关联设备列表 -->
           <template v-else-if="col.prop === 'relatedEquipment'">
             <overflow-tags-popover
               :data="scope.row.relatedEquipment || []"
-              :max-show="2"
+              :max-show="1"
               :enable-modern-features="true"
               label-key="name"
               title="关联设备列表"
@@ -153,16 +150,13 @@
               effect="light"
               @error="handleError"
             />
-            <div v-if="!scope.row.relatedEquipment || !scope.row.relatedEquipment.length" class="debug-info">
-              无关联设备数据
-            </div>
           </template>
 
           <!-- 关联工艺模板列表 -->
           <template v-else-if="col.prop === 'relatedTemplates'">
             <overflow-tags-popover
               :data="scope.row.relatedTemplates || []"
-              :max-show="2"
+              :max-show="1"
               :enable-modern-features="true"
               label-key="templateName"
               title="关联工艺模板列表"
@@ -170,9 +164,6 @@
               effect="light"
               @error="handleError"
             />
-            <div v-if="!scope.row.relatedTemplates || !scope.row.relatedTemplates.length" class="debug-info">
-              无关联工艺模板数据
-            </div>
           </template>
 
           <!-- 其他列的默认渲染 -->
@@ -214,7 +205,6 @@
 </template>
 
 <script>
-import { getFurnaceTypeList, deleteFurnaceType, updateFurnaceTypeStatus, getRelatedEquipment, getRelatedTemplates } from '@/api/master-data/furnace-type'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import TableToolbar from '@/components/TableToolbar'

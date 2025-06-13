@@ -146,6 +146,12 @@ export const constantRoutes = [
         name: 'BaseTableDemo',
         component: () => import('@/views/base-table-demo/index'),
         meta: { title: 'BaseTable 表格组件' }
+      },
+      {
+        path: 'overflow-tags',
+        name: 'OverflowTagsDemo',
+        component: () => import('@/components/OverflowTagsPopover/example.vue'),
+        meta: { title: 'OverflowTagsPopover 溢出标签组件' }
       }
     ]
   },
