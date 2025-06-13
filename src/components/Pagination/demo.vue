@@ -219,14 +219,44 @@
       </div>
       
       <div class="performance-info">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="总操作次数">{{ performanceStats.totalOperations }}</el-descriptions-item>
-          <el-descriptions-item label="平均响应时间">{{ performanceStats.averageTime }}ms</el-descriptions-item>
-          <el-descriptions-item label="最快响应">{{ performanceStats.minTime }}ms</el-descriptions-item>
-          <el-descriptions-item label="最慢响应">{{ performanceStats.maxTime }}ms</el-descriptions-item>
-          <el-descriptions-item label="错误次数">{{ performanceStats.errorCount }}</el-descriptions-item>
-          <el-descriptions-item label="重试次数">{{ performanceStats.retryCount }}</el-descriptions-item>
-        </el-descriptions>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="performance-item">
+              <span class="label">总操作次数:</span>
+              <span class="value">{{ performanceStats.totalOperations }}</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="performance-item">
+              <span class="label">平均响应时间:</span>
+              <span class="value">{{ performanceStats.averageTime }}ms</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="performance-item">
+              <span class="label">最快响应:</span>
+              <span class="value">{{ performanceStats.minTime }}ms</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="performance-item">
+              <span class="label">最慢响应:</span>
+              <span class="value">{{ performanceStats.maxTime }}ms</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="performance-item">
+              <span class="label">错误次数:</span>
+              <span class="value error">{{ performanceStats.errorCount }}</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="performance-item">
+              <span class="label">重试次数:</span>
+              <span class="value warning">{{ performanceStats.retryCount }}</span>
+            </div>
+          </el-col>
+        </el-row>
       </div>
     </div>
 
@@ -686,6 +716,51 @@ export default {
 
 .performance-info {
   margin-top: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e4e7ed;
+}
+
+.performance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.performance-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.performance-item:last-child {
+  margin-bottom: 0;
+}
+
+.performance-item .label {
+  font-weight: 500;
+  color: #606266;
+  flex: 1;
+}
+
+.performance-item .value {
+  font-weight: 600;
+  color: #409eff;
+  font-family: monospace;
+}
+
+.performance-item .value.error {
+  color: #f56c6c;
+}
+
+.performance-item .value.warning {
+  color: #e6a23c;
 }
 
 .event-logs {
