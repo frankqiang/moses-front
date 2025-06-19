@@ -163,6 +163,19 @@ export default {
   }
 }
 </script>
+
+```
+### 滚动动画工具函数
+**重要**: 所有需要滚动功能的页面必须使用全局滚动动画工具函数。
+
+```js
+import { scrollTo } from '@/utils/scroll-to'
+
+// 滚动到顶部
+scrollTo(0, 500)
+
+// 滚动到指定位置，带回调
+scrollTo(400, 800, () => console.log('滚动完成'))
 ```
 
 ### ❌ 错误示例

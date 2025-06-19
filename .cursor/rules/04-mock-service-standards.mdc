@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: Mock服务开发规范、数据生成原则和业务逻辑模拟标准
+globs: 
 alwaysApply: false
 ---
 # Mock服务开发规范
@@ -11,7 +11,7 @@ alwaysApply: false
 ## Mock系统架构概述
 
 ### 技术栈与架构
-- **数据生成引擎**：基于[mockjs](http://mockjs.com)实现智能数据生成
+- **数据生成引擎**：基于[mockjs](mdc:http:/mockjs.com)实现智能数据生成
 - **服务架构**：使用Express中间件处理HTTP请求
 - **模块系统**：CommonJS模块系统（`require()`/`module.exports`）
 - **路由管理**：支持动态路由注册和响应数据配置
@@ -45,11 +45,6 @@ module.exports = {
 if (process.env.NODE_ENV === 'development') {
   require('../mock')
 }
-
-// 生产环境关闭Mock（如需要）
-if (process.env.NODE_ENV === 'production') {
-  // Mock服务已关闭
-}
 ```
 
 ### Mock服务入口配置
@@ -67,28 +62,14 @@ const mocks = [
 
 // 注册Mock接口
 function mockXHR() {
-  // 修复在IE中的问题
-  Mock.XHR.prototype.proxy_send = Mock.XHR.prototype.send
-  Mock.XHR.prototype.send = function() {
-    if (this.custom.xhr) {
-      this.custom.xhr.withCredentials = this.withCredentials || false
-    }
-    this.proxy_send(...arguments)
-  }
-
   function XHR2ExpressReqWrap(respond) {
     return function(options) {
-      let result = null
-      if (respond instanceof Function) {
-        const { body, type, url } = options
-        result = respond({
-          method: type,
-          body: JSON.parse(body),
-          query: param2Obj(url)
-        })
-      } else {
-        result = respond
-      }
+      const { body, type, url } = options
+      const result = respond({
+        method: type,
+        body: JSON.parse(body),
+        query: param2Obj(url)
+      })
       return Mock.mock(result)
     }
   }
@@ -98,10 +79,7 @@ function mockXHR() {
   }
 }
 
-module.exports = {
-  mocks,
-  mockXHR
-}
+module.exports = { mocks, mockXHR }
 ```
 
 ## 目录结构规范
@@ -125,16 +103,11 @@ mock/
     │   │   └── material.js     # 物料基础数据
     │   ├── equipment.js        # 设备管理Mock
     │   └── material.js         # 物料管理Mock
-    ├── production/             # 生产模块组
-    │   ├── index.js
-    │   ├── data/
-    │   │   └── work-order.js
-    │   └── work-order.js
-    └── system/                 # 系统模块组
+    └── production/             # 生产模块组
         ├── index.js
         ├── data/
-        │   └── user.js
-        └── user.js
+        │   └── work-order.js
+        └── work-order.js
 ```
 
 ### 模块组织原则
@@ -159,8 +132,7 @@ const equipmentTypes = [
 
 // ❌ 错误 - 使用无意义的测试数据
 const badData = [
-  { code: 'test123', name: 'aaa', category: 'bbb' },
-  { code: 'xxx', name: 'yyy', category: 'zzz' }
+  { code: 'test123', name: 'aaa', category: 'bbb' }
 ]
 ```
 
@@ -172,12 +144,6 @@ const processParameters = {
   pressure: Mock.mock('@float(0.5, 2.0, 1, 2)'), // 合理的压力范围
   speed: Mock.mock('@integer(100, 1500)'), // 合理的转速范围
   workTime: Mock.mock('@integer(480, 720)'), // 8-12小时工作时间（分钟）
-}
-
-// ❌ 错误 - 不合理的参数范围
-const badParameters = {
-  temperature: Mock.mock('@integer(1, 1000000)'), // 过大范围
-  pressure: Mock.mock('@float(0, 999)'), // 不现实的范围
 }
 ```
 
@@ -192,8 +158,8 @@ const generateWorkOrder = () => {
   return {
     startTime: startTime,
     endTime: endDate.toISOString().slice(0, 19).replace('T', ' '),
-    planDuration: Math.floor((endDate - startDate) / (60 * 1000)), // 分钟
-    actualDuration: Mock.mock('@integer(120, 480)') // 实际用时2-8小时
+    planDuration: Math.floor((endDate - startDate) / (60 * 1000)),
+    actualDuration: Mock.mock('@integer(120, 480)')
   }
 }
 ```
@@ -220,7 +186,7 @@ const generateProduct = (productType) => {
   const config = typeConfig[productType]
   return {
     type: productType,
-    materials: Mock.mock(config.materials),
+    materials: config.materials,
     processes: config.processes,
     qualityRate: config.quality
   }
@@ -238,7 +204,6 @@ const Mock = require('mockjs')
 
 /**
  * 生成设备基础数据
- * @returns {Array} 设备数据数组
  */
 const generateEquipmentData = () => {
   // 预设真实基础数据
@@ -258,28 +223,7 @@ const generateEquipmentData = () => {
         maxLoad: 2000
       },
       purchaseDate: '2020-03-15',
-      warrantyExpiry: '2025-03-15',
-      lastMaintenanceDate: '2024-01-15',
-      nextMaintenanceDate: '2024-04-15'
-    },
-    {
-      id: 2,
-      code: 'ROBOT-A001', 
-      name: 'ABB工业机器人',
-      model: 'IRB-1600',
-      manufacturer: 'ABB',
-      category: '机器人',
-      workshop: '自动化车间',
-      status: 'idle',
-      specifications: {
-        payload: 6,
-        reach: 1450,
-        repeatability: 0.05
-      },
-      purchaseDate: '2021-06-20',
-      warrantyExpiry: '2026-06-20',
-      lastMaintenanceDate: '2024-02-01',
-      nextMaintenanceDate: '2024-05-01'
+      warrantyExpiry: '2025-03-15'
     }
   ]
 
@@ -291,27 +235,12 @@ const generateEquipmentData = () => {
         const types = ['CNC', 'ROBOT', 'LASER', 'PRESS', 'FURNACE']
         const type = types[Math.floor(Math.random() * types.length)]
         const num = Mock.mock('@integer(100, 999)')
-        return `${type}-${String.num).padStart(3, '0')}`
+        return `${type}-${String(num).padStart(3, '0')}`
       },
-      'name': () => {
-        const brands = ['FANUC', 'SIEMENS', 'ABB', 'KUKA', 'MITSUBISHI']
-        const types = ['数控机床', '机器人', '激光设备', '压力机', '热处理炉']
-        return `${Mock.mock(brands)} ${Mock.mock(types)}`
-      },
-      'model': '@word(5, 10)',
-      'manufacturer|1': ['发那科', '西门子', 'ABB', '库卡', '三菱'],
-      'category|1': ['数控设备', '机器人', '激光设备', '压力设备', '热处理设备'],
-      'workshop|1': ['机加车间1', '机加车间2', '自动化车间', '热处理车间', '装配车间'],
+      'name|1': ['FANUC数控机床', 'ABB机器人', '激光切割机', '冲压设备', '热处理炉'],
       'status|1': ['running', 'idle', 'maintenance', 'fault'],
-      'specifications': {
-        'maxSpeed': '@integer(1000, 8000)',
-        'power': '@integer(10, 500)',
-        'precision': '@float(0.01, 0.1, 2, 3)'
-      },
-      'purchaseDate': '@date("yyyy-MM-dd")',
-      'warrantyExpiry': '@date("yyyy-MM-dd")',
-      'lastMaintenanceDate': '@date("yyyy-MM-dd")',
-      'nextMaintenanceDate': '@date("yyyy-MM-dd")'
+      'category|1': ['数控设备', '机器人', '激光设备', '压力设备', '热处理设备'],
+      'workshop|1': ['机加车间1', '机加车间2', '自动化车间', '热处理车间', '装配车间']
     }]
   }).items
 
@@ -324,16 +253,13 @@ module.exports = {
 }
 ```
 
-### 数据验证和规范化
+### 数据生成工具函数
 ```javascript
 // mock/utils/generator.js
 const Mock = require('mockjs')
 
 /**
  * 生成符合规范的编码
- * @param {string} prefix - 前缀
- * @param {number} length - 数字部分长度
- * @returns {string} 规范化编码
  */
 const generateCode = (prefix, length = 3) => {
   const number = Mock.mock(`@integer(1, ${Math.pow(10, length) - 1})`)
@@ -342,10 +268,6 @@ const generateCode = (prefix, length = 3) => {
 
 /**
  * 生成合理的时间范围
- * @param {Date} baseDate - 基准日期
- * @param {number} daysBefore - 向前天数
- * @param {number} daysAfter - 向后天数
- * @returns {Object} 时间范围对象
  */
 const generateTimeRange = (baseDate = new Date(), daysBefore = 30, daysAfter = 30) => {
   const base = new Date(baseDate)
@@ -360,9 +282,6 @@ const generateTimeRange = (baseDate = new Date(), daysBefore = 30, daysAfter = 3
 
 /**
  * 生成符合业务规则的状态流转
- * @param {string} currentStatus - 当前状态
- * @param {Object} stateRules - 状态转换规则
- * @returns {string} 下一个可能状态
  */
 const generateNextStatus = (currentStatus, stateRules) => {
   const allowedNext = stateRules[currentStatus] || []
@@ -405,227 +324,36 @@ const statusRules = {
  * API处理函数集合
  */
 const handlers = {
-  /**
-   * 获取设备列表
-   * @param {Object} config - 请求配置
-   * @returns {Object} 响应数据
-   */
   getList(config) {
-    const { 
-      page = 1, 
-      limit = 10, 
-      keyword = '', 
-      status = '', 
-      category = '',
-      workshop = ''
-    } = config.query
-    
-    let filteredData = [...dataCache]
-    
-    // 关键词搜索
-    if (keyword) {
-      filteredData = filteredData.filter(item => 
-        item.name.includes(keyword) || 
-        item.code.includes(keyword) ||
-        item.model.includes(keyword)
-      )
-    }
-    
-    // 状态过滤
-    if (status) {
-      filteredData = filteredData.filter(item => item.status === status)
-    }
-    
-    // 分类过滤
-    if (category) {
-      filteredData = filteredData.filter(item => item.category === category)
-    }
-    
-    // 车间过滤
-    if (workshop) {
-      filteredData = filteredData.filter(item => item.workshop === workshop)
-    }
-    
-    // 分页处理
-    const paginatedResult = paginate(filteredData, page, limit)
-    
-    return success({
-      items: paginatedResult.items,
-      total: filteredData.length,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      hasNext: paginatedResult.hasNext,
-      hasPrev: paginatedResult.hasPrev
-    }, '获取设备列表成功')
+    // 实现列表查询、搜索、过滤、分页逻辑
+    const { page = 1, limit = 10, keyword = '', status = '' } = config.query
+    // ... 具体实现
+    return success(paginatedResult)
   },
 
-  /**
-   * 获取设备详情
-   * @param {Object} config - 请求配置
-   * @returns {Object} 响应数据
-   */
   getDetail(config) {
+    // 实现详情查询逻辑
     const { id } = config.query
-    const equipment = dataCache.find(item => item.id == id)
-    
-    if (!equipment) {
-      return error('EQUIPMENT_NOT_FOUND', '设备不存在', 404)
-    }
-    
-    return success(equipment, '获取设备详情成功')
+    // ... 具体实现
+    return success(equipment)
   },
 
-  /**
-   * 创建设备
-   * @param {Object} config - 请求配置
-   * @returns {Object} 响应数据
-   */
   create(config) {
-    const equipmentData = config.body
-    
-    // 基础验证
-    if (!equipmentData.name || !equipmentData.code) {
-      return error('VALIDATION_ERROR', '设备名称和编码不能为空', 422)
-    }
-    
-    // 检查编码唯一性
-    const existingEquipment = dataCache.find(item => item.code === equipmentData.code)
-    if (existingEquipment) {
-      return error('EQUIPMENT_CODE_EXISTS', '设备编码已存在', 422)
-    }
-    
-    // 创建新设备
-    const newEquipment = {
-      id: idCounter++,
-      ...equipmentData,
-      status: equipmentData.status || 'idle',
-      createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
-    }
-    
-    dataCache.push(newEquipment)
-    
-    return success(newEquipment, '设备创建成功', 201)
+    // 实现创建逻辑：验证 -> 检查唯一性 -> 创建
+    // ... 具体实现
+    return success(newEquipment, '创建成功', 201)
   },
 
-  /**
-   * 更新设备
-   * @param {Object} config - 请求配置
-   * @returns {Object} 响应数据
-   */
   update(config) {
-    const { id } = config.query
-    const updateData = config.body
-    
-    const equipmentIndex = dataCache.findIndex(item => item.id == id)
-    if (equipmentIndex === -1) {
-      return error('EQUIPMENT_NOT_FOUND', '设备不存在', 404)
-    }
-    
-    // 验证状态转换
-    const currentEquipment = dataCache[equipmentIndex]
-    if (updateData.status && updateData.status !== currentEquipment.status) {
-      const allowedStatuses = statusRules[currentEquipment.status] || []
-      if (!allowedStatuses.includes(updateData.status)) {
-        return error('INVALID_STATUS_TRANSITION', 
-          `不能从${currentEquipment.status}状态转换到${updateData.status}状态`, 422)
-      }
-    }
-    
-    // 更新设备信息
-    const updatedEquipment = {
-      ...currentEquipment,
-      ...updateData,
-      id: currentEquipment.id, // 保持ID不变
-      updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
-    }
-    
-    dataCache[equipmentIndex] = updatedEquipment
-    
-    return success(updatedEquipment, '设备更新成功')
+    // 实现更新逻辑：验证 -> 状态转换检查 -> 更新
+    // ... 具体实现
+    return success(updatedEquipment, '更新成功')
   },
 
-  /**
-   * 删除设备
-   * @param {Object} config - 请求配置
-   * @returns {Object} 响应数据
-   */
   delete(config) {
-    const { id } = config.query
-    const equipmentIndex = dataCache.findIndex(item => item.id == id)
-    
-    if (equipmentIndex === -1) {
-      return error('EQUIPMENT_NOT_FOUND', '设备不存在', 404)
-    }
-    
-    // 检查设备状态，运行中的设备不能删除
-    const equipment = dataCache[equipmentIndex]
-    if (equipment.status === 'running') {
-      return error('EQUIPMENT_IN_USE', '运行中的设备不能删除', 422)
-    }
-    
-    dataCache.splice(equipmentIndex, 1)
-    
-    return success(null, '设备删除成功', 204)
-  },
-
-  /**
-   * 批量更新设备状态
-   * @param {Object} config - 请求配置
-   * @returns {Object} 响应数据
-   */
-  batchUpdateStatus(config) {
-    const { ids, status } = config.body
-    
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return error('VALIDATION_ERROR', '设备ID列表不能为空', 422)
-    }
-    
-    const validStatuses = ['idle', 'running', 'maintenance', 'fault']
-    if (!validStatuses.includes(status)) {
-      return error('VALIDATION_ERROR', '无效的设备状态', 422)
-    }
-    
-    const updatedEquipments = []
-    const errors = []
-    
-    ids.forEach(id => {
-      const equipmentIndex = dataCache.findIndex(item => item.id == id)
-      if (equipmentIndex === -1) {
-        errors.push({ id, message: '设备不存在' })
-        return
-      }
-      
-      const equipment = dataCache[equipmentIndex]
-      const allowedStatuses = statusRules[equipment.status] || []
-      
-      if (!allowedStatuses.includes(status)) {
-        errors.push({ 
-          id, 
-          message: `不能从${equipment.status}状态转换到${status}状态` 
-        })
-        return
-      }
-      
-      const updatedEquipment = {
-        ...equipment,
-        status,
-        updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
-      }
-      
-      dataCache[equipmentIndex] = updatedEquipment
-      updatedEquipments.push(updatedEquipment)
-    })
-    
-    return success({
-      updated: updatedEquipments,
-      errors: errors,
-      summary: {
-        total: ids.length,
-        success: updatedEquipments.length,
-        failed: errors.length
-      }
-    }, '批量更新完成')
+    // 实现删除逻辑：存在性检查 -> 业务规则验证 -> 删除
+    // ... 具体实现
+    return success(null, '删除成功', 204)
   }
 }
 
@@ -633,38 +361,20 @@ const handlers = {
  * 导出Mock路由配置
  */
 module.exports = [
-  {
-    url: '/mes/master-data/equipment/list',
-    type: 'get',
-    response: handlers.getList
-  },
-  {
-    url: '/mes/master-data/equipment/detail',
-    type: 'get', 
-    response: handlers.getDetail
-  },
-  {
-    url: '/mes/master-data/equipment',
-    type: 'post',
-    response: handlers.create
-  },
-  {
-    url: '/mes/master-data/equipment',
-    type: 'put',
-    response: handlers.update
-  },
-  {
-    url: '/mes/master-data/equipment',
-    type: 'delete',
-    response: handlers.delete
-  },
-  {
-    url: '/mes/master-data/equipment/batch-status',
-    type: 'post',
-    response: handlers.batchUpdateStatus
-  }
+  { url: '/mes/master-data/equipment/list', type: 'get', response: handlers.getList },
+  { url: '/mes/master-data/equipment/detail', type: 'get', response: handlers.getDetail },
+  { url: '/mes/master-data/equipment', type: 'post', response: handlers.create },
+  { url: '/mes/master-data/equipment', type: 'put', response: handlers.update },
+  { url: '/mes/master-data/equipment', type: 'delete', response: handlers.delete }
 ]
 ```
+
+### API处理规范
+- **数据缓存**：使用内存数组缓存数据，支持运行时增删改查
+- **状态管理**：定义业务状态转换规则，验证状态变更合法性
+- **参数验证**：检查必填参数、数据格式、业务规则
+- **错误处理**：返回统一的错误格式和适当的HTTP状态码
+- **业务逻辑**：模拟真实的业务验证和处理流程
 
 ## 响应工具与格式规范
 
@@ -674,10 +384,6 @@ module.exports = [
 
 /**
  * 成功响应
- * @param {*} data - 响应数据
- * @param {string} message - 响应消息
- * @param {number} status - HTTP状态码
- * @returns {Object} 标准响应格式
  */
 const success = (data, message = '操作成功', status = 200) => ({
   success: true,
@@ -689,11 +395,6 @@ const success = (data, message = '操作成功', status = 200) => ({
 
 /**
  * 错误响应
- * @param {string} code - 错误码
- * @param {string} message - 错误消息
- * @param {number} status - HTTP状态码
- * @param {*} details - 详细错误信息
- * @returns {Object} 错误响应格式
  */
 const error = (code, message, status = 500, details = null) => ({
   success: false,
@@ -708,10 +409,6 @@ const error = (code, message, status = 500, details = null) => ({
 
 /**
  * 分页处理工具
- * @param {Array} data - 原始数据数组
- * @param {number} page - 页码
- * @param {number} limit - 每页条数
- * @returns {Object} 分页结果
  */
 const paginate = (data, page = 1, limit = 10) => {
   const pageNum = parseInt(page)
@@ -734,34 +431,7 @@ const paginate = (data, page = 1, limit = 10) => {
 }
 
 /**
- * 格式化时间
- * @param {Date|string} date - 日期对象或字符串
- * @param {string} format - 格式化模式
- * @returns {string} 格式化后的时间字符串
- */
-const formatTime = (date = new Date(), format = 'yyyy-MM-dd HH:mm:ss') => {
-  const d = new Date(date)
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours = String(d.getHours()).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
-  const seconds = String(d.getSeconds()).padStart(2, '0')
-  
-  return format
-    .replace('yyyy', year)
-    .replace('MM', month)
-    .replace('dd', day)
-    .replace('HH', hours)
-    .replace('mm', minutes)
-    .replace('ss', seconds)
-}
-
-/**
  * 延迟响应（用于模拟网络延迟）
- * @param {Function} responseFn - 响应函数
- * @param {number} delay - 延迟时间（毫秒）
- * @returns {Promise} 延迟响应Promise
  */
 const delayResponse = (responseFn, delay = 500) => {
   return new Promise((resolve) => {
@@ -775,7 +445,6 @@ module.exports = {
   success,
   error,
   paginate,
-  formatTime,
   delayResponse
 }
 ```
@@ -838,28 +507,20 @@ const businessRules = {
 
 ### 调试技巧
 ```javascript
-// 1. 控制台输出调试
+// 控制台输出调试
 response: (config) => {
-  console.log('🔍 Mock请求调试:')
-  console.log('请求方法:', config.method)
-  console.log('请求路径:', config.url)
-  console.log('查询参数:', config.query)
-  console.log('请求体:', config.body)
-  
+  console.log('🔍 Mock请求调试:', config.method, config.url, config.query)
   const result = handlers.getList(config)
   console.log('🔍 Mock响应调试:', result)
-  
   return result
 }
 
-// 2. 延迟响应测试
+// 延迟响应测试
 response: (config) => {
-  return delayResponse(() => {
-    return handlers.getList(config)
-  }, 1000) // 1秒延迟
+  return delayResponse(() => handlers.getList(config), 1000) // 1秒延迟
 }
 
-// 3. 随机错误模拟
+// 随机错误模拟
 response: (config) => {
   // 10% 概率返回错误
   if (Math.random() < 0.1) {
@@ -870,99 +531,16 @@ response: (config) => {
 }
 ```
 
-### 开发环境工具
-```javascript
-// mock/utils/dev-tools.js
-
-/**
- * Mock数据重置工具
- */
-const resetMockData = () => {
-  // 重置所有Mock数据到初始状态
-  console.log('🔄 重置Mock数据...')
-  // 实现重置逻辑
-}
-
-/**
- * Mock数据导出工具
- */
-const exportMockData = (filename = 'mock-data.json') => {
-  // 导出当前Mock数据状态
-  console.log(`📤 导出Mock数据到 ${filename}`)
-  // 实现导出逻辑
-}
-
-/**
- * Mock数据统计工具
- */
-const getMockStats = () => {
-  return {
-    totalApis: mocks.length,
-    totalRequests: requestCount,
-    errorRate: errorCount / requestCount,
-    avgResponseTime: totalResponseTime / requestCount
-  }
-}
-
-module.exports = {
-  resetMockData,
-  exportMockData,
-  getMockStats
-}
-```
-
-## 最佳实践与性能优化
-
-### 数据缓存策略
-```javascript
-// 内存缓存优化
-class MockDataCache {
-  constructor() {
-    this.cache = new Map()
-    this.ttl = 5 * 60 * 1000 // 5分钟TTL
-  }
-  
-  get(key) {
-    const item = this.cache.get(key)
-    if (!item) return null
-    
-    if (Date.now() - item.timestamp > this.ttl) {
-      this.cache.delete(key)
-      return null
-    }
-    
-    return item.data
-  }
-  
-  set(key, data) {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now()
-    })
-  }
-  
-  clear() {
-    this.cache.clear()
-  }
-}
-
-const mockCache = new MockDataCache()
-```
-
 ### 性能监控
 ```javascript
 // 性能监控工具
 const performanceMonitor = {
-  startTime: null,
-  endTime: null,
-  
   start() {
     this.startTime = Date.now()
   },
   
   end() {
-    this.endTime = Date.now()
-    const duration = this.endTime - this.startTime
+    const duration = Date.now() - this.startTime
     console.log(`⏱️ Mock响应耗时: ${duration}ms`)
     return duration
   }
@@ -971,60 +549,33 @@ const performanceMonitor = {
 // 在处理函数中使用
 response: (config) => {
   performanceMonitor.start()
-  
   const result = handlers.getList(config)
-  
   performanceMonitor.end()
   return result
-}
-```
-
-### 错误场景覆盖
-```javascript
-// 错误场景测试套件
-const errorScenarios = {
-  // 网络错误模拟
-  networkError: () => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        reject(new Error('Network Error'))
-      }, 100)
-    })
-  },
-  
-  // 服务器错误模拟  
-  serverError: () => error('SERVER_ERROR', '服务器内部错误', 500),
-  
-  // 认证错误模拟
-  authError: () => error('UNAUTHORIZED', '认证失败', 401),
-  
-  // 权限错误模拟
-  permissionError: () => error('FORBIDDEN', '权限不足', 403),
-  
-  // 数据验证错误模拟
-  validationError: () => error('VALIDATION_ERROR', '数据验证失败', 422)
 }
 ```
 
 ## 🔍 Mock服务质量检查清单
 
 ### 数据质量 [P0]
-- [ ] **[P0]** 数据真实性：Mock数据是否符合实际业务场景和行业标准？
-- [ ] **[P0]** 数据关联性：相关数据之间是否保持逻辑一致性？
-- [ ] **[P0]** 参数合理性：数值参数是否在合理范围内？
-- [ ] **[P0]** 时间逻辑性：时间数据是否符合实际业务时间规律？
-- [ ] **[P0]** 状态流转：状态变更是否遵循真实业务流程规则？
+- [ ] **数据真实性**：Mock数据是否符合实际业务场景和行业标准？
+- [ ] **数据关联性**：相关数据之间是否保持逻辑一致性？
+- [ ] **参数合理性**：数值参数是否在合理范围内？
+- [ ] **时间逻辑性**：时间数据是否符合实际业务时间规律？
+- [ ] **状态流转**：状态变更是否遵循真实业务流程规则？
 
 ### API功能 [P1] 
-- [ ] **[P1]** 完整CRUD：是否实现了完整的增删改查功能？
-- [ ] **[P1]** 业务验证：是否模拟了真实的业务验证规则？
-- [ ] **[P1]** 错误处理：是否覆盖了各种错误场景？
-- [ ] **[P1]** 分页功能：列表接口是否正确实现分页逻辑？
-- [ ] **[P1]** 搜索过滤：是否支持关键词搜索和条件过滤？
+- [ ] **完整CRUD**：是否实现了完整的增删改查功能？
+- [ ] **业务验证**：是否模拟了真实的业务验证规则？
+- [ ] **错误处理**：是否覆盖了各种错误场景？
+- [ ] **分页功能**：列表接口是否正确实现分页逻辑？
+- [ ] **搜索过滤**：是否支持关键词搜索和条件过滤？
 
 ### 开发体验 [P2]
-- [ ] **[P2]** 响应格式：是否使用统一的响应格式？
-- [ ] **[P2]** 调试支持：是否提供了充分的调试信息？
-- [ ] **[P2]** 性能模拟：是否模拟了合理的响应延迟？
-- [ ] **[P2]** 错误模拟：是否提供了错误场景测试能力？
-- [ ] **[P2]** 文档完整：是否有完整的API使用文档？
+- [ ] **响应格式**：是否使用统一的响应格式？
+- [ ] **调试支持**：是否提供了充分的调试信息？
+- [ ] **性能模拟**：是否模拟了合理的响应延迟？
+- [ ] **错误模拟**：是否提供了错误场景测试能力？
+
+
+- [ ] **文档完整**：是否有完整的API使用文档？
