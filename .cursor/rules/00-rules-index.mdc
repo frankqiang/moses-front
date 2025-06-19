@@ -27,17 +27,27 @@ alwaysApply: true
 - 组件通信规范
 - 数据加载模式
 
-### 03. API接口层与Mock服务
-**文件**: [03-api-and-mock.mdc](mdc:03-api-and-mock.mdc)  
+### 03. API设计与开发规范
+**文件**: [03-api-design-standards.mdc](mdc:03-api-design-standards.mdc)
 **内容**:
-- API接口层开发标准
-- Mock服务开发规范
-- 真实数据生成原则
-- URL路径规范
-- 接口路径管理
+- RESTful API设计原则
+- 统一响应格式规范
+- HTTP状态码使用标准
+- 请求验证与安全规范
+- 错误处理与错误码系统
+- API版本控制策略
 
-### 04. 错误处理、状态管理与工具函数
-**文件**: [04-error-handling-and-state.mdc](mdc:04-error-handling-and-state.mdc)
+### 04. Mock服务开发规范
+**文件**: [04-mock-service-standards.mdc](mdc:04-mock-service-standards.mdc)
+**内容**:
+- Mock系统架构设计
+- 真实数据生成原则
+- 业务逻辑模拟规范
+- API处理函数设计
+- 调试工具与性能优化
+
+### 05. 错误处理、状态管理与工具函数
+**文件**: [07-error-handling-and-state.mdc](mdc:07-error-handling-and-state.mdc)
 **内容**:
 - 错误处理模式
 - 消息提示规范
@@ -46,8 +56,8 @@ alwaysApply: true
 - 常量管理
 - 全局组件使用规范
 
-### 05. 代码质量、性能优化与文档规范
-**文件**: [05-quality-and-performance.mdc](mdc:05-quality-and-performance.mdc)
+### 06. 代码质量、性能优化与文档规范
+**文件**: [09-quality-and-performance.mdc](mdc:09-quality-and-performance.mdc)
 **内容**:
 - 性能优化实践
 - 文档与注释规范

@@ -1,0 +1,653 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# API设计与开发规范
+
+## 规则说明与适用范围
+本规则定义了项目中API接口的设计标准、开发规范和最佳实践。所有API相关开发都需遵循此规范，确保接口的一致性、安全性和可维护性。
+
+## RESTful API设计原则
+
+### 核心设计原则
+【必须】遵循REST架构风格：
+
+```javascript
+// ✅ 正确 - RESTful 路由设计
+interface ApiRoutes {
+  'GET /api/users': { response: PaginatedResponse<User> };
+  'GET /api/users/:id': { params: { id: string }; response: ApiResponse<User> };
+  'POST /api/users': { body: CreateUserRequest; response: ApiResponse<User> };
+  'PUT /api/users/:id': { params: { id: string }; body: UpdateUserRequest; response: ApiResponse<User> };
+  'DELETE /api/users/:id': { params: { id: string }; response: ApiResponse<null> };
+}
+
+// ✅ 正确 - HTTP 方法使用规范
+const HTTP_METHODS = {
+  GET: '获取资源，幂等，无副作用',
+  POST: '创建资源或执行操作',
+  PUT: '完整更新资源，幂等',
+  PATCH: '部分更新资源，幂等',
+  DELETE: '删除资源，幂等',
+} as const;
+```
+
+### URL路径设计规范
+项目特定路径规范：
+1. 所有API路径必须以`/mes`作为前缀
+2. 路径应按照业务模块组织：`/mes/master-data/xxx`、`/mes/production/xxx`
+3. 使用复数名词表示资源：`/mes/users`、`/mes/orders`
+4. 使用嵌套路径表示资源关系：`/mes/users/:id/orders`
+
+```javascript
+// ✅ 正确的URL设计
+const API_ROUTES = {
+  // 用户管理
+  users: '/mes/users',
+  userDetail: '/mes/users/:id',
+  
+  // 主数据管理
+  masterData: '/mes/master-data',
+  equipmentTypes: '/mes/master-data/equipment-types',
+  
+  // 生产管理
+  production: '/mes/production',
+  workOrders: '/mes/production/work-orders',
+}
+```
+
+## 统一响应格式规范
+
+### 标准响应结构
+【必须】使用一致的响应结构：
+
+```javascript
+// ✅ 基础响应格式
+interface ApiResponse<T = any> {
+  success: boolean;
+  data: T;
+  message: string;
+  timestamp: string;
+}
+
+// ✅ 分页响应格式
+interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+// ✅ 错误响应格式
+interface ErrorResponse {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    field?: string; // 验证错误时的字段名
+    details?: any;  // 详细错误信息
+  };
+  timestamp: string;
+}
+```
+
+### 响应构建器工具
+```javascript
+// src/utils/response-builder.js
+export const createResponse = {
+  success: <T>(data: T, message = '操作成功'): ApiResponse<T> => ({
+    success: true,
+    data,
+    message,
+    timestamp: new Date().toISOString(),
+  }),
+  
+  paginated: <T>(items: T[], pagination: PaginationInfo): PaginatedResponse<T> => ({
+    success: true,
+    data: items,
+    pagination: {
+      ...pagination,
+      hasNext: pagination.page * pagination.limit < pagination.total,
+      hasPrev: pagination.page > 1,
+    },
+    message: '获取成功',
+    timestamp: new Date().toISOString(),
+  }),
+  
+  error: (code: string, message: string, field?: string, details?: any): ErrorResponse => ({
+    success: false,
+    error: { code, message, field, details },
+    timestamp: new Date().toISOString(),
+  }),
+};
+```
+
+## HTTP状态码规范
+
+### 状态码使用标准
+【必须】正确使用HTTP状态码：
+
+```javascript
+const HTTP_STATUS = {
+  // 2xx 成功
+  200: 'OK - 请求成功',
+  201: 'Created - 资源创建成功', 
+  204: 'No Content - 删除成功，无返回内容',
+  
+  // 4xx 客户端错误
+  400: 'Bad Request - 请求参数错误',
+  401: 'Unauthorized - 未认证或认证失败',
+  403: 'Forbidden - 无权限访问',
+  404: 'Not Found - 资源不存在',
+  422: 'Unprocessable Entity - 数据验证失败',
+  429: 'Too Many Requests - 请求过于频繁',
+  
+  // 5xx 服务器错误
+  500: 'Internal Server Error - 服务器内部错误',
+  502: 'Bad Gateway - 网关错误',
+  503: 'Service Unavailable - 服务不可用',
+} as const;
+```
+
+### 状态码使用示例
+```javascript
+// 使用 [src/utils/request.js](mdc:src/utils/request.js) 处理响应
+export async function createUser(userData) {
+  try {
+    const response = await request({
+      url: '/mes/users',
+      method: 'post',
+      data: userData
+    });
+    // 201 Created - 创建成功
+    return createResponse.success(response.data, '用户创建成功');
+  } catch (error) {
+    if (error.response?.status === 422) {
+      // 422 数据验证失败
+      return createResponse.error('VALIDATION_ERROR', '数据验证失败', error.response.data);
+    }
+    throw error;
+  }
+}
+```
+
+## 请求验证与安全规范
+
+### 输入验证标准
+【必须】验证所有输入数据：
+
+```javascript
+// 推荐使用第三方验证库
+import { z } from 'zod';
+
+// ✅ 定义验证模式
+const CreateUserSchema = z.object({
+  name: z.string().min(1, '姓名不能为空').max(100, '姓名长度不能超过100'),
+  email: z.string().email('邮箱格式不正确'),
+  role: z.enum(['admin', 'user']).default('user'),
+  age: z.number().int().min(18, '年龄不能小于18').max(100, '年龄不能大于100').optional(),
+});
+
+const PaginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  keyword: z.string().optional(),
+  status: z.string().optional(),
+});
+
+// ✅ 验证函数
+export function validateData<T extends z.ZodSchema>(schema: T, data: unknown) {
+  try {
+    return {
+      success: true,
+      data: schema.parse(data),
+      error: null
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        data: null,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: '数据验证失败',
+          details: error.errors
+        }
+      };
+    }
+    throw error;
+  }
+}
+```
+
+### 安全防护措施
+```javascript
+// ✅ 请求参数清理和验证
+import { formatQueryParams } from '@/utils/formatter'
+
+export function secureApiCall(url, params = {}) {
+  // 清理和验证参数
+  const cleanParams = formatQueryParams(params);
+  
+  return request({
+    url,
+    method: 'get',
+    params: cleanParams,
+    // 添加安全头
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  });
+}
+```
+
+## 错误处理与错误码规范
+
+### 统一错误码系统
+【必须】使用统一的错误码：
+
+```javascript
+// src/constants/error-codes.js
+export const ERROR_CODES = {
+  // 1xxx 通用错误
+  INTERNAL_ERROR: 'E1000',
+  INVALID_REQUEST: 'E1001', 
+  UNAUTHORIZED: 'E1002',
+  FORBIDDEN: 'E1003',
+  NOT_FOUND: 'E1004',
+  RATE_LIMITED: 'E1005',
+  
+  // 2xxx 验证错误
+  VALIDATION_ERROR: 'E2000',
+  INVALID_EMAIL: 'E2001',
+  INVALID_PHONE: 'E2002',
+  REQUIRED_FIELD_MISSING: 'E2003',
+  
+  // 3xxx 业务错误
+  USER_NOT_FOUND: 'E3000',
+  USER_ALREADY_EXISTS: 'E3001',
+  INVALID_CREDENTIALS: 'E3002',
+  INSUFFICIENT_PERMISSIONS: 'E3003',
+  
+  // 4xxx 系统错误
+  DATABASE_ERROR: 'E4000',
+  EXTERNAL_SERVICE_ERROR: 'E4001',
+  FILE_UPLOAD_ERROR: 'E4002',
+} as const;
+
+export const ERROR_MESSAGES = {
+  [ERROR_CODES.INTERNAL_ERROR]: '系统内部错误，请稍后重试',
+  [ERROR_CODES.INVALID_REQUEST]: '请求参数错误',
+  [ERROR_CODES.UNAUTHORIZED]: '未登录或登录已过期',
+  [ERROR_CODES.FORBIDDEN]: '权限不足',
+  [ERROR_CODES.NOT_FOUND]: '请求的资源不存在',
+  [ERROR_CODES.VALIDATION_ERROR]: '数据验证失败',
+  [ERROR_CODES.USER_NOT_FOUND]: '用户不存在',
+  [ERROR_CODES.USER_ALREADY_EXISTS]: '用户已存在',
+};
+```
+
+### 错误处理最佳实践
+```javascript
+// src/utils/error-handler.js
+import { ERROR_CODES, ERROR_MESSAGES } from '@/constants/error-codes'
+
+export class ApiError extends Error {
+  constructor(code, message, status = 500, details = null) {
+    super(message);
+    this.code = code;
+    this.status = status;
+    this.details = details;
+    this.name = 'ApiError';
+  }
+}
+
+export function handleApiError(error) {
+  console.error('API错误:', error);
+  
+  if (error instanceof ApiError) {
+    return createResponse.error(error.code, error.message, null, error.details);
+  }
+  
+  // 处理网络错误
+  if (!error.response) {
+    return createResponse.error(
+      ERROR_CODES.INTERNAL_ERROR, 
+      '网络连接错误，请检查网络设置'
+    );
+  }
+  
+  // 处理HTTP错误
+  const { status, data } = error.response;
+  switch (status) {
+    case 401:
+      return createResponse.error(ERROR_CODES.UNAUTHORIZED, ERROR_MESSAGES[ERROR_CODES.UNAUTHORIZED]);
+    case 403:
+      return createResponse.error(ERROR_CODES.FORBIDDEN, ERROR_MESSAGES[ERROR_CODES.FORBIDDEN]);
+    case 404:
+      return createResponse.error(ERROR_CODES.NOT_FOUND, ERROR_MESSAGES[ERROR_CODES.NOT_FOUND]);
+    case 422:
+      return createResponse.error(ERROR_CODES.VALIDATION_ERROR, data.message || ERROR_MESSAGES[ERROR_CODES.VALIDATION_ERROR]);
+    default:
+      return createResponse.error(ERROR_CODES.INTERNAL_ERROR, ERROR_MESSAGES[ERROR_CODES.INTERNAL_ERROR]);
+  }
+}
+```
+
+## API模块设计标准
+
+### 模块文件结构
+每个API模块文件应遵循以下结构：
+
+```javascript
+/**
+ * 模块名称API
+ * 功能描述：提供模块相关的API调用方法
+ * 创建日期：YYYY-MM-DD
+ */
+import request from '@/utils/request'
+import { formatQueryParams } from '@/utils/formatter'
+import { validateData } from '@/utils/validation'
+import { handleApiError } from '@/utils/error-handler'
+
+// API基础路径常量
+const BASE_URL = '/mes/module-path'
+
+// 验证模式定义
+const ListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  keyword: z.string().optional(),
+  status: z.string().optional(),
+});
+
+/**
+ * 获取列表数据
+ * @param {Object} query - 查询参数
+ * @returns {Promise<PaginatedResponse>} 返回分页数据
+ */
+export async function getList(query = {}) {
+  try {
+    // 验证查询参数
+    const validation = validateData(ListQuerySchema, query);
+    if (!validation.success) {
+      throw new ApiError('VALIDATION_ERROR', '查询参数验证失败', 400, validation.error);
+    }
+    
+    const response = await request({
+      url: `${BASE_URL}/list`,
+      method: 'get',
+      params: formatQueryParams(validation.data)
+    });
+    
+    return createResponse.paginated(
+      response.data.items,
+      {
+        page: validation.data.page,
+        limit: validation.data.limit,
+        total: response.data.total
+      }
+    );
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+/**
+ * 获取详情
+ * @param {string|number} id - 资源ID
+ * @returns {Promise<ApiResponse>} 返回详情数据
+ */
+export async function getDetail(id) {
+  try {
+    if (!id) {
+      throw new ApiError('VALIDATION_ERROR', 'ID参数不能为空', 400);
+    }
+    
+    const response = await request({
+      url: `${BASE_URL}/${id}`,
+      method: 'get'
+    });
+    
+    return createResponse.success(response.data, '获取详情成功');
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+/**
+ * 创建资源
+ * @param {Object} data - 创建数据
+ * @returns {Promise<ApiResponse>} 返回创建结果
+ */
+export async function create(data) {
+  try {
+    const response = await request({
+      url: BASE_URL,
+      method: 'post',
+      data
+    });
+    
+    return createResponse.success(response.data, '创建成功');
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+/**
+ * 更新资源
+ * @param {string|number} id - 资源ID
+ * @param {Object} data - 更新数据
+ * @returns {Promise<ApiResponse>} 返回更新结果
+ */
+export async function update(id, data) {
+  try {
+    if (!id) {
+      throw new ApiError('VALIDATION_ERROR', 'ID参数不能为空', 400);
+    }
+    
+    const response = await request({
+      url: `${BASE_URL}/${id}`,
+      method: 'put',
+      data
+    });
+    
+    return createResponse.success(response.data, '更新成功');
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+/**
+ * 删除资源
+ * @param {string|number} id - 资源ID
+ * @returns {Promise<ApiResponse>} 返回删除结果
+ */
+export async function remove(id) {
+  try {
+    if (!id) {
+      throw new ApiError('VALIDATION_ERROR', 'ID参数不能为空', 400);
+    }
+    
+    await request({
+      url: `${BASE_URL}/${id}`,
+      method: 'delete'
+    });
+    
+    return createResponse.success(null, '删除成功');
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+// 导出所有API方法
+export default {
+  getList,
+  getDetail,
+  create,
+  update,
+  remove,
+}
+```
+
+### API命名规范
+- **获取列表**：`getXxxList` 或 `getList`
+- **获取详情**：`getXxxDetail` 或 `getDetail`
+- **创建记录**：`createXxx` 或 `create`
+- **更新记录**：`updateXxx` 或 `update`
+- **删除记录**：`deleteXxx` 或 `remove`
+- **批量操作**：`batchXxx`（如`batchDelete`, `batchUpdate`等）
+- **特殊操作**：使用动词+名词结构（如`changeStatus`, `exportData`等）
+
+### 目录结构规范
+API目录必须按照业务模块组织：
+
+```
+src/api/
+├── modules/                  # 业务模块目录
+│   ├── master-data/          # 主数据模块
+│   │   ├── index.js          # 模块统一导出
+│   │   ├── equipment.js      # 设备管理API
+│   │   └── material.js       # 物料管理API
+│   ├── production/           # 生产模块
+│   │   ├── index.js
+│   │   ├── work-order.js     # 工单管理API
+│   │   └── quality.js        # 质量管理API
+│   └── system/               # 系统模块
+│       ├── index.js
+│       ├── user.js           # 用户管理API
+│       └── permission.js     # 权限管理API
+├── index.js                  # API总入口
+└── base.js                   # 基础API配置
+```
+
+## API版本控制策略
+
+### 版本控制方法
+【推荐】使用URL版本控制：
+
+```javascript
+// ✅ URL版本控制
+const API_VERSIONS = {
+  v1: '/mes/v1',
+  v2: '/mes/v2',
+  current: '/mes/v1', // 当前版本
+};
+
+// 版本兼容处理
+export function createVersionedApi(version = 'current') {
+  const baseURL = API_VERSIONS[version];
+  
+  return {
+    users: {
+      getList: (query) => request.get(`${baseURL}/users`, { params: query }),
+      getDetail: (id) => request.get(`${baseURL}/users/${id}`),
+    }
+  };
+}
+```
+
+## 性能优化与最佳实践
+
+### 请求优化
+```javascript
+// ✅ 使用防抖避免频繁请求
+import { debounce } from 'lodash-es';
+
+export const debouncedSearch = debounce(async (keyword) => {
+  return await searchApi({ keyword });
+}, 300);
+
+// ✅ 请求缓存
+const cache = new Map();
+
+export async function getCachedData(key, fetcher, ttl = 5 * 60 * 1000) {
+  const cached = cache.get(key);
+  
+  if (cached && Date.now() - cached.timestamp < ttl) {
+    return cached.data;
+  }
+  
+  const data = await fetcher();
+  cache.set(key, {
+    data,
+    timestamp: Date.now()
+  });
+  
+  return data;
+}
+```
+
+### 安全最佳实践
+```javascript
+// ✅ 请求拦截器配置（在 src/utils/request.js 中）
+service.interceptors.request.use(
+  config => {
+    // 添加认证令牌
+    const token = getToken();
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // 添加安全头
+    config.headers['X-Requested-With'] = 'XMLHttpRequest';
+    config.headers['Content-Type'] = 'application/json';
+    
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
+// ✅ 响应拦截器配置
+service.interceptors.response.use(
+  response => {
+    const res = response.data;
+    
+    // 统一处理业务错误
+    if (!res.success) {
+      return Promise.reject(new ApiError(
+        res.error?.code || 'UNKNOWN_ERROR',
+        res.error?.message || '未知错误',
+        response.status,
+        res.error?.details
+      ));
+    }
+    
+    return res;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+```
+
+## 🔍 API设计质量检查清单
+
+### 核心设计 [P0]
+- [ ] **[P0]** RESTful设计：是否遵循资源导向原则，正确使用HTTP方法？
+- [ ] **[P0]** 统一响应：所有API响应是否遵循统一的`{success, data, message, timestamp}`格式？
+- [ ] **[P0]** HTTP状态码：是否根据操作结果正确使用HTTP状态码？
+- [ ] **[P0]** 输入验证：所有输入参数是否都经过严格验证？
+- [ ] **[P0]** 错误处理：是否定义并使用统一的错误码规范？
+- [ ] **[P0]** 路径规范：是否使用`/mes`前缀和正确的资源路径？
+
+### 质量与安全 [P1]
+- [ ] **[P1]** 参数清理：是否使用`formatQueryParams`清理查询参数？
+- [ ] **[P1]** 认证授权：是否实施了适当的认证和授权机制？
+- [ ] **[P1]** 分页实现：列表接口是否正确实现分页逻辑？
+- [ ] **[P1]** 错误边界：是否有完整的错误处理和用户友好的错误提示？
+- [ ] **[P1]** API文档：是否有完整的JSDoc注释说明？
+
+### 性能与维护 [P2]
+- [ ] **[P2]** 防抖节流：搜索等频繁操作是否添加了防抖处理？
+- [ ] **[P2]** 请求缓存：是否为适当的接口添加了缓存机制？
+- [ ] **[P2]** 版本控制：是否考虑了API版本控制策略？
+- [ ] **[P2]** 代码复用：是否充分利用了基础工具函数和通用组件？
+
