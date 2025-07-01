@@ -39,47 +39,83 @@ alwaysApply: true
 
 ## 标准项目结构
 
+本项目推荐采用**模块内聚式架构**，同时保留必要的全局资源管理。这种架构模式强调模块的独立性和内聚性，便于大型项目的开发和维护。
+
+### 全局资源结构
+
 ```
 src/
-├── api/                     # API接口层
-│   ├── index.js             # API入口，统一导出
-│   └── modules/             # 按业务模块拆分API
-│       ├── common.js        # 通用API
-│       └── master-data/     # 主数据API目录
-│           ├── index.js     # 导出所有主数据API
-│           └── module-name.js  # 具体模块API
+├── api/                     # 全局API接口层
+│   ├── user.js              # 用户认证相关API
+│   └── common.js            # 系统级通用API
+├── constants/               # 全局常量
+│   ├── app.js               # 应用级常量
+│   └── common.js            # 系统级通用常量
+├── router/                  # 全局路由配置
+│   ├── index.js             # 路由主入口
 ├── components/              # 全局通用组件
 │   ├── SvgIcon/             # SVG图标组件
 │   ├── Breadcrumb/          # 面包屑导航组件
 │   └── ...                  # 其他全局组件
-├── utils/                   # 工具函数
+├── utils/                   # 全局工具函数
 │   ├── request.js           # 请求工具
 │   ├── formatter.js         # 格式化工具
 │   └── validator.js         # 验证工具
-├── mock/                    # Mock数据
-│   ├── index.js             # Mock入口
-│   ├── utils/               # Mock工具函数
-│   │   ├── response.js      # 响应处理工具
-│   │   └── generator.js     # 数据生成工具
-│   └── modules/             # Mock模块
-│       └── module-group/    # 模块组
-│           ├── index.js     # 模块组入口
-│           ├── data/        # 基础数据
-│           │   └── module-name.js  # 模块基础数据
-│           └── module-name.js  # 模块API Mock
+├── store/                   # Vuex状态管理
+│   ├── index.js             # Store主入口
+│   └── modules/             # Store模块
 ├── layout/                  # 布局组件
 │   ├── index.vue            # 主布局容器
-│   ├── components/          # 布局子组件
-│   │   ├── Sidebar/         # 侧边栏组件
-│   │   ├── Navbar.vue       # 顶部导航组件
-│   │   └── ...              # 其他布局组件
-├── views/                   # 页面视图组件
-│   ├── module-name/         # 功能模块目录
-│   │   ├── index.vue        # 模块主页面
-│   │   └── components/      # 模块专用组件
-└── constants/               # 全局常量
-    ├── index.js             # 常量入口
-    └── modules/             # 按模块划分的常量
+│   └── components/          # 布局子组件
+└── assets/                  # 全局静态资源
+```
+
+### 业务模块结构
+
+每个业务模块应采用**高内聚**的目录结构，包含自身所需的API、常量和组件：
+
+```
+src/views/master-data/
+├── equipment/               # 设备管理模块
+│   ├── index.vue            # 模块主页面
+│   ├── api/                 # 模块专用API
+│   │   └── index.js         # 设备相关API封装
+│   ├── constants/           # 模块专用常量
+│   │   └── index.js         # 设备相关常量定义
+│   ├── router/              # 模块专用路由（可选）
+│   │   └── index.js         # 设备管理子路由
+│   ├── components/          # 模块专用组件
+│   │   ├── SearchForm.vue   # 搜索表单组件
+│   │   ├── DataTable.vue    # 数据表格组件
+│   │   └── EditDialog.vue   # 编辑对话框组件
+│   ├── mixins/              # 模块专用混入
+│   │   └── form-mixin.js    # 表单处理混入
+│   ├── utils/               # 模块专用工具函数
+│   │   └── formatter.js     # 数据格式化工具
+│   └── README.md            # 模块说明文档
+├── warehouse/               # 仓库管理模块（类似结构）
+└── ...                      # 其他业务模块
+```
+
+### Mock数据组织结构
+
+Mock数据采用**全局集中 + 模块化组织**的方式：
+
+```
+mock/
+├── index.js                 # Mock服务入口，统一注册所有模块
+├── utils/                   # Mock工具函数
+│   ├── response.js          # 响应处理工具
+│   └── generator.js         # 数据生成工具
+├── user.js                  # 用户认证Mock
+├── table.js                 # 通用表格Mock
+└── master-data/             # 主数据Mock（按模块组织）
+    ├── equipment.js         # 设备管理Mock
+    ├── warehouse.js         # 仓库管理Mock
+    ├── furnace-type.js      # 炉型管理Mock
+    └── process-management/  # 复杂模块可创建子目录
+        ├── index.js         # 模块入口
+        └── data/            # 基础数据
 ```
 
 ## 目录命名规范
@@ -90,32 +126,71 @@ src/
 
 ## 功能模块目录结构
 
-每个功能模块应遵循以下标准目录结构：
+### 架构设计原则
 
+#### 模块内聚式
+
+**优势**：模块内聚性强，便于独立开发和维护
+**适用场景**：大型项目、多团队协作、微前端架构
+
+```javascript
+// 模块API使用方式
+import { getEquipmentList } from './api'
+// 或者
+import * as equipmentApi from './api'
+equipmentApi.getEquipmentList()
+
+// 模块常量使用方式
+import { EQUIPMENT_STATUS } from './constants'
 ```
-views/module-name/
-├── index.vue                 # 主页面组件（入口）
-├── router/                   # 路由配置
-│   └── index.js              # 模块路由定义
-├── api/                      # API调用
-│   └── index.js              # 模块API封装
-├── components/               # 子组件目录
-│   ├── common/               # 通用组件
-│   ├── form/                 # 表单相关组件
-│   ├── table/                # 表格相关组件
-│   └── search/               # 搜索相关组件
-├── constants/                # 常量定义
-├── mixins/                   # 混入目录
-├── utils/                    # 工具函数
-├── styles/                   # 样式文件
-├── docs/                     # 文档目录
-└── README.md                 # 模块说明文档
-```
+
+### 全局资源与模块资源的区别
+
+| 资源类型 | 全局资源 | 模块资源 |
+|---------|---------|---------|
+| API | 用户认证、系统级API | 业务模块专用API |
+| 常量 | 系统状态码、全局配置 | 业务模块专用状态和配置 |
+| 路由 | 主路由、布局路由 | 模块内部子路由 |
+| 组件 | 通用UI组件、布局组件 | 业务模块专用组件 |
+| 工具函数 | HTTP请求、格式化等通用工具 | 模块专用业务逻辑工具 |
+
+### 模块复杂度适配
 
 根据模块的复杂度和特点，可以适当调整目录结构：
-- **简单模块**：可以省略router、constants等目录
-- **中等复杂度模块**：保留主要目录，如api、components、mixins
+
+- **简单模块**：至少包含`index.vue`和`components/`目录
+- **中等复杂度模块**：增加`api/`、`constants/`、`mixins/`等目录
 - **复杂模块**：使用完整的目录结构，必要时可以增加子模块目录
+
+### 从集中式迁移到模块内聚式的步骤
+
+如果项目之前采用集中式管理，可以按照以下步骤逐步迁移：
+
+```javascript
+// 步骤1：在模块内创建API重导出文件
+// views/master-data/equipment/api/index.js
+export {
+  getEquipmentList,
+  createEquipment,
+  updateEquipment,
+  deleteEquipment
+} from '@/api/master-data/equipment'
+
+// 步骤2：在组件中使用相对路径
+// views/master-data/equipment/index.vue
+import * as equipmentApi from './api'
+// 替代原来的：import { getEquipmentList } from '@/api/master-data/equipment'
+
+// 步骤3：逐步将API实现迁移到模块内
+// 最终目标：完全在模块内定义API，不再依赖全局API
+```
+
+**重要提示**：模块内聚式架构的核心优势：
+- **开发效率**：相关代码集中在一起，减少跨目录查找
+- **代码可维护性**：修改某个模块不影响其他模块
+- **团队协作**：不同团队可以独立负责不同模块
+- **代码复用**：模块可以作为整体在不同项目间复用
+- **测试便利性**：模块可以独立测试
 
 ## 组件架构设计
 
