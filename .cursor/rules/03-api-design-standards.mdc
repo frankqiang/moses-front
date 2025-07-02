@@ -31,17 +31,40 @@ const HTTP_METHODS = {
 ### URL路径设计规范
 项目特定路径规范：
 1. 所有API路径必须以`/mes`作为前缀
-2. 路径按业务模块组织：`/mes/master-data/xxx`、`/mes/production/xxx`
-3. 使用复数名词表示资源：`/mes/users`、`/mes/orders`
-4. 使用嵌套路径表示关系：`/mes/users/:id/orders`
+2. 【必须】在前缀后添加版本号，如`/mes/v1`，`/mes/v2`
+3. 路径按业务模块组织：`/mes/v1/master-data/xxx`、`/mes/v1/production/xxx`
+4. 使用复数名词表示资源：`/mes/v1/users`、`/mes/v1/orders`
+5. 使用嵌套路径表示关系：`/mes/v1/users/:id/orders`
 
 ```javascript
 // ✅ 正确的URL设计
 const API_ROUTES = {
-  users: '/mes/users',
-  userDetail: '/mes/users/:id',
-  equipmentTypes: '/mes/master-data/equipment-types',
-  workOrders: '/mes/production/work-orders',
+  users: '/mes/v1/users',
+  userDetail: '/mes/v1/users/:id',
+  equipmentTypes: '/mes/v1/master-data/equipment-types',
+  workOrders: '/mes/v1/production/work-orders',
+  processOperations: '/mes/v1/process-management/operations/:id/work-orders',
+}
+```
+
+### API版本控制规范
+【必须】遵循以下版本控制原则：
+1. 在URL路径中明确标识API版本，如`/mes/v1/users`
+2. 主版本号(v1, v2)表示不兼容的API变更
+3. 次版本号变更通过响应头部`X-API-Version`标识，不在URL中体现
+4. 新功能应在新版本中实现，保持旧版本稳定性
+5. 版本升级时提供完整的迁移文档
+
+```javascript
+// API版本管理示例
+const API_VERSIONS = {
+  V1: 'v1', // 当前稳定版本
+  V2: 'v2'  // 开发中的新版本
+};
+
+// 构建带版本的API路径
+export function buildApiPath(resource, version = API_VERSIONS.V1) {
+  return `/mes/${version}/${resource}`;
 }
 ```
 
@@ -257,7 +280,8 @@ export async function getCachedData(key, fetcher, ttl = 5 * 60 * 1000) {
 - [ ] **HTTP状态码**：是否根据操作结果正确使用状态码？
 - [ ] **输入验证**：所有输入参数是否都经过严格验证？
 - [ ] **错误处理**：是否定义并使用统一的错误码规范？
-- [ ] **路径规范**：是否使用`/mes`前缀和正确的资源路径？
+- [ ] **路径规范**：是否使用`/mes/v1`前缀和正确的资源路径？
+- [ ] **版本控制**：是否在URL中包含版本信息（如`/mes/v1/...`）？
 
 ### 质量与安全 [P1]
 - [ ] **参数清理**：是否使用`formatQueryParams`清理查询参数？
@@ -265,11 +289,12 @@ export async function getCachedData(key, fetcher, ttl = 5 * 60 * 1000) {
 - [ ] **分页实现**：列表接口是否正确实现分页逻辑？
 - [ ] **错误边界**：是否有完整的错误处理和用户友好的错误提示？
 - [ ] **API文档**：是否有完整的JSDoc注释说明？
+- [ ] **版本兼容性**：新版本API是否考虑了与旧版本的兼容性问题？
 
 ### 性能与维护 [P2]
 - [ ] **防抖节流**：搜索等频繁操作是否添加了防抖处理？
 - [ ] **请求缓存**：是否为适当的接口添加了缓存机制？
-- [ ] **版本控制**：是否考虑了API版本控制策略？
+- [ ] **版本迁移**：是否提供了版本升级的迁移文档？
 - [ ] **代码复用**：是否充分利用了基础工具函数和通用组件？
 
 
