@@ -11,12 +11,30 @@ import cloneDeep from 'lodash.clonedeep'
 export { debounce, throttle, cloneDeep }
 
 /**
- * Parse the time to string
+ * 格式化API查询参数，移除空值和undefined值
+ * @param {Object} params 原始查询参数对象
+ * @returns {Object} 格式化后的查询参数对象
+ */
+export function formatQueryParams(params = {}) {
+  const result = {}
+  Object.keys(params).forEach(key => {
+    const value = params[key]
+    if (value !== '' && value !== null && value !== undefined) {
+      result[key] = value
+    }
+  })
+  return result
+}
+
+// formatDateTime 函数已移除，请直接使用 parseTime 函数，传入格式 '{y}-{m}-{d} {h}:{i}'
+
+/**
+ * 原始的时间解析函数 - 备份
  * @param {(Object|string|number)} time
  * @param {string} cFormat
  * @returns {string | null}
  */
-export function parseTime(time, cFormat) {
+export function parseTimeOriginal(time, cFormat) {
   if (arguments.length === 0 || !time) {
     return null
   }
@@ -57,6 +75,73 @@ export function parseTime(time, cFormat) {
     return value.toString().padStart(2, '0')
   })
   return time_str
+}
+
+/**
+ * Parse the time to string - 增强版，更好地处理ISO格式日期
+ * @param {(Object|string|number)} time
+ * @param {string} cFormat
+ * @returns {string | null}
+ */
+export function parseTime(time, cFormat) {
+  if (arguments.length === 0 || !time) {
+    return null
+  }
+  
+  try {
+    const format = cFormat || '{y}-{m}-{d} {h}:{i}:{s}'
+    let date
+    if (typeof time === 'object') {
+      date = time
+    } else {
+      if ((typeof time === 'string')) {
+        if ((/^[0-9]+$/.test(time))) {
+          // support "1548221490638"
+          time = parseInt(time)
+        }
+        // 注意：不再替换 - 为 /，现代浏览器可以直接解析ISO格式
+      }
+
+      if ((typeof time === 'number') && (time.toString().length === 10)) {
+        time = time * 1000
+      }
+      date = new Date(time)
+      
+      // 检查日期是否有效
+      if (isNaN(date.getTime())) {
+        // 尝试使用原始方法
+        const originalResult = parseTimeOriginal(time, cFormat)
+        if (originalResult !== null) {
+          return originalResult
+        }
+        return '-'
+      }
+    }
+    
+    const formatObj = {
+      y: date.getFullYear(),
+      m: date.getMonth() + 1,
+      d: date.getDate(),
+      h: date.getHours(),
+      i: date.getMinutes(),
+      s: date.getSeconds(),
+      a: date.getDay()
+    }
+    const time_str = format.replace(/{([ymdhisa])+}/g, (result, key) => {
+      const value = formatObj[key]
+      // Note: getDay() returns 0 on Sunday
+      if (key === 'a') { return ['日', '一', '二', '三', '四', '五', '六'][value ] }
+      return value.toString().padStart(2, '0')
+    })
+    return time_str
+  } catch (e) {
+    // 出错时尝试使用原始方法
+    try {
+      return parseTimeOriginal(time, cFormat) || '-'
+    } catch (innerError) {
+      return '-'
+    }
+  }
 }
 
 /**

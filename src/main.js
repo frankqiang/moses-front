@@ -19,6 +19,7 @@ import '@/permission' // permission control
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import SearchForm from '@/components/SearchForm'
+import SearchFormV2 from '@/components/SearchFormV2'
 import DialogForm from '@/components/DialogForm'
 import DrawerForm from '@/components/DrawerForm'
 import TableToolbar from '@/components/TableToolbar'
@@ -53,6 +54,7 @@ Vue.use(ElementUI, { locale })
 Vue.component('StatusTag', StatusTag)
 Vue.component('ActionButtons', ActionButtons)
 Vue.component('SearchForm', SearchForm)
+Vue.component('SearchFormV2', SearchFormV2)
 Vue.component('DialogForm', DialogForm)
 Vue.component('DrawerForm', DrawerForm)
 Vue.component('TableToolbar', TableToolbar)

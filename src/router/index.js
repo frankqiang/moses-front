@@ -113,6 +113,12 @@ export const constantRoutes = [
         component: () => import('@/views/master-data/furnace-type/index'),
         name: 'FurnaceType',
         meta: { title: '炉型管理' }
+      },
+      {
+        path: 'operations',
+        component: () => import('@/views/master-data/process-management/operations/index'),
+        name: 'Operations',
+        meta: { title: '工序管理' }
       }
       // 后续可以在这里添加其他主数据管理的子页面
     ]

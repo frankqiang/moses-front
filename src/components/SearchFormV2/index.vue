@@ -441,6 +441,7 @@ export default {
   background-color: #fff;
   border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  margin-bottom: 18px;
   // margin-bottom: 18px;
 
   .el-form {

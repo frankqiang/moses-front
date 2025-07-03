@@ -55,14 +55,6 @@ npm run build:prod
 # 运行单元测试
 npm run test:unit
 ```
-
-## 新页面添加流程
-
-1. 在`src/views`下创建页面目录和组件
-2. 在`src/router`中添加路由配置
-3. 在`src/api`中添加API请求模块
-4. 在`mock`目录下添加模拟数据
-
 ## 快速开发指南
 
 ### 开发前必读检查清单
@@ -72,27 +64,6 @@ npm run test:unit
 - [ ] 已设计API接口规范
 - [ ] 已准备Mock数据方案
 - [ ] 已了解相关的业务规则
-
-### 创建新模块的标准步骤
-
-1. **创建目录结构**
-   ```bash
-   mkdir -p src/views/module-name/{components,docs}
-   mkdir -p src/api/module-name
-   mkdir -p mock/modules/module-name/{data}
-   ```
-
-2. **创建基础文件**
-   - `src/views/module-name/index.vue` - 主页面组件
-   - `src/api/module-name/index.js` - API接口
-   - `mock/modules/module-name/index.js` - Mock接口
-   - `mock/modules/module-name/data/index.js` - Mock数据
-
-3. **添加路由配置**
-   - 在 `src/router/index.js` 中添加路由定义
-
-4. **创建文档**
-   - 在 `src/views/module-name/docs/` 下创建需求文档
 
 ### 常见问题快速解决
 
