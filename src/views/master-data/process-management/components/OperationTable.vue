@@ -3,6 +3,8 @@
  * 功能描述：展示工序列表数据，提供分页、选择、操作功能，支持动态列显示及持久化设置
  * 创建日期：2024-12-20
  * 重构日期：2024-12-20 - 使用BaseTable组件替代el-table
+ * 优化记录：
+ *   - 2024-12-20: 使用OverflowTagsPopover组件优化关联资源类型列的显示
  */
 <template>
   <div class="operation-table">
@@ -85,15 +87,18 @@
 
       <!-- 关联资源类型列 -->
       <template #associatedResourceType="{ row }">
-        <el-tooltip v-if="row.associatedResourceType && row.associatedResourceType.length > 0" placement="top" :content="row.associatedResourceType.join(', ')">
-          <el-tag v-if="row.associatedResourceType.length === 1" size="mini">
-            {{ row.associatedResourceType[0] }}
-          </el-tag>
-          <span v-else>
-            <el-tag size="mini">{{ row.associatedResourceType[0] }}</el-tag>
-            <span class="more-tags">+{{ row.associatedResourceType.length - 1 }}</span>
-          </span>
-        </el-tooltip>
+        <!-- 使用全局组件OverflowTagsPopover优化多标签显示 -->
+        <OverflowTagsPopover
+          v-if="row.associatedResourceType && row.associatedResourceType.length > 0"
+          :data="row.associatedResourceType"
+          :max-show="1"
+          :enable-modern-features="true"
+          size="mini"
+          type="primary"
+          title="关联资源类型"
+          :popover-width="300"
+          placement="top"
+        />
         <span v-else>-</span>
       </template>
 
@@ -117,7 +122,8 @@
       </template>
     </BaseTable>
 
-    <!-- 分页 -->
+    <!-- 分页组件 -->
+    <!-- 说明：BaseTable组件并不包含分页功能，只是纯表格组件，所以这里的分页组件是必要的 -->
     <Pagination
       v-show="total > 0"
       :total="total"
@@ -136,6 +142,7 @@ import ActionButtons from '@/components/ActionButtons'
 import TableToolbar from '@/components/TableToolbar'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import Pagination from '@/components/Pagination'
+import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import request from '@/utils/request'
 
 import { parseTime, debounce } from '@/utils'
@@ -154,7 +161,8 @@ export default {
     StatusTag,
     ActionButtons,
     TableToolbar,
-    Pagination
+    Pagination,
+    OverflowTagsPopover
   },
   mixins: [columnSettingsMixin],
   props: {
@@ -540,10 +548,6 @@ export default {
     }
   }
 
-  .more-tags {
-    margin-left: 4px;
-    color: #909399;
-    font-size: 12px;
-  }
+
 }
 </style>
