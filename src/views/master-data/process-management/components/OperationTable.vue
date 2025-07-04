@@ -44,11 +44,12 @@
       </template>
     </table-toolbar>
 
-    <!-- 使用BaseTable组件替代el-table -->
+    <!-- 使用BaseTable组件替代el-table，使用内置分页功能 -->
     <BaseTable
       :data="data"
       :columns="baseTableColumns"
       :loading="loading"
+      :pagination="paginationConfig"
       :show-selection="true"
       :show-index="true"
       :virtual-scroll="enableVirtualScroll"
@@ -65,6 +66,7 @@
       @row-click="handleRowClick"
       @data-error="handleDataError"
       @format-error="handleFormatError"
+      @pagination-change="handlePaginationChange"
     >
       <!-- 状态列自定义渲染 -->
       <template #status="{ row }">
@@ -122,16 +124,6 @@
       </template>
     </BaseTable>
 
-    <!-- 分页组件 -->
-    <!-- 说明：BaseTable组件并不包含分页功能，只是纯表格组件，所以这里的分页组件是必要的 -->
-    <Pagination
-      v-show="total > 0"
-      :total="total"
-      :page.sync="currentPage"
-      :limit.sync="pageSize"
-      @pagination="handlePagination"
-    />
-
   </div>
 </template>
 
@@ -141,7 +133,6 @@ import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import TableToolbar from '@/components/TableToolbar'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
-import Pagination from '@/components/Pagination'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import request from '@/utils/request'
 
@@ -161,7 +152,6 @@ export default {
     StatusTag,
     ActionButtons,
     TableToolbar,
-    Pagination,
     OverflowTagsPopover
   },
   mixins: [columnSettingsMixin],
@@ -269,6 +259,18 @@ export default {
       return TABLE_COLUMNS.filter(col =>
         this.internalVisibleColumns.includes(col.prop)
       )
+    },
+    // 分页配置
+    paginationConfig() {
+      return {
+        total: this.total,
+        page: this.currentPage,
+        limit: this.pageSize,
+        pageSizes: [10, 20, 50, 100],
+        layout: 'total, sizes, prev, pager, next, jumper',
+        background: true,
+        autoScroll: true
+      }
     }
   },
   watch: {
@@ -338,7 +340,7 @@ export default {
     },
 
     // 处理分页事件
-    handlePagination({ page, limit }) {
+    handlePaginationChange({ page, limit }) {
       this.$emit('pagination', {
         page,
         limit
@@ -547,7 +549,5 @@ export default {
       color: #909399;
     }
   }
-
-
 }
 </style>
