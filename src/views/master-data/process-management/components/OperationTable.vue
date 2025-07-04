@@ -2,6 +2,7 @@
  * 工序表格组件
  * 功能描述：展示工序列表数据，提供分页、选择、操作功能，支持动态列显示及持久化设置
  * 创建日期：2024-12-20
+ * 重构日期：2024-12-20 - 使用BaseTable组件替代el-table
  */
 <template>
   <div class="operation-table">
@@ -28,7 +29,11 @@
       @export-success="handleExportSuccess"
     >
       <template #toolbar-left>
-        <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增工序</el-button>
+        <ActionButtons
+          :buttons="toolbarButtons"
+          mode="normal"
+          @click="handleToolbarAction"
+        />
         <slot name="toolbar-left" />
       </template>
 
@@ -37,76 +42,80 @@
       </template>
     </table-toolbar>
 
-    <el-table
-      v-loading="loading"
+    <!-- 使用BaseTable组件替代el-table -->
+    <BaseTable
       :data="data"
+      :columns="baseTableColumns"
+      :loading="loading"
+      :show-selection="true"
+      :show-index="true"
+      :virtual-scroll="enableVirtualScroll"
+      :virtual-threshold="1000"
+      :virtual-height="600"
+      :item-height="48"
+      :allow-retry="true"
+      :load-error="loadError"
       border
+      stripe
       highlight-current-row
-      :fit="true"
-      style="width: 100%"
-      :row-class-name="tableRowClassName"
       @selection-change="handleSelectionChange"
+      @retry="handleRetry"
+      @row-click="handleRowClick"
+      @data-error="handleDataError"
+      @format-error="handleFormatError"
     >
-      <el-table-column type="selection" width="45" align="center" fixed="left" />
-      <el-table-column label="#" type="index" width="50" align="center" fixed="left" />
+      <!-- 状态列自定义渲染 -->
+      <template #status="{ row }">
+        <StatusTag
+          :status="row.status"
+          :text-map="statusTextMap"
+          :type-map="statusTypeMap"
+        />
+      </template>
 
-      <el-table-column
-        v-for="col in tableColumns"
-        :key="col.prop"
-        v-bind="col"
-        show-overflow-tooltip
-        align="center"
-      >
-        <template slot-scope="scope">
-          <!-- 使用StatusTag组件展示状态列 -->
-          <template v-if="col.prop === 'status'">
-            <StatusTag
-              :status="scope.row.status"
-              :text-map="statusTextMap"
-              :type-map="statusTypeMap"
-            />
-          </template>
+      <!-- 工序类型列 -->
+      <template #type="{ row }">
+        <span>{{ getTypeLabel(row.type) }}</span>
+      </template>
 
-          <!-- 工序类型列 -->
-          <template v-else-if="col.prop === 'type'">
-            <span>{{ getTypeLabel(scope.row.type) }}</span>
-          </template>
+      <!-- 报告点列 -->
+      <template #reportingPoint="{ row }">
+        <span>{{ getReportingPointLabel(row.reportingPoint) }}</span>
+      </template>
 
-          <!-- 报告点列 -->
-          <template v-else-if="col.prop === 'reportingPoint'">
-            <span>{{ getReportingPointLabel(scope.row.reportingPoint) }}</span>
-          </template>
+      <!-- 关联资源类型列 -->
+      <template #associatedResourceType="{ row }">
+        <el-tooltip v-if="row.associatedResourceType && row.associatedResourceType.length > 0" placement="top" :content="row.associatedResourceType.join(', ')">
+          <el-tag v-if="row.associatedResourceType.length === 1" size="mini">
+            {{ row.associatedResourceType[0] }}
+          </el-tag>
+          <span v-else>
+            <el-tag size="mini">{{ row.associatedResourceType[0] }}</el-tag>
+            <span class="more-tags">+{{ row.associatedResourceType.length - 1 }}</span>
+          </span>
+        </el-tooltip>
+        <span v-else>-</span>
+      </template>
 
-                      <!-- 时间格式化 -->
-            <template v-else-if="col.prop === 'createdAt' || col.prop === 'updatedAt'">
-             {{ parseTime(scope.row[col.prop], '{y}-{m}-{d} {h}:{i}') || '-' }}
-            </template>
+      <!-- 操作列 -->
+      <template #actions="{ row }">
+        <ActionButtons
+          :buttons="getActionButtons(row)"
+          mode="text"
+          :row="row"
+          @click="handleActionClick"
+        />
+      </template>
 
-          <!-- 其他列的默认渲染 -->
-          <template v-else-if="col.formatter">
-            {{ col.formatter(scope.row[col.prop], scope.row) }}
-          </template>
-          <template v-else-if="scope.row[col.prop] !== undefined && scope.row[col.prop] !== null">
-            {{ scope.row[col.prop] }}
-          </template>
-          <template v-else>
-            -
-          </template>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="操作" width="220" align="center" fixed="right">
-        <template slot-scope="scope">
-          <!-- 使用ActionButtons组件替代原来的按钮组 -->
-          <ActionButtons
-            :buttons="getActionButtons(scope.row)"
-            mode="text"
-            :row="scope.row"
-            @click="handleActionClick"
-          />
-        </template>
-      </el-table-column>
-    </el-table>
+      <!-- 空状态自定义 -->
+      <template #empty>
+        <div class="custom-empty">
+          <i class="el-icon-document-remove" style="font-size: 48px; color: #c0c4cc;" />
+          <p>暂无工序数据</p>
+          <el-button type="primary" size="small" @click="handleAdd">新增工序</el-button>
+        </div>
+      </template>
+    </BaseTable>
 
     <!-- 分页 -->
     <Pagination
@@ -121,6 +130,7 @@
 </template>
 
 <script>
+import BaseTable from '@/components/BaseTable'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import TableToolbar from '@/components/TableToolbar'
@@ -128,18 +138,19 @@ import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import Pagination from '@/components/Pagination'
 import request from '@/utils/request'
 
-import { parseTime } from '@/utils'
-import { 
-  TABLE_COLUMNS, 
+import { parseTime, debounce } from '@/utils'
+import {
+  TABLE_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
-  OPERATION_TYPE_OPTIONS, 
-  OPERATION_STATUS_OPTIONS,
-  REPORTING_POINT_OPTIONS
+  OPERATION_TYPE_OPTIONS,
+  REPORTING_POINT_OPTIONS,
+  STATUS_CONFIG
 } from '../constants'
 
 export default {
   name: 'OperationTable',
   components: {
+    BaseTable,
     StatusTag,
     ActionButtons,
     TableToolbar,
@@ -162,6 +173,11 @@ export default {
       type: Boolean,
       default: false
     },
+    // 加载错误状态
+    loadError: {
+      type: [Boolean, String, Error],
+      default: false
+    },
     // 当前页码
     page: {
       type: Number,
@@ -175,7 +191,7 @@ export default {
     // 导出API
     exportApi: {
       type: String,
-      default: '/vue-admin-template/mes/operations/export'
+      default: '/mes/v1/master-data/process-management/operations/export'
     }
   },
   data() {
@@ -189,21 +205,30 @@ export default {
       // 当前页码
       currentPage: 1,
       // 每页条数
-      pageSize: 10,
-
-      // 状态文本映射
-      statusTextMap: {
-        'Enabled': '启用',
-        'Disabled': '禁用'
-      },
-      // 状态类型映射
-      statusTypeMap: {
-        'Enabled': 'success',
-        'Disabled': 'info'
-      }
+      pageSize: 10
     }
   },
   computed: {
+    // 状态文本映射 - 直接使用常量
+    statusTextMap() {
+      return STATUS_CONFIG.textMap
+    },
+    // 状态类型映射 - 直接使用常量
+    statusTypeMap() {
+      return STATUS_CONFIG.typeMap
+    },
+    // 工具栏按钮配置
+    toolbarButtons() {
+      return [
+        {
+          action: 'add',
+          text: '新增工序',
+          type: 'primary',
+          icon: 'el-icon-plus',
+          size: 'mini'
+        }
+      ]
+    },
     // 所有可用列
     columnOptions() {
       return TABLE_COLUMNS
@@ -227,14 +252,15 @@ export default {
         })
       }
     },
-    // 表格列配置
-    tableColumns() {
-      // 使用mixin中提供的方法筛选可见列
-      if (!this.allColumns || this.allColumns.length === 0) {
-        // 如果allColumns还没初始化，先使用columnOptions初始化
-        return this.columnOptions.filter(col => this.internalVisibleColumns.includes(col.prop))
-      }
-      return this.allColumns.filter(col => this.internalVisibleColumns.includes(col.prop))
+    // 是否启用虚拟滚动
+    enableVirtualScroll() {
+      return this.data.length > 100
+    },
+    // BaseTable列配置 - 直接使用常量，无需转换
+    baseTableColumns() {
+      return TABLE_COLUMNS.filter(col =>
+        this.internalVisibleColumns.includes(col.prop)
+      )
     }
   },
   watch: {
@@ -272,25 +298,30 @@ export default {
         console.error('解析保存的列设置失败:', e)
       }
     }
+
+    // 创建防抖函数
+    this.debouncedRefresh = debounce(() => {
+      this.$emit('refresh')
+    }, 300)
   },
   methods: {
     // 将导入的parseTime函数添加为组件方法
     parseTime(dateTime, format) {
       return parseTime(dateTime, format)
     },
-    
+
     // 获取工序类型标签
     getTypeLabel(type) {
       const option = OPERATION_TYPE_OPTIONS.find(opt => opt.value === type)
       return option ? option.label : type
     },
-    
+
     // 获取报告点标签
     getReportingPointLabel(reportingPoint) {
       const option = REPORTING_POINT_OPTIONS.find(opt => opt.value === reportingPoint)
       return option ? option.label : reportingPoint
     },
-    
+
     // 更新导出参数
     updateExportParams() {
       this.exportParams = {
@@ -306,9 +337,31 @@ export default {
       })
     },
 
-    // 处理刷新事件
+    // 处理刷新事件（带防抖）
     handleRefresh() {
-      this.$emit('refresh')
+      this.debouncedRefresh()
+    },
+
+    // 处理重试事件
+    handleRetry() {
+      this.$emit('retry')
+    },
+
+    // 处理数据错误
+    handleDataError(errorInfo) {
+      console.error('表格数据错误:', errorInfo)
+      this.$emit('data-error', errorInfo)
+    },
+
+    // 处理格式化错误
+    handleFormatError(errorInfo) {
+      console.error('数据格式化错误:', errorInfo)
+      this.$emit('format-error', errorInfo)
+    },
+
+    // 处理行点击事件
+    handleRowClick(row, column, event) {
+      this.$emit('row-click', row, column, event)
     },
 
     // 处理列变更事件
@@ -327,6 +380,17 @@ export default {
     // 处理新增事件
     handleAdd() {
       this.$emit('create')
+    },
+
+    // 处理工具栏按钮点击事件
+    handleToolbarAction(button) {
+      switch (button.action) {
+        case 'add':
+          this.handleAdd()
+          break
+        default:
+          console.warn('未知的工具栏操作:', button.action)
+      }
     },
 
     // 处理批量删除事件
@@ -353,7 +417,7 @@ export default {
         this.$message.warning('请至少选择一条记录')
         return
       }
-      
+
       this.$emit('batch-enable', rows)
     },
 
@@ -363,7 +427,7 @@ export default {
         this.$message.warning('请至少选择一条记录')
         return
       }
-      
+
       this.$emit('batch-disable', rows)
     },
 
@@ -425,23 +489,23 @@ export default {
     },
 
     // 处理按钮点击事件
-    handleActionClick({ action, row }) {
-      switch (action) {
+    handleActionClick(button) {
+      switch (button.action) {
         case 'edit':
-          this.$emit('edit', row)
+          this.$emit('edit', button.row)
           break
         case 'delete':
-          this.confirmDelete(row)
+          this.confirmDelete(button.row)
           break
         case 'enable':
           this.$emit('status-change', {
-            id: row.id,
+            id: button.row.id,
             status: 'Enabled'
           })
           break
         case 'disable':
           this.$emit('status-change', {
-            id: row.id,
+            id: button.row.id,
             status: 'Disabled'
           })
           break
@@ -459,14 +523,6 @@ export default {
       }).catch(() => {
         this.$message.info('已取消删除')
       })
-    },
-
-    // 表格行样式
-    tableRowClassName({ row }) {
-      if (row.status === 'Disabled') {
-        return 'row-disabled'
-      }
-      return ''
     }
   }
 }
@@ -474,8 +530,20 @@ export default {
 
 <style lang="scss" scoped>
 .operation-table {
-  .row-disabled {
-    color: #c0c4cc;
+  .custom-empty {
+    text-align: center;
+    padding: 40px 0;
+
+    p {
+      margin: 16px 0 8px;
+      color: #909399;
+    }
+  }
+
+  .more-tags {
+    margin-left: 4px;
+    color: #909399;
+    font-size: 12px;
   }
 }
-</style> 
+</style>

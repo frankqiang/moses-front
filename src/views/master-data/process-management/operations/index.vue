@@ -7,7 +7,7 @@
         @reset="handleReset"
       />
     </div>
-    
+
     <operation-table
       :data="list"
       :loading="listLoading"
@@ -36,12 +36,12 @@ import { getOperationList, updateOperationStatus, deleteOperation, batchUpdateOp
 
 export default {
   name: 'OperationList',
-  
+
   components: {
     SearchForm,
     OperationTable
   },
-  
+
   data() {
     return {
       list: [],
@@ -56,12 +56,12 @@ export default {
       }
     }
   },
-  
+
   created() {
     this.debouncedGetList = debounce(this.getList, 300)
     this.getList()
   },
-  
+
   methods: {
     // 获取工序列表
     async getList() {
@@ -77,7 +77,7 @@ export default {
         this.listLoading = false
       }
     },
-    
+
     // 处理搜索
     handleSearch(formData) {
       this.listQuery = {
@@ -89,7 +89,7 @@ export default {
       }
       this.debouncedGetList()
     },
-    
+
     // 处理重置
     handleReset() {
       this.listQuery = {
@@ -101,7 +101,7 @@ export default {
       }
       this.debouncedGetList()
     },
-    
+
     // 处理分页
     handlePagination({ page, limit }) {
       this.listQuery = {
@@ -111,19 +111,19 @@ export default {
       }
       this.getList()
     },
-    
+
     // 处理创建
     handleCreate() {
       // 这里可以打开创建工序的表单抽屉
       this.$message.info('打开创建工序表单')
     },
-    
+
     // 处理编辑
     handleEdit(row) {
       // 这里可以打开编辑工序的表单抽屉
       this.$message.info(`编辑工序: ${row.name}`)
     },
-    
+
     // 处理状态变更
     async handleStatusChange({ id, status }) {
       try {
@@ -138,7 +138,7 @@ export default {
         this.listLoading = false
       }
     },
-    
+
     // 处理删除
     async handleDelete(row) {
       try {
@@ -153,7 +153,7 @@ export default {
         this.listLoading = false
       }
     },
-    
+
     // 处理批量删除
     async handleBatchDelete(rows) {
       try {
@@ -169,7 +169,7 @@ export default {
         this.listLoading = false
       }
     },
-    
+
     // 处理批量启用
     async handleBatchEnable(rows) {
       try {
@@ -185,7 +185,7 @@ export default {
         this.listLoading = false
       }
     },
-    
+
     // 处理批量禁用
     async handleBatchDisable(rows) {
       try {
@@ -203,4 +203,4 @@ export default {
     }
   }
 }
-</script> 
+</script>

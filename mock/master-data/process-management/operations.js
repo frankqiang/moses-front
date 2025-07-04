@@ -57,13 +57,27 @@ const handlers = {
     
     // 类型筛选
     if (type) {
-      const types = type.split(',')
+      let types
+      if (Array.isArray(type)) {
+        types = type
+      } else if (typeof type === 'string') {
+        types = type.split(',')
+      } else {
+        types = [type]
+      }
       filteredList = filteredList.filter(item => types.includes(item.type))
     }
     
     // 状态筛选
     if (status) {
-      const statuses = status.split(',')
+      let statuses
+      if (Array.isArray(status)) {
+        statuses = status
+      } else if (typeof status === 'string') {
+        statuses = status.split(',')
+      } else {
+        statuses = [status]
+      }
       filteredList = filteredList.filter(item => statuses.includes(item.status))
     }
     

@@ -1,7 +1,7 @@
 /**
  * 工序管理表单配置
  */
-import { OPERATION_TYPE_OPTIONS, OPERATION_STATUS_OPTIONS } from './enums'
+import { OPERATION_TYPE_OPTIONS, OPERATION_STATUS_OPTIONS } from './operation'
 
 // 搜索表单配置
 export const SEARCH_FORM_CONFIG = [
@@ -30,4 +30,4 @@ export const SEARCH_FORM_CONFIG = [
     multiple: true,
     options: OPERATION_STATUS_OPTIONS
   }
-] 
+]

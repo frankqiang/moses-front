@@ -3,7 +3,6 @@
  * 功能描述：提供工序管理相关的API调用方法
  */
 import request from '@/utils/request'
-import { formatQueryParams } from '@/utils/index'
 
 const BASE_URL = '/mes/v1/master-data/process-management/operations'
 
@@ -166,4 +165,4 @@ export default {
   exportOperations,
   importOperations,
   downloadOperationTemplate
-} 
+}

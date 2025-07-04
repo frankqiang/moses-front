@@ -87,7 +87,7 @@ export function parseTime(time, cFormat) {
   if (arguments.length === 0 || !time) {
     return null
   }
-  
+
   try {
     const format = cFormat || '{y}-{m}-{d} {h}:{i}:{s}'
     let date
@@ -106,7 +106,7 @@ export function parseTime(time, cFormat) {
         time = time * 1000
       }
       date = new Date(time)
-      
+
       // 检查日期是否有效
       if (isNaN(date.getTime())) {
         // 尝试使用原始方法
@@ -117,7 +117,7 @@ export function parseTime(time, cFormat) {
         return '-'
       }
     }
-    
+
     const formatObj = {
       y: date.getFullYear(),
       m: date.getMonth() + 1,
