@@ -329,6 +329,21 @@ const handlers = {
       data: Buffer.from('模拟的Excel模板数据'),
       filename: '工序导入模板.xlsx'
     }
+  },
+
+  checkCode(config) {
+    const { code, excludeId } = config.query
+    
+    if (!code) {
+      return error('VALIDATION_ERROR', '工序代码不能为空', 400)
+    }
+    
+    // 检查代码是否已存在
+    const exists = dataCache.some(item => 
+      item.code === code && (!excludeId || item.id !== excludeId)
+    )
+    
+    return success({ exists }, '检查完成')
   }
 }
 
@@ -367,5 +382,8 @@ module.exports = [
   { url: '/mes/v1/master-data/process-management/operations/import', type: 'post', response: handlers.import },
   
   // 下载模板
-  { url: '/mes/v1/master-data/process-management/operations/download-template', type: 'get', response: handlers.downloadTemplate }
+  { url: '/mes/v1/master-data/process-management/operations/download-template', type: 'get', response: handlers.downloadTemplate },
+  
+  // 检查工序代码是否存在
+  { url: '/mes/v1/master-data/process-management/operations/check-code', type: 'get', response: handlers.checkCode }
 ] 

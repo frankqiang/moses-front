@@ -291,7 +291,7 @@ export default {
 
     // 初始化列配置 - 使用columnOptions初始化allColumns
     this.allColumns = this.columnOptions
-    
+
     // 加载列设置（使用mixin的方法）
     this.loadColumnSettings()
 

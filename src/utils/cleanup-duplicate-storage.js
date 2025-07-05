@@ -10,14 +10,14 @@
  */
 export function cleanupDuplicateColumnConfigs() {
   console.log('开始清理重复的列配置存储...')
-  
+
   const keysToRemove = []
   const migratedKeys = []
-  
+
   // 遍历所有localStorage键
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)
-    
+
     // 查找表格列配置相关的键
     if (key && (
       key.startsWith('operation_columns_') ||
@@ -27,11 +27,11 @@ export function cleanupDuplicateColumnConfigs() {
       key.includes('_columns_')
     )) {
       const value = localStorage.getItem(key)
-      
+
       try {
         // 尝试解析数据
         const columns = JSON.parse(value)
-        
+
         if (Array.isArray(columns)) {
           console.log(`发现列配置: ${key}`, columns)
           keysToRemove.push(key)
@@ -43,15 +43,15 @@ export function cleanupDuplicateColumnConfigs() {
       }
     }
   }
-  
+
   // 移除重复的键
   keysToRemove.forEach(key => {
     localStorage.removeItem(key)
     console.log(`已移除重复的存储键: ${key}`)
   })
-  
+
   console.log(`清理完成！移除了 ${keysToRemove.length} 个重复的存储键`)
-  
+
   return {
     removedCount: keysToRemove.length,
     migratedKeys,
@@ -68,7 +68,7 @@ export function checkStorageStatus() {
     duplicateKeys: [],
     totalSize: 0
   }
-  
+
   // 检查集中式存储
   const centralData = localStorage.getItem('vue_admin_table_configs')
   if (centralData) {
@@ -79,11 +79,11 @@ export function checkStorageStatus() {
       console.error('集中式存储数据损坏:', error)
     }
   }
-  
+
   // 检查重复的键
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)
-    
+
     if (key && key !== 'vue_admin_table_configs' && (
       key.startsWith('operation_columns_') ||
       key.startsWith('equipment_columns_') ||
@@ -100,7 +100,7 @@ export function checkStorageStatus() {
       storageInfo.totalSize += (value ? value.length : 0)
     }
   }
-  
+
   return storageInfo
 }
 
@@ -109,9 +109,9 @@ export function checkStorageStatus() {
  */
 export function cleanupNow() {
   const status = checkStorageStatus()
-  
+
   console.log('当前存储状态:', status)
-  
+
   if (status.duplicateKeys.length > 0) {
     const result = cleanupDuplicateColumnConfigs()
     console.log('清理结果:', result)
@@ -129,9 +129,9 @@ if (process.env.NODE_ENV === 'development') {
     cleanup: cleanupNow,
     cleanupDuplicates: cleanupDuplicateColumnConfigs
   }
-  
+
   console.log('🧹 存储清理工具已挂载到 window.cleanupDuplicateStorage')
   console.log('使用方法:')
   console.log('- window.cleanupDuplicateStorage.checkStatus() // 检查存储状态')
   console.log('- window.cleanupDuplicateStorage.cleanup() // 一键清理')
-} 
+}
