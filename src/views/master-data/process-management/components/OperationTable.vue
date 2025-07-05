@@ -12,7 +12,7 @@
     <table-toolbar
       :enable-column-settings="true"
       :column-options="columnOptions"
-      :storage-key="currentStorageKey"
+      :storage-key="columnSettingsKey"
       :default-visible-columns="defaultVisibleColumns"
       :enable-batch-actions="true"
       :selected-rows="selectedRows"
@@ -235,10 +235,6 @@ export default {
     defaultVisibleColumns() {
       return DEFAULT_VISIBLE_COLUMNS
     },
-    // 重写列设置存储键
-    currentStorageKey() {
-      return `${this.columnSettingsKeyPrefix}_${this.$options.name || 'common'}`
-    },
     // 导出API函数
     exportApiFunction() {
       return (params) => {
@@ -295,19 +291,9 @@ export default {
 
     // 初始化列配置 - 使用columnOptions初始化allColumns
     this.allColumns = this.columnOptions
-
-    // 设置初始可见列
-    this.internalVisibleColumns = [...this.defaultVisibleColumns]
-
-    // 尝试从localStorage读取用户设置的可见列
-    const savedColumns = localStorage.getItem(this.currentStorageKey)
-    if (savedColumns) {
-      try {
-        this.internalVisibleColumns = JSON.parse(savedColumns)
-      } catch (e) {
-        console.error('解析保存的列设置失败:', e)
-      }
-    }
+    
+    // 加载列设置（使用mixin的方法）
+    this.loadColumnSettings()
 
     // 创建防抖函数
     this.debouncedRefresh = debounce(() => {
@@ -372,13 +358,6 @@ export default {
     // 处理行点击事件
     handleRowClick(row, column, event) {
       this.$emit('row-click', row, column, event)
-    },
-
-    // 处理列变更事件
-    handleColumnChange(columns) {
-      this.internalVisibleColumns = columns
-      // 保存列设置到localStorage
-      localStorage.setItem(this.currentStorageKey, JSON.stringify(columns))
     },
 
     // 处理选择变更事件

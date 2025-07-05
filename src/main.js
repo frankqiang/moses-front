@@ -45,6 +45,11 @@ if (process.env.NODE_ENV === 'production') {
   mockXHR()
 }
 
+// 开发环境下导入存储清理工具
+if (process.env.NODE_ENV === 'development') {
+  import('@/utils/cleanup-duplicate-storage')
+}
+
 // set ElementUI lang to ZH-CN
 Vue.use(ElementUI, { locale })
 // 如果想要中文版 element-ui，按如下方式声明
