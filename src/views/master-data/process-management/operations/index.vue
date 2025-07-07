@@ -20,8 +20,7 @@
       :total="total"
       :page="pagination.page"
       :limit="pagination.limit"
-      @page-change="handlePageChange"
-      @size-change="handleSizeChange"
+      @pagination="handlePaginationChange"
       @create="handleCreate"
       @edit="handleEdit"
       @view="handleView"
@@ -132,16 +131,10 @@ export default {
       this.fetchList()
     },
 
-    // 分页变化处理
-    handlePageChange(page) {
+    // 统一的分页变化处理
+    handlePaginationChange({ page, limit }) {
       this.pagination.page = page
-      this.fetchList()
-    },
-
-    // 分页大小变化处理
-    handleSizeChange(size) {
-      this.pagination.limit = size
-      this.pagination.page = 1
+      this.pagination.limit = limit
       this.fetchList()
     },
 

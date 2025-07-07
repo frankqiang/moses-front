@@ -22,6 +22,8 @@
       :show-footer="false"
       :clear-validate-on-data-update="true"
       :disable-initial-validation="true"
+      :validate-on-data-change="false"
+      @submit="handleFormSubmit"
       @validate="handleCustomValidate"
       @validate-error="handleValidateError"
       @reset="handleFormReset"
@@ -383,29 +385,19 @@ export default {
     },
 
     // 提交按钮处理
-    async handleSubmit() {
-      await this.submitForm(false)
+    handleSubmit() {
+      // 触发 EnhancedForm 的内置提交机制
+      if (this.$refs.enhancedForm) {
+        this.$refs.enhancedForm.handleSubmitClick()
+      }
     },
 
     // 保存并继续按钮处理
-    async handleSubmitAndContinue() {
-      await this.submitForm(true)
-    },
-
-    // 统一的表单提交处理
-    async submitForm(continueEdit = false) {
-      // 先进行表单验证
-      try {
-        if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs.form) {
-          await this.$refs.enhancedForm.$refs.form.validate()
-        }
-      } catch (error) {
-        this.$message.warning('请检查表单填写是否正确')
-        return
+    handleSubmitAndContinue() {
+      // 触发 EnhancedForm 的内置保存并继续机制
+      if (this.$refs.enhancedForm) {
+        this.$refs.enhancedForm.handleContinueClick()
       }
-
-      // 验证通过后提交数据
-      await this.handleFormSubmit(this.formData, continueEdit)
     },
 
     // 业务逻辑：实际的数据提交处理
