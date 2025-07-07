@@ -404,14 +404,18 @@ export default {
     async handleFormSubmit(formData, continueEdit = false) {
       try {
         this.loading = true
+        let response
 
         if (this.mode === 'create') {
-          await createOperation(formData)
-          this.$message.success('工序创建成功')
+          response = await createOperation(formData)
         } else if (this.mode === 'update') {
-          await updateOperation(formData.id, formData)
-          this.$message.success('工序更新成功')
+          response = await updateOperation(formData.id, formData)
         }
+
+        // 从API响应中获取消息，提供备选默认消息
+        const successMessage = response?.message || 
+          (this.mode === 'create' ? '工序创建成功' : '工序更新成功')
+        this.$message.success(successMessage)
 
         this.$emit('success', { mode: this.mode, data: formData, continueEdit })
 
