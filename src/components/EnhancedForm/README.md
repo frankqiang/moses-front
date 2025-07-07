@@ -146,6 +146,9 @@ export default {
 | validateBeforeSubmit| Boolean| true    | 是否在提交前自动验证表单                 |
 | **allowEmptySubmit** | Boolean | false   | 是否允许空表单提交（新增）               |
 | **autoSaveInterval** | Number  | 0       | 自动保存间隔(毫秒)，0表示禁用（新增）     |
+| validateOnDataChange | Boolean | true | 是否在数据变化时自动验证 |
+| clearValidateOnDataUpdate | Boolean | false | 是否在数据更新时清除验证状态 |
+| disableInitialValidation | Boolean | false | 是否在组件初始化时禁用验证 |
 
 ## 事件
 
@@ -200,6 +203,8 @@ export default {
 | **getChanges** | 无               | 获取表单变更详情（新增）   |
 | **setLoading** | (loading)        | 手动设置加载状态（新增）   |
 | **clearError** | 无               | 清除错误信息（新增）      |
+| setValidationEnabled | (enabled) | 手动启用/禁用验证 |
+| withValidationDisabled | (callback) | 临时禁用验证执行操作 |
 
 ## 示例
 
@@ -346,6 +351,21 @@ export default {
   }
 }
 </script>
+```
+
+### 验证控制示例
+
+```vue
+<template>
+  <!-- 抽屉/弹窗场景 -->
+  <enhanced-form
+    :data="formData"
+    :clear-validate-on-data-update="true"
+    :disable-initial-validation="true"
+  >
+    <!-- 表单内容 -->
+  </enhanced-form>
+</template>
 ```
 
 ### 错误处理

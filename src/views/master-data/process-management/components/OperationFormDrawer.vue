@@ -20,6 +20,8 @@
       :rules="formRules"
       label-width="120px"
       :show-footer="false"
+      :clear-validate-on-data-update="true"
+      :disable-initial-validation="true"
       @validate="handleCustomValidate"
       @validate-error="handleValidateError"
       @reset="handleFormReset"
@@ -43,7 +45,7 @@
                 <div class="field-hint">工序代码必须以大写字母开头，只能包含大写字母、数字和下划线</div>
               </el-form-item>
             </el-col>
-            
+
           </el-row>
           <el-row :gutter="20">
             <el-col :span="24">
@@ -76,7 +78,7 @@
                 </el-select>
               </el-form-item>
             </el-col>
-            
+
           </el-row>
           <el-row :gutter="20">
             <el-col :span="24">
@@ -319,12 +321,6 @@ export default {
       handler(newVal) {
         if (newVal && (this.mode === 'update' || this.mode === 'view')) {
           this.formData = { ...newVal }
-          // 数据变更后清除可能的验证错误
-          setTimeout(() => {
-            if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs.form) {
-              this.$refs.enhancedForm.$refs.form.clearValidate()
-            }
-          }, 100)
         }
       }
     }
@@ -350,23 +346,20 @@ export default {
 
     // 抽屉打开处理
     handleDrawerOpen() {
-      // 立即初始化表单数据
+      // 初始化表单数据
       if (this.mode === 'create') {
         this.formData = this.initFormData()
       } else if (this.operationData) {
         this.formData = { ...this.operationData }
       }
 
-      // 使用 setTimeout 确保所有响应式更新完成后再清除验证
-      setTimeout(() => {
-        if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs.form) {
-          this.$refs.enhancedForm.$refs.form.clearValidate()
-        }
-      }, 100)
+      // 由于组件已配置自动清除验证，无需手动处理
     },
 
     // 抽屉关闭处理
     handleDrawerClose() {
+      // 重置表单数据（组件会自动处理验证清除）
+      this.formData = this.initFormData()
       this.$emit('close')
     },
 
@@ -433,12 +426,6 @@ export default {
         if (continueEdit) {
           // 保存并继续 - 重置表单
           this.formData = this.initFormData()
-          // 使用 setTimeout 确保重置后不立即显示验证错误
-          setTimeout(() => {
-            if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs.form) {
-              this.$refs.enhancedForm.$refs.form.clearValidate()
-            }
-          }, 100)
         } else {
           // 普通保存 - 关闭抽屉
           this.drawerVisible = false
@@ -483,12 +470,6 @@ export default {
     // 表单重置处理
     handleFormReset() {
       this.formData = this.initFormData()
-      // 使用 setTimeout 确保重置后不立即显示验证错误
-      setTimeout(() => {
-        if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs.form) {
-          this.$refs.enhancedForm.$refs.form.clearValidate()
-        }
-      }, 100)
     },
 
     // 工序代码失焦处理

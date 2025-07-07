@@ -210,6 +210,24 @@ export default {
         }
         return true
       }
+    },
+
+    // 是否在数据变化时自动验证
+    validateOnDataChange: {
+      type: Boolean,
+      default: true
+    },
+
+    // 是否在数据更新时清除验证状态
+    clearValidateOnDataUpdate: {
+      type: Boolean,
+      default: false
+    },
+
+    // 是否在组件初始化时禁用验证
+    disableInitialValidation: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -228,7 +246,11 @@ export default {
       // 自动保存定时器
       autoSaveTimer: null,
       // 深度监听器引用
-      dataWatcher: null
+      dataWatcher: null,
+      // 是否正在初始化数据
+      isInitializingData: false,
+      // 验证禁用标志
+      validationDisabled: false
     }
   },
 
@@ -275,7 +297,10 @@ export default {
     // 监听表单数据变化进行验证
     formModel: {
       handler() {
-        this.debouncedValidate()
+        // 只有在允许自动验证且未禁用验证时才执行
+        if (this.validateOnDataChange && !this.validationDisabled && !this.isInitializingData) {
+          this.debouncedValidate()
+        }
         if (this.autoSaveInterval > 0) {
           this.scheduleAutoSave()
         }
@@ -292,6 +317,15 @@ export default {
     this.setupKeyboardListeners()
     if (this.autoSaveInterval > 0) {
       this.startAutoSave()
+    }
+
+    // 如果禁用初始验证，设置验证禁用标志
+    if (this.disableInitialValidation) {
+      this.validationDisabled = true
+      // 延迟启用验证，给外部组件处理的时间
+      setTimeout(() => {
+        this.validationDisabled = false
+      }, 500)
     }
   },
 
@@ -363,15 +397,29 @@ export default {
     // 更新表单数据模型
     updateFormModel(val) {
       try {
+        // 标记为数据初始化状态
+        this.isInitializingData = true
         this.formModel = cloneDeep(val || {})
         this.originFormData = cloneDeep(val || {})
         this.clearError()
+
+        // 如果启用了数据更新时清除验证
+        if (this.clearValidateOnDataUpdate) {
+          this.$nextTick(() => {
+            this.clearValidate()
+          })
+        }
 
         // 通知父组件表单数据已更新
         this.$emit('form-update', this.formModel)
       } catch (error) {
         console.error('[EnhancedForm] Failed to update form model:', error)
         this.setError('更新表单数据失败')
+      } finally {
+        // 使用 nextTick 确保 DOM 更新完成后再取消初始化状态
+        this.$nextTick(() => {
+          this.isInitializingData = false
+        })
       }
     },
 
@@ -595,6 +643,30 @@ export default {
     // 手动设置加载状态
     setLoading(loading) {
       this.internalLoading = loading
+    },
+
+    // 手动启用/禁用验证
+    setValidationEnabled(enabled) {
+      this.validationDisabled = !enabled
+      if (enabled) {
+        // 启用验证时立即执行一次验证
+        this.$nextTick(() => {
+          this.validateForm()
+        })
+      }
+    },
+
+    // 临时禁用验证执行操作
+    withValidationDisabled(callback) {
+      const originalState = this.validationDisabled
+      this.validationDisabled = true
+      try {
+        callback()
+      } finally {
+        this.$nextTick(() => {
+          this.validationDisabled = originalState
+        })
+      }
     }
   }
 }
