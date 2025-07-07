@@ -147,6 +147,8 @@ const handlers = {
     const { body } = config
     const id = config.url.split('/').pop()
     
+
+    
     // 验证必填字段
     if (!body.name || !body.type) {
       return error('VALIDATION_ERROR', '工序名称和类型为必填项', 400)
@@ -158,14 +160,18 @@ const handlers = {
       return error('OPERATION_NOT_FOUND', `未找到ID为${id}的工序`, 404)
     }
     
-    // 更新工序
+    // 更新工序 - 保留创建信息，更新业务字段
     const updatedOperation = {
-      ...dataCache[index],
+      ...dataCache[index],  // 保留原有数据
+      // 更新所有业务字段
+      code: body.code,
       name: body.name,
       type: body.type,
-      description: body.description || dataCache[index].description,
-      reportingPoint: body.reportingPoint || dataCache[index].reportingPoint,
-      associatedResourceType: body.associatedResourceType || dataCache[index].associatedResourceType,
+      description: body.description,
+      reportingPoint: body.reportingPoint,
+      associatedResourceType: body.associatedResourceType,
+      status: body.status,
+      // 更新时间信息
       updatedBy: 'admin',
       updatedAt: new Date().toISOString()
     }
@@ -355,19 +361,19 @@ module.exports = [
   { url: '/mes/v1/master-data/process-management/operations', type: 'get', response: handlers.getList },
   
   // 获取工序详情
-  { url: RegExp('/mes/v1/master-data/process-management/operations/[^/]+$'), type: 'get', response: handlers.getDetail },
+  { url: '/mes/v1/master-data/process-management/operations/[^/]+$', type: 'get', response: handlers.getDetail },
   
   // 创建工序
   { url: '/mes/v1/master-data/process-management/operations', type: 'post', response: handlers.create },
   
   // 更新工序
-  { url: RegExp('/mes/v1/master-data/process-management/operations/[^/]+$'), type: 'put', response: handlers.update },
+  { url: '/mes/v1/master-data/process-management/operations/[^/]+$', type: 'put', response: handlers.update },
   
   // 更新工序状态
-  { url: RegExp('/mes/v1/master-data/process-management/operations/[^/]+/status$'), type: 'put', response: handlers.updateStatus },
+  { url: '/mes/v1/master-data/process-management/operations/[^/]+/status$', type: 'put', response: handlers.updateStatus },
   
   // 删除工序
-  { url: RegExp('/mes/v1/master-data/process-management/operations/[^/]+$'), type: 'delete', response: handlers.delete },
+  { url: '/mes/v1/master-data/process-management/operations/[^/]+$', type: 'delete', response: handlers.delete },
   
   // 批量更新状态
   { url: '/mes/v1/master-data/process-management/operations/batch/status', type: 'put', response: handlers.batchUpdateStatus },
