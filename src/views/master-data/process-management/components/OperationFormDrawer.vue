@@ -41,7 +41,7 @@
                   placeholder="请输入工序代码"
                   maxlength="30"
                   show-word-limit
-                  :disabled="formMode === 'view' || (formMode === 'update' && !allowCodeEdit)"
+                  :disabled="formMode === 'view' || formMode === 'update'"
                   @blur="handleCodeBlur"
                 />
                 <div class="field-hint">工序代码必须以大写字母开头，只能包含大写字母、数字和下划线</div>
@@ -232,8 +232,6 @@ export default {
       formData: this.initFormData(),
       // 加载状态
       loading: false,
-      // 是否允许编辑工序代码
-      allowCodeEdit: true,
       // 资源类型选项
       resourceTypeOptions: [
         'Rolling Mill',
