@@ -31,6 +31,7 @@ import ExportButton from '@/components/ExportButton'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import ColumnSettings from '@/components/ColumnSettings'
 import BaseTable from '@/components/BaseTable'
+import BatchDeleteConfirm from '@/components/BatchDeleteConfirm'
 
 /**
  * If you don't want to use mock-server
@@ -71,6 +72,7 @@ Vue.component('ExportButton', ExportButton)
 Vue.component('OverflowTagsPopover', OverflowTagsPopover)
 Vue.component('ColumnSettings', ColumnSettings)
 Vue.component('BaseTable', BaseTable)
+Vue.component('BatchDeleteConfirm', BatchDeleteConfirm)
 
 Vue.config.productionTip = false
 

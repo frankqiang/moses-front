@@ -574,13 +574,13 @@ export default {
           display: flex;
           align-items: center;
           margin-bottom: 20px;
-          
+
           .confirm-icon {
             font-size: 24px;
             color: #e6a23c;
             margin-right: 12px;
           }
-          
+
           .confirm-text {
             h3 {
               margin: 0 0 4px 0;
@@ -588,7 +588,7 @@ export default {
               font-weight: 600;
               color: #303133;
             }
-            
+
             p {
               margin: 0;
               font-size: 14px;
@@ -596,44 +596,44 @@ export default {
             }
           }
         }
-        
+
         .operation-list {
           max-height: 200px;
           overflow-y: auto;
           border: 1px solid #e4e7ed;
           border-radius: 4px;
           margin-bottom: 16px;
-          
+
           .operation-item {
             display: flex;
             align-items: center;
             padding: 8px 12px;
             border-bottom: 1px solid #f5f7fa;
             font-size: 14px;
-            
+
             &:last-child {
               border-bottom: none;
             }
-            
+
             .item-number {
               width: 30px;
               color: #909399;
               font-weight: 500;
             }
-            
+
             .item-code {
               width: 100px;
               color: #409eff;
               font-weight: 500;
               margin-right: 12px;
             }
-            
+
             .item-name {
               flex: 1;
               color: #303133;
               margin-right: 12px;
             }
-            
+
             .item-type {
               color: #606266;
               font-size: 12px;
@@ -643,7 +643,7 @@ export default {
             }
           }
         }
-        
+
         .warning-note {
           display: flex;
           align-items: center;
@@ -653,7 +653,7 @@ export default {
           padding: 8px 12px;
           border-radius: 4px;
           border: 1px solid #f5dab1;
-          
+
           i {
             margin-right: 6px;
             font-size: 14px;
@@ -673,13 +673,13 @@ export default {
           display: flex;
           align-items: center;
           margin-bottom: 20px;
-          
+
           .conflict-icon {
             font-size: 24px;
             color: #e6a23c;
             margin-right: 12px;
           }
-          
+
           .conflict-text {
             h3 {
               margin: 0 0 4px 0;
@@ -687,7 +687,7 @@ export default {
               font-weight: 600;
               color: #303133;
             }
-            
+
             p {
               margin: 0;
               font-size: 14px;
@@ -695,79 +695,79 @@ export default {
             }
           }
         }
-        
+
         .blocked-operations,
         .allowed-operations {
           margin-bottom: 16px;
-          
+
           h4 {
             margin: 0 0 8px 0;
             font-size: 14px;
             font-weight: 600;
             color: #303133;
           }
-          
+
           .operation-list {
             max-height: 120px;
             overflow-y: auto;
             border: 1px solid #e4e7ed;
             border-radius: 4px;
-            
+
             .operation-item {
               display: flex;
               align-items: center;
               padding: 6px 12px;
               border-bottom: 1px solid #f5f7fa;
               font-size: 13px;
-              
+
               &:last-child {
                 border-bottom: none;
               }
-              
+
               &.blocked {
                 background-color: #fef0f0;
-                
+
                 .item-code {
                   color: #f56c6c;
                 }
-                
+
                 .item-status {
                   background-color: #f56c6c;
                   color: white;
                 }
               }
-              
+
               &.allowed {
                 background-color: #f0f9ff;
-                
+
                 .item-code {
                   color: #67c23a;
                 }
-                
+
                 .item-status {
                   background-color: #67c23a;
                   color: white;
                 }
               }
-              
+
               .item-number {
                 width: 25px;
                 color: #909399;
                 font-weight: 500;
               }
-              
+
               .item-code {
                 width: 80px;
                 font-weight: 500;
                 margin-right: 12px;
               }
-              
+
               .item-name {
                 flex: 1;
                 color: #303133;
                 margin-right: 12px;
               }
-              
+
               .item-status {
                 font-size: 12px;
                 padding: 2px 6px;
@@ -776,7 +776,7 @@ export default {
             }
           }
         }
-        
+
         .conflict-note {
           display: flex;
           align-items: center;
@@ -786,7 +786,7 @@ export default {
           padding: 8px 12px;
           border-radius: 4px;
           border: 1px solid #f5dab1;
-          
+
           i {
             margin-right: 6px;
             font-size: 14px;
