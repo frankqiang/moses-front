@@ -22,7 +22,7 @@
       :hide-status-buttons="false"
       :status-buttons-mode="'dropdown'"
       :status-confirm="false"
-      :delete-confirm="true"
+      :delete-confirm="false"
       :table-data="data"
       :smart-status-buttons="true"
       :status-field="'status'"
@@ -304,6 +304,9 @@ export default {
     this.debouncedRefresh = debounce(() => {
       this.$emit('refresh')
     }, 300)
+
+    // 创建防抖版本的批量删除函数
+    this.debouncedBatchDelete = debounce(this.performBatchDelete, 300)
   },
   methods: {
     // 将导入的parseTime函数添加为组件方法
@@ -394,10 +397,47 @@ export default {
         return
       }
 
-      this.$confirm('确认批量删除选中的记录吗？此操作不可恢复', '警告', {
-        confirmButtonText: '确定',
+      // 使用防抖函数处理批量删除
+      this.debouncedBatchDelete(rows)
+    },
+
+    // 执行批量删除（防抖版本）
+    performBatchDelete(rows) {
+      // 构建简洁确认对话框内容
+      const confirmContent = `
+        <div class="simple-batch-delete-confirm">
+          <div class="confirm-header">
+            <i class="el-icon-warning confirm-icon"></i>
+            <div class="confirm-text">
+              <h3>确认批量删除</h3>
+              <p>您即将删除以下 ${rows.length} 个工序，此操作不可撤销</p>
+            </div>
+          </div>
+          
+          <div class="operation-list">
+            ${rows.map((row, index) => `
+              <div class="operation-item">
+                <span class="item-number">${index + 1}</span>
+                <span class="item-code">${row.code}</span>
+                <span class="item-name">${row.name}</span>
+                <span class="item-type">${this.getTypeLabel(row.type)}</span>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div class="warning-note">
+            <i class="el-icon-info"></i>
+            <span>此操作不可恢复，请谨慎确认</span>
+          </div>
+        </div>
+      `
+
+      this.$confirm(confirmContent, '批量删除确认', {
+        confirmButtonText: '确认删除',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
+        dangerouslyUseHTMLString: true,
+        customClass: 'simple-batch-delete-message-box'
       }).then(() => {
         this.$emit('batch-delete', rows)
       }).catch(() => {
@@ -489,7 +529,8 @@ export default {
           this.$emit('edit', button.row)
           break
         case 'delete':
-          this.confirmDelete(button.row)
+          // 直接发送删除事件，让主页面处理确认逻辑
+          this.$emit('delete', button.row)
           break
         case 'enable':
           this.$emit('status-change', {
@@ -504,19 +545,6 @@ export default {
           })
           break
       }
-    },
-
-    // 确认删除
-    confirmDelete(row) {
-      this.$confirm(`确认删除工序 "${row.name}"？`, '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.$emit('delete', row)
-      }).catch(() => {
-        this.$message.info('已取消删除')
-      })
     }
   }
 }
@@ -531,6 +559,240 @@ export default {
     p {
       margin: 16px 0 8px;
       color: #909399;
+    }
+  }
+}
+</style>
+
+<style lang="scss">
+// 简洁批量删除对话框样式
+.simple-batch-delete-message-box {
+  .el-message-box__content {
+    .el-message-box__message {
+      .simple-batch-delete-confirm {
+        .confirm-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 20px;
+          
+          .confirm-icon {
+            font-size: 24px;
+            color: #e6a23c;
+            margin-right: 12px;
+          }
+          
+          .confirm-text {
+            h3 {
+              margin: 0 0 4px 0;
+              font-size: 16px;
+              font-weight: 600;
+              color: #303133;
+            }
+            
+            p {
+              margin: 0;
+              font-size: 14px;
+              color: #606266;
+            }
+          }
+        }
+        
+        .operation-list {
+          max-height: 200px;
+          overflow-y: auto;
+          border: 1px solid #e4e7ed;
+          border-radius: 4px;
+          margin-bottom: 16px;
+          
+          .operation-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #f5f7fa;
+            font-size: 14px;
+            
+            &:last-child {
+              border-bottom: none;
+            }
+            
+            .item-number {
+              width: 30px;
+              color: #909399;
+              font-weight: 500;
+            }
+            
+            .item-code {
+              width: 100px;
+              color: #409eff;
+              font-weight: 500;
+              margin-right: 12px;
+            }
+            
+            .item-name {
+              flex: 1;
+              color: #303133;
+              margin-right: 12px;
+            }
+            
+            .item-type {
+              color: #606266;
+              font-size: 12px;
+              background-color: #f4f4f5;
+              padding: 2px 6px;
+              border-radius: 3px;
+            }
+          }
+        }
+        
+        .warning-note {
+          display: flex;
+          align-items: center;
+          font-size: 13px;
+          color: #e6a23c;
+          background-color: #fdf6ec;
+          padding: 8px 12px;
+          border-radius: 4px;
+          border: 1px solid #f5dab1;
+          
+          i {
+            margin-right: 6px;
+            font-size: 14px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 简洁冲突对话框样式
+.simple-conflict-dialog-box {
+  .el-message-box__content {
+    .el-message-box__message {
+      .simple-conflict-dialog {
+        .conflict-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 20px;
+          
+          .conflict-icon {
+            font-size: 24px;
+            color: #e6a23c;
+            margin-right: 12px;
+          }
+          
+          .conflict-text {
+            h3 {
+              margin: 0 0 4px 0;
+              font-size: 16px;
+              font-weight: 600;
+              color: #303133;
+            }
+            
+            p {
+              margin: 0;
+              font-size: 14px;
+              color: #606266;
+            }
+          }
+        }
+        
+        .blocked-operations,
+        .allowed-operations {
+          margin-bottom: 16px;
+          
+          h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #303133;
+          }
+          
+          .operation-list {
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #e4e7ed;
+            border-radius: 4px;
+            
+            .operation-item {
+              display: flex;
+              align-items: center;
+              padding: 6px 12px;
+              border-bottom: 1px solid #f5f7fa;
+              font-size: 13px;
+              
+              &:last-child {
+                border-bottom: none;
+              }
+              
+              &.blocked {
+                background-color: #fef0f0;
+                
+                .item-code {
+                  color: #f56c6c;
+                }
+                
+                .item-status {
+                  background-color: #f56c6c;
+                  color: white;
+                }
+              }
+              
+              &.allowed {
+                background-color: #f0f9ff;
+                
+                .item-code {
+                  color: #67c23a;
+                }
+                
+                .item-status {
+                  background-color: #67c23a;
+                  color: white;
+                }
+              }
+              
+              .item-number {
+                width: 25px;
+                color: #909399;
+                font-weight: 500;
+              }
+              
+              .item-code {
+                width: 80px;
+                font-weight: 500;
+                margin-right: 12px;
+              }
+              
+              .item-name {
+                flex: 1;
+                color: #303133;
+                margin-right: 12px;
+              }
+              
+              .item-status {
+                font-size: 12px;
+                padding: 2px 6px;
+                border-radius: 3px;
+              }
+            }
+          }
+        }
+        
+        .conflict-note {
+          display: flex;
+          align-items: center;
+          font-size: 13px;
+          color: #e6a23c;
+          background-color: #fdf6ec;
+          padding: 8px 12px;
+          border-radius: 4px;
+          border: 1px solid #f5dab1;
+          
+          i {
+            margin-right: 6px;
+            font-size: 14px;
+          }
+        }
+      }
     }
   }
 }

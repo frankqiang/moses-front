@@ -411,7 +411,7 @@ export default {
         }
 
         // 从API响应中获取消息，提供备选默认消息
-        const successMessage = response?.message || 
+        const successMessage = response?.message ||
           (this.mode === 'create' ? '工序创建成功' : '工序更新成功')
         this.$message.success(successMessage)
 

@@ -374,14 +374,14 @@ export default {
     // 是否应该显示启用按钮
     shouldShowEnableButton() {
       if (!this.smartStatusButtons) return true // 如果没有启用智能判断，则始终显示
-      
+
       // 检查选中的项目中是否有需要启用的（即当前状态不是启用状态）
       return this.selectedRows.some(row => row[this.statusField] !== this.enabledValue)
     },
     // 是否应该显示禁用按钮
     shouldShowDisableButton() {
       if (!this.smartStatusButtons) return true // 如果没有启用智能判断，则始终显示
-      
+
       // 检查选中的项目中是否有需要禁用的（即当前状态不是禁用状态）
       return this.selectedRows.some(row => row[this.statusField] !== this.disabledValue)
     },

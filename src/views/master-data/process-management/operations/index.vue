@@ -49,6 +49,7 @@ import SearchForm from '../components/SearchForm.vue'
 import OperationTable from '../components/OperationTable.vue'
 import OperationFormDrawer from '../components/OperationFormDrawer.vue'
 import { debounce } from '@/utils'
+import { ApiError } from '@/utils/request'
 import { 
   getOperationList, 
   updateOperationStatus, 
@@ -189,24 +190,38 @@ export default {
 
     // 批量删除工序
     handleBatchDelete(rows) {
-      this.$confirm(`确定要删除选中的 ${rows.length} 个工序吗？`, '批量删除确认', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async() => {
-        try {
-          const ids = rows.map(row => row.id)
-          const response = await batchDeleteOperations(ids)
-          this.$message.success(response.message || '批量删除成功')
-          this.fetchList()
-        } catch (error) {
-          console.error('批量删除失败:', error)
-          const errorMessage = error.response?.data?.message || error.message || '批量删除失败，请稍后重试'
+      this.performBatchDeleteOperation(rows)
+    },
+
+    // 执行批量删除操作
+    async performBatchDeleteOperation(rows) {
+      try {
+        this.loading = true
+        const ids = rows.map(row => row.id)
+        const response = await batchDeleteOperations(ids)
+
+        // 提供详细的成功反馈
+        const successMessage = response.message || `批量删除成功，共删除 ${rows.length} 个工序`
+        this.$message.success(successMessage)
+        this.fetchList()
+      } catch (error) {
+        console.error('批量删除失败:', error)
+
+        // 增强错误处理逻辑 - 支持新旧格式
+        const errorCode = error.code || error.response?.data?.error?.code
+        const errorDetails = error.details || error.response?.data?.error?.details
+
+        if (errorCode === 'OPERATIONS_IN_USE') {
+          const { cannotDeleteIds } = errorDetails || {}
+          const cannotDeleteOperations = rows.filter(row => cannotDeleteIds?.includes(row.id))
+          this.showCannotDeleteDialog(cannotDeleteOperations, rows)
+        } else {
+          const errorMessage = error.message || error.response?.data?.message || '批量删除失败，请稍后重试'
           this.$message.error(errorMessage)
         }
-      }).catch(() => {
-        // 用户取消删除
-      })
+      } finally {
+        this.loading = false
+      }
     },
 
     // 状态变更处理
@@ -216,7 +231,7 @@ export default {
         this.$message.error('未找到对应工序')
         return
       }
-      
+
       const statusText = status === 'Enabled' ? '启用' : '禁用'
       this.$confirm(`确定要将工序 "${row.name}" 状态更改为 "${statusText}" 吗？`, '状态变更确认', {
         confirmButtonText: '确定',
@@ -312,6 +327,75 @@ export default {
     handleFormClose() {
       this.formDrawerVisible = false
       this.currentOperation = null
+    },
+
+    // 显示不可删除工序的详细信息
+    showCannotDeleteDialog(cannotDeleteOperations, allRows) {
+      const canDeleteCount = allRows.length - cannotDeleteOperations.length
+      const canDeleteOperations = allRows.filter(row =>
+        !cannotDeleteOperations.some(blocked => blocked.id === row.id)
+      )
+
+      const dialogContent = `
+        <div class="simple-conflict-dialog">
+          <div class="conflict-header">
+            <i class="el-icon-warning conflict-icon"></i>
+            <div class="conflict-text">
+              <h3>部分工序无法删除</h3>
+              <p>发现 ${cannotDeleteOperations.length} 个工序正在使用中${canDeleteCount > 0 ? `，${canDeleteCount} 个工序可安全删除` : ''}</p>
+            </div>
+          </div>
+          
+          <div class="blocked-operations">
+            <h4>无法删除的工序：</h4>
+            <div class="operation-list">
+              ${cannotDeleteOperations.map((op, index) => `
+                <div class="operation-item blocked">
+                  <span class="item-number">${index + 1}</span>
+                  <span class="item-code">${op.code}</span>
+                  <span class="item-name">${op.name}</span>
+                  <span class="item-status">使用中</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          
+          ${canDeleteCount > 0 ? `
+            <div class="allowed-operations">
+              <h4>可安全删除的工序：</h4>
+              <div class="operation-list">
+                ${canDeleteOperations.map((op, index) => `
+                  <div class="operation-item allowed">
+                    <span class="item-number">${index + 1}</span>
+                    <span class="item-code">${op.code}</span>
+                    <span class="item-name">${op.name}</span>
+                    <span class="item-status">可删除</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
+          <div class="conflict-note">
+            <i class="el-icon-info"></i>
+            <span>${canDeleteCount > 0 ? '您可以选择继续删除可用的工序' : '所有工序都在使用中，无法删除'}</span>
+          </div>
+        </div>
+      `
+
+      this.$confirm(dialogContent, '删除冲突', {
+        confirmButtonText: canDeleteCount > 0 ? '仅删除可删除的工序' : '我知道了',
+        cancelButtonText: '取消',
+        type: 'warning',
+        dangerouslyUseHTMLString: true,
+        customClass: 'simple-conflict-dialog-box'
+      }).then(() => {
+        if (canDeleteCount > 0) {
+          this.performBatchDeleteOperation(canDeleteOperations)
+        }
+      }).catch(() => {
+        this.$message.info('已取消操作')
+      })
     }
   }
 }
