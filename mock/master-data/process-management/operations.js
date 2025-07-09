@@ -1,4 +1,19 @@
 /**
+ * Mock路由配置标准模式
+ * 
+ * 【推荐作为项目标准】此文件展示了Mock路由配置的最佳实践：
+ * 1. 使用常量管理基础路径
+ * 2. 结构化定义路由模式
+ * 3. 使用负向前瞻正则避免路径冲突
+ * 4. 按功能分组组织路由
+ * 
+ * 优势：
+ * - 无顺序依赖，易维护
+ * - 路径复用，减少错误
+ * - 结构清晰，便于理解
+ * - 易于扩展新功能
+ */
+/**
  * 工序管理模块Mock API处理函数
  */
 const { data: operationsData } = require('./data/operations')
@@ -354,42 +369,53 @@ const handlers = {
 }
 
 /**
+ * 路由配置常量
+ * 统一管理URL模式，便于维护和复用
+ */
+const BASE_PATH = '/mes/v1/master-data/process-management/operations'
+
+// 定义路由模式
+const ROUTES = {
+  // 集合操作
+  COLLECTION: `${BASE_PATH}$`,
+  
+  // 批量操作
+  BATCH_STATUS: `${BASE_PATH}/batch/status$`,
+  BATCH_DELETE: `${BASE_PATH}/batch$`,
+  
+  // 工具功能
+  EXPORT: `${BASE_PATH}/export$`,
+  IMPORT: `${BASE_PATH}/import$`,
+  DOWNLOAD_TEMPLATE: `${BASE_PATH}/download-template$`,
+  CHECK_CODE: `${BASE_PATH}/check-code$`,
+  
+  // 单个工序操作（使用负向前瞻避免与特殊路径冲突）
+  ITEM_STATUS: `${BASE_PATH}/(?!batch|export|import|download-template|check-code)[a-zA-Z0-9_-]+/status$`,
+  ITEM_DETAIL: `${BASE_PATH}/(?!batch|export|import|download-template|check-code)[a-zA-Z0-9_-]+$`
+}
+
+/**
  * 导出Mock路由配置
+ * 使用常量化配置，结构清晰，易于维护
  */
 module.exports = [
-  // 获取工序列表
-  { url: '/mes/v1/master-data/process-management/operations', type: 'get', response: handlers.getList },
+  // 集合操作
+  { url: ROUTES.COLLECTION, type: 'get', response: handlers.getList },
+  { url: ROUTES.COLLECTION, type: 'post', response: handlers.create },
   
-  // 获取工序详情
-  { url: '/mes/v1/master-data/process-management/operations/[^/]+$', type: 'get', response: handlers.getDetail },
+  // 批量操作
+  { url: ROUTES.BATCH_STATUS, type: 'put', response: handlers.batchUpdateStatus },
+  { url: ROUTES.BATCH_DELETE, type: 'delete', response: handlers.batchDelete },
   
-  // 创建工序
-  { url: '/mes/v1/master-data/process-management/operations', type: 'post', response: handlers.create },
+  // 工具功能
+  { url: ROUTES.EXPORT, type: 'post', response: handlers.export },
+  { url: ROUTES.IMPORT, type: 'post', response: handlers.import },
+  { url: ROUTES.DOWNLOAD_TEMPLATE, type: 'get', response: handlers.downloadTemplate },
+  { url: ROUTES.CHECK_CODE, type: 'get', response: handlers.checkCode },
   
-  // 更新工序
-  { url: '/mes/v1/master-data/process-management/operations/[^/]+$', type: 'put', response: handlers.update },
-  
-  // 更新工序状态
-  { url: '/mes/v1/master-data/process-management/operations/[^/]+/status$', type: 'put', response: handlers.updateStatus },
-  
-  // 删除工序
-  { url: '/mes/v1/master-data/process-management/operations/[^/]+$', type: 'delete', response: handlers.delete },
-  
-  // 批量更新状态
-  { url: '/mes/v1/master-data/process-management/operations/batch/status', type: 'put', response: handlers.batchUpdateStatus },
-  
-  // 批量删除
-  { url: '/mes/v1/master-data/process-management/operations/batch', type: 'delete', response: handlers.batchDelete },
-  
-  // 导出
-  { url: '/mes/v1/master-data/process-management/operations/export', type: 'post', response: handlers.export },
-  
-  // 导入
-  { url: '/mes/v1/master-data/process-management/operations/import', type: 'post', response: handlers.import },
-  
-  // 下载模板
-  { url: '/mes/v1/master-data/process-management/operations/download-template', type: 'get', response: handlers.downloadTemplate },
-  
-  // 检查工序代码是否存在
-  { url: '/mes/v1/master-data/process-management/operations/check-code', type: 'get', response: handlers.checkCode }
+  // 单个工序操作
+  { url: ROUTES.ITEM_STATUS, type: 'put', response: handlers.updateStatus },
+  { url: ROUTES.ITEM_DETAIL, type: 'get', response: handlers.getDetail },
+  { url: ROUTES.ITEM_DETAIL, type: 'put', response: handlers.update },
+  { url: ROUTES.ITEM_DETAIL, type: 'delete', response: handlers.delete }
 ] 

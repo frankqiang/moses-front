@@ -52,6 +52,10 @@
         :delete-confirm-text="deleteConfirmText"
         :delete-confirm-title="deleteConfirmTitle"
         :status-confirm="statusConfirm"
+        :status-field="statusField"
+        :enabled-value="enabledValue"
+        :disabled-value="disabledValue"
+        :smart-status-buttons="smartStatusButtons"
         @batch-delete="handleBatchDelete"
         @batch-enable="handleBatchEnable"
         @batch-disable="handleBatchDisable"
@@ -272,6 +276,26 @@ export default {
     statusConfirm: {
       type: Boolean,
       default: true
+    },
+    // 状态字段名称
+    statusField: {
+      type: String,
+      default: 'status'
+    },
+    // 启用状态的值
+    enabledValue: {
+      type: [String, Number, Boolean],
+      default: 'Enabled'
+    },
+    // 禁用状态的值
+    disabledValue: {
+      type: [String, Number, Boolean],
+      default: 'Disabled'
+    },
+    // 是否启用智能状态按钮判断
+    smartStatusButtons: {
+      type: Boolean,
+      default: false
     },
 
     // 导入按钮相关属性

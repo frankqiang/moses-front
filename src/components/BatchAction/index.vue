@@ -33,8 +33,69 @@
       </div>
     </transition>
 
-    <!-- 批量操作下拉菜单 -->
+    <!-- 按钮组模式 -->
+    <div v-if="statusButtonsMode === 'buttons'" class="batch-buttons-group">
+      <!-- 批量删除按钮 -->
+      <el-button
+        v-if="!hideDeleteButton"
+        :size="size"
+        type="danger"
+        :disabled="deleteDisabled"
+        :loading="isLoading"
+        @click="handleBatchCommandSafe('delete')"
+      >
+        <i :class="deleteIcon" />
+        {{ deleteText || '批量删除' }}
+        <span v-if="selectedRows.length > 0">({{ selectedRows.length }})</span>
+      </el-button>
+
+      <!-- 批量启用按钮 -->
+      <el-button
+        v-if="!hideStatusButtons && shouldShowEnableButton"
+        :size="size"
+        type="success"
+        :disabled="statusDisabled"
+        :loading="isLoading"
+        @click="handleBatchCommandSafe('enable')"
+      >
+        <i :class="enableIcon" />
+        {{ enableText || '批量启用' }}
+        <span v-if="selectedRows.length > 0">({{ selectedRows.length }})</span>
+      </el-button>
+
+      <!-- 批量禁用按钮 -->
+      <el-button
+        v-if="!hideStatusButtons && shouldShowDisableButton"
+        :size="size"
+        type="warning"
+        :disabled="statusDisabled"
+        :loading="isLoading"
+        @click="handleBatchCommandSafe('disable')"
+      >
+        <i :class="disableIcon" />
+        {{ disableText || '批量禁用' }}
+        <span v-if="selectedRows.length > 0">({{ selectedRows.length }})</span>
+      </el-button>
+
+      <!-- 自定义操作按钮 -->
+      <el-button
+        v-for="(action, index) in validCustomActions"
+        :key="action.key || action.action || index"
+        :size="size"
+        :type="action.type || 'default'"
+        :disabled="!checkActionEnabled(action) || action.disabled || isLoading"
+        :loading="isLoading"
+        @click="handleBatchCommandSafe(action.action || action.key || action)"
+      >
+        <i v-if="action.icon" :class="action.icon" />
+        {{ action.label || action.text }}
+        <span v-if="action.showCount && selectedRows.length > 0">({{ selectedRows.length }})</span>
+      </el-button>
+    </div>
+
+    <!-- 下拉菜单模式 -->
     <el-dropdown
+      v-else
       trigger="click"
       placement="bottom-start"
       :disabled="isLoading || hasError"
@@ -68,6 +129,7 @@
         <!-- 批量启用/禁用 -->
         <template v-if="!hideStatusButtons">
           <el-dropdown-item
+            v-if="shouldShowEnableButton"
             command="enable"
             :disabled="statusDisabled"
             class="dropdown-item success-item"
@@ -77,6 +139,7 @@
             <span v-if="selectedRows.length > 0" class="item-count">({{ selectedRows.length }})</span>
           </el-dropdown-item>
           <el-dropdown-item
+            v-if="shouldShowDisableButton"
             command="disable"
             :disabled="statusDisabled"
             class="dropdown-item warning-item"
@@ -261,6 +324,26 @@ export default {
     virtualizationThreshold: {
       type: Number,
       default: 1000
+    },
+    // 状态字段名称
+    statusField: {
+      type: String,
+      default: 'status'
+    },
+    // 启用状态的值
+    enabledValue: {
+      type: [String, Number, Boolean],
+      default: 'Enabled'
+    },
+    // 禁用状态的值
+    disabledValue: {
+      type: [String, Number, Boolean],
+      default: 'Disabled'
+    },
+    // 是否启用智能状态按钮判断
+    smartStatusButtons: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -287,6 +370,20 @@ export default {
     // 状态按钮是否禁用
     statusDisabled() {
       return this.selectedRows.length === 0 || this.isLoading
+    },
+    // 是否应该显示启用按钮
+    shouldShowEnableButton() {
+      if (!this.smartStatusButtons) return true // 如果没有启用智能判断，则始终显示
+      
+      // 检查选中的项目中是否有需要启用的（即当前状态不是启用状态）
+      return this.selectedRows.some(row => row[this.statusField] !== this.enabledValue)
+    },
+    // 是否应该显示禁用按钮
+    shouldShowDisableButton() {
+      if (!this.smartStatusButtons) return true // 如果没有启用智能判断，则始终显示
+      
+      // 检查选中的项目中是否有需要禁用的（即当前状态不是禁用状态）
+      return this.selectedRows.some(row => row[this.statusField] !== this.disabledValue)
     },
     // 格式化选中数量显示
     formatSelectedCount() {
@@ -421,8 +518,7 @@ export default {
 
         this.setLoading(true, '删除中...')
         await this.emitBatchDelete()
-
-        this.$message.success(`成功删除 ${this.selectedRows.length} 项`)
+        // 成功消息由父组件处理，不在这里显示
       } catch (error) {
         if (error === 'cancel') {
           this.$emit('delete-cancel')
@@ -458,8 +554,7 @@ export default {
 
         this.setLoading(true, '启用中...')
         await this.emitBatchEnable()
-
-        this.$message.success(`成功启用 ${this.selectedRows.length} 项`)
+        // 成功消息由父组件处理，不在这里显示
       } catch (error) {
         if (error === 'cancel') {
           this.$emit('status-cancel', { command: 'enable', status: 1 })
@@ -492,8 +587,7 @@ export default {
 
         this.setLoading(true, '禁用中...')
         await this.emitBatchDisable()
-
-        this.$message.success(`成功禁用 ${this.selectedRows.length} 项`)
+        // 成功消息由父组件处理，不在这里显示
       } catch (error) {
         if (error === 'cancel') {
           this.$emit('status-cancel', { command: 'disable', status: 0 })
@@ -779,6 +873,94 @@ export default {
         font-weight: bold;
         color: #409eff;
         font-size: 14px;
+      }
+    }
+  }
+
+  // 按钮组模式
+  .batch-buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    .el-button {
+      border-radius: 4px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      font-weight: 500;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+      }
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+        &::before {
+          left: 100%;
+        }
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      // 不同类型按钮的样式
+      &.el-button--danger {
+        background: linear-gradient(135deg, #f56c6c 0%, #ff8a8a 100%);
+        border: none;
+        box-shadow: 0 2px 8px rgba(245, 108, 108, 0.2);
+
+        &:hover {
+          box-shadow: 0 4px 16px rgba(245, 108, 108, 0.3);
+        }
+      }
+
+      &.el-button--success {
+        background: linear-gradient(135deg, #67c23a 0%, #85d45f 100%);
+        border: none;
+        box-shadow: 0 2px 8px rgba(103, 194, 58, 0.2);
+
+        &:hover {
+          box-shadow: 0 4px 16px rgba(103, 194, 58, 0.3);
+        }
+      }
+
+      &.el-button--warning {
+        background: linear-gradient(135deg, #e6a23c 0%, #f0c05a 100%);
+        border: none;
+        box-shadow: 0 2px 8px rgba(230, 162, 60, 0.2);
+
+        &:hover {
+          box-shadow: 0 4px 16px rgba(230, 162, 60, 0.3);
+        }
+      }
+
+      // 禁用状态
+      &.is-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+      }
+
+      // 响应式设计
+      @media (max-width: 768px) {
+        font-size: 12px;
+        padding: 6px 12px;
       }
     }
   }

@@ -27,7 +27,8 @@
       @delete="handleDelete"
       @batch-delete="handleBatchDelete"
       @status-change="handleStatusChange"
-      @batch-status-change="handleBatchStatusChange"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
       @export="handleExport"
       @import="handleImport"
     />
@@ -48,7 +49,13 @@ import SearchForm from '../components/SearchForm.vue'
 import OperationTable from '../components/OperationTable.vue'
 import OperationFormDrawer from '../components/OperationFormDrawer.vue'
 import { debounce } from '@/utils'
-import { getOperationList } from '../api'
+import { 
+  getOperationList, 
+  updateOperationStatus, 
+  batchUpdateOperationStatus,
+  deleteOperation,
+  batchDeleteOperations
+} from '../api'
 
 export default {
   name: 'OperationManagement',
@@ -167,12 +174,13 @@ export default {
         type: 'warning'
       }).then(async() => {
         try {
-          await this.$api.delete(`/mes/v1/master-data/process-management/operations/${row.id}`)
-          this.$message.success('删除成功')
+          const response = await deleteOperation(row.id)
+          this.$message.success(response.message || '删除成功')
           this.fetchList()
         } catch (error) {
           console.error('删除失败:', error)
-          this.$message.error('删除失败，请稍后重试')
+          const errorMessage = error.response?.data?.message || error.message || '删除失败，请稍后重试'
+          this.$message.error(errorMessage)
         }
       }).catch(() => {
         // 用户取消删除
@@ -188,14 +196,13 @@ export default {
       }).then(async() => {
         try {
           const ids = rows.map(row => row.id)
-          await this.$api.delete('/mes/v1/master-data/process-management/operations/batch', {
-            data: { ids }
-          })
-          this.$message.success('批量删除成功')
+          const response = await batchDeleteOperations(ids)
+          this.$message.success(response.message || '批量删除成功')
           this.fetchList()
         } catch (error) {
           console.error('批量删除失败:', error)
-          this.$message.error('批量删除失败，请稍后重试')
+          const errorMessage = error.response?.data?.message || error.message || '批量删除失败，请稍后重试'
+          this.$message.error(errorMessage)
         }
       }).catch(() => {
         // 用户取消删除
@@ -203,48 +210,74 @@ export default {
     },
 
     // 状态变更处理
-    handleStatusChange(row, status) {
-      this.$confirm(`确定要将工序 "${row.name}" 状态更改为 "${status}" 吗？`, '状态变更确认', {
+    handleStatusChange({ id, status }) {
+      const row = this.tableData.find(item => item.id === id)
+      if (!row) {
+        this.$message.error('未找到对应工序')
+        return
+      }
+      
+      const statusText = status === 'Enabled' ? '启用' : '禁用'
+      this.$confirm(`确定要将工序 "${row.name}" 状态更改为 "${statusText}" 吗？`, '状态变更确认', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async() => {
         try {
-          await this.$api.put(`/mes/v1/master-data/process-management/operations/${row.id}/status`, {
-            status
-          })
-          this.$message.success('状态更新成功')
+          const response = await updateOperationStatus(id, status)
+          this.$message.success(response.message || '状态更新成功')
           this.fetchList()
         } catch (error) {
           console.error('状态更新失败:', error)
-          this.$message.error('状态更新失败，请稍后重试')
+          const errorMessage = error.response?.data?.message || error.message || '状态更新失败，请稍后重试'
+          this.$message.error(errorMessage)
         }
       }).catch(() => {
         // 用户取消更新
       })
     },
 
-    // 批量状态变更处理
-    handleBatchStatusChange(rows, status) {
-      this.$confirm(`确定要将选中的 ${rows.length} 个工序状态更改为 "${status}" 吗？`, '批量状态变更确认', {
+    // 批量启用处理
+    handleBatchEnable(rows) {
+      this.$confirm(`确定要启用选中的 ${rows.length} 个工序吗？`, '批量启用确认', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async() => {
         try {
           const ids = rows.map(row => row.id)
-          await this.$api.put('/mes/v1/master-data/process-management/operations/batch/status', {
-            ids,
-            status
-          })
-          this.$message.success('批量状态更新成功')
+          const response = await batchUpdateOperationStatus(ids, 'Enabled')
+          this.$message.success(response.message || '批量启用成功')
           this.fetchList()
         } catch (error) {
-          console.error('批量状态更新失败:', error)
-          this.$message.error('批量状态更新失败，请稍后重试')
+          console.error('批量启用失败:', error)
+          const errorMessage = error.response?.data?.message || error.message || '批量启用失败，请稍后重试'
+          this.$message.error(errorMessage)
         }
       }).catch(() => {
-        // 用户取消更新
+        // 用户取消启用
+      })
+    },
+
+    // 批量禁用处理
+    handleBatchDisable(rows) {
+      this.$confirm(`确定要禁用选中的 ${rows.length} 个工序吗？`, '批量禁用确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async() => {
+        try {
+          const ids = rows.map(row => row.id)
+          const response = await batchUpdateOperationStatus(ids, 'Disabled')
+          this.$message.success(response.message || '批量禁用成功')
+          this.fetchList()
+        } catch (error) {
+          console.error('批量禁用失败:', error)
+          const errorMessage = error.response?.data?.message || error.message || '批量禁用失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
+      }).catch(() => {
+        // 用户取消禁用
       })
     },
 
