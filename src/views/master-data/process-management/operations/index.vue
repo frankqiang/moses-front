@@ -204,6 +204,7 @@ export default {
         }
       }).catch(() => {
         // 用户取消删除
+        this.$message.info('已取消删除操作')
       })
     },
 
@@ -402,6 +403,7 @@ export default {
         }
       }).catch(() => {
         // 用户取消更新
+        this.$message.info('已取消状态变更操作')
       })
     },
 
@@ -424,6 +426,7 @@ export default {
         }
       }).catch(() => {
         // 用户取消启用
+        this.$message.info('已取消批量启用操作')
       })
     },
 
@@ -446,6 +449,7 @@ export default {
         }
       }).catch(() => {
         // 用户取消禁用
+        this.$message.info('已取消批量禁用操作')
       })
     },
 
@@ -505,7 +509,6 @@ export default {
     // 取消删除处理
     handleDeleteCancel() {
       // 只有用户主动取消时才显示取消消息
-      // 注意：这个方法只应在用户点击取消按钮时被调用
       console.log('用户取消了删除操作')
       this.$message.info('已取消删除操作')
     },

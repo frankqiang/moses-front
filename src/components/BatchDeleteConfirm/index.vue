@@ -198,6 +198,7 @@ export default {
 
       // 操作状态
       loading: false,
+      isSuccessClose: false, // 标记是否为成功后关闭
 
       // 配置状态
       currentConfig: {}
@@ -251,6 +252,7 @@ export default {
       this.conflictItems = []
       this.deletableItems = []
       this.loading = false
+      // 不在这里重置成功关闭标记，在事件处理函数中重置
     },
 
     // 执行删除操作
@@ -264,6 +266,8 @@ export default {
             deletedCount: result.deletedCount || items.length,
             message: result.message || `${this.actionName}成功`
           })
+          // 标记为成功关闭，避免触发取消事件
+          this.isSuccessClose = true
           this.hide()
         } else {
           throw new Error(result.message || `${this.actionName}失败`)
@@ -323,11 +327,22 @@ export default {
     handleConfirmCancel() {
       this.confirmDialogVisible = false
       this.loading = false // 重置loading状态
-      this.$emit('delete-cancel')
+      
+      // 使用 nextTick 确保在对话框关闭后处理
+      this.$nextTick(() => {
+        // 只有在非成功关闭时才发出取消事件
+        if (!this.isSuccessClose) {
+          this.$emit('delete-cancel')
+        }
+        
+        // 重置成功关闭标记
+        this.isSuccessClose = false
+      })
     },
 
     // 冲突确认处理（仅删除可删除项）
     async handleConflictConfirm() {
+      // executeDelete方法内部已经处理了isSuccessClose标记
       await this.executeDelete(this.deletableItems)
     },
 
@@ -335,7 +350,17 @@ export default {
     handleConflictCancel() {
       this.conflictDialogVisible = false
       this.loading = false // 重置loading状态
-      this.$emit('delete-cancel')
+      
+      // 使用 nextTick 确保在对话框关闭后处理
+      this.$nextTick(() => {
+        // 只有在非成功关闭时才发出取消事件（与确认对话框保持一致）
+        if (!this.isSuccessClose) {
+          this.$emit('delete-cancel')
+        }
+        
+        // 重置成功关闭标记
+        this.isSuccessClose = false
+      })
     }
   }
 }
