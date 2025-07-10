@@ -31,6 +31,7 @@
       @batch-disable="handleBatchDisable"
       @export="handleExport"
       @import="handleImport"
+      @refresh="fetchList"
     />
 
     <!-- 工序表单抽屉 -->

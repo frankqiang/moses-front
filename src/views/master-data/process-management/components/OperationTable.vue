@@ -301,13 +301,14 @@ export default {
     // 加载列设置（使用mixin的方法）
     this.loadColumnSettings()
 
-    // 创建防抖函数
+    // 创建防抖版本的批量删除函数
+    this.debouncedBatchDelete = debounce(this.performBatchDelete, 300)
+  },
+  mounted() {
+    // 初始化防抖刷新函数
     this.debouncedRefresh = debounce(() => {
       this.$emit('refresh')
     }, 300)
-
-    // 创建防抖版本的批量删除函数
-    this.debouncedBatchDelete = debounce(this.performBatchDelete, 300)
   },
   methods: {
     // 将导入的parseTime函数添加为组件方法
@@ -342,11 +343,6 @@ export default {
     // 处理刷新
     handleRefresh() {
       this.debouncedRefresh()
-    },
-
-    // 处理列变更
-    handleColumnChange(visibleColumns) {
-      this.updateVisibleColumns(visibleColumns)
     },
 
     // 处理选择变更
