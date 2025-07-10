@@ -69,8 +69,8 @@ service.interceptors.request.use(
  * 功能：自动识别新旧响应格式，统一错误处理，保持兼容性
  */
 service.interceptors.response.use(
+
   response => {
-    // 🐛 开发环境调试日志
     if (process.env.NODE_ENV === 'development') {
       console.log('📥 API Response:', {
         url: response.config.url,
@@ -78,21 +78,33 @@ service.interceptors.response.use(
         data: response.data
       })
     }
-
     const res = response.data
-
-    // 🔄 核心：双格式响应处理
     return handleResponse(res, response.status)
   },
   error => {
-    console.log('❌ Response Error:', error)
+    console.error('❌ Response Interceptor Error:', error.response || error)
 
-    // 🌐 只处理网络级别错误（连接失败、超时等）
-    Message({
-      message: '网络请求失败，请稍后重试',
-      type: 'error',
-      duration: 5 * 1000
-    })
+    if (error.response && error.response.data) {
+      const res = error.response.data
+      const isModernFormat = res.success !== undefined
+      if (isModernFormat && !res.success) {
+        return handleModernFormat(res, error.response.status)
+      }
+    }
+
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      Message({
+        message: '请求超时，请检查网络或稍后重试',
+        type: 'error',
+        duration: 5 * 1000
+      })
+    } else {
+      Message({
+        message: error.message || '网络请求失败，请稍后重试',
+        type: 'error',
+        duration: 5 * 1000
+      })
+    }
 
     return Promise.reject(error)
   }

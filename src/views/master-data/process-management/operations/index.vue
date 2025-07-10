@@ -41,24 +41,6 @@
       @success="handleFormSuccess"
       @close="handleFormClose"
     />
-
-    <!-- 批量删除确认组件 -->
-    <batch-delete-confirm
-      ref="batchDeleteConfirm"
-      :delete-api="deleteOperationsApi"
-      :conflict-detector="detectOperationConflicts"
-      :display-fields="{
-        id: 'id',
-        code: 'code',
-        name: 'name'
-      }"
-      title="批量删除工序"
-      action-name="删除"
-      @delete-success="handleDeleteSuccess"
-      @delete-error="handleDeleteError"
-      @delete-cancel="handleDeleteCancel"
-      @conflict-detected="handleConflictDetected"
-    />
   </div>
 </template>
 
@@ -66,7 +48,6 @@
 import SearchForm from '../components/SearchForm.vue'
 import OperationTable from '../components/OperationTable.vue'
 import OperationFormDrawer from '../components/OperationFormDrawer.vue'
-import BatchDeleteConfirm from '@/components/BatchDeleteConfirm'
 import { debounce } from '@/utils'
 import {
   getOperationList,
@@ -75,14 +56,14 @@ import {
   deleteOperation,
   batchDeleteOperations
 } from '../api'
+import { ApiError } from '@/utils/request'
 
 export default {
   name: 'OperationManagement',
   components: {
     SearchForm,
     OperationTable,
-    OperationFormDrawer,
-    BatchDeleteConfirm
+    OperationFormDrawer
   },
   data() {
     return {
@@ -208,174 +189,49 @@ export default {
       })
     },
 
-    // 批量删除工序
-    handleBatchDelete(rows) {
-      this.$refs.batchDeleteConfirm.show(rows)
-    },
+    // 批量删除工序 - 简化版
+    async handleBatchDelete(rows) {
+      this.$confirm(`确认批量删除选中的 ${rows.length} 个工序吗？此操作不可恢复`, '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async() => {
+        try {
+          const ids = rows.map(row => row.id)
+          const response = await batchDeleteOperations(ids)
+          this.$message.success(response.message || `成功删除 ${response.data?.totalDeleted || rows.length} 个工序`)
+          this.fetchList()
+        } catch (error) {
+          // 增加详细的错误日志，方便调试
+          console.error('捕获到的API错误:', error)
 
-    // 删除API函数
-    async deleteOperationsApi(items) {
-      try {
-        const ids = items.map(item => item.id)
-        console.log('正在执行删除操作，工序IDs:', ids)
-        
-        const response = await batchDeleteOperations(ids)
-        
-        // 检查响应数据，确保删除操作成功
-        const actualDeletedCount = response.data?.deletedCount || response.deletedCount || items.length
-        
-        console.log('删除操作完成:', {
-          请求删除数量: items.length,
-          实际删除数量: actualDeletedCount,
-          响应消息: response.message
-        })
-        
-        return {
-          success: true,
-          message: response.message || `批量删除成功，共删除 ${actualDeletedCount} 个工序`,
-          deletedCount: actualDeletedCount
-        }
-      } catch (error) {
-        console.error('批量删除失败:', error)
-        
-        // 处理特殊错误情况
-        if (error.response?.status === 404) {
-          return {
-            success: false,
-            message: '要删除的工序不存在或已被删除'
-          }
-        }
-        
-        if (error.response?.status === 409) {
-          return {
-            success: false,
-            message: '工序正在使用中，无法删除'
-          }
-        }
-        
-        return {
-          success: false,
-          message: error.message || error.response?.data?.message || '批量删除失败，请稍后重试'
-        }
-      }
-    },
+          if (error instanceof ApiError && error.code === 'OPERATIONS_IN_USE') {
+            const cannotDeleteIds = error.details?.cannotDeleteIds || []
 
-    // 冲突检测函数
-    async detectOperationConflicts(items) {
-      try {
-        // ✅ 修复：调用专门的冲突检测API，而不是直接删除
-        const ids = items.map(item => item.id)
-        
-        // 这里应该调用专门的冲突检测API
-        // 暂时模拟冲突检测逻辑，实际开发中应该是后端提供的冲突检测接口
-        const mockConflictCheckResponse = await this.checkOperationConflicts(ids)
-        
-        if (mockConflictCheckResponse.hasConflicts) {
-          return {
-            hasConflicts: true,
-            conflicts: mockConflictCheckResponse.conflicts,
-            canDelete: mockConflictCheckResponse.canDelete
-          }
-        }
+            if (cannotDeleteIds.length > 0) {
+              const cannotDeleteDetails = cannotDeleteIds.map(id => {
+                const item = rows.find(row => row.id === id)
+                return item ? `【${item.code}】${item.name}` : id
+              })
 
-        // 如果没有冲突，返回可以删除
-        return {
-          hasConflicts: false,
-          conflicts: [],
-          canDelete: items
-        }
-      } catch (error) {
-        console.error('冲突检测失败:', error)
-        
-        // 检测失败时，默认无冲突（让组件处理错误）
-        return {
-          hasConflicts: false,
-          conflicts: [],
-          canDelete: items
-        }
-      }
-    },
-
-    // 模拟冲突检测API（实际项目中应该是后端API）
-    async checkOperationConflicts(ids) {
-      // 模拟API调用延时
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      // 模拟冲突检测逻辑
-      // 实际项目中这里应该调用后端的冲突检测接口
-      const conflicts = []
-      const canDelete = []
-      
-      // 🔧 修复：使用更合理的冲突判断规则，确保数据不重复
-      ids.forEach(id => {
-        const item = this.tableData.find(row => row.id === id)
-        if (item) {
-          // 基于工序状态和类型判断是否冲突（更真实的业务逻辑）
-          const hasConflict = this.checkSingleOperationConflict(item)
-          
-          if (hasConflict) {
-            conflicts.push({
-              ...item,
-              reason: hasConflict.reason
-            })
+              this.$message({
+                message: `以下工序正在被工艺路线使用，无法删除：<br/>${cannotDeleteDetails.join('<br/>')}`,
+                type: 'error',
+                duration: 8000,
+                dangerouslyUseHTMLString: true,
+                customClass: 'batch-delete-error-message'
+              })
+            } else {
+              this.$message.error(error.message || '部分工序正在使用中，无法删除')
+            }
           } else {
-            canDelete.push(item)
+            const errorMessage = error.message || '删除失败，请稍后重试'
+            this.$message.error(errorMessage)
           }
         }
+      }).catch(() => {
+        this.$message.info('已取消删除操作')
       })
-      
-      console.log('冲突检测完成:', {
-        总数: ids.length,
-        冲突数量: conflicts.length,
-        可删除数量: canDelete.length,
-        冲突ID列表: conflicts.map(c => c.id),
-        可删除ID列表: canDelete.map(c => c.id)
-      })
-      
-      return {
-        hasConflicts: conflicts.length > 0,
-        conflicts,
-        canDelete
-      }
-    },
-
-    // 检查单个工序是否有冲突
-    checkSingleOperationConflict(operation) {
-      // 模拟业务规则：
-      // 1. 启用状态的工序可能正在使用中
-      // 2. 特定类型的工序可能有依赖关系
-      // 3. 特定ID模式的工序模拟正在使用
-      
-      // 规则1：状态为 Enabled 且类型为 Production 的工序正在使用中
-      if (operation.status === 'Enabled' && operation.type === 'Production') {
-        return {
-          reason: '生产工序正在使用中，无法删除'
-        }
-      }
-      
-      // 规则2：工序代码包含特定关键字的正在使用中
-      if (operation.code && (operation.code.includes('ROLLING') || operation.code.includes('HEATING'))) {
-        return {
-          reason: '关键工序正在使用中，无法删除'
-        }
-      }
-      
-      // 规则3：模拟某些随机工序正在使用（基于工序名称哈希）
-      const nameHash = operation.name ? operation.name.split('').reduce((a, b) => a + b.charCodeAt(0), 0) : 0
-      if (nameHash % 7 === 0) {  // 约14%的工序会有冲突
-        return {
-          reason: '工序被其他模块引用，无法删除'
-        }
-      }
-      
-      // 规则4：特定ID格式的工序正在使用
-      if (operation.id && operation.id.toString().includes('NaN')) {
-        return {
-          reason: '数据异常的工序无法删除'
-        }
-      }
-      
-      return null  // 无冲突
     },
 
     // 状态变更处理
@@ -484,47 +340,6 @@ export default {
     handleFormClose() {
       this.formDrawerVisible = false
       this.currentOperation = null
-    },
-
-    // 删除成功处理
-    handleDeleteSuccess({ deletedCount, message }) {
-      // 只有真正删除了数据才显示成功消息
-      if (deletedCount > 0) {
-        this.$message.success(message || `成功删除 ${deletedCount} 个工序`)
-        this.fetchList()
-      } else {
-        // 如果删除数量为0，可能是重复调用或其他问题
-        console.warn('删除成功但删除数量为0:', { deletedCount, message })
-        this.$message.warning('删除操作已完成，但未发现需要删除的数据')
-      }
-    },
-
-    // 删除失败处理
-    handleDeleteError({ error }) {
-      console.error('删除操作失败:', error)
-      const errorMessage = error?.message || error?.response?.data?.message || '删除操作失败，请稍后重试'
-      this.$message.error(errorMessage)
-    },
-
-    // 取消删除处理
-    handleDeleteCancel() {
-      // 只有用户主动取消时才显示取消消息
-      console.log('用户取消了删除操作')
-      this.$message.info('已取消删除操作')
-    },
-
-    // 冲突检测处理
-    handleConflictDetected({ conflicts, canDelete }) {
-      console.log('检测到删除冲突:', conflicts)
-      console.log('可删除的项目:', canDelete)
-      
-      // 这里不需要额外的消息提示，BatchDeleteConfirm 组件会处理冲突显示
-      if (conflicts.length > 0) {
-        console.warn(`检测到 ${conflicts.length} 个工序存在冲突，无法删除`)
-      }
-      if (canDelete.length > 0) {
-        console.info(`有 ${canDelete.length} 个工序可以正常删除`)
-      }
     }
   }
 }
@@ -533,5 +348,16 @@ export default {
 <style lang="scss" scoped>
 .operation-management {
   padding: 20px;
+}
+</style>
+
+<style lang="scss">
+// 批量删除错误信息样式
+.batch-delete-error-message {
+  .el-message__content {
+    white-space: pre-line !important;
+    line-height: 1.6 !important;
+    max-width: 500px !important;
+  }
 }
 </style>
