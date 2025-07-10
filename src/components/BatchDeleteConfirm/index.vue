@@ -46,6 +46,7 @@
         </div>
 
         <div class="confirm-note">
+          <i class="el-icon-info" />
           <span>此操作不可撤销，请确认后继续</span>
         </div>
       </div>
@@ -270,6 +271,8 @@ export default {
       } catch (error) {
         console.error(`${this.actionName}操作失败:`, error)
         this.$emit('delete-error', { error })
+        // 确保在错误时也重置loading状态
+        this.loading = false
       } finally {
         this.loading = false
       }
@@ -319,6 +322,7 @@ export default {
     // 取消确认处理
     handleConfirmCancel() {
       this.confirmDialogVisible = false
+      this.loading = false // 重置loading状态
       this.$emit('delete-cancel')
     },
 
@@ -330,6 +334,7 @@ export default {
     // 取消冲突处理
     handleConflictCancel() {
       this.conflictDialogVisible = false
+      this.loading = false // 重置loading状态
       this.$emit('delete-cancel')
     }
   }

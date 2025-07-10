@@ -5,6 +5,7 @@
  * 重构日期：2024-12-20 - 使用BaseTable组件替代el-table
  * 优化记录：
  *   - 2024-12-20: 使用OverflowTagsPopover组件优化关联资源类型列的显示
+ *   - 2024-12-22: 重构批量删除功能，使用BatchDeleteConfirm全局组件替代自定义实现，移除冗余CSS样式
  */
 <template>
   <div class="operation-table">
@@ -129,6 +130,16 @@
       </template>
     </BaseTable>
 
+    <!-- 使用全局 BatchDeleteConfirm 组件 -->
+    <BatchDeleteConfirm
+      ref="batchDeleteConfirm"
+      :delete-api="batchDeleteApi"
+      :display-fields="{ id: 'id', code: 'code', name: 'name' }"
+      action-name="删除"
+      @success="handleBatchDeleteSuccess"
+      @error="handleBatchDeleteError"
+    />
+
   </div>
 </template>
 
@@ -137,6 +148,7 @@ import BaseTable from '@/components/BaseTable'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import TableToolbar from '@/components/TableToolbar'
+import BatchDeleteConfirm from '@/components/BatchDeleteConfirm'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import request from '@/utils/request'
@@ -157,6 +169,7 @@ export default {
     StatusTag,
     ActionButtons,
     TableToolbar,
+    BatchDeleteConfirm,
     OverflowTagsPopover
   },
   mixins: [columnSettingsMixin],
@@ -390,7 +403,7 @@ export default {
       }
     },
 
-    // 处理批量删除事件
+    // 处理批量删除事件 - 使用全局 BatchDeleteConfirm 组件
     handleBatchDelete(rows) {
       if (!rows || rows.length === 0) {
         this.$message.warning('请至少选择一条记录')
@@ -401,48 +414,29 @@ export default {
       this.debouncedBatchDelete(rows)
     },
 
-    // 执行批量删除（防抖版本）
+    // 执行批量删除（防抖版本）- 使用全局组件
     performBatchDelete(rows) {
-      // 构建简洁确认对话框内容
-      const confirmContent = `
-        <div class="simple-batch-delete-confirm">
-          <div class="confirm-header">
-            <i class="el-icon-warning confirm-icon"></i>
-            <div class="confirm-text">
-              <h3>确认批量删除</h3>
-              <p>您即将删除以下 ${rows.length} 个工序，此操作不可撤销</p>
-            </div>
-          </div>
-          
-          <div class="operation-list">
-            ${rows.map((row, index) => `
-              <div class="operation-item">
-                <span class="item-number">${index + 1}</span>
-                <span class="item-code">${row.code}</span>
-                <span class="item-name">${row.name}</span>
-                <span class="item-type">${this.getTypeLabel(row.type)}</span>
-              </div>
-            `).join('')}
-          </div>
-          
-          <div class="warning-note">
-            <i class="el-icon-info"></i>
-            <span>此操作不可恢复，请谨慎确认</span>
-          </div>
-        </div>
-      `
+      // 使用全局 BatchDeleteConfirm 组件
+      this.$refs.batchDeleteConfirm.show(rows)
+    },
 
-      this.$confirm(confirmContent, '批量删除确认', {
-        confirmButtonText: '确认删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-        dangerouslyUseHTMLString: true,
-        customClass: 'simple-batch-delete-message-box'
-      }).then(() => {
-        this.$emit('batch-delete', rows)
-      }).catch(() => {
-        this.$message.info('已取消删除操作')
+    // 批量删除API函数
+    batchDeleteApi(items) {
+      // 发出事件，让父组件处理实际的删除逻辑
+      return new Promise((resolve, reject) => {
+        this.$emit('batch-delete', items, { resolve, reject })
       })
+    },
+
+    // 批量删除成功回调
+    handleBatchDeleteSuccess(deletedItems) {
+      this.$message.success(`成功删除 ${deletedItems.length} 个工序`)
+      this.$emit('refresh')
+    },
+
+    // 批量删除失败回调
+    handleBatchDeleteError(error) {
+      this.$message.error(`删除失败: ${error.message || '未知错误'}`)
     },
 
     // 处理批量启用事件
@@ -564,236 +558,4 @@ export default {
 }
 </style>
 
-<style lang="scss">
-// 简洁批量删除对话框样式
-.simple-batch-delete-message-box {
-  .el-message-box__content {
-    .el-message-box__message {
-      .simple-batch-delete-confirm {
-        .confirm-header {
-          display: flex;
-          align-items: center;
-          margin-bottom: 20px;
 
-          .confirm-icon {
-            font-size: 24px;
-            color: #e6a23c;
-            margin-right: 12px;
-          }
-
-          .confirm-text {
-            h3 {
-              margin: 0 0 4px 0;
-              font-size: 16px;
-              font-weight: 600;
-              color: #303133;
-            }
-
-            p {
-              margin: 0;
-              font-size: 14px;
-              color: #606266;
-            }
-          }
-        }
-
-        .operation-list {
-          max-height: 200px;
-          overflow-y: auto;
-          border: 1px solid #e4e7ed;
-          border-radius: 4px;
-          margin-bottom: 16px;
-
-          .operation-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            border-bottom: 1px solid #f5f7fa;
-            font-size: 14px;
-
-            &:last-child {
-              border-bottom: none;
-            }
-
-            .item-number {
-              width: 30px;
-              color: #909399;
-              font-weight: 500;
-            }
-
-            .item-code {
-              width: 100px;
-              color: #409eff;
-              font-weight: 500;
-              margin-right: 12px;
-            }
-
-            .item-name {
-              flex: 1;
-              color: #303133;
-              margin-right: 12px;
-            }
-
-            .item-type {
-              color: #606266;
-              font-size: 12px;
-              background-color: #f4f4f5;
-              padding: 2px 6px;
-              border-radius: 3px;
-            }
-          }
-        }
-
-        .warning-note {
-          display: flex;
-          align-items: center;
-          font-size: 13px;
-          color: #e6a23c;
-          background-color: #fdf6ec;
-          padding: 8px 12px;
-          border-radius: 4px;
-          border: 1px solid #f5dab1;
-
-          i {
-            margin-right: 6px;
-            font-size: 14px;
-          }
-        }
-      }
-    }
-  }
-}
-
-// 简洁冲突对话框样式
-.simple-conflict-dialog-box {
-  .el-message-box__content {
-    .el-message-box__message {
-      .simple-conflict-dialog {
-        .conflict-header {
-          display: flex;
-          align-items: center;
-          margin-bottom: 20px;
-
-          .conflict-icon {
-            font-size: 24px;
-            color: #e6a23c;
-            margin-right: 12px;
-          }
-
-          .conflict-text {
-            h3 {
-              margin: 0 0 4px 0;
-              font-size: 16px;
-              font-weight: 600;
-              color: #303133;
-            }
-
-            p {
-              margin: 0;
-              font-size: 14px;
-              color: #606266;
-            }
-          }
-        }
-
-        .blocked-operations,
-        .allowed-operations {
-          margin-bottom: 16px;
-
-          h4 {
-            margin: 0 0 8px 0;
-            font-size: 14px;
-            font-weight: 600;
-            color: #303133;
-          }
-
-          .operation-list {
-            max-height: 120px;
-            overflow-y: auto;
-            border: 1px solid #e4e7ed;
-            border-radius: 4px;
-
-            .operation-item {
-              display: flex;
-              align-items: center;
-              padding: 6px 12px;
-              border-bottom: 1px solid #f5f7fa;
-              font-size: 13px;
-
-              &:last-child {
-                border-bottom: none;
-              }
-
-              &.blocked {
-                background-color: #fef0f0;
-
-                .item-code {
-                  color: #f56c6c;
-                }
-
-                .item-status {
-                  background-color: #f56c6c;
-                  color: white;
-                }
-              }
-
-              &.allowed {
-                background-color: #f0f9ff;
-
-                .item-code {
-                  color: #67c23a;
-                }
-
-                .item-status {
-                  background-color: #67c23a;
-                  color: white;
-                }
-              }
-
-              .item-number {
-                width: 25px;
-                color: #909399;
-                font-weight: 500;
-              }
-
-              .item-code {
-                width: 80px;
-                font-weight: 500;
-                margin-right: 12px;
-              }
-
-              .item-name {
-                flex: 1;
-                color: #303133;
-                margin-right: 12px;
-              }
-
-              .item-status {
-                font-size: 12px;
-                padding: 2px 6px;
-                border-radius: 3px;
-              }
-            }
-          }
-        }
-
-        .conflict-note {
-          display: flex;
-          align-items: center;
-          font-size: 13px;
-          color: #e6a23c;
-          background-color: #fdf6ec;
-          padding: 8px 12px;
-          border-radius: 4px;
-          border: 1px solid #f5dab1;
-
-          i {
-            margin-right: 6px;
-            font-size: 14px;
-          }
-        }
-      }
-    }
-  }
-}
-</style>
