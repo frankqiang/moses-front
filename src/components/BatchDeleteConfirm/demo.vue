@@ -12,21 +12,21 @@
 
     <div class="demo-section">
       <h2>功能演示</h2>
-      
+
       <!-- 模拟数据表格 -->
       <div class="demo-table">
         <div class="table-header">
           <h3>示例数据列表</h3>
           <div class="table-actions">
-            <el-button 
-              type="danger" 
+            <el-button
+              type="danger"
               :disabled="selectedItems.length === 0"
               @click="handleBasicDelete"
             >
               普通删除示例
             </el-button>
-            <el-button 
-              type="danger" 
+            <el-button
+              type="danger"
               :disabled="selectedItems.length === 0"
               @click="handleConflictDelete"
             >
@@ -37,10 +37,10 @@
           </div>
         </div>
 
-        <el-table 
-          :data="demoData" 
-          @selection-change="handleSelectionChange"
+        <el-table
+          :data="demoData"
           style="width: 100%"
+          @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="55" />
           <el-table-column prop="id" label="ID" width="80" />
@@ -128,6 +128,9 @@ export default {
       forceConflict: false
     }
   },
+  mounted() {
+    this.addLog('INFO', '演示页面已加载')
+  },
   methods: {
     // 处理选择变化
     handleSelectionChange(selection) {
@@ -162,16 +165,16 @@ export default {
     // 模拟删除API
     async mockDeleteApi(items) {
       this.addLog('INFO', `正在删除 ${items.length} 个项目...`)
-      
+
       // 模拟API延迟
       await this.delay(1000)
-      
+
       // 模拟删除成功
       const deletedIds = items.map(item => item.id)
       this.demoData = this.demoData.filter(item => !deletedIds.includes(item.id))
-      
+
       this.addLog('SUCCESS', `成功删除 ${items.length} 个项目`)
-      
+
       return {
         success: true,
         message: `成功删除 ${items.length} 个项目`
@@ -181,17 +184,17 @@ export default {
     // 模拟冲突检测
     async mockConflictDetector(items) {
       this.addLog('INFO', '正在检测删除冲突...')
-      
+
       // 模拟检测延迟
       await this.delay(800)
-      
+
       if (this.forceConflict || items.some(item => item.inUse)) {
         // 模拟冲突情况
         const conflicts = items.filter(item => item.inUse)
         const canDelete = items.filter(item => !item.inUse)
-        
+
         this.addLog('WARNING', `检测到 ${conflicts.length} 个冲突项目`)
-        
+
         return {
           hasConflicts: true,
           conflicts: conflicts.map(item => ({
@@ -241,7 +244,7 @@ export default {
         type,
         message
       })
-      
+
       // 限制日志数量
       if (this.operationLogs.length > 20) {
         this.operationLogs = this.operationLogs.slice(0, 20)
@@ -252,9 +255,6 @@ export default {
     delay(ms) {
       return new Promise(resolve => setTimeout(resolve, ms))
     }
-  },
-  mounted() {
-    this.addLog('INFO', '演示页面已加载')
   }
 }
 </script>
@@ -269,12 +269,12 @@ export default {
 .demo-header {
   text-align: center;
   margin-bottom: 30px;
-  
+
   h1 {
     color: #303133;
     margin-bottom: 10px;
   }
-  
+
   p {
     color: #606266;
     font-size: 14px;
@@ -283,7 +283,7 @@ export default {
 
 .demo-section {
   margin-bottom: 30px;
-  
+
   h2 {
     color: #303133;
     border-bottom: 2px solid #409eff;
@@ -298,25 +298,25 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-    
+
     h3 {
       margin: 0;
       color: #303133;
     }
-    
+
     .table-actions {
       .el-button {
         margin-left: 10px;
       }
     }
   }
-  
+
   .selection-info {
     margin-top: 15px;
     padding: 10px;
     background: #f5f7fa;
     border-radius: 4px;
-    
+
     p {
       margin: 5px 0;
       font-size: 14px;
@@ -331,51 +331,51 @@ export default {
   border: 1px solid #ebeef5;
   border-radius: 4px;
   background: #fafafa;
-  
+
   .log-item {
     display: flex;
     align-items: center;
     padding: 8px 15px;
     border-bottom: 1px solid #ebeef5;
     font-size: 13px;
-    
+
     &:last-child {
       border-bottom: none;
     }
-    
+
     .log-time {
       width: 80px;
       color: #909399;
     }
-    
+
     .log-type {
       width: 60px;
       font-weight: 500;
       margin-right: 10px;
-      
+
       &.INFO {
         color: #409eff;
       }
-      
+
       &.SUCCESS {
         color: #67c23a;
       }
-      
+
       &.WARNING {
         color: #e6a23c;
       }
-      
+
       &.ERROR {
         color: #f56c6c;
       }
     }
-    
+
     .log-message {
       flex: 1;
       color: #303133;
     }
   }
-  
+
   .no-logs {
     padding: 20px;
     text-align: center;
@@ -383,4 +383,4 @@ export default {
     font-size: 13px;
   }
 }
-</style> 
+</style>

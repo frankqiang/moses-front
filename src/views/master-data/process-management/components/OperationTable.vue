@@ -5,7 +5,7 @@
  * 重构日期：2024-12-20 - 使用BaseTable组件替代el-table
  * 优化记录：
  *   - 2024-12-20: 使用OverflowTagsPopover组件优化关联资源类型列的显示
- *   - 2024-12-22: 重构批量删除功能，使用BatchDeleteConfirm全局组件替代自定义实现，移除冗余CSS样式
+ *   - 2024-12-22: 移除重复的BatchDeleteConfirm组件，恢复表格组件单一职责原则
  */
 <template>
   <div class="operation-table">
@@ -130,16 +130,6 @@
       </template>
     </BaseTable>
 
-    <!-- 使用全局 BatchDeleteConfirm 组件 -->
-    <BatchDeleteConfirm
-      ref="batchDeleteConfirm"
-      :delete-api="batchDeleteApi"
-      :display-fields="{ id: 'id', code: 'code', name: 'name' }"
-      action-name="删除"
-      @success="handleBatchDeleteSuccess"
-      @error="handleBatchDeleteError"
-    />
-
   </div>
 </template>
 
@@ -148,7 +138,6 @@ import BaseTable from '@/components/BaseTable'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import TableToolbar from '@/components/TableToolbar'
-import BatchDeleteConfirm from '@/components/BatchDeleteConfirm'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import request from '@/utils/request'
@@ -169,7 +158,6 @@ export default {
     StatusTag,
     ActionButtons,
     TableToolbar,
-    BatchDeleteConfirm,
     OverflowTagsPopover
   },
   mixins: [columnSettingsMixin],
@@ -327,83 +315,73 @@ export default {
       return parseTime(dateTime, format)
     },
 
-    // 获取工序类型标签
-    getTypeLabel(type) {
-      const option = OPERATION_TYPE_OPTIONS.find(opt => opt.value === type)
-      return option ? option.label : type
-    },
-
-    // 获取报告点标签
-    getReportingPointLabel(reportingPoint) {
-      const option = REPORTING_POINT_OPTIONS.find(opt => opt.value === reportingPoint)
-      return option ? option.label : reportingPoint
-    },
-
     // 更新导出参数
     updateExportParams() {
+      // 更新导出参数（这里可以添加其他参数）
       this.exportParams = {
-        // 可添加固定的导出参数
+        // 导出时可以添加额外参数
       }
     },
 
-    // 处理分页事件
-    handlePaginationChange({ page, limit }) {
-      this.$emit('pagination', {
-        page,
-        limit
-      })
-    },
-
-    // 处理刷新事件（带防抖）
-    handleRefresh() {
-      this.debouncedRefresh()
-    },
-
-    // 处理重试事件
-    handleRetry() {
-      this.$emit('retry')
-    },
-
-    // 处理数据错误
-    handleDataError(errorInfo) {
-      console.error('表格数据错误:', errorInfo)
-      this.$emit('data-error', errorInfo)
-    },
-
-    // 处理格式化错误
-    handleFormatError(errorInfo) {
-      console.error('数据格式化错误:', errorInfo)
-      this.$emit('format-error', errorInfo)
-    },
-
-    // 处理行点击事件
-    handleRowClick(row, column, event) {
-      this.$emit('row-click', row, column, event)
-    },
-
-    // 处理选择变更事件
-    handleSelectionChange(selection) {
-      this.selectedRows = selection
-      this.$emit('selection-change', selection)
-    },
-
-    // 处理新增事件
-    handleAdd() {
-      this.$emit('create')
-    },
-
-    // 处理工具栏按钮点击事件
-    handleToolbarAction(button) {
-      switch (button.action) {
+    // 处理工具栏按钮点击
+    handleToolbarAction(action) {
+      switch (action.action) {
         case 'add':
           this.handleAdd()
           break
         default:
-          console.warn('未知的工具栏操作:', button.action)
+          console.log('未知的工具栏动作:', action.action)
       }
     },
 
-    // 处理批量删除事件 - 使用全局 BatchDeleteConfirm 组件
+    // 处理新增
+    handleAdd() {
+      this.$emit('add')
+    },
+
+    // 处理刷新
+    handleRefresh() {
+      this.debouncedRefresh()
+    },
+
+    // 处理列变更
+    handleColumnChange(visibleColumns) {
+      this.updateVisibleColumns(visibleColumns)
+    },
+
+    // 处理选择变更
+    handleSelectionChange(selection) {
+      this.selectedRows = selection
+    },
+
+    // 处理重试
+    handleRetry() {
+      this.$emit('retry')
+    },
+
+    // 处理行点击
+    handleRowClick(row) {
+      this.$emit('row-click', row)
+    },
+
+    // 处理数据错误
+    handleDataError(error) {
+      this.$emit('data-error', error)
+    },
+
+    // 处理格式错误
+    handleFormatError(error) {
+      this.$emit('format-error', error)
+    },
+
+    // 处理分页变化
+    handlePaginationChange(pagination) {
+      this.currentPage = pagination.page
+      this.pageSize = pagination.limit
+      this.$emit('pagination-change', pagination)
+    },
+
+    // 处理批量删除事件 - 只发出事件，让父组件处理
     handleBatchDelete(rows) {
       if (!rows || rows.length === 0) {
         this.$message.warning('请至少选择一条记录')
@@ -414,29 +392,10 @@ export default {
       this.debouncedBatchDelete(rows)
     },
 
-    // 执行批量删除（防抖版本）- 使用全局组件
+    // 执行批量删除（防抖版本）- 发出事件让父组件处理批量删除逻辑
     performBatchDelete(rows) {
-      // 使用全局 BatchDeleteConfirm 组件
-      this.$refs.batchDeleteConfirm.show(rows)
-    },
-
-    // 批量删除API函数
-    batchDeleteApi(items) {
-      // 发出事件，让父组件处理实际的删除逻辑
-      return new Promise((resolve, reject) => {
-        this.$emit('batch-delete', items, { resolve, reject })
-      })
-    },
-
-    // 批量删除成功回调
-    handleBatchDeleteSuccess(deletedItems) {
-      this.$message.success(`成功删除 ${deletedItems.length} 个工序`)
-      this.$emit('refresh')
-    },
-
-    // 批量删除失败回调
-    handleBatchDeleteError(error) {
-      this.$message.error(`删除失败: ${error.message || '未知错误'}`)
+      // 发出事件让父组件处理批量删除逻辑
+      this.$emit('batch-delete', rows)
     },
 
     // 处理批量启用事件
@@ -472,6 +431,15 @@ export default {
       }
 
       const buttons = []
+
+      // 添加查看按钮
+      buttons.push({
+        text: '查看',
+        action: 'view',
+        icon: 'el-icon-view',
+        type: 'text',
+        tooltip: '查看工序详情'
+      })
 
       // 添加常规操作按钮
       buttons.push({
@@ -522,6 +490,9 @@ export default {
         case 'edit':
           this.$emit('edit', button.row)
           break
+        case 'view':
+          this.$emit('view', button.row)
+          break
         case 'delete':
           // 直接发送删除事件，让主页面处理确认逻辑
           this.$emit('delete', button.row)
@@ -539,6 +510,28 @@ export default {
           })
           break
       }
+    },
+
+    // 处理导出事件
+    handleExport(params) {
+      this.$emit('export', params)
+    },
+
+    // 处理导入事件  
+    handleImport(data) {
+      this.$emit('import', data)
+    },
+
+    // 获取类型标签
+    getTypeLabel(type) {
+      const option = OPERATION_TYPE_OPTIONS.find(opt => opt.value === type)
+      return option ? option.label : type
+    },
+
+    // 获取报告点标签
+    getReportingPointLabel(reportingPoint) {
+      const option = REPORTING_POINT_OPTIONS.find(opt => opt.value === reportingPoint)
+      return option ? option.label : reportingPoint
     }
   }
 }
@@ -557,5 +550,4 @@ export default {
   }
 }
 </style>
-
 

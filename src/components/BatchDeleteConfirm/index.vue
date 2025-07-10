@@ -432,7 +432,7 @@ export default {
         }
 
         .item-status {
-          width: 80px;
+          // width: 80px;
           text-align: right;
           font-size: 12px;
           color: #409eff;
@@ -555,7 +555,7 @@ export default {
         }
 
         .item-status {
-          width: 120px;
+          // width: 120px;
           text-align: right;
           font-size: 12px;
           flex-shrink: 0;
