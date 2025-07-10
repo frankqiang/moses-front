@@ -123,8 +123,9 @@ export default {
     },
 
     // 搜索处理
-    handleSearch() {
+    handleSearch(formData) {
       this.pagination.page = 1
+      this.searchParams = formData
       this.debouncedSearch()
     },
 
