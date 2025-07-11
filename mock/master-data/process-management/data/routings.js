@@ -47,7 +47,11 @@ const generateRoutingsData = () => {
       ],
       "approvalHistory": [
         { "version": "1.2", "approver": "wang_director", "timestamp": "2023-10-21T09:00:00Z", "result": "Approved", "comment": "同意发布" }
-      ]
+      ],
+      "createdBy": "admin",
+      "createdAt": "2023-10-01T10:00:00Z",
+      "updatedBy": "li_guan",
+      "updatedAt": "2023-10-20T11:00:00Z"
     },
     {
       "id": "rt-002",
@@ -59,7 +63,11 @@ const generateRoutingsData = () => {
       "applicableProducts": ["P-1235-DZ"],
       "steps": [],
       "changelog": [],
-      "approvalHistory": []
+      "approvalHistory": [],
+      "createdBy": "admin",
+      "createdAt": "2023-11-01T10:00:00Z",
+      "updatedBy": "admin",
+      "updatedAt": "2023-11-01T10:00:00Z"
     },
     {
       "id": "rt-003",
@@ -85,7 +93,11 @@ const generateRoutingsData = () => {
       "changelog": [
         { "version": "1.0", "user": "admin", "timestamp": "2024-01-05T10:00:00Z", "note": "初始创建并提交审批" }
       ],
-      "approvalHistory": []
+      "approvalHistory": [],
+      "createdBy": "admin",
+      "createdAt": "2024-01-05T10:00:00Z",
+      "updatedBy": "admin",
+      "updatedAt": "2024-01-05T10:00:00Z"
     },
     {
       "id": "rt-004",
@@ -97,7 +109,11 @@ const generateRoutingsData = () => {
       "applicableProducts": ["P-OLD-PRODUCT"],
       "steps": [],
       "changelog": [],
-      "approvalHistory": []
+      "approvalHistory": [],
+      "createdBy": "system",
+      "createdAt": "2022-01-01T00:00:00Z",
+      "updatedBy": "system",
+      "updatedAt": "2022-01-01T00:00:00Z"
     }
   ]
 
@@ -124,7 +140,15 @@ const generateRoutingsData = () => {
       }],
       'steps': [],
       'changelog': [],
-      'approvalHistory': []
+      'approvalHistory': [],
+      'createdBy|1': ['admin', 'manager', 'process_engineer', 'quality_manager'],
+      'createdAt': function() {
+        return Mock.mock('@datetime("yyyy-MM-ddTHH:mm:ss.000Z")')
+      },
+      'updatedBy|1': ['admin', 'manager', 'process_engineer', 'quality_manager'],
+      'updatedAt': function() {
+        return this.createdAt
+      }
     }]
   }).items
   

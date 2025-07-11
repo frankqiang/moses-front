@@ -74,8 +74,8 @@ export default {
     handleSearch(query) {
       this.listQuery.page = 1
       this.listQuery.keyword = query.keyword
-      this.listQuery.status = query.status
-      this.listQuery.type = query.type
+      this.listQuery.status = Array.isArray(query.status) ? query.status.join(',') : ''
+      this.listQuery.type = Array.isArray(query.type) ? query.type.join(',') : ''
       this.debouncedFetchList()
     },
     handleReset() {

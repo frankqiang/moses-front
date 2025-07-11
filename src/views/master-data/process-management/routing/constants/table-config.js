@@ -1,6 +1,17 @@
 /**
  * 工艺路线表格配置
  */
+import { parseTime } from '@/utils'
+
+// 局部日期格式化工具函数，以处理无效日期
+const formatTableDate = (cellValue) => {
+  if (!cellValue) return ''
+  const date = new Date(cellValue)
+  if (isNaN(date.getTime())) {
+    return 'invalid-date'
+  }
+  return parseTime(cellValue, '{y}-{m}-{d} {h}:{i}')
+}
 
 export const TABLE_COLUMNS = [
   {
@@ -51,6 +62,38 @@ export const TABLE_COLUMNS = [
     slotName: 'applicableProducts'
   },
   {
+    prop: 'createdBy',
+    label: '创建人',
+    sortable: true,
+    minWidth: 120,
+    align: 'center'
+  },
+  {
+    prop: 'createdAt',
+    label: '创建时间',
+    sortable: true,
+    minWidth: 160,
+    align: 'center',
+    type: 'datetime',
+    format: '{y}-{m}-{d} {h}:{i}'
+  },
+  {
+    prop: 'updatedBy',
+    label: '更新人',
+    sortable: true,
+    minWidth: 120,
+    align: 'center'
+  },
+  {
+    prop: 'updatedAt',
+    label: '更新时间',
+    sortable: true,
+    minWidth: 160,
+    align: 'center',
+    type: 'datetime',
+    format: '{y}-{m}-{d} {h}:{i}'
+  },
+  {
     prop: 'actions',
     label: '操作',
     minWidth: 230,
@@ -62,5 +105,5 @@ export const TABLE_COLUMNS = [
 
 // 默认可见列
 export const DEFAULT_VISIBLE_COLUMNS = [
-  'code', 'name', 'version', 'status', 'type', 'applicableProducts', 'actions'
+  'code', 'name', 'version', 'status', 'type', 'applicableProducts', 'createdBy', 'createdAt', 'actions'
 ] 

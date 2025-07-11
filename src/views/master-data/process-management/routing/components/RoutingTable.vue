@@ -188,11 +188,24 @@ export default {
       if (!row) {
         return []
       }
+      
       const actionsMap = {
-        'Draft': [{ action: 'edit', text: '编辑' }, { action: 'delete', text: '删除', type: 'danger' }, { action: 'submit', text: '提交审批' }],
-        'Enabled': [{ action: 'view', text: '查看' }, { action: 'newVersion', text: '创建新版本' }],
-        'PendingApproval': [{ action: 'view', text: '查看' }],
-        'Archived': [{ action: 'view', text: '查看' }, { action: 'delete', text: '删除', type: 'danger' }]
+        'Draft': [
+          { action: 'edit', text: '编辑', icon: 'el-icon-edit', tooltip: '编辑工艺路线' },
+          { action: 'submit', text: '提交审批', icon: 'el-icon-s-promotion', class: 'success', tooltip: '提交以供审批' },
+          { action: 'delete', text: '删除', icon: 'el-icon-delete', class: 'danger', tooltip: '删除此草稿' }
+        ],
+        'Enabled': [
+          { action: 'view', text: '查看', icon: 'el-icon-view', tooltip: '查看详情' },
+          { action: 'newVersion', text: '创建新版本', icon: 'el-icon-plus', tooltip: '基于此版本创建新版' }
+        ],
+        'PendingApproval': [
+          { action: 'view', text: '查看', icon: 'el-icon-view', tooltip: '查看详情' }
+        ],
+        'Archived': [
+          { action: 'view', text: '查看', icon: 'el-icon-view', tooltip: '查看已归档的工艺路线' },
+          { action: 'delete', text: '删除', icon: 'el-icon-delete', class: 'danger', tooltip: '永久删除此记录' }
+        ]
       }
       return actionsMap[row.status] || []
     }
