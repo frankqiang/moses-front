@@ -115,16 +115,25 @@ export const constantRoutes = [
         meta: { title: '炉型管理' }
       },
       {
-        path: 'operations',
-        component: () => import('@/views/master-data/process-management/operations/index'),
-        name: 'Operations',
-        meta: { title: '工序管理' }
-      },
-      {
-        path: 'routing',
-        name: 'RoutingManagement',
-        component: () => import('@/views/master-data/process-management/routing/index'),
-        meta: { title: '工艺路线管理', icon: 'route' }
+        path: 'process-management',
+        name: 'ProcessManagement',
+        component: { render: h => h('router-view') },
+        meta: { title: '工序管理', icon: 'el-icon-setting' },
+        redirect: '/master-data/process-management/operations',
+        children: [
+          {
+            path: 'operations',
+            component: () => import('@/views/master-data/process-management/operations/index'),
+            name: 'Operations',
+            meta: { title: '基础工序定义', }
+          },
+          {
+            path: 'routing',
+            name: 'RoutingManagement',
+            component: () => import('@/views/master-data/process-management/routing/index'),
+            meta: { title: '工艺路线编排',  }
+          }
+        ]
       }
       // 后续可以在这里添加其他主数据管理的子页面
     ]
