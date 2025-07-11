@@ -21,8 +21,15 @@
       @newVersion="handleNewVersion"
       @refresh="getList"
     />
-    
-    <!-- 后续可以添加表单抽屉/对话框 -->
+
+    <!-- 工艺路线表单抽屉 -->
+    <routing-form-drawer
+      :visible.sync="formDrawerVisible"
+      :mode="formMode"
+      :routing-data="currentRouting"
+      @success="handleFormSuccess"
+      @close="handleFormClose"
+    />
 
   </div>
 </template>
@@ -31,13 +38,15 @@
 import { getRoutingList } from './api'
 import SearchForm from './components/SearchForm.vue'
 import RoutingTable from './components/RoutingTable.vue'
+import RoutingFormDrawer from './components/RoutingFormDrawer.vue'
 import { debounce } from '@/utils'
 
 export default {
   name: 'RoutingManagement',
   components: {
     SearchForm,
-    RoutingTable
+    RoutingTable,
+    RoutingFormDrawer
   },
   data() {
     return {
@@ -50,7 +59,11 @@ export default {
         keyword: '',
         type: '',
         status: ''
-      }
+      },
+      // 表单抽屉相关状态
+      formDrawerVisible: false,
+      formMode: 'create',
+      currentRouting: null
     }
   },
   created() {
@@ -94,13 +107,19 @@ export default {
       this.getList()
     },
     handleCreate() {
-      this.$message.info('TODO: 实现新建工艺路线逻辑')
+      this.formMode = 'create'
+      this.currentRouting = null
+      this.formDrawerVisible = true
     },
     handleEdit(row) {
-      this.$message.info(`TODO: 实现编辑ID为 ${row.id} 的工艺路线`)
+      this.formMode = 'update'
+      this.currentRouting = row
+      this.formDrawerVisible = true
     },
     handleView(row) {
-      this.$message.info(`TODO: 实现查看ID为 ${row.id} 的工艺路线`)
+      this.formMode = 'view'
+      this.currentRouting = row
+      this.formDrawerVisible = true
     },
     handleDelete(row) {
       this.$confirm(`确定要删除工艺路线 "${row.name}" 吗？`, '删除确认', {
@@ -114,6 +133,19 @@ export default {
     },
     handleNewVersion(row) {
       this.$message.info(`TODO: 实现为ID为 ${row.id} 的工艺路线创建新版本`)
+    },
+    handleFormSuccess(payload = {}) {
+      if (payload.continue) {
+        // "保存并继续" 模式，列表刷新即可，抽屉不关闭
+        this.getList()
+      } else {
+        // 默认模式，关闭抽屉并刷新列表
+        this.formDrawerVisible = false
+        this.getList()
+      }
+    },
+    handleFormClose() {
+      this.currentRouting = null
     }
   }
 }

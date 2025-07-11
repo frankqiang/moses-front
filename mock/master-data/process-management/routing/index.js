@@ -1,11 +1,17 @@
+const { v4: uuidv4 } = require('uuid')
 const { data: routingsData } = require('../data/routings.js')
 
-const success = (data, message = '操作成功') => ({
+// 数据缓存，模拟数据库行为
+let dataCache = [...routingsData]
+
+// 响应工具函数
+const success = (data, message = '操作成功', status = 200) => ({
   code: 20000,
   success: true,
   data,
   message,
-  timestamp: new Date().getTime()
+  timestamp: new Date().getTime(),
+  status
 })
 
 const error = (code, message, status = 500, details = null) => ({
@@ -19,11 +25,17 @@ const error = (code, message, status = 500, details = null) => ({
   status
 })
 
+// API基础路径
+const BASE_PATH = '/mes/v1/master-data/process-management/routings'
+
+/**
+ * API处理函数集合
+ */
 const handlers = {
   getList(config) {
     const { page = 1, limit = 10, keyword = '', status = '', type = '' } = config.query
     
-    let filteredList = [...routingsData]
+    let filteredList = [...dataCache]
 
     // 关键词搜索
     if (keyword) {
@@ -31,7 +43,7 @@ const handlers = {
       filteredList = filteredList.filter(item =>
         item.code.toLowerCase().includes(lowercaseKeyword) ||
         item.name.toLowerCase().includes(lowercaseKeyword) ||
-        item.applicableProducts.some(p => p.toLowerCase().includes(lowercaseKeyword))
+        (item.applicableProducts && item.applicableProducts.some(p => p.toLowerCase().includes(lowercaseKeyword)))
       )
     }
 
@@ -65,13 +77,68 @@ const handlers = {
       page: pageNum,
       limit: limitNum
     })
+  },
+
+  create(config) {
+    const newData = config.body
+    if (!newData.code || !newData.name) {
+      return error('VALIDATION_ERROR', '路线代码和名称不能为空', 400)
+    }
+    if (dataCache.some(r => r.code === newData.code)) {
+      return error('DUPLICATE_CODE', `路线代码 '${newData.code}' 已存在`, 409)
+    }
+
+    const newRouting = {
+      ...newData,
+      id: uuidv4(),
+      steps: [],
+      changelog: [{ version: newData.version || '1.0', user: 'admin', timestamp: new Date().toISOString(), note: '初始创建' }],
+      approvalHistory: [],
+      createdBy: 'admin',
+      createdAt: new Date().toISOString(),
+      updatedBy: 'admin',
+      updatedAt: new Date().toISOString()
+    }
+
+    dataCache.unshift(newRouting)
+    return success(newRouting, '工艺路线创建成功', 201)
+  },
+
+  update(config) {
+    const updateData = config.body
+    const id = config.url.split('/').pop()
+
+    const index = dataCache.findIndex(r => r.id === id)
+
+    if (index === -1) {
+      return error('NOT_FOUND', `ID为 '${id}' 的工艺路线未找到`, 404)
+    }
+
+    dataCache[index] = { 
+      ...dataCache[index], 
+      ...updateData,
+      updatedBy: 'admin',
+      updatedAt: new Date().toISOString()
+    }
+
+    return success(dataCache[index], '工艺路线更新成功')
   }
 }
 
 module.exports = [
   {
-    url: '/mes/process-management/routings',
+    url: `${BASE_PATH}`,
     type: 'get',
     response: config => handlers.getList(config)
+  },
+  {
+    url: `${BASE_PATH}`,
+    type: 'post',
+    response: config => handlers.create(config)
+  },
+  {
+    url: `${BASE_PATH}/:id`,
+    type: 'put',
+    response: config => handlers.update(config)
   }
 ] 
