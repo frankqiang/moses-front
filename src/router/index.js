@@ -119,6 +119,12 @@ export const constantRoutes = [
         component: () => import('@/views/master-data/process-management/operations/index'),
         name: 'Operations',
         meta: { title: '工序管理' }
+      },
+      {
+        path: 'routing',
+        name: 'RoutingManagement',
+        component: () => import('@/views/master-data/process-management/routing/index'),
+        meta: { title: '工艺路线管理', icon: 'route' }
       }
       // 后续可以在这里添加其他主数据管理的子页面
     ]
