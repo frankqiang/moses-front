@@ -88,7 +88,7 @@ import {
   TABLE_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
   ROUTING_TYPE_OPTIONS,
-  STATUS_CONFIG
+  ROUTING_STATUS_CONFIG as STATUS_CONFIG
 } from '../constants'
 
 export default {
