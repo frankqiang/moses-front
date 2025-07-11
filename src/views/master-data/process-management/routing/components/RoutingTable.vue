@@ -56,11 +56,10 @@
 
       <template #actions="{ row }">
         <action-buttons
-          :status="row.status"
-          :actions-map="actionsMap"
+          :buttons="generateActions(row)"
           :row="row"
           mode="text"
-          @action="handleActionClick"
+          @click="handleActionClick"
         />
       </template>
     </base-table>
@@ -124,13 +123,7 @@ export default {
       columnSettingsKeyPrefix: 'routing_columns',
       selectedRows: [],
       currentPage: this.page,
-      pageSize: this.limit,
-       actionsMap: {
-        'Draft': ['edit', 'delete', { name: '提交审批', action: 'submit' }],
-        'Enabled': ['view', { name: '创建新版本', action: 'newVersion' }],
-        'PendingApproval': ['view'],
-        'Archived': ['view', 'delete']
-      }
+      pageSize: this.limit
     }
   },
   computed: {
@@ -185,11 +178,23 @@ export default {
       this.$emit('pagination-change', pagination)
     },
     handleActionClick(payload) {
-       this.$emit(payload.action, payload.row)
+      this.$emit(payload.action, payload.row)
     },
     getTypeLabel(type) {
       const option = ROUTING_TYPE_OPTIONS.find(opt => opt.value === type)
       return option ? option.label : type
+    },
+    generateActions(row) {
+      if (!row) {
+        return []
+      }
+      const actionsMap = {
+        'Draft': [{ action: 'edit', text: '编辑' }, { action: 'delete', text: '删除', type: 'danger' }, { action: 'submit', text: '提交审批' }],
+        'Enabled': [{ action: 'view', text: '查看' }, { action: 'newVersion', text: '创建新版本' }],
+        'PendingApproval': [{ action: 'view', text: '查看' }],
+        'Archived': [{ action: 'view', text: '查看' }, { action: 'delete', text: '删除', type: 'danger' }]
+      }
+      return actionsMap[row.status] || []
     }
   }
 }
