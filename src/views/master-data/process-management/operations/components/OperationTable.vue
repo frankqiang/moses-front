@@ -545,5 +545,4 @@ export default {
     }
   }
 }
-</style>
-
+</style> 

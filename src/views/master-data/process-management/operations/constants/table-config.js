@@ -124,4 +124,4 @@ export const STATUS_CONFIG = {
 // 表格行样式配置
 export const ROW_CLASS_CONFIG = {
   'Disabled': 'row-disabled'
-}
+} 

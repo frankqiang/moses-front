@@ -46,9 +46,9 @@
 </template>
 
 <script>
-import SearchForm from '../components/SearchForm.vue'
-import OperationTable from '../components/OperationTable.vue'
-import OperationFormDrawer from '../components/OperationFormDrawer.vue'
+import SearchForm from './components/SearchForm.vue'
+import OperationTable from './components/OperationTable.vue'
+import OperationFormDrawer from './components/OperationFormDrawer.vue'
 import { debounce } from '@/utils'
 import {
   getOperationList,
@@ -56,7 +56,7 @@ import {
   batchUpdateOperationStatus,
   deleteOperation,
   batchDeleteOperations
-} from '../api'
+} from './api'
 import { ApiError } from '@/utils/request'
 
 export default {
