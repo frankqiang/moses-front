@@ -11,6 +11,7 @@
   <div class="operation-table">
     <!-- 使用全局表格工具栏组件 -->
     <table-toolbar
+      ref="toolbar"
       :enable-column-settings="true"
       :column-options="columnOptions"
       :storage-key="columnSettingsKey"
@@ -35,6 +36,7 @@
       @batch-enable="handleBatchEnable"
       @batch-disable="handleBatchDisable"
       @export-success="handleExportSuccess"
+      :refresh-feedback-mode="'all'"
     >
       <template #toolbar-left>
         <ActionButtons
@@ -311,6 +313,20 @@ export default {
     }, 300)
   },
   methods: {
+    // 公开方法，供父组件调用
+    refreshSucceed(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshSucceed(message)
+      }
+    },
+
+    // 公开方法，供父组件调用
+    refreshFail(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshFail(message)
+      }
+    },
+
     // 将导入的parseTime函数添加为组件方法
     parseTime(dateTime, format) {
       return parseTime(dateTime, format)

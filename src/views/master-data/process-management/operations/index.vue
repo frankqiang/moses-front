@@ -15,6 +15,7 @@
 
     <!-- 操作表格 -->
     <operation-table
+      ref="operationTable"
       :data="tableData"
       :loading="loading"
       :total="total"
@@ -114,9 +115,10 @@ export default {
         const response = await getOperationList(params)
         this.tableData = response.data.items || []
         this.total = response.data.total || 0
+        this.$refs.operationTable.refreshSucceed()
       } catch (error) {
         console.error('获取工序列表失败:', error)
-        this.$message.error('获取数据失败，请稍后重试')
+        this.$refs.operationTable.refreshFail('获取数据失败，请稍后重试')
       } finally {
         this.loading = false
       }

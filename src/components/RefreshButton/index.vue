@@ -190,6 +190,13 @@ export default {
       default: true
     },
 
+    // 反馈模式
+    feedbackMode: {
+      type: String,
+      default: 'error',
+      validator: value => ['all', 'error', 'none'].includes(value)
+    },
+
     // 自定义CSS类
     customClass: {
       type: String,
@@ -374,6 +381,30 @@ export default {
       } catch (error) {
         this.handleRefreshError(error)
       }
+    },
+
+    // 公开方法：供父组件调用，表示刷新成功
+    refreshSucceed(message) {
+      if (this.feedbackMode === 'all') {
+        this.$message({
+          message: message || '刷新成功',
+          type: 'success',
+          duration: 1500
+        })
+      }
+      this.reset() // 重置内部状态，如错误
+    },
+
+    // 公开方法：供父组件调用，表示刷新失败
+    refreshFail(message) {
+      if (this.feedbackMode === 'all' || this.feedbackMode === 'error') {
+        this.$message({
+          message: message || '刷新失败，请稍后重试',
+          type: 'error',
+          duration: 3000
+        })
+      }
+      this.hasError = true // 设置错误状态
     },
 
     // 开始加载状态

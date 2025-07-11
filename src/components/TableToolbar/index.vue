@@ -102,6 +102,8 @@
 
       <!-- 刷新按钮 -->
       <refresh-button
+        ref="refreshBtn"
+        :feedback-mode="refreshFeedbackMode"
         size="mini"
         @refresh="handleRefresh"
       />
@@ -164,6 +166,12 @@ export default {
     maxRetries: {
       type: Number,
       default: 3
+    },
+
+    // 刷新按钮反馈模式
+    refreshFeedbackMode: {
+      type: String,
+      default: 'error'
     },
 
     // 列设置相关属性
@@ -650,6 +658,20 @@ export default {
       }
 
       return stats
+    },
+
+    // 公开方法：刷新成功
+    refreshSucceed(message) {
+      if (this.$refs.refreshBtn) {
+        this.$refs.refreshBtn.refreshSucceed(message)
+      }
+    },
+
+    // 公开方法：刷新失败
+    refreshFail(message) {
+      if (this.$refs.refreshBtn) {
+        this.$refs.refreshBtn.refreshFail(message)
+      }
     }
   }
 }

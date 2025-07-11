@@ -62,6 +62,15 @@
           @click="handleActionClick"
         />
       </template>
+
+      <!-- 空状态自定义 -->
+      <template #empty>
+        <div class="custom-empty">
+          <i class="el-icon-document-remove" style="font-size: 48px; color: #c0c4cc;" />
+          <p>暂无工艺路线数据</p>
+          <el-button type="primary" size="small" @click="handleToolbarAction({ action: 'add' })">新建工艺路线</el-button>
+        </div>
+      </template>
     </base-table>
   </div>
 </template>
@@ -211,4 +220,16 @@ export default {
     }
   }
 }
-</script> 
+</script>
+
+<style lang="scss" scoped>
+.routing-table-container .custom-empty {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.routing-table-container .custom-empty p {
+  margin: 16px 0 8px;
+  color: #909399;
+}
+</style> 
