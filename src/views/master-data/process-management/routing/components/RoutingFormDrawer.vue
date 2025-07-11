@@ -2,107 +2,133 @@
   <base-drawer
     :visible.sync="drawerVisible"
     :title="drawerTitle"
-    width="700px"
+    width="90%"
     :wrapper-closable="false"
     @open="handleDrawerOpen"
     @close="handleDrawerClose"
   >
-    <enhanced-form
-      ref="routingForm"
-      :data="formData"
-      :rules="formRules"
-      :mode="mode"
-      label-width="110px"
-      :show-footer="false"
-    >
-      <template #default="{ form, mode: formMode }">
-        <div class="form-section">
-          <div class="section-title">一、路线基本信息</div>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="路线代码" prop="code">
-                <el-input
-                  v-model="form.code"
-                  placeholder="请输入路线代码"
-                  maxlength="30"
-                  show-word-limit
-                  :disabled="formMode !== 'create'"
-                />
-                <div class="field-hint">路线代码必须唯一，建议使用大写字母、数字和下划线</div>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="路线名称" prop="name">
-                <el-input
-                  v-model="form.name"
-                  placeholder="请输入路线名称"
-                  maxlength="50"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="版本" prop="version">
-                <el-input v-model="form.version" disabled />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="状态" prop="status">
-                 <StatusTag
-                   v-if="form.status"
-                   :status="form.status"
-                   :text-map="statusTextMap"
-                   :type-map="statusTypeMap"
-                 />
-                 <span v-else>-</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="路线类型" prop="type">
-                <el-select
-                  v-model="form.type"
-                  placeholder="请选择路线类型"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                >
-                  <el-option
-                    v-for="item in routingTypeOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-           <el-row :gutter="20">
-             <el-col :span="24">
-               <el-form-item label="适用产品" prop="applicableProducts">
-                 <el-select
-                  v-model="form.applicableProducts"
-                  multiple
-                  filterable
-                  allow-create
-                  default-first-option
-                  placeholder="请输入或选择适用的产品代码"
-                  style="width: 100%;"
-                  :disabled="formMode === 'view'"
-                >
-                 </el-select>
-                 <div class="field-hint">可输入新的产品代码后按回车键添加</div>
-               </el-form-item>
-             </el-col>
-           </el-row>
-        </div>
-      </template>
-    </enhanced-form>
+    <el-row :gutter="20" class="routing-form-container">
+      <!-- Left Panel -->
+      <el-col :span="15">
+        <enhanced-form
+          ref="routingForm"
+          :data="formData"
+          :rules="formRules"
+          :mode="mode"
+          label-width="110px"
+          :show-footer="false"
+        >
+          <template #default="{ form, mode: formMode }">
+            <div class="form-section">
+              <div class="section-title">一、路线基本信息</div>
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="路线代码" prop="code">
+                    <el-input
+                      v-model="form.code"
+                      placeholder="请输入路线代码"
+                      maxlength="30"
+                      show-word-limit
+                      :disabled="formMode !== 'create'"
+                    />
+                    <div class="field-hint">路线代码必须唯一，建议使用大写字母、数字和下划线</div>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="路线名称" prop="name">
+                    <el-input
+                      v-model="form.name"
+                      placeholder="请输入路线名称"
+                      maxlength="50"
+                      show-word-limit
+                      :disabled="formMode === 'view'"
+                    />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="版本" prop="version">
+                    <el-input v-model="form.version" disabled />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="状态" prop="status">
+                    <StatusTag
+                      v-if="form.status"
+                      :status="form.status"
+                      :text-map="statusTextMap"
+                      :type-map="statusTypeMap"
+                    />
+                    <span v-else>-</span>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="路线类型" prop="type">
+                    <el-select
+                      v-model="form.type"
+                      placeholder="请选择路线类型"
+                      style="width: 100%"
+                      :disabled="formMode === 'view'"
+                    >
+                      <el-option
+                        v-for="item in routingTypeOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                 <el-col :span="12">
+                   <el-form-item label="适用产品" prop="applicableProducts">
+                     <el-select
+                       v-model="form.applicableProducts"
+                       multiple
+                       filterable
+                       allow-create
+                       default-first-option
+                       placeholder="请输入或选择适用的产品代码"
+                       style="width: 100%;"
+                       :disabled="formMode === 'view'"
+                     />
+                     <div class="field-hint">可输入新的产品代码后按回车键添加</div>
+                   </el-form-item>
+                 </el-col>
+              </el-row>
+            </div>
+          </template>
+        </enhanced-form>
 
-     <template #footer>
+        <div class="form-section">
+          <routing-steps-editor
+            ref="stepsEditor"
+            :steps="formData.steps || []"
+            :is-view-mode="mode === 'view'"
+            @add-step="handleOpenOperationSelector"
+            @select-step="handleSelectStep"
+            @up="handleMoveStepUp"
+            @down="handleMoveStepDown"
+            @delete="handleDeleteStep"
+          />
+        </div>
+      </el-col>
+
+      <!-- Right Panel -->
+      <el-col :span="9">
+        <div class="form-section step-details-panel">
+           <step-details-form
+             :selected-step="selectedStep"
+             :is-view-mode="mode === 'view'"
+             @update-step="handleUpdateStepDetails"
+           />
+        </div>
+      </el-col>
+    </el-row>
+    
+    <template #footer>
       <el-button @click="handleCancel">{{ mode === 'view' ? '关闭' : '取消' }}</el-button>
       <el-button v-if="mode !== 'view'" @click="handleReset">重置</el-button>
       <el-button
@@ -122,6 +148,11 @@
         {{ mode === 'create' ? '确认保存' : '保存修改' }}
       </el-button>
     </template>
+
+    <operation-selector-modal
+      :visible.sync="operationSelectorVisible"
+      @confirm="handleAddOperations"
+    />
   </base-drawer>
 </template>
 
@@ -129,15 +160,22 @@
 import BaseDrawer from '@/components/Drawer'
 import EnhancedForm from '@/components/EnhancedForm'
 import StatusTag from '@/components/StatusTag'
+import RoutingStepsEditor from './RoutingStepsEditor.vue'
+import StepDetailsForm from './StepDetailsForm.vue'
+import OperationSelectorModal from './OperationSelectorModal.vue'
 import { createRouting, updateRouting } from '../api'
 import { ROUTING_TYPE_OPTIONS, ROUTING_STATUS_CONFIG } from '../constants'
+import { cloneDeep } from '@/utils'
 
 export default {
   name: 'RoutingFormDrawer',
   components: {
     BaseDrawer,
     EnhancedForm,
-    StatusTag
+    StatusTag,
+    RoutingStepsEditor,
+    StepDetailsForm,
+    OperationSelectorModal
   },
   props: {
     visible: {
@@ -166,7 +204,9 @@ export default {
         name: [{ required: true, message: '路线名称不能为空', trigger: 'blur' }],
         type: [{ required: true, message: '路线类型不能为空', trigger: 'change' }],
         applicableProducts: [{ type: 'array', required: true, message: '至少选择或输入一个适用产品', trigger: 'change' }]
-      }
+      },
+      operationSelectorVisible: false,
+      selectedStep: null
     }
   },
   computed: {
@@ -199,10 +239,12 @@ export default {
   methods: {
     handleDrawerOpen() {
       this.formData = this.initFormData(this.routingData)
+      this.selectedStep = null
     },
     handleDrawerClose() {
       this.$refs.routingForm.resetFields()
       this.$emit('close')
+      this.selectedStep = null
     },
     initFormData(data) {
       if (this.mode === 'create') {
@@ -212,15 +254,94 @@ export default {
           version: '1.0',
           status: 'Draft',
           type: 'Standard',
-          applicableProducts: []
+          applicableProducts: [],
+          steps: []
         }
       }
-      // 在编辑或查看时，确保返回一个新对象，避免直接修改prop
-      return data ? { ...data } : {}
+      return data ? cloneDeep(data) : {}
     },
+    
+    // --- Steps Management ---
+    handleOpenOperationSelector() {
+      this.operationSelectorVisible = true
+    },
+    
+    handleAddOperations(selectedOps) {
+      const newSteps = selectedOps.map((op, index) => ({
+        stepId: `new-step-${Date.now()}-${index}`, // Temporary unique ID
+        stepNumber: (this.formData.steps.length + index + 1) * 10,
+        operationId: op.id,
+        operationCode: op.code,
+        operationName: op.name,
+        onSuccessStep: 0,
+        onFailureStep: 0,
+        standardSetupTime: 0,
+        standardProcessingTime: 0
+      }));
+      this.formData.steps.push(...newSteps);
+    },
+    
+    handleSelectStep(step) {
+      this.selectedStep = step
+    },
+    
+    handleMoveStepUp(index) {
+      if (index === 0) return
+      const temp = this.formData.steps[index]
+      this.$set(this.formData.steps, index, this.formData.steps[index - 1])
+      this.$set(this.formData.steps, index - 1, temp)
+      this.recalculateStepNumbers()
+    },
+    
+    handleMoveStepDown(index) {
+      if (index === this.formData.steps.length - 1) return
+      const temp = this.formData.steps[index]
+      this.$set(this.formData.steps, index, this.formData.steps[index + 1])
+      this.$set(this.formData.steps, index + 1, temp)
+      this.recalculateStepNumbers()
+    },
+    
+    handleDeleteStep(index) {
+       this.$confirm('确定要删除这个工序步骤吗?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          const deletedStep = this.formData.steps[index]
+          this.formData.steps.splice(index, 1)
+          this.recalculateStepNumbers()
+          if (this.selectedStep && this.selectedStep.stepId === deletedStep.stepId) {
+            this.selectedStep = null
+          }
+           this.$message({
+            type: 'success',
+            message: '删除成功!'
+          });
+        }).catch(() => {});
+    },
+    
+    recalculateStepNumbers() {
+      this.formData.steps.forEach((step, index) => {
+        step.stepNumber = (index + 1) * 10
+      })
+    },
+
+    handleUpdateStepDetails(updatedStep) {
+      const index = this.formData.steps.findIndex(s => s.stepId === updatedStep.stepId)
+      if (index !== -1) {
+        this.$set(this.formData.steps, index, updatedStep)
+      }
+    },
+    // --- Form Submission ---
     async handleSubmit(andContinue = false) {
       try {
         await this.$refs.routingForm.validate()
+        
+        if (!this.formData.steps || this.formData.steps.length === 0) {
+          this.$message.warning('请至少添加一个工序步骤')
+          return
+        }
+
         this.loading = true
         const apiCall = this.mode === 'create' ? createRouting : updateRouting
         const response = await apiCall(this.formData)
@@ -235,7 +356,6 @@ export default {
           this.drawerVisible = false
         }
       } catch (error) {
-        // Validation error is handled by EnhancedForm, this catch is for API errors
         if (error && error.message) {
            console.error('API请求失败:', error)
         }
@@ -252,25 +372,39 @@ export default {
     handleReset() {
       this.$refs.routingForm.resetFields()
       this.formData = this.initFormData()
+      this.selectedStep = null
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.form-section {
-  margin-bottom: 30px;
+.routing-form-container {
+  height: calc(100vh - 130px); // Adjust based on your header/footer height
+}
 
-  .section-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-    margin-bottom: 20px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #e4e7ed;
-    border-left: 4px solid #409eff; /* 保留并融合用户指定的样式 */
-    padding-left: 10px;
+.form-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  &:last-child {
+    margin-bottom: 0;
   }
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.step-details-panel {
+  height: 100%;
+  overflow-y: auto;
 }
 
 .field-hint {

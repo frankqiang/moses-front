@@ -38,8 +38,20 @@ export function updateRouting(data) {
   })
 }
 
+/**
+ * 删除工艺路线
+ * @param {string} id 工艺路线ID
+ */
+export function deleteRouting(id) {
+  return request({
+    url: `${BASE_URL}/${id}`,
+    method: 'delete'
+  })
+}
+
 export default {
   getRoutingList,
   createRouting,
-  updateRouting
+  updateRouting,
+  deleteRouting
 }

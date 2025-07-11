@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { getRoutingList } from './api'
+import { getRoutingList, deleteRouting } from './api'
 import SearchForm from './components/SearchForm.vue'
 import RoutingTable from './components/RoutingTable.vue'
 import RoutingFormDrawer from './components/RoutingFormDrawer.vue'
@@ -123,16 +123,35 @@ export default {
     },
     handleDelete(row) {
       this.$confirm(`确定要删除工艺路线 "${row.name}" 吗？`, '删除确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        this.$message.success(`TODO: 实现删除ID为 ${row.id} 的逻辑`)
-      }).catch(() => {})
+      }).then(async() => {
+        try {
+          await deleteRouting(row.id)
+          this.$message.success('删除成功')
+          this.getList()
+        } catch (error) {
+          console.error('删除工艺路线失败:', error)
+          // 错误信息由request拦截器统一处理，此处无需额外展示
+        }
+      }).catch(() => {
+        this.$message.info('已取消删除')
+      })
     },
     handleSubmit(row) {
-      this.$message.info(`TODO: 实现提交ID为 ${row.id} 的工艺路线`)
+      this.$confirm(`确定要提交审批工艺路线 "${row.name}" 吗？`, '提交确认', {
+        type: 'info'
+      }).then(() => {
+        this.$message.info(`TODO: 实现提交ID为 ${row.id} 的工艺路线状态变更逻辑`)
+      }).catch(() => {})
     },
     handleNewVersion(row) {
-      this.$message.info(`TODO: 实现为ID为 ${row.id} 的工艺路线创建新版本`)
+      this.$confirm(`确定要为工艺路线 "${row.name}" 创建一个新版本吗？`, '创建新版本确认', {
+        type: 'info'
+      }).then(() => {
+        this.$message.info(`TODO: 实现为ID为 ${row.id} 的工艺路线创建新版本的逻辑`)
+      }).catch(() => {})
     },
     handleFormSuccess(payload = {}) {
       if (payload.continue) {

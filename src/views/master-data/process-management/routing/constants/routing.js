@@ -26,3 +26,9 @@ export const ROUTING_STATUS_CONFIG = {
     Archived: 'danger'
   }
 }
+
+// 路线状态选项（用于选择器）
+export const ROUTING_STATUS_OPTIONS = Object.keys(ROUTING_STATUS_CONFIG.textMap).map(key => ({
+  value: key,
+  label: ROUTING_STATUS_CONFIG.textMap[key]
+}))
