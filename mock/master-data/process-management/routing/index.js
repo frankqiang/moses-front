@@ -21,7 +21,7 @@ const error = (code, message, status = 500, details = null) => ({
 
 const handlers = {
   getList(config) {
-    const { page = 1, limit = 10, keyword = '', status = '' } = config.query
+    const { page = 1, limit = 10, keyword = '', status = '', type = '' } = config.query
     
     let filteredList = [...routingsData]
 
@@ -40,6 +40,14 @@ const handlers = {
       const statuses = Array.isArray(status) ? status : status.split(',')
       if (statuses.length > 0) {
         filteredList = filteredList.filter(item => statuses.includes(item.status))
+      }
+    }
+
+    // 路线类型筛选
+    if (type) {
+      const types = Array.isArray(type) ? type : type.split(',')
+      if (types.length > 0) {
+        filteredList = filteredList.filter(item => types.includes(item.type))
       }
     }
 

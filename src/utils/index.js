@@ -106,15 +106,9 @@ export function parseTime(time, cFormat) {
         time = time * 1000
       }
       date = new Date(time)
-
-      // 检查日期是否有效
+      // 如果日期无效，返回空字符串
       if (isNaN(date.getTime())) {
-        // 尝试使用原始方法
-        const originalResult = parseTimeOriginal(time, cFormat)
-        if (originalResult !== null) {
-          return originalResult
-        }
-        return '-'
+        return 'invalid-date'
       }
     }
 
