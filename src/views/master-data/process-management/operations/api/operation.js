@@ -153,6 +153,19 @@ export function downloadOperationTemplate() {
   })
 }
 
+/**
+ * 检查工序代码唯一性
+ * @param {Object} params - 查询参数 { code, excludeId }
+ * @returns {Promise} - 返回检查结果
+ */
+export function checkOperationCode(params) {
+  return request({
+    url: `${BASE_URL}/check-code`,
+    method: 'get',
+    params
+  })
+}
+
 export default {
   getOperationList,
   getOperationDetail,
@@ -164,5 +177,6 @@ export default {
   batchDeleteOperations,
   exportOperations,
   importOperations,
-  downloadOperationTemplate
+  downloadOperationTemplate,
+  checkOperationCode
 } 

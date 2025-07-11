@@ -257,24 +257,30 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .form-section {
-  margin-bottom: 20px;
-  padding: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background-color: #ffffff;
+  margin-bottom: 30px;
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e4e7ed;
+    border-left: 4px solid #409eff; /* 保留并融合用户指定的样式 */
+    padding-left: 10px;
+  }
 }
-.section-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  border-left: 4px solid #409eff;
-  padding-left: 10px;
-}
+
 .field-hint {
-  color: #909399;
   font-size: 12px;
-  line-height: 1.5;
+  color: #909399;
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+::v-deep .el-form-item__label {
+  font-weight: 500;
 }
 </style> 

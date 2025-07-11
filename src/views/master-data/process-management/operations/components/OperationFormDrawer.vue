@@ -192,7 +192,8 @@ import EnhancedForm from '@/components/EnhancedForm'
 import { debounce } from '@/utils'
 import {
   createOperation,
-  updateOperation
+  updateOperation,
+  checkOperationCode
 } from '../api'
 import {
   OPERATION_TYPE_OPTIONS,
@@ -506,11 +507,9 @@ export default {
       try {
         // 这里应该调用实际的API检查接口
         // 暂时使用模拟逻辑
-        const response = await this.$http.get('/mes/v1/master-data/process-management/operations/check-code', {
-          params: {
-            code,
-            excludeId: this.mode === 'update' ? this.operationData?.id : undefined
-          }
+        const response = await checkOperationCode({
+          code,
+          excludeId: this.mode === 'update' ? this.operationData?.id : undefined
         })
         return response.data.exists
       } catch (error) {

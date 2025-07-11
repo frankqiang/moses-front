@@ -16,7 +16,7 @@
 /**
  * 工序管理模块Mock API处理函数
  */
-const { data: operationsData } = require('./data/operations')
+const { data: operationsData } = require('../data/operations')
 const Mock = require('mockjs')
 
 // 引入响应工具函数
