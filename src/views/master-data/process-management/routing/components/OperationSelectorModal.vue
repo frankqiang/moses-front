@@ -2,7 +2,7 @@
   <el-dialog
     title="选择工序"
     :visible.sync="dialogVisible"
-    width="60%"
+    width="40%"
     append-to-body
     @close="handleClose"
   >
@@ -21,12 +21,14 @@
         v-loading="loading"
         :data="operationList"
         :columns="columns"
-        :show-pagination="false"
-        height="400px"
+        :show-pagination="true"
+        height="500px"
         :row-key="'id'"
         :reserve-selection="true"
         :show-selection="true"
+        :pagination="paginationConfig"
         @selection-change="handleSelectionChange"
+        @pagination-change="handlePaginationChange"
       >
         <template #type="{ row }">
           <el-tag size="mini">{{ operationTypeMap[row.type] || row.type }}</el-tag>
@@ -78,7 +80,13 @@ export default {
         Storage: '仓储',
         Move: '移动',
         Packing: '包装'
-      }
+      },
+      // 分页相关数据
+      listQuery: {
+        page: 1,
+        limit: 10
+      },
+      total: 0
     }
   },
   computed: {
@@ -89,11 +97,26 @@ export default {
       set(val) {
         this.$emit('update:visible', val)
       }
+    },
+    paginationConfig() {
+      return {
+        total: this.total,
+        page: this.listQuery.page,
+        limit: this.listQuery.limit,
+        pageSizes: [10, 20, 50],
+        layout: 'total, sizes, prev, pager, next, jumper',
+        background: true,
+        autoScroll: false // 在弹窗中不需要自动滚动
+      }
     }
   },
   watch: {
     visible(val) {
       if (val) {
+        // 打开模态框时重置分页和搜索关键词
+        this.searchKeyword = ''
+        this.listQuery.page = 1
+        this.listQuery.limit = 10
         this.fetchOperations()
       }
     }
@@ -107,10 +130,13 @@ export default {
       try {
         const params = {
           status: 'Enabled', // 只获取启用的工序
-          keyword: this.searchKeyword
+          keyword: this.searchKeyword,
+          page: this.listQuery.page,
+          limit: this.listQuery.limit
         }
         const { data } = await getOperationList(params)
         this.operationList = data.items || []
+        this.total = data.total || 0
       } catch (error) {
         console.error('获取工序列表失败:', error)
         this.$message.error('获取工序列表失败')
@@ -129,6 +155,15 @@ export default {
       this.dialogVisible = false
       this.searchKeyword = ''
       this.selectedOperations = []
+      // 关闭时重置分页，避免下次打开显示上一页数据
+      this.listQuery.page = 1
+      this.listQuery.limit = 10
+      this.total = 0
+    },
+    handlePaginationChange(pagination) {
+      this.listQuery.page = pagination.page
+      this.listQuery.limit = pagination.limit
+      this.fetchOperations()
     }
   }
 }
