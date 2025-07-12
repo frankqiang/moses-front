@@ -23,6 +23,9 @@
         :columns="columns"
         :show-pagination="false"
         height="400px"
+        :row-key="'id'"
+        :reserve-selection="true"
+        :show-selection="true"
         @selection-change="handleSelectionChange"
       >
         <template #type="{ row }">
