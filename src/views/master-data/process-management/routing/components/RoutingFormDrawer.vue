@@ -400,7 +400,7 @@ export default {
 
 <style lang="scss" scoped>
 .routing-form-container {
-  height: calc(100vh - 130px); // Adjust based on your header/footer height
+  height: calc(100vh - 150px); // Adjust based on your header/footer height
 }
 
 .form-section {

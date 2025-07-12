@@ -14,14 +14,16 @@
     </div>
     <base-table
       ref="stepsTable"
-      :data="steps"
+      :data="pagedSteps"
       :columns="columns"
-      :show-pagination="false"
+      :show-pagination="true"
+      :pagination="{ total: steps.length, page: currentPage, limit: pageSize, pageSizes: [5, 10, 20, 50] }"
       :show-selection="false"
       :show-index="false"
       highlight-current-row
       class="steps-table"
       @current-change="handleCurrentRowChange"
+      @pagination-change="handlePaginationChange"
     >
       <template #stepNumber="{ row, $index }">
         <span>{{ ($index + 1) * 10 }}</span>
@@ -74,12 +76,25 @@ export default {
   },
   data() {
     return {
+      currentPage: 1,
+      pageSize: 10,
       columns: [
         { prop: 'stepNumber', label: '步骤号', width: 80, align: 'center', slotName: 'stepNumber' },
         { prop: 'operationCode', label: '工序代码', minWidth: 120 },
         { prop: 'operationName', label: '工序名称', minWidth: 150 },
-        { prop: 'actions', label: '操作', width: 150, align: 'center', slotName: 'actions', fixed: 'right' }
+        { prop: 'actions', label: '操作', width: 200, align: 'center', slotName: 'actions', fixed: 'right' }
       ]
+    }
+  },
+  computed: {
+    pagedSteps() {
+      console.log('pagedSteps computed triggered. CurrentPage:', this.currentPage, 'PageSize:', this.pageSize, 'Total steps:', this.steps.length);
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      console.log('Slice range: start =', start, 'end =', end);
+      const result = this.steps.slice(start, end);
+      console.log('pagedSteps result length:', result.length, 'Result:', result);
+      return result;
     }
   },
   methods: {
@@ -104,8 +119,22 @@ export default {
     handleCurrentRowChange(newRow) {
       this.$emit('select-step', newRow)
     },
+    handlePaginationChange({ page, limit }) {
+      console.log('handlePaginationChange triggered:', { page, limit });
+      this.currentPage = page;
+      this.pageSize = limit;
+      console.log('After update: currentPage =', this.currentPage, 'pageSize =', this.pageSize);
+      console.log('Steps length:', this.steps.length, 'Paged steps length (before computed):', this.pagedSteps.length);
+    },
     setCurrentRow(row) {
       this.$refs.stepsTable.setCurrentRow(row)
+    }
+  },
+  watch: {
+    steps(newVal, oldVal) {
+      console.log('Steps changed. Old length:', oldVal.length, 'New length:', newVal.length);
+      this.currentPage = 1;
+      console.log('CurrentPage reset to:', this.currentPage);
     }
   }
 }
