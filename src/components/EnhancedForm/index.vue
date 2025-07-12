@@ -327,6 +327,12 @@ export default {
         this.validationDisabled = false
       }, 500)
     }
+
+    // 兼容父组件通过ref调用clearValidate
+    this.$emit('hook:mounted')
+    if (typeof this.clearValidate === 'function') {
+      this.$parent && (this.$parent.$refs && this.$parent.$refs[this.$vnode.key || this.$options.name] === this) && (this.clearValidate = this.clearValidate.bind(this))
+    }
   },
 
   beforeDestroy() {

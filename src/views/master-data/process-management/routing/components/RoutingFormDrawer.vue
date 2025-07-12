@@ -17,6 +17,9 @@
           :mode="mode"
           label-width="110px"
           :show-footer="false"
+          :clear-validate-on-data-update="true"
+          :disable-initial-validation="true"
+          :validate-on-data-change="false"
         >
           <template #default="{ form, mode: formMode }">
             <div class="form-section">
@@ -88,13 +91,19 @@
                        v-model="form.applicableProducts"
                        multiple
                        filterable
-                       allow-create
                        default-first-option
+                       collapse-tags
                        placeholder="请输入或选择适用的产品代码"
                        style="width: 100%;"
                        :disabled="formMode === 'view'"
-                     />
-                     <div class="field-hint">可输入新的产品代码后按回车键添加</div>
+                     >
+                       <el-option
+                         v-for="item in productOptions"
+                         :key="item.id"
+                         :label="item.code + (item.name ? ' ' + item.name : '')"
+                         :value="item.code"
+                       />
+                     </el-select>
                    </el-form-item>
                  </el-col>
               </el-row>
@@ -166,6 +175,7 @@ import OperationSelectorModal from './OperationSelectorModal.vue'
 import { createRouting, updateRouting } from '../api'
 import { ROUTING_TYPE_OPTIONS, ROUTING_STATUS_CONFIG } from '../constants'
 import { cloneDeep } from '@/utils'
+import { getAllProductList } from '@/api/master-data/product-management'
 
 export default {
   name: 'RoutingFormDrawer',
@@ -206,7 +216,8 @@ export default {
         applicableProducts: [{ type: 'array', required: true, message: '至少选择或输入一个适用产品', trigger: 'change' }]
       },
       operationSelectorVisible: false,
-      selectedStep: null
+      selectedStep: null,
+      productOptions: [] // 新增：产品下拉选项
     }
   },
   computed: {
@@ -237,12 +248,21 @@ export default {
     }
   },
   methods: {
-    handleDrawerOpen() {
+    async handleDrawerOpen() {
+      // 每次打开弹窗都重置表单数据，自动清除校验提示（最佳实践）
       this.formData = this.initFormData(this.routingData)
       this.selectedStep = null
+      // 加载产品选项
+      try {
+        const res = await getAllProductList()
+        this.productOptions = (res.data && res.data.items) || []
+      } catch (e) {
+        this.productOptions = []
+      }
     },
     handleDrawerClose() {
-      this.$refs.routingForm.resetFields()
+      // 关闭弹窗时重置表单数据，自动清除校验提示（最佳实践）
+      this.formData = this.initFormData()
       this.$emit('close')
       this.selectedStep = null
     },
@@ -370,7 +390,7 @@ export default {
       this.drawerVisible = false
     },
     handleReset() {
-      this.$refs.routingForm.resetFields()
+      // 点击重置按钮时重置表单数据，自动清除校验提示（最佳实践）
       this.formData = this.initFormData()
       this.selectedStep = null
     }
