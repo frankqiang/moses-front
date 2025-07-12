@@ -400,7 +400,7 @@ export default {
 
 <style lang="scss" scoped>
 .routing-form-container {
-  height: calc(100vh - 150px); // Adjust based on your header/footer height
+  // height: calc(100vh - 150px); // Adjust based on your header/footer height
 }
 
 .form-section {
@@ -423,8 +423,8 @@ export default {
 }
 
 .step-details-panel {
-  height: 100%;
-  overflow-y: auto;
+  // height: 100%;
+  // overflow-y: auto;
 }
 
 .field-hint {
