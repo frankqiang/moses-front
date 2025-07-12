@@ -9,7 +9,7 @@
   >
     <el-row :gutter="20" class="routing-form-container">
       <!-- Left Panel -->
-      <el-col :span="15">
+      <el-col :span="18">
         <enhanced-form
           ref="routingForm"
           :data="formData"
@@ -25,7 +25,7 @@
             <div class="form-section">
               <div class="section-title">一、路线基本信息</div>
               <el-row :gutter="20">
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="路线代码" prop="code">
                     <el-input
                       v-model="form.code"
@@ -37,7 +37,7 @@
                     <div class="field-hint">路线代码必须唯一，建议使用大写字母、数字和下划线</div>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="路线名称" prop="name">
                     <el-input
                       v-model="form.name"
@@ -48,27 +48,16 @@
                     />
                   </el-form-item>
                 </el-col>
-              </el-row>
-              <el-row :gutter="20">
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="版本" prop="version">
                     <el-input v-model="form.version" disabled />
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
-                  <el-form-item label="状态" prop="status">
-                    <StatusTag
-                      v-if="form.status"
-                      :status="form.status"
-                      :text-map="statusTextMap"
-                      :type-map="statusTypeMap"
-                    />
-                    <span v-else>-</span>
-                  </el-form-item>
-                </el-col>
               </el-row>
               <el-row :gutter="20">
-                <el-col :span="12">
+                
+                
+                <el-col :span="8">
                   <el-form-item label="路线类型" prop="type">
                     <el-select
                       v-model="form.type"
@@ -85,7 +74,7 @@
                     </el-select>
                   </el-form-item>
                 </el-col>
-                 <el-col :span="12">
+                <el-col :span="8">
                    <el-form-item label="适用产品" prop="applicableProducts">
                      <el-select
                        v-model="form.applicableProducts"
@@ -106,7 +95,19 @@
                      </el-select>
                    </el-form-item>
                  </el-col>
+                 <el-col :span="8">
+                  <el-form-item label="状态" prop="status">
+                    <StatusTag
+                      v-if="form.status"
+                      :status="form.status"
+                      :text-map="statusTextMap"
+                      :type-map="statusTypeMap"
+                    />
+                    <span v-else>-</span>
+                  </el-form-item>
+                </el-col>
               </el-row>
+           
             </div>
           </template>
         </enhanced-form>
@@ -126,7 +127,7 @@
       </el-col>
 
       <!-- Right Panel -->
-      <el-col :span="9">
+      <el-col :span="6">
         <div class="form-section step-details-panel">
            <step-details-form
              :selected-step="selectedStep"
