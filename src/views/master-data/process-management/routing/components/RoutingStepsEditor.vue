@@ -36,6 +36,9 @@
           @click="handleStepAction($event, $index)"
         />
       </template>
+      <template #type="{ row }">
+        <el-tag size="mini">{{ getOperationTypeLabel(row.operationType) }}</el-tag>
+      </template>
 
       <template #empty>
         <div class="custom-empty">
@@ -57,6 +60,7 @@
 <script>
 import BaseTable from '@/components/BaseTable'
 import ActionButtons from '@/components/ActionButtons'
+import { OPERATION_TYPE_OPTIONS } from '@/views/master-data/process-management/operations/constants/operation'; // 导入工序类型常量
 
 export default {
   name: 'RoutingStepsEditor',
@@ -82,8 +86,10 @@ export default {
         { prop: 'stepNumber', label: '步骤号', width: 80, align: 'center', slotName: 'stepNumber' },
         { prop: 'operationCode', label: '工序代码', minWidth: 120 },
         { prop: 'operationName', label: '工序名称', minWidth: 150 },
+        { prop: 'operationType', label: '工序类型', width: 120, slotName: 'type' }, // 新增工序类型列
         { prop: 'actions', label: '操作', width: 200, align: 'center', slotName: 'actions', fixed: 'right' }
-      ]
+      ],
+      // 移除 operationTypeMap
     }
   },
   computed: {
@@ -128,6 +134,10 @@ export default {
     },
     setCurrentRow(row) {
       this.$refs.stepsTable.setCurrentRow(row)
+    },
+    getOperationTypeLabel(type) {
+      const option = OPERATION_TYPE_OPTIONS.find(opt => opt.value === type);
+      return option ? option.label : type;
     }
   },
   watch: {

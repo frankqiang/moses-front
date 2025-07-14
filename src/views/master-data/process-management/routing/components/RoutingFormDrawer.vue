@@ -132,6 +132,7 @@
            <step-details-form
              :selected-step="selectedStep"
              :is-view-mode="mode === 'view'"
+             :all-steps="formData.steps" 
              @update-step="handleUpdateStepDetails"
            />
         </div>
@@ -294,10 +295,12 @@ export default {
         operationId: op.id,
         operationCode: op.code,
         operationName: op.name,
+        operationType: op.type, // 新增：保存工序类型
         onSuccessStep: 0,
         onFailureStep: 0,
         standardSetupTime: 0,
-        standardProcessingTime: 0
+        standardProcessingTime: 0,
+        processingTimeUnit: '分钟/吨' // 新增：初始化加工时间单位
       }));
       this.formData.steps.push(...newSteps);
     },

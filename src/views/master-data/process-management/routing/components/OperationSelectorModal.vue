@@ -31,7 +31,7 @@
         @pagination-change="handlePaginationChange"
       >
         <template #type="{ row }">
-          <el-tag size="mini">{{ operationTypeMap[row.type] || row.type }}</el-tag>
+          <el-tag size="mini">{{ getOperationTypeLabel(row.type) }}</el-tag>
         </template>
       </base-table>
     </div>
@@ -52,6 +52,7 @@
 import BaseTable from '@/components/BaseTable'
 import { getOperationList } from '@/views/master-data/process-management/operations/api/operation'
 import { debounce } from '@/utils'
+import { OPERATION_TYPE_OPTIONS } from '@/views/master-data/process-management/operations/constants/operation'; // 导入工序类型常量
 
 export default {
   name: 'OperationSelectorModal',
@@ -74,13 +75,6 @@ export default {
         { prop: 'name', label: '工序名称', minWidth: 180 },
         { prop: 'type', label: '工序类型', width: 120, slotName: 'type' }
       ],
-      operationTypeMap: {
-        Production: '生产',
-        Inspection: '检验',
-        Storage: '仓储',
-        Move: '移动',
-        Packing: '包装'
-      },
       // 分页相关数据
       listQuery: {
         page: 1,
@@ -164,6 +158,10 @@ export default {
       this.listQuery.page = pagination.page
       this.listQuery.limit = pagination.limit
       this.fetchOperations()
+    },
+    getOperationTypeLabel(type) {
+      const option = OPERATION_TYPE_OPTIONS.find(opt => opt.value === type);
+      return option ? option.label : type;
     }
   }
 }
