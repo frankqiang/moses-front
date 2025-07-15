@@ -177,6 +177,7 @@ import OperationSelectorModal from './OperationSelectorModal.vue'
 import { createRouting, updateRouting } from '../api'
 import { ROUTING_TYPE_OPTIONS, ROUTING_STATUS_CONFIG } from '../constants'
 import { cloneDeep } from '@/utils'
+import { v4 as uuidv4 } from 'uuid' // 导入uuid v4方法并重命名为uuidv4
 import { getAllProductList } from '@/api/master-data/product-management'
 
 export default {
@@ -298,21 +299,89 @@ export default {
       this.operationSelectorVisible = true
     },
     
-    handleAddOperations(selectedOps) {
-      const newSteps = selectedOps.map((op, index) => ({
-        stepId: `new-step-${Date.now()}-${index}`, // Temporary unique ID
-        stepNumber: (this.formData.steps.length + index + 1) * 10,
-        operationId: op.id,
-        operationCode: op.code,
-        operationName: op.name,
-        operationType: op.type, // 新增：保存工序类型
-        flowLogic: { nextStep: 0, onSuccessStep: 0, onFailureStep: 0 }, // 初始化 flowLogic
-        timeStandards: { // 初始化 timeStandards
-          setup: { type: 'Fixed', value: 0, unit: 'minute', matrixId: null },
-          processing: { type: 'Fixed', value: 0, unit: '分钟/吨', formula: null }
+    handleAddOperations(selectedOperations) {
+      if (!selectedOperations || selectedOperations.length === 0) {
+        return;
+      }
+
+      let maxStepNumber = this.formData.steps.reduce((max, step) => Math.max(max, step.stepNumber), 0);
+      const addedOperationsCount = selectedOperations.length;
+      let actualAddedCount = 0;
+      const duplicateOperations = []; // 步骤1: 初始化空数组用于收集重复工序
+
+      selectedOperations.forEach(operation => {
+        // 检查是否已存在相同的基础工序
+        const isDuplicate = this.formData.steps.some(step => step.operationId === operation.id);
+
+        if (isDuplicate) {
+          // 步骤2: 不立即弹出警告，而是添加到重复工序数组
+          duplicateOperations.push(operation);
+        } else {
+          maxStepNumber += 10; // 步骤号递增10
+          const newStep = {
+            stepId: uuidv4(), // 生成唯一UUID
+            stepNumber: maxStepNumber,
+            operationId: operation.id,
+            operationCode: operation.code,
+            operationName: operation.name,
+            operationType: operation.type,
+            flowLogic: { // 默认流程逻辑
+              nextStep: null,
+              onSuccessStep: null,
+              onFailureStep: null
+            },
+            timeStandards: { // 默认时间标准
+              setup: { type: 'Fixed', value: 0, unit: 'minute', matrixId: null },
+              processing: { type: 'Fixed', value: 0, unit: 'minute/roll', formula: null }
+            }
+          };
+          this.formData.steps.push(newStep);
+          actualAddedCount++;
         }
-      }));
-      this.formData.steps.push(...newSteps);
+      });
+
+      // 步骤1: 删除所有原有的 this.$message.warning(), this.$message.success() 和 this.$message.info() 调用。
+      // 原有警告消息处理代码已在上次修改中替换为收集duplicateOperations数组
+      // 原有的成功和信息提示代码如下：
+      // if (actualAddedCount > 0) {
+      //   this.$message.success(`成功添加 ${actualAddedCount} 个工序步骤。`);
+      // } else if (addedOperationsCount > 0 && actualAddedCount === 0) {
+      //   this.$message.info(`没有新的工序步骤被添加。`);
+      // }
+
+      // 步骤2: 新增一个统一的消息生成和显示逻辑
+      if (actualAddedCount > 0 && duplicateOperations.length > 0) {
+        // 既有成功添加的，也有重复的
+        const duplicateNames = duplicateOperations.map(op => `${op.name} (${op.code})`).join('、');
+        const message = `成功添加 ${actualAddedCount} 个工序步骤，但以下工序已存在，无法重复添加：${duplicateNames}。`;
+        this.$message.warning(message);
+      } else if (actualAddedCount > 0 && duplicateOperations.length === 0) {
+        // 只有成功添加的
+        this.$message.success(`成功添加 ${actualAddedCount} 个工序步骤。`);
+      } else if (actualAddedCount === 0 && duplicateOperations.length > 0) {
+        // 没有成功添加，但有重复的 (所有选择的都是重复的)
+        let warningMessage = '';
+        if (duplicateOperations.length <= 3) {
+          const duplicateNames = duplicateOperations.map(op => `${op.name} (${op.code})`).join('、');
+          warningMessage = `以下工序已存在于当前工艺路线中，无法重复添加：${duplicateNames}。`;
+        } else {
+          warningMessage = `所有选择的工序（共 ${duplicateOperations.length} 项）均已存在于当前工艺路线中，无法重复添加。`;
+        }
+        this.$message.warning(warningMessage);
+      } else if (actualAddedCount === 0 && duplicateOperations.length === 0 && addedOperationsCount > 0) {
+        // 理论上不会出现，但作为兜底
+         this.$message.info(`没有新的工序步骤被添加。`);
+      }
+
+      // 步骤3: 保持 selectedStep 更新和 setCurrentRow 的逻辑不变
+      if (this.formData.steps.length > 0) {
+        this.$nextTick(() => {
+          this.selectedStep = this.formData.steps[0];
+          if (this.$refs.stepsEditor) {
+            this.$refs.stepsEditor.setCurrentRow(this.selectedStep);
+          }
+        });
+      }
     },
     
     handleSelectStep(step) {

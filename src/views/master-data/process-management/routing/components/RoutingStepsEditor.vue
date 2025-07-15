@@ -21,6 +21,7 @@
       :show-selection="false"
       :show-index="false"
       highlight-current-row
+      :row-key="'stepId'"
       class="steps-table"
       @current-change="handleCurrentRowChange"
       @pagination-change="handlePaginationChange"
