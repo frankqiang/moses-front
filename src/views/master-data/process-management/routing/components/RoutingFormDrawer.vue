@@ -332,7 +332,7 @@ export default {
             },
             timeStandards: { // 默认时间标准
               setup: { type: 'Fixed', value: 0, unit: 'minute', matrixId: null },
-              processing: { type: 'Fixed', value: 0, unit: 'minute/roll', formula: null }
+              processing: { type: 'Fixed', value: 0, unit: '分钟/吨', formula: null }
             }
           };
           this.formData.steps.push(newStep);
@@ -394,6 +394,7 @@ export default {
       this.$set(this.formData.steps, index, this.formData.steps[index - 1])
       this.$set(this.formData.steps, index - 1, temp)
       this.recalculateStepNumbers()
+      this.resetFlowLogicAndNotify() // 新增：重置流程逻辑并通知用户
     },
     
     handleMoveStepDown(index) {
@@ -402,6 +403,7 @@ export default {
       this.$set(this.formData.steps, index, this.formData.steps[index + 1])
       this.$set(this.formData.steps, index + 1, temp)
       this.recalculateStepNumbers()
+      this.resetFlowLogicAndNotify() // 新增：重置流程逻辑并通知用户
     },
     
     handleDeleteStep(index) {
@@ -413,6 +415,7 @@ export default {
           const deletedStep = this.formData.steps[index]
           this.formData.steps.splice(index, 1)
           this.recalculateStepNumbers()
+          this.resetFlowLogicAndNotify() // 新增：重置流程逻辑并通知用户
           if (this.selectedStep && this.selectedStep.stepId === deletedStep.stepId) {
             this.selectedStep = null
           }
@@ -476,6 +479,19 @@ export default {
       // 点击重置按钮时重置表单数据，自动清除校验提示（最佳实践）
       this.formData = this.initFormData()
       this.selectedStep = null
+    },
+    resetFlowLogicAndNotify() {
+      // 重置所有步骤的流程逻辑
+      this.formData.steps.forEach(step => {
+        this.$set(step.flowLogic, 'nextStep', null);
+        this.$set(step.flowLogic, 'onSuccessStep', null);
+        this.$set(step.flowLogic, 'onFailureStep', null);
+      });
+
+      this.$alert('工序步骤的移动/删除操作已导致流程逻辑重置，请重新配置相关步骤的下一步设置。', '重要提示', {
+        confirmButtonText: '确定',
+        type: 'warning'
+      });
     }
   }
 }
