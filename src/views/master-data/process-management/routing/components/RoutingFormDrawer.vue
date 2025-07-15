@@ -280,7 +280,17 @@ export default {
           steps: []
         }
       }
-      return data ? cloneDeep(data) : {}
+      // 确保现有数据也包含默认的 flowLogic 和 timeStandards
+      const clonedData = data ? cloneDeep(data) : {};
+      clonedData.steps = (clonedData.steps || []).map(step => ({
+        ...step,
+        flowLogic: step.flowLogic || { nextStep: 0, onSuccessStep: 0, onFailureStep: 0 },
+        timeStandards: {
+          setup: step.timeStandards?.setup || { type: 'Fixed', value: 0, unit: 'minute', matrixId: null },
+          processing: step.timeStandards?.processing || { type: 'Fixed', value: 0, unit: '分钟/吨', formula: null }
+        }
+      }));
+      return clonedData;
     },
     
     // --- Steps Management ---
@@ -296,11 +306,11 @@ export default {
         operationCode: op.code,
         operationName: op.name,
         operationType: op.type, // 新增：保存工序类型
-        onSuccessStep: 0,
-        onFailureStep: 0,
-        standardSetupTime: 0,
-        standardProcessingTime: 0,
-        processingTimeUnit: '分钟/吨' // 新增：初始化加工时间单位
+        flowLogic: { nextStep: 0, onSuccessStep: 0, onFailureStep: 0 }, // 初始化 flowLogic
+        timeStandards: { // 初始化 timeStandards
+          setup: { type: 'Fixed', value: 0, unit: 'minute', matrixId: null },
+          processing: { type: 'Fixed', value: 0, unit: '分钟/吨', formula: null }
+        }
       }));
       this.formData.steps.push(...newSteps);
     },
