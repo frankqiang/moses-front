@@ -13,7 +13,7 @@ const generateRoutingsData = () => {
       "id": "rt-001",
       "code": "RT_STD_DOUBLE_ZERO",
       "name": "标准双零箔生产工艺路线",
-      "version": "1.2",
+      "version": "2.0", // 更新版本号以匹配文档
       "status": "Enabled",
       "type": "Standard",
       "applicableProducts": ["P-1100-DZ", "P-8011-DZ"],
@@ -24,10 +24,12 @@ const generateRoutingsData = () => {
           "operationId": "op-002",
           "operationCode": "ANNEALING",
           "operationName": "退火",
-          "onSuccessStep": 20,
-          "onFailureStep": 50,
-          "standardSetupTime": 60,
-          "standardProcessingTime": 120
+          "operationType": "Production",
+          "flowLogic": { "nextStep": 20, "onSuccessStep": 20, "onFailureStep": null },
+          "timeStandards": {
+            "setup": { "type": "Fixed", "value": 60, "unit": "minute", "matrixId": null },
+            "processing": { "type": "Fixed", "value": 120, "unit": "分钟/吨", "formula": null }
+          }
         },
         {
           "stepId": "step-001-2",
@@ -35,18 +37,59 @@ const generateRoutingsData = () => {
           "operationId": "op-003",
           "operationCode": "QC_ANNEAL_INSPECT",
           "operationName": "退火后检验",
-          "onSuccessStep": 30,
-          "onFailureStep": 50,
-          "standardSetupTime": 10,
-          "standardProcessingTime": 15
+          "operationType": "Inspection",
+          "flowLogic": { "nextStep": null, "onSuccessStep": 30, "onFailureStep": 50 },
+          "timeStandards": {
+            "setup": { "type": "Fixed", "value": 10, "unit": "minute", "matrixId": null },
+            "processing": { "type": "Fixed", "value": 15, "unit": "分钟/卷", "formula": null }
+          }
+        },
+        {
+          "stepId": "step-001-3",
+          "stepNumber": 30,
+          "operationId": "op-004",
+          "operationCode": "SLITTING",
+          "operationName": "分切",
+          "operationType": "Production",
+          "flowLogic": { "nextStep": 40, "onSuccessStep": 40, "onFailureStep": null },
+          "timeStandards": {
+            "setup": { "type": "Matrix", "value": 30, "unit": "minute", "matrixId": "SM-SPEC-02" },
+            "processing": { "type": "Fixed", "value": 45, "unit": "分钟/吨", "formula": null }
+          }
+        },
+        {
+          "stepId": "step-001-5",
+          "stepNumber": 40,
+          "operationId": "op-006",
+          "operationCode": "PACKING",
+          "operationName": "包装",
+          "operationType": "Packing",
+          "flowLogic": { "nextStep": null, "onSuccessStep": null, "onFailureStep": null },
+          "timeStandards": {
+            "setup": { "type": "Fixed", "value": 5, "unit": "minute", "matrixId": null },
+            "processing": { "type": "Formula", "value": 0, "unit": "分钟/卷", "formula": "5 * [width_m] + 2" }
+          }
+        },
+        {
+          "stepId": "step-001-4",
+          "stepNumber": 50,
+          "operationId": "op-005",
+          "operationCode": "REWORK_SURFACE",
+          "operationName": "表面处理返工",
+          "operationType": "Production",
+          "flowLogic": { "nextStep": 20, "onSuccessStep": 20, "onFailureStep": null },
+          "timeStandards": {
+            "setup": { "type": "Fixed", "value": 0, "unit": "minute", "matrixId": null },
+            "processing": { "type": "Fixed", "value": 60, "unit": "分钟/卷", "formula": null }
+          }
         }
       ],
       "changelog": [
-        { "version": "1.0", "user": "admin", "timestamp": "2023-10-01T10:00:00Z", "note": "初始创建" },
-        { "version": "1.2", "user": "li_guan", "timestamp": "2023-10-20T11:00:00Z", "note": "增加返工流程并审批通过" }
+        { "version": "1.2", "user": "li_guan", "timestamp": "2023-10-20T11:00:00Z", "note": "增加返工流程并审批通过" },
+        { "version": "2.0", "user": "admin", "timestamp": "2024-05-18T16:00:00Z", "note": "升级至新版数据结构，支持动态时间配置" }
       ],
       "approvalHistory": [
-        { "version": "1.2", "approver": "wang_director", "timestamp": "2023-10-21T09:00:00Z", "result": "Approved", "comment": "同意发布" }
+        { "version": "2.0", "approver": "system_arch", "timestamp": "2024-05-18T17:00:00Z", "result": "Approved", "comment": "模型升级通过" }
       ],
       "createdBy": "admin",
       "createdAt": "2023-10-01T10:00:00Z",
@@ -84,10 +127,12 @@ const generateRoutingsData = () => {
           "operationId": "op-001",
           "operationCode": "ROLLING",
           "operationName": "热轧",
-          "onSuccessStep": 20,
-          "onFailureStep": null,
-          "standardSetupTime": 120,
-          "standardProcessingTime": 180
+          "operationType": "Production",
+          "flowLogic": { "nextStep": 20, "onSuccessStep": 20, "onFailureStep": null },
+          "timeStandards": {
+            "setup": { "type": "Fixed", "value": 120, "unit": "minute", "matrixId": null },
+            "processing": { "type": "Fixed", "value": 180, "unit": "分钟/吨", "formula": null }
+          }
         }
       ],
       "changelog": [
@@ -138,7 +183,64 @@ const generateRoutingsData = () => {
       'applicableProducts|1-3': [function() {
         return 'P-' + Mock.mock('@word(4, 8)').toUpperCase()
       }],
-      'steps': [],
+      'steps|0-5': [
+        {
+          'stepId': () => uuidv4(),
+          'stepNumber': '@integer(10, 50, 10)',
+          'operationId|1': ['op-001', 'op-002', 'op-003', 'op-004', 'op-005', 'op-006'],
+          'operationCode': function() {
+            const opMap = {
+              'op-001': 'ROLLING',
+              'op-002': 'ANNEALING',
+              'op-003': 'QC_ANNEAL_INSPECT',
+              'op-004': 'SLITTING',
+              'op-005': 'REWORK_SURFACE',
+              'op-006': 'PACKING'
+            }
+            return opMap[this.operationId]
+          },
+          'operationName': function() {
+            const opMap = {
+              'op-001': '热轧',
+              'op-002': '退火',
+              'op-003': '退火后检验',
+              'op-004': '分切',
+              'op-005': '表面处理返工',
+              'op-006': '包装'
+            }
+            return opMap[this.operationId]
+          },
+          'operationType|1': ['Production', 'Inspection', 'Packing', 'Storage', 'Move'],
+          'flowLogic': function() {
+            if (this.operationType === 'Inspection') {
+              return { "nextStep": null, "onSuccessStep": '@integer(10, 100, 10)', "onFailureStep": '@integer(10, 100, 10)' }
+            } else {
+              const next = '@integer(10, 100, 10)'
+              return { "nextStep": next, "onSuccessStep": next, "onFailureStep": null }
+            }
+          },
+          'timeStandards': {
+            'setup': function() {
+              const setupType = Mock.mock('@pick(["Fixed", "Matrix"])')
+              return {
+                "type": setupType,
+                "value": '@integer(0, 60)',
+                "unit": "minute",
+                "matrixId": setupType === 'Matrix' ? Mock.mock('@pick(["SM-SPEC-02", "SM-SIZE-01"])') : null
+              }
+            },
+            'processing': function() {
+              const processingType = Mock.mock('@pick(["Fixed", "Formula"])')
+              return {
+                "type": processingType,
+                "value": processingType === 'Fixed' ? '@integer(10, 200)' : 0,
+                "unit": Mock.mock('@pick(["分钟/吨", "分钟/卷", "分钟/批次", "分钟/米"])'),
+                "formula": processingType === 'Formula' ? "@pick([\"10 * [thickness] + 5\", \"[length] * [width] / 100\"])" : null
+              }
+            }
+          }
+        }
+      ],
       'changelog': [],
       'approvalHistory': [],
       'createdBy|1': ['admin', 'manager', 'process_engineer', 'quality_manager'],
@@ -154,6 +256,8 @@ const generateRoutingsData = () => {
   
   return [...baseRoutings, ...additionalData]
 }
+
+const { v4: uuidv4 } = require('uuid') // 确保 uuidv4 在这里被引入
 
 module.exports = {
   generateRoutingsData,

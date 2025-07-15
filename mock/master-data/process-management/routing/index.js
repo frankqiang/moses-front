@@ -91,7 +91,15 @@ const handlers = {
     const newRouting = {
       ...newData,
       id: uuidv4(),
-      steps: [],
+      // 确保 steps 数组中的每个步骤都包含 flowLogic 和 timeStandards 的默认结构
+      steps: (newData.steps || []).map(step => ({
+        ...step,
+        flowLogic: step.flowLogic || { nextStep: 0, onSuccessStep: 0, onFailureStep: 0 },
+        timeStandards: {
+          setup: step.timeStandards?.setup || { type: 'Fixed', value: 0, unit: 'minute', matrixId: null },
+          processing: step.timeStandards?.processing || { type: 'Fixed', value: 0, unit: '分钟/吨', formula: null }
+        }
+      })),
       changelog: [{ version: newData.version || '1.0', user: 'admin', timestamp: new Date().toISOString(), note: '初始创建' }],
       approvalHistory: [],
       createdBy: 'admin',
