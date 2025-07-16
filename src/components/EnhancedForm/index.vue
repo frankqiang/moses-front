@@ -272,11 +272,17 @@ export default {
       // 可以在这里添加通用的验证规则增强
       Object.keys(rules).forEach(field => {
         if (Array.isArray(rules[field])) {
-          rules[field] = rules[field].map(rule => ({
-            ...rule,
-            // 增强错误提示
-            message: rule.message || `${field}字段验证失败`
-          }))
+          rules[field] = rules[field].map(rule => {
+            // 对于包含自定义验证器的规则，不覆盖message
+            if (rule.validator) {
+              return rule;
+            }
+            return {
+              ...rule,
+              // 增强错误提示
+              message: rule.message || `${field}字段验证失败`
+            }
+          })
         }
       })
 

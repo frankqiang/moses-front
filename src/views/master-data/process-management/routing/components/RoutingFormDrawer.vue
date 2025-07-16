@@ -213,11 +213,12 @@ export default {
       formData: {},
       formRules: {
         code: [
-          { required: true, message: '路线代码不能为空', trigger: 'blur' },
-          { pattern: /^[A-Z0-9_]+$/, message: '只能包含大写字母、数字和下划线', trigger: 'blur' },
+          { required: true, message: '路线代码不能为空', trigger: [] },
+          { pattern: /^[A-Z0-9_]+$/, message: '只能包含大写字母、数字和下划线', trigger: [] },
           {
             validator: this.validateRoutingCodeUnique,
-            trigger: 'blur'
+            message: '', // 显式设置为空字符串，避免EnhancedForm的默认消息覆盖
+            trigger: []
           }
         ],
         name: [{ required: true, message: '路线名称不能为空', trigger: 'blur' }],
@@ -587,4 +588,4 @@ export default {
   transform: translateY(-50%);
   font-size: 16px;
 }
-</style> 
+</style>

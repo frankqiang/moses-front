@@ -1,0 +1,106 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 前端开发规范索引
+
+## 规则文件拆分说明
+
+## 核心开发规范文件
+
+### 01. 开发流程与规范
+**文件**: [01-development-workflow.mdc](mdc:01-development-workflow.mdc)
+**内容**: 
+- 标准开发流程
+- 快速开发指南  
+- 新页面添加流程
+- 模块文档规范
+- 常见问题解决
+
+### 02. 项目结构与组件架构  
+**文件**: [02-project-structure.mdc](mdc:02-project-structure.mdc)
+**内容**:
+- 标准项目结构
+- 目录命名规范
+- 组件架构设计
+- 组件通信规范
+- 数据加载模式
+
+### 03. API设计与开发规范
+**文件**: [03-api-design-standards.mdc](mdc:03-api-design-standards.mdc)
+**内容**:
+- RESTful API设计原则
+- 统一响应格式规范
+- HTTP状态码使用标准
+- 请求验证与安全规范
+- 错误处理与错误码系统
+- API版本控制策略
+
+### 04. Mock服务开发规范
+**文件**: [04-mock-service-standards.mdc](mdc:04-mock-service-standards.mdc)
+**内容**:
+- Mock系统架构设计
+- 真实数据生成原则
+- 业务逻辑模拟规范
+- API处理函数设计
+- 调试工具与性能优化
+
+### 05. 错误处理、状态管理与工具函数
+**文件**: [07-error-handling-and-state.mdc](mdc:07-error-handling-and-state.mdc)
+**内容**:
+- 错误处理模式
+- 消息提示规范
+- 状态管理最佳实践
+- 工具函数开发
+- 常量管理
+- 全局组件使用规范
+
+### 06. 代码质量、性能优化与文档规范
+**文件**: [09-quality-and-performance.mdc](mdc:09-quality-and-performance.mdc)
+**内容**:
+- 性能优化实践
+- 文档与注释规范
+- 样式指南
+- 安全性规范
+- 代码评审与质量控制
+- 代码质量检查清单
+- 完整代码示例
+
+## 专门化规范文件
+
+### 项目基础
+- **[ESLint代码规范](mdc:.cursor/rules/02-eslint-standards.mdc)** - 代码格式和质量规范
+- **[权限控制系统](mdc:.cursor/rules/02-permission-system.mdc)** - 权限管理规范
+
+### 设计规范
+- **[现代UI设计](mdc:.cursor/rules/06-modern-ui-design.mdc)** - UI设计指导原则
+- **[现代前端开发范式](mdc:.cursor/rules/10-modern-frontend-paradigms.mdc)** - 现代前端开发最佳实践和组件复用规范
+
+## 规则使用建议
+
+### 按开发阶段使用
+1. **项目启动时**: 参考 `01-development-workflow.mdc` 和 `02-project-structure.mdc`
+2. **功能开发时**: 参考 `03-api-and-mock.mdc` 和 `04-error-handling-and-state.mdc`  
+3. **代码审查时**: 参考 `05-quality-and-performance.mdc`
+
+### 按角色使用
+- **新手开发者**: 重点关注 `01-development-workflow.mdc` 和完整示例
+- **经验开发者**: 重点关注各专项规范和最佳实践
+- **项目负责人**: 重点关注质量检查清单和代码评审标准
+
+## 拆分的优势
+
+1. **更好的组织性**: 每个文件专注于特定领域，便于查找和维护
+2. **提高可读性**: 减少单个文件的复杂度，提高阅读体验
+3. **更容易更新**: 可以针对特定领域进行精准更新，不影响其他部分
+4. **按需使用**: 开发者可以根据当前工作重点选择相关规则文件
+5. **更好的团队协作**: 不同专业领域的开发者可以专注于相关规则的维护
+
+## 注意事项
+
+- 所有规则文件都是相互关联的，建议完整阅读理解整体开发规范
+- 定期检查规则文件更新，确保遵循最新的开发标准
+- 在实际开发中如遇到规则冲突或不明确的地方，及时与团队讨论明确
+
+

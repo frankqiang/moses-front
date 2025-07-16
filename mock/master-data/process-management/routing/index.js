@@ -8,7 +8,6 @@ const existentCodes = ['ROUTE001', 'ROUTE002', 'EXISTING_CODE'] // 模拟已存�
 
 // 响应工具函数
 const success = (data, message = '操作成功', status = 200) => ({
-  code: 20000,
   success: true,
   data,
   message,
