@@ -4,7 +4,7 @@ const { data: routingsData } = require('../data/routings.js')
 // 数据缓存，模拟数据库行为
 let dataCache = [...routingsData]
 
-const existentCodes = ['ROUTE001', 'ROUTE002', 'EXISTING_CODE'] // 模拟已存在的路线代码，此处可以与dataCache联动以模拟更真实的唯一性校验
+// 从dataCache动态获取已存在的路线代码，实现真实唯一性校验
 
 // 响应工具函数
 const success = (data, message = '操作成功', status = 200) => ({
@@ -159,12 +159,8 @@ const handlers = {
     }
 
     // 检查是否在模拟的已存在代码列表中
-    const isUniqueInExistent = !existentCodes.includes(code.toUpperCase())
-
-    // 同时检查是否在当前数据缓存中已存在
-    const isUniqueInDataCache = !dataCache.some(r => r.code.toUpperCase() === code.toUpperCase())
-
-    const isUnique = isUniqueInExistent && isUniqueInDataCache
+    // 检查是否在当前数据缓存中已存在
+    const isUnique = !dataCache.some(r => r.code.toUpperCase() === code.toUpperCase())
 
     if (isUnique) {
       return success({ unique: true }, '路线代码可用')
@@ -218,4 +214,4 @@ module.exports = [
     type: 'delete',
     response: config => handlers.deleteRouting(config) // 注意：这里使用了错误的函数名，应为 handlers.delete
   }
-] 
+]
