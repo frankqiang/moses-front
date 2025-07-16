@@ -49,9 +49,22 @@ export function deleteRouting(id) {
   })
 }
 
+/**
+ * 检查路线代码唯一性
+ * @param {string} code 要检查的路线代码
+ */
+export function checkRoutingCodeUnique(code) {
+  return request({
+    url: `${BASE_URL}/check-code-unique`,
+    method: 'get',
+    params: { code }
+  })
+}
+
 export default {
   getRoutingList,
   createRouting,
   updateRouting,
-  deleteRouting
+  deleteRouting,
+  checkRoutingCodeUnique
 }

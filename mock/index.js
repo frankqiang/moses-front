@@ -14,6 +14,23 @@ const furnaceType = require('./master-data/furnace-type')
 const operations = require('./master-data/process-management/operations')
 const routing = require('./master-data/process-management/routing')
 
+/**
+ * Mock 模块加载顺序和路由优先级约定：
+ * 
+ * 在此 `mocks` 数组中，模块的排列顺序将直接影响全局 Mock 路由的匹配优先级。
+ * Mock.js 会按照数组中的顺序注册路由。因此，为了避免路由匹配冲突，
+ * 必须遵循以下原则：
+ * 
+ * 1. **更具体的路由模块应放在更通用的路由模块之前加载。**
+ *    例如：如果 'routing' 模块包含 'check-code-unique' (更具体) 和 '' (更通用) 路由，
+ *    那么 'routing' 模块应该放在其他可能与 'routing' 模块通用路径冲突的模块之前。
+ * 
+ * 2. **在各个 Mock 模块内部 (如 `mock/master-data/process-management/operations/index.js`)，**
+ *    **也应遵循类似的“从具体到通用”的路由定义顺序，并尽可能利用正则表达式的负向前瞻断言**
+ *    **(`(?!...)`) 来明确路由的特异性。**
+ * 
+ * 遵循此约定可以确保 Mock 路由的正确匹配，并提高 Mock 架构的健壮性和可维护性。
+ */
 const mocks = [
   ...user,
   ...table,

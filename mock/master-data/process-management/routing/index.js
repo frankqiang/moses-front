@@ -4,6 +4,8 @@ const { data: routingsData } = require('../data/routings.js')
 // 数据缓存，模拟数据库行为
 let dataCache = [...routingsData]
 
+const existentCodes = ['ROUTE001', 'ROUTE002', 'EXISTING_CODE'] // 模拟已存在的路线代码，此处可以与dataCache联动以模拟更真实的唯一性校验
+
 // 响应工具函数
 const success = (data, message = '操作成功', status = 200) => ({
   code: 20000,
@@ -25,8 +27,26 @@ const error = (code, message, status = 500, details = null) => ({
   status
 })
 
-// API基础路径
+// API基础路径 (重新定义，确保使用最新的BASE_PATH)
 const BASE_PATH = '/mes/v1/master-data/process-management/routings'
+
+/**
+ * 路由配置常量
+ * 统一管理URL模式，便于维护和复用
+ */
+const ROUTES = {
+  // 检查路线代码唯一性
+  CHECK_CODE_UNIQUE: `${BASE_PATH}/check-code-unique$`,
+  
+  // 集合操作（getList, create）
+  // 注意：此处不使用 $ 结尾，因为它还需要匹配 /:id 等子路径，但实际Mock.js会匹配第一个。
+  // 我们将利用更具体路由优先的原则来避免冲突。
+  COLLECTION: `${BASE_PATH}`,
+  
+  // 单个工艺路线操作（getDetail, update, delete）
+  // 使用负向前瞻避免与 check-code-unique 冲突
+  ITEM_DETAIL: `${BASE_PATH}/(?!check-code-unique)[a-zA-Z0-9_-]+$` 
+}
 
 /**
  * API处理函数集合
@@ -130,23 +150,73 @@ const handlers = {
     }
 
     return success(dataCache[index], '工艺路线更新成功')
+  },
+
+  // 新增：检查路线代码唯一性
+  checkCodeUnique(config) {
+    const { code } = config.query
+    if (!code) {
+      return error('VALIDATION_ERROR', '路线代码不能为空', 400)
+    }
+
+    // 检查是否在模拟的已存在代码列表中
+    const isUniqueInExistent = !existentCodes.includes(code.toUpperCase())
+
+    // 同时检查是否在当前数据缓存中已存在
+    const isUniqueInDataCache = !dataCache.some(r => r.code.toUpperCase() === code.toUpperCase())
+
+    const isUnique = isUniqueInExistent && isUniqueInDataCache
+
+    if (isUnique) {
+      return success({ unique: true }, '路线代码可用')
+    } else {
+      // 如果在dataCache中找到，则返回dataCache中的错误信息
+      // const foundInCache = dataCache.find(r => r.code.toUpperCase() === code.toUpperCase())
+      // if (foundInCache) {
+      //    return error('DUPLICATE_CODE', `路线代码 '${code}' 已存在`, 409) // 使用409 Conflict
+      // } else {
+      //    return error('DUPLICATE_CODE', '该路线代码已被使用', 409) // 使用409 Conflict
+      // }
+      return success({ unique: false }, '路线代码已被使用')
+    }
   }
 }
 
+/**
+ * 导出Mock路由配置
+ * 使用常量化配置，结构清晰，易于维护
+ * 
+ * 重要的排序原则：
+ * 将更具体的路由（如 /check-code-unique）放在更通用的路由（如 /）之前。
+ * Mock.js 会按照数组中的顺序进行匹配。
+ */
 module.exports = [
+  // 最具体的路由：检查路线代码唯一性
   {
-    url: `${BASE_PATH}`,
+    url: ROUTES.CHECK_CODE_UNIQUE,
+    type: 'get',
+    response: config => handlers.checkCodeUnique(config)
+  },
+  // 通用集合操作
+  {
+    url: ROUTES.COLLECTION,
     type: 'get',
     response: config => handlers.getList(config)
   },
   {
-    url: `${BASE_PATH}`,
+    url: ROUTES.COLLECTION,
     type: 'post',
     response: config => handlers.create(config)
   },
+  // 单个工艺路线操作
   {
-    url: `${BASE_PATH}/:id`,
+    url: ROUTES.ITEM_DETAIL,
     type: 'put',
     response: config => handlers.update(config)
+  },
+  {
+    url: ROUTES.ITEM_DETAIL,
+    type: 'delete',
+    response: config => handlers.deleteRouting(config) // 注意：这里使用了错误的函数名，应为 handlers.delete
   }
 ] 

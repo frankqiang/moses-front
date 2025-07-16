@@ -33,7 +33,9 @@
                       maxlength="30"
                       show-word-limit
                       :disabled="formMode !== 'create'"
+                      @blur="debouncedHandleCodeBlur"
                     />
+                    <i v-if="checkingCode" class="el-icon-loading input-suffix"></i>
                     <div class="field-hint">路线代码必须唯一，建议使用大写字母、数字和下划线</div>
                   </el-form-item>
                 </el-col>
@@ -174,10 +176,10 @@ import StatusTag from '@/components/StatusTag'
 import RoutingStepsEditor from './RoutingStepsEditor.vue'
 import StepDetailsForm from './StepDetailsForm.vue'
 import OperationSelectorModal from './OperationSelectorModal.vue'
-import { createRouting, updateRouting } from '../api'
+import { createRouting, updateRouting, checkRoutingCodeUnique } from '../api'
 import { ROUTING_TYPE_OPTIONS, ROUTING_STATUS_CONFIG } from '../constants'
-import { cloneDeep } from '@/utils'
-import { v4 as uuidv4 } from 'uuid' // 导入uuid v4方法并重命名为uuidv4
+import { cloneDeep, debounce } from '@/utils' // 导入 debounce
+import { v4 as uuidv4 } from 'uuid'
 import { getAllProductList } from '@/api/master-data/product-management'
 
 export default {
@@ -212,7 +214,11 @@ export default {
       formRules: {
         code: [
           { required: true, message: '路线代码不能为空', trigger: 'blur' },
-          { pattern: /^[A-Z0-9_]+$/, message: '只能包含大写字母、数字和下划线', trigger: 'blur' }
+          { pattern: /^[A-Z0-9_]+$/, message: '只能包含大写字母、数字和下划线', trigger: 'blur' },
+          {
+            validator: this.validateRoutingCodeUnique,
+            trigger: 'blur'
+          }
         ],
         name: [{ required: true, message: '路线名称不能为空', trigger: 'blur' }],
         type: [{ required: true, message: '路线类型不能为空', trigger: 'change' }],
@@ -220,7 +226,8 @@ export default {
       },
       operationSelectorVisible: false,
       selectedStep: null,
-      productOptions: [] // 新增：产品下拉选项
+      productOptions: [],
+      checkingCode: false // 用于控制路线代码输入框的加载状态
     }
   },
   computed: {
@@ -249,6 +256,9 @@ export default {
     statusTypeMap() {
       return ROUTING_STATUS_CONFIG.typeMap
     }
+  },
+  created() {
+    this.debouncedHandleCodeBlur = debounce(this.handleCodeBlur, 500); // 500ms 防抖
   },
   methods: {
     async handleDrawerOpen() {
@@ -492,6 +502,39 @@ export default {
         confirmButtonText: '确定',
         type: 'warning'
       });
+    },
+    async handleCodeBlur() {
+      if (this.mode === 'create') { // 仅在创建模式下进行唯一性校验
+        this.$refs.routingForm.$refs.form.validateField('code'); // 触发表单项的校验
+      }
+    },
+
+    async validateRoutingCodeUnique(rule, value, callback) {
+      if (!value) {
+        this.checkingCode = false; // 如果值为空，也需要重置加载状态
+        return callback(); // 如果为空，由required规则处理
+      }
+      if (this.mode !== 'create') {
+        this.checkingCode = false; // 非创建模式，重置加载状态
+        return callback(); // 非创建模式不进行唯一性校验
+      }
+
+      this.checkingCode = true; // 开始校验，显示加载状态
+      try {
+        const res = await checkRoutingCodeUnique(value);
+        if (!res.data.unique) {
+          callback(new Error('该路线代码已被使用'));
+        } else {
+          callback();
+        }
+      } catch (error) {
+        // API 校验失败（例如网络错误），需要根据具体错误类型给出提示
+        // 这里统一提示校验失败，实际项目中可以根据 error.code 或 error.response.status 进行更细致的区分
+        callback(new Error('路线代码校验失败，请稍后重试'));
+        console.error('路线代码唯一性校验失败:', error);
+      } finally {
+        this.checkingCode = false; // 校验结束，隐藏加载状态
+      }
     }
   }
 }
@@ -535,5 +578,13 @@ export default {
 
 ::v-deep .el-form-item__label {
   font-weight: 500;
+}
+
+.input-suffix {
+  position: absolute;
+  right: 10px; /* Adjust as needed for alignment */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
 }
 </style> 
