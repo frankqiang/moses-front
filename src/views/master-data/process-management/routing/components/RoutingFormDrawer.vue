@@ -524,15 +524,17 @@ export default {
       try {
         const res = await checkRoutingCodeUnique(value);
         if (!res.data.unique) {
-          callback(new Error('该路线代码已被使用'));
+          // 从 API 响应中获取错误信息，如果没有则使用默认信息
+          const errorMessage = res.message || res.data?.message || '该路线代码已被使用';
+          callback(new Error(errorMessage));
         } else {
           callback();
         }
       } catch (error) {
-        // API 校验失败（例如网络错误），需要根据具体错误类型给出提示
-        // 这里统一提示校验失败，实际项目中可以根据 error.code 或 error.response.status 进行更细致的区分
-        callback(new Error('路线代码校验失败，请稍后重试'));
+        // API 校验失败（例如网络错误），从 API 响应中获取错误信息
         console.error('路线代码唯一性校验失败:', error);
+        const errorMessage = error.response?.data?.message || error.message || '路线代码校验失败，请稍后重试';
+        callback(new Error(errorMessage));
       } finally {
         this.checkingCode = false; // 校验结束，隐藏加载状态
       }

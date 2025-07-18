@@ -6,25 +6,8 @@ let dataCache = [...routingsData]
 
 // 从dataCache动态获取已存在的路线代码，实现真实唯一性校验
 
-// 响应工具函数
-const success = (data, message = '操作成功', status = 200) => ({
-  success: true,
-  data,
-  message,
-  timestamp: new Date().getTime(),
-  status
-})
-
-const error = (code, message, status = 500, details = null) => ({
-  success: false,
-  error: {
-    code,
-    message,
-    details
-  },
-  timestamp: new Date().toISOString(),
-  status
-})
+// 引入统一的响应工具函数
+const { success, error, errors } = require('../../../utils/response')
 
 // API基础路径 (重新定义，确保使用最新的BASE_PATH)
 const BASE_PATH = '/mes/v1/master-data/process-management/routings'

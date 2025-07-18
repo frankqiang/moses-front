@@ -19,27 +19,8 @@
 const { data: operationsData } = require('../data/operations')
 const Mock = require('mockjs')
 
-// 引入响应工具函数
-// 由于我们没有看到mock/utils/response.js的具体实现，这里假设它提供了success和error函数
-// 如果实际项目中没有这些函数，需要自行实现
-const success = (data, message = '操作成功', status = 200) => ({
-  success: true,
-  data,
-  message,
-  timestamp: new Date().toISOString(),
-  status
-})
-
-const error = (code, message, status = 500, details = null) => ({
-  success: false,
-  error: {
-    code,
-    message,
-    details
-  },
-  timestamp: new Date().toISOString(),
-  status
-})
+// 引入统一的响应工具函数
+const { success, error, errors } = require('../../../utils/response')
 
 // 数据缓存和状态管理
 let dataCache = [...operationsData]
@@ -418,4 +399,4 @@ module.exports = [
   { url: ROUTES.ITEM_DETAIL, type: 'get', response: handlers.getDetail },
   { url: ROUTES.ITEM_DETAIL, type: 'put', response: handlers.update },
   { url: ROUTES.ITEM_DETAIL, type: 'delete', response: handlers.delete }
-] 
+]

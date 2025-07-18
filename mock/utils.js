@@ -20,6 +20,11 @@ function param2Obj(url) {
   return obj
 }
 
+// 导入响应工具函数
+const response = require('./utils/response')
+
 module.exports = {
-  param2Obj
+  param2Obj,
+  // 导出响应工具函数，方便统一导入
+  ...response
 }

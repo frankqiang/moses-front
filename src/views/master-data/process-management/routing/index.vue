@@ -78,8 +78,9 @@ export default {
         this.list = data.items
         this.total = data.total
       } catch (error) {
-        this.$message.error('获取工艺路线列表失败')
         console.error('获取工艺路线列表失败:', error)
+        const errorMessage = error.response?.data?.message || error.message || '获取工艺路线列表失败'
+        this.$message.error(errorMessage)
       } finally {
         this.loading = false
       }
@@ -128,12 +129,13 @@ export default {
         type: 'warning'
       }).then(async() => {
         try {
-          await deleteRouting(row.id)
-          this.$message.success('删除成功')
+          const response = await deleteRouting(row.id)
+          this.$message.success(response.message || '删除成功')
           this.getList()
         } catch (error) {
           console.error('删除工艺路线失败:', error)
-          // 错误信息由request拦截器统一处理，此处无需额外展示
+          const errorMessage = error.response?.data?.message || error.message || '删除失败，请稍后重试'
+          this.$message.error(errorMessage)
         }
       }).catch(() => {
         this.$message.info('已取消删除')
@@ -174,4 +176,4 @@ export default {
 .routing-management {
   padding: 20px;
 }
-</style> 
+</style>
