@@ -1,5 +1,5 @@
 const Mock = require('mockjs')
-const { param2Obj } = require('./utils')
+const { param2Obj } = require('./utils/index')
 
 const user = require('./user')
 const table = require('./table')

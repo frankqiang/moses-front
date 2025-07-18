@@ -5,7 +5,7 @@
  */
 
 const Mock = require('mockjs')
-const { param2Obj } = require('../utils')
+const { param2Obj } = require('../utils/index')
 
 // 仓库类型
 const warehouseTypes = ['RAW', 'FINISHED', 'SEMI', 'CONSUMABLE', 'SPARE_PARTS']
@@ -419,4 +419,4 @@ module.exports = [
       }
     }
   }
-] 
+]

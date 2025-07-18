@@ -35,7 +35,7 @@ return {
 
 ```javascript
 // 导入统一工具函数
-const { success, error, errors } = require('../../utils/response')
+const { success, error, errors } = require('../../utils/index')
 
 // 使用统一函数
 return success(result, '操作成功')
@@ -72,7 +72,7 @@ return errors.notFound('资源', id)
 
 ```diff
 + // 引入统一的响应工具函数
-+ const { success, error, errors } = require('../../utils/response')
++ const { success, error, errors } = require('../../utils/index')
 ```
 
 ### 步骤3：更新响应调用
@@ -194,7 +194,7 @@ return errors.notFound('资源', id)
 确保文件顶部正确导入了响应工具函数：
 
 ```javascript
-const { success, error, errors } = require('../../utils/response')
+const { success, error, errors } = require('../../utils/index')
 ```
 
 ### 2. 检查响应格式

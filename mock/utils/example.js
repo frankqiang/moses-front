@@ -6,7 +6,7 @@
  */
 
 // 引入统一的响应工具函数
-const { success, error, errors, paginated, batch } = require('./response')
+const { success, error, errors, paginated, batch, param2Obj } = require('./index')
 
 // 模拟数据
 let mockData = [

@@ -1,6 +1,7 @@
 /**
- * @param {string} url
- * @returns {Object}
+ * URL参数解析工具函数
+ * @param {string} url - 包含查询参数的URL
+ * @returns {Object} 解析后的参数对象
  */
 function param2Obj(url) {
   const search = decodeURIComponent(url.split('?')[1]).replace(/\+/g, ' ')
@@ -20,11 +21,6 @@ function param2Obj(url) {
   return obj
 }
 
-// 导入响应工具函数
-const response = require('./utils/response')
-
 module.exports = {
-  param2Obj,
-  // 导出响应工具函数，方便统一导入
-  ...response
+  param2Obj
 }

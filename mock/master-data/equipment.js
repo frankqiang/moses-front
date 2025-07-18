@@ -5,7 +5,7 @@
  */
 
 const Mock = require('mockjs')
-const { param2Obj } = require('../utils')
+const { param2Obj } = require('../utils/index')
 
 // 退火炉数据
 const furnaceData = Mock.mock({
@@ -499,4 +499,4 @@ module.exports = [
     type: 'put',
     response: batchUpdateEquipmentStatus
   }
-] 
+]
