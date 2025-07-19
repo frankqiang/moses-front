@@ -121,10 +121,11 @@ export function importProduct(file) {
   })
 }
 
-// 获取所有产品列表（不分页，用于下拉选择）
-export function getAllProductList() {
+// 获取所有产品列表（支持搜索，用于下拉选择）
+export function getAllProductList(params = {}) {
   return request({
     url: '/vue-admin-template/mes/product/all-list',
-    method: 'get'
+    method: 'get',
+    params // 支持 search, limit 等参数
   })
 }

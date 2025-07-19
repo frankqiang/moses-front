@@ -1,8 +1,8 @@
 const Mock = require('mockjs')
 
-// 生成随机的铝箔产品数据
+// 生成随机的铝箔产品数据（模拟大数据量场景）
 const data = Mock.mock({
-  'items|30': [{
+  'items|1000': [{
     'id|+1': 1, // 产品ID
     'code': function() {
       const alloys = ['1100', '8011', '3003', '8021']
@@ -414,23 +414,41 @@ module.exports = [
     }
   },
 
-  // 获取所有产品列表（不分页，用于下拉选择）
+  // 获取所有产品列表（支持搜索和限制数量，用于下拉选择）
   {
     url: '/vue-admin-template/mes/product/all-list',
     type: 'get',
-    response: () => {
+    response: config => {
+      const { search, limit = 50 } = config.query || {}
+      
+      // 过滤产品数据
+      let filteredItems = items.map(item => ({
+        id: item.id,
+        name: item.name,
+        code: item.code,
+        alloy: item.alloy,
+        state: item.state
+      }))
+      
+      // 根据搜索关键词过滤
+      if (search) {
+        const searchLower = search.toLowerCase()
+        filteredItems = filteredItems.filter(item => 
+          item.code.toLowerCase().includes(searchLower) ||
+          item.name.toLowerCase().includes(searchLower)
+        )
+      }
+      
+      // 限制返回数量
+      const limitedItems = filteredItems.slice(0, parseInt(limit))
+      
       return {
         code: 20000,
         data: {
-          items: items.map(item => ({
-            id: item.id,
-            name: item.name,
-            code: item.code,
-            alloy: item.alloy,
-            state: item.state
-          }))
+          items: limitedItems,
+          total: filteredItems.length
         }
       }
     }
   }
-] 
+]

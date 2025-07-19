@@ -84,11 +84,16 @@
                        v-model="form.applicableProducts"
                        multiple
                        filterable
-                       default-first-option
+                       remote
+                       reserve-keyword
                        collapse-tags
-                       placeholder="请输入或选择适用的产品代码"
+                       placeholder="请输入产品代码或名称进行搜索"
                        style="width: 100%;"
                        :disabled="formMode === 'view'"
+                       :remote-method="debouncedRemoteSearchProducts"
+                       :loading="productLoading"
+                       no-data-text="请输入关键词搜索产品"
+                       loading-text="搜索中..."
                      >
                        <el-option
                          v-for="item in productOptions"
@@ -97,6 +102,7 @@
                          :value="item.code"
                        />
                      </el-select>
+                     <div class="field-hint">输入产品代码或名称进行搜索，支持模糊匹配</div>
                    </el-form-item>
                  </el-col>
                  <el-col :span="8">
@@ -231,6 +237,7 @@ export default {
       operationSelectorVisible: false,
       selectedStep: null,
       productOptions: [],
+      productLoading: false, // 产品搜索加载状态
       checkingCode: false // 用于控制路线代码输入框的加载状态
     }
   },
@@ -263,6 +270,7 @@ export default {
   },
   created() {
     this.debouncedHandleCodeBlur = debounce(this.handleCodeBlur, 500); // 500ms 防抖
+    this.debouncedRemoteSearchProducts = debounce(this.remoteSearchProducts, 300); // 300ms 防抖搜索
   },
   watch: {
     'formData.type': {
@@ -280,12 +288,13 @@ export default {
       this.formData = this.initFormData(this.routingData)
       this.previousType = this.formData.type // 初始化previousType
       this.selectedStep = null
-      // 加载产品选项
-      try {
-        const res = await getAllProductList()
-        this.productOptions = (res.data && res.data.items) || []
-      } catch (e) {
-        this.productOptions = []
+      // 重置产品选项，使用远程搜索模式
+      this.productOptions = []
+      this.productLoading = false
+      
+      // 如果是编辑模式且已有选中的产品，需要加载这些产品的详细信息
+      if (this.mode !== 'create' && this.formData.applicableProducts && this.formData.applicableProducts.length > 0) {
+        await this.loadSelectedProducts()
       }
     },
     handleDrawerClose() {
@@ -525,6 +534,69 @@ export default {
         confirmButtonText: '确定',
         type: 'warning'
       });
+    },
+    
+    /**
+     * 远程搜索产品
+     * @param {string} query - 搜索关键词
+     */
+    async remoteSearchProducts(query) {
+      if (query && query.trim() !== '') {
+        this.productLoading = true
+        try {
+          const res = await getAllProductList({
+            search: query.trim(),
+            limit: 50 // 限制返回数量，提升性能
+          })
+          this.productOptions = (res.data && res.data.items) || []
+        } catch (error) {
+          console.error('搜索产品失败:', error)
+          this.productOptions = []
+          this.$message.error('搜索产品失败，请重试')
+        } finally {
+          this.productLoading = false
+        }
+      } else {
+        this.productOptions = []
+      }
+    },
+    
+    /**
+     * 加载已选中的产品详细信息（用于编辑模式）
+     */
+    async loadSelectedProducts() {
+      if (!this.formData.applicableProducts || this.formData.applicableProducts.length === 0) {
+        return
+      }
+      
+      this.productLoading = true
+      try {
+        // 为已选中的产品代码搜索对应的产品信息
+        const searchPromises = this.formData.applicableProducts.map(code => 
+          getAllProductList({ search: code, limit: 10 })
+        )
+        
+        const responses = await Promise.all(searchPromises)
+        const allProducts = []
+        
+        responses.forEach(res => {
+          if (res.data && res.data.items) {
+            allProducts.push(...res.data.items)
+          }
+        })
+        
+        // 去重并设置到选项中
+        const uniqueProducts = allProducts.filter((product, index, self) => 
+          index === self.findIndex(p => p.id === product.id)
+        )
+        
+        this.productOptions = uniqueProducts
+      } catch (error) {
+        console.error('加载已选产品失败:', error)
+        this.productOptions = []
+      } finally {
+        this.productLoading = false
+      }
     },
     async handleCodeBlur() {
       if (this.mode === 'create') { // 仅在创建模式下进行唯一性校验
