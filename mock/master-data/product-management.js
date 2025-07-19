@@ -419,16 +419,25 @@ module.exports = [
     url: '/vue-admin-template/mes/product/all-list',
     type: 'get',
     response: config => {
-      const { search, limit = 50 } = config.query || {}
+      const { search, limit = 50, includeInactive = false } = config.query || {}
       
-      // 过滤产品数据
+      // 过滤产品数据，包含生命周期状态信息
       let filteredItems = items.map(item => ({
         id: item.id,
         name: item.name,
         code: item.code,
         alloy: item.alloy,
-        state: item.state
+        state: item.state,
+        lifecycleStatus: item.lifecycleStatus,
+        lifecycleStatusName: item.lifecycleStatusName
       }))
+      
+      // 默认只返回有效产品（试产和量产状态），除非明确要求包含无效产品
+      if (!includeInactive || includeInactive === 'false') {
+        filteredItems = filteredItems.filter(item => 
+          item.lifecycleStatus === 'trial' || item.lifecycleStatus === 'production'
+        )
+      }
       
       // 根据搜索关键词过滤
       if (search) {

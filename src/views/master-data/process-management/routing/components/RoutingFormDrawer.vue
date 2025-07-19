@@ -98,8 +98,10 @@
                        <el-option
                          v-for="item in productOptions"
                          :key="item.id"
-                         :label="item.code + (item.name ? ' ' + item.name : '')"
+                         :label="item.code + (item.name ? ' ' + item.name : '') + (item.lifecycleStatus === 'discontinued' ? ' (已停产)' : '')"
                          :value="item.code"
+                         :disabled="item.lifecycleStatus === 'discontinued'"
+                         :class="{ 'discontinued-product': item.lifecycleStatus === 'discontinued' }"
                        />
                      </el-select>
                      <div class="field-hint">输入产品代码或名称进行搜索，支持模糊匹配</div>
@@ -490,6 +492,15 @@ export default {
           return
         }
 
+        // 校验所选产品的有效性
+        if (this.formData.applicableProducts && this.formData.applicableProducts.length > 0) {
+          const validationResult = await this.validateSelectedProducts()
+          if (!validationResult.isValid) {
+            this.$message.error(validationResult.message)
+            return
+          }
+        }
+
         this.loading = true
         const apiCall = this.mode === 'create' ? createRouting : updateRouting
         const response = await apiCall(this.formData)
@@ -563,6 +574,7 @@ export default {
     
     /**
      * 加载已选中的产品详细信息（用于编辑模式）
+     * 检查产品状态，识别无效产品并给出提示
      */
     async loadSelectedProducts() {
       if (!this.formData.applicableProducts || this.formData.applicableProducts.length === 0) {
@@ -571,31 +583,106 @@ export default {
       
       this.productLoading = true
       try {
-        // 为已选中的产品代码搜索对应的产品信息
-        const searchPromises = this.formData.applicableProducts.map(code => 
-          getAllProductList({ search: code, limit: 10 })
-        )
+        // 加载所有已选产品（包括无效的），用于状态检查
+        const searchQuery = this.formData.applicableProducts.join(',')
+        const res = await getAllProductList({ 
+          search: searchQuery, 
+          limit: 100,
+          includeInactive: true // 包含无效产品以便检查状态
+        })
         
-        const responses = await Promise.all(searchPromises)
-        const allProducts = []
+        const allProducts = res.data?.items || []
+        const validProducts = []
+        const invalidProducts = []
+        const missingProducts = []
         
-        responses.forEach(res => {
-          if (res.data && res.data.items) {
-            allProducts.push(...res.data.items)
+        // 分类产品状态
+        this.formData.applicableProducts.forEach(code => {
+          const product = allProducts.find(p => p.code === code)
+          if (product) {
+            if (product.lifecycleStatus === 'discontinued') {
+              invalidProducts.push(product)
+            } else {
+              validProducts.push(product)
+            }
+          } else {
+            missingProducts.push(code)
           }
         })
         
-        // 去重并设置到选项中
-        const uniqueProducts = allProducts.filter((product, index, self) => 
-          index === self.findIndex(p => p.id === product.id)
-        )
+        // 设置产品选项（包含所有产品用于显示）
+        this.productOptions = allProducts
         
-        this.productOptions = uniqueProducts
+        // 提示用户无效或缺失的产品
+        if (invalidProducts.length > 0) {
+          const invalidNames = invalidProducts.map(p => `${p.code}(${p.name})`).join('、')
+          this.$message.warning(`以下产品已停产，建议移除：${invalidNames}`)
+        }
+        
+        if (missingProducts.length > 0) {
+          const missingNames = missingProducts.join('、')
+          this.$message.error(`以下产品代码不存在：${missingNames}`)
+        }
+        
       } catch (error) {
         console.error('加载已选产品失败:', error)
         this.productOptions = []
       } finally {
         this.productLoading = false
+      }
+    },
+
+    /**
+     * 校验所选产品的有效性
+     * @returns {Object} 校验结果 { isValid: boolean, message: string }
+     */
+    async validateSelectedProducts() {
+      try {
+        const searchQuery = this.formData.applicableProducts.join(',')
+        const res = await getAllProductList({ 
+          search: searchQuery, 
+          limit: 100,
+          includeInactive: true
+        })
+        
+        const allProducts = res.data?.items || []
+        const invalidProducts = []
+        const missingProducts = []
+        
+        this.formData.applicableProducts.forEach(code => {
+          const product = allProducts.find(p => p.code === code)
+          if (product) {
+            if (product.lifecycleStatus === 'discontinued') {
+              invalidProducts.push(product)
+            }
+          } else {
+            missingProducts.push(code)
+          }
+        })
+        
+        if (missingProducts.length > 0) {
+          return {
+            isValid: false,
+            message: `以下产品代码不存在：${missingProducts.join('、')}`
+          }
+        }
+        
+        if (invalidProducts.length > 0) {
+          const invalidNames = invalidProducts.map(p => `${p.code}(${p.name})`).join('、')
+          return {
+            isValid: false,
+            message: `以下产品已停产，无法保存：${invalidNames}`
+          }
+        }
+        
+        return { isValid: true, message: '' }
+        
+      } catch (error) {
+        console.error('校验产品有效性失败:', error)
+        return {
+          isValid: false,
+          message: '校验产品有效性失败，请重试'
+        }
       }
     },
     async handleCodeBlur() {
@@ -783,5 +870,15 @@ export default {
   top: 50%;
   transform: translateY(-50%);
   font-size: 16px;
+}
+
+/* 已停产产品样式 */
+::v-deep .discontinued-product {
+  color: #909399 !important;
+  background-color: #f5f7fa !important;
+}
+
+::v-deep .discontinued-product:hover {
+  background-color: #e9ecef !important;
 }
 </style>
