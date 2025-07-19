@@ -2,7 +2,7 @@
   <base-drawer
     :visible.sync="drawerVisible"
     :title="drawerTitle"
-    width="90%"
+    width="100%"
     :wrapper-closable="false"
     @open="handleDrawerOpen"
     @close="handleDrawerClose"
@@ -66,6 +66,7 @@
                       placeholder="请选择路线类型"
                       style="width: 100%"
                       :disabled="formMode === 'view'"
+                      @change="handleTypeChange"
                     >
                       <el-option
                         v-for="item in routingTypeOptions"
@@ -74,6 +75,7 @@
                         :value="item.value"
                       />
                     </el-select>
+                    <div class="field-hint">{{ getTypeDescription(form.type) }}</div>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
@@ -177,7 +179,7 @@ import RoutingStepsEditor from './RoutingStepsEditor.vue'
 import StepDetailsForm from './StepDetailsForm.vue'
 import OperationSelectorModal from './OperationSelectorModal.vue'
 import { createRouting, updateRouting, checkRoutingCodeUnique } from '../api'
-import { ROUTING_TYPE_OPTIONS, ROUTING_STATUS_CONFIG } from '../constants'
+import { ROUTING_TYPE_OPTIONS, ROUTING_STATUS_CONFIG, getRoutingTypeRule } from '../constants'
 import { cloneDeep, debounce } from '@/utils' // 导入 debounce
 import { v4 as uuidv4 } from 'uuid'
 import { getAllProductList } from '@/api/master-data/product-management'
@@ -211,6 +213,7 @@ export default {
     return {
       loading: false,
       formData: {},
+      previousType: null, // 用于跟踪之前的路线类型
       formRules: {
         code: [
           { required: true, message: '路线代码不能为空', trigger: [] },
@@ -261,10 +264,21 @@ export default {
   created() {
     this.debouncedHandleCodeBlur = debounce(this.handleCodeBlur, 500); // 500ms 防抖
   },
+  watch: {
+    'formData.type': {
+      handler(newType, oldType) {
+        if (oldType && newType !== oldType) {
+          this.previousType = oldType
+        }
+      },
+      immediate: false
+    }
+  },
   methods: {
     async handleDrawerOpen() {
       // 每次打开弹窗都重置表单数据，自动清除校验提示（最佳实践）
       this.formData = this.initFormData(this.routingData)
+      this.previousType = this.formData.type // 初始化previousType
       this.selectedStep = null
       // 加载产品选项
       try {
@@ -459,6 +473,14 @@ export default {
           return
         }
 
+        // 验证路线类型特定规则
+        try {
+          this.validateTypeSpecificRules()
+        } catch (validationError) {
+          this.$message.warning(validationError.message)
+          return
+        }
+
         this.loading = true
         const apiCall = this.mode === 'create' ? createRouting : updateRouting
         const response = await apiCall(this.formData)
@@ -537,6 +559,106 @@ export default {
         callback(new Error(errorMessage));
       } finally {
         this.checkingCode = false; // 校验结束，隐藏加载状态
+      }
+    },
+
+    // --- 路线类型变更处理 ---
+    handleTypeChange(newType) {
+      if (!this.previousType || newType === this.previousType) {
+        return
+      }
+
+      // 检查是否有已填写的数据
+      if (this.hasFormData()) {
+        this.$confirm(
+          `切换到"${getRoutingTypeRule(newType).name}"将重置当前表单数据和工序步骤，是否继续？`,
+          '确认切换路线类型',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        ).then(() => {
+          this.resetFormForType(newType)
+          this.$message.success(`已切换到${getRoutingTypeRule(newType).name}`)
+        }).catch(() => {
+          // 恢复原类型
+          this.$nextTick(() => {
+            this.formData.type = this.previousType
+          })
+        })
+      } else {
+        // 没有数据时直接切换
+        this.resetFormForType(newType)
+      }
+    },
+
+    // 检查是否有已填写的表单数据
+    hasFormData() {
+      return (
+        this.formData.code ||
+        this.formData.name ||
+        (this.formData.applicableProducts && this.formData.applicableProducts.length > 0) ||
+        (this.formData.steps && this.formData.steps.length > 0)
+      )
+    },
+
+    // 为新类型重置表单
+    resetFormForType(newType) {
+      const typeRule = getRoutingTypeRule(newType)
+      this.formData = {
+        ...this.initFormData(),
+        type: newType
+      }
+      this.previousType = newType
+      this.selectedStep = null
+      
+      // 清除表单验证
+      this.$nextTick(() => {
+        if (this.$refs.routingForm && this.$refs.routingForm.$refs.form) {
+          this.$refs.routingForm.$refs.form.clearValidate()
+        }
+      })
+    },
+
+    // 获取路线类型描述
+    getTypeDescription(type) {
+      if (!type) return ''
+      const typeRule = getRoutingTypeRule(type)
+      return typeRule.description
+    },
+
+    // 验证路线类型特定规则
+    validateTypeSpecificRules() {
+      const typeRule = getRoutingTypeRule(this.formData.type)
+      const steps = this.formData.steps || []
+      
+      // 检查最小步骤数
+      if (steps.length < typeRule.stepConstraints.minSteps) {
+        throw new Error(`${typeRule.name}至少需要${typeRule.stepConstraints.minSteps}个工序步骤`)
+      }
+      
+      // 检查最大步骤数
+      if (typeRule.stepConstraints.maxSteps && steps.length > typeRule.stepConstraints.maxSteps) {
+        throw new Error(`${typeRule.name}最多允许${typeRule.stepConstraints.maxSteps}个工序步骤`)
+      }
+      
+      // 检查必需的工序类型
+      if (typeRule.stepConstraints.requiredOperationTypes.length > 0) {
+        const stepOperationTypes = steps.map(step => step.operationType)
+        const missingTypes = typeRule.stepConstraints.requiredOperationTypes.filter(
+          type => !stepOperationTypes.includes(type)
+        )
+        if (missingTypes.length > 0) {
+          throw new Error(`${typeRule.name}必须包含以下工序类型：${missingTypes.join('、')}`)
+        }
+      }
+      
+      // 检查返工路线的特殊规则
+      if (this.formData.type === 'Rework' && typeRule.validationRules.firstStepMustBeInspection) {
+        if (steps.length > 0 && steps[0].operationType !== 'Inspection') {
+          throw new Error('返工路线的第一个工序必须是检验工序')
+        }
       }
     }
   }
