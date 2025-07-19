@@ -426,40 +426,40 @@ export default {
     
     handleMoveStepUp(index) {
       if (index === 0) return
-      const temp = this.formData.steps[index]
-      this.$set(this.formData.steps, index, this.formData.steps[index - 1])
-      this.$set(this.formData.steps, index - 1, temp)
-      this.recalculateStepNumbers()
-      this.resetFlowLogicAndNotify() // 新增：重置流程逻辑并通知用户
+      this.confirmFlowLogicReset('移动工序步骤', () => {
+        const temp = this.formData.steps[index]
+        this.$set(this.formData.steps, index, this.formData.steps[index - 1])
+        this.$set(this.formData.steps, index - 1, temp)
+        this.recalculateStepNumbers()
+        this.resetFlowLogic() // 重置流程逻辑但不显示提示
+      })
     },
     
     handleMoveStepDown(index) {
       if (index === this.formData.steps.length - 1) return
-      const temp = this.formData.steps[index]
-      this.$set(this.formData.steps, index, this.formData.steps[index + 1])
-      this.$set(this.formData.steps, index + 1, temp)
-      this.recalculateStepNumbers()
-      this.resetFlowLogicAndNotify() // 新增：重置流程逻辑并通知用户
+      this.confirmFlowLogicReset('移动工序步骤', () => {
+        const temp = this.formData.steps[index]
+        this.$set(this.formData.steps, index, this.formData.steps[index + 1])
+        this.$set(this.formData.steps, index + 1, temp)
+        this.recalculateStepNumbers()
+        this.resetFlowLogic() // 重置流程逻辑但不显示提示
+      })
     },
     
     handleDeleteStep(index) {
-       this.$confirm('确定要删除这个工序步骤吗?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          const deletedStep = this.formData.steps[index]
-          this.formData.steps.splice(index, 1)
-          this.recalculateStepNumbers()
-          this.resetFlowLogicAndNotify() // 新增：重置流程逻辑并通知用户
-          if (this.selectedStep && this.selectedStep.stepId === deletedStep.stepId) {
-            this.selectedStep = null
-          }
-           this.$message({
-            type: 'success',
-            message: '删除成功!'
-          });
-        }).catch(() => {});
+      this.confirmFlowLogicReset('删除工序步骤', () => {
+        const deletedStep = this.formData.steps[index]
+        this.formData.steps.splice(index, 1)
+        this.recalculateStepNumbers()
+        this.resetFlowLogic() // 重置流程逻辑但不显示提示
+        if (this.selectedStep && this.selectedStep.stepId === deletedStep.stepId) {
+          this.selectedStep = null
+        }
+        this.$message({
+          type: 'success',
+          message: '删除成功!'
+        })
+      })
     },
     
     recalculateStepNumbers() {
@@ -533,18 +533,49 @@ export default {
       this.formData = this.initFormData()
       this.selectedStep = null
     },
-    resetFlowLogicAndNotify() {
+    /**
+     * 确认流程逻辑重置操作
+     * @param {string} operation - 操作类型（如：移动工序步骤、删除工序步骤）
+     * @param {Function} callback - 确认后执行的回调函数
+     */
+    confirmFlowLogicReset(operation, callback) {
+      this.$confirm(
+        `${operation}将会重置所有步骤的流程逻辑配置，需要重新设置相关步骤的下一步。确定要继续吗？`,
+        '重要提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          dangerouslyUseHTMLString: false
+        }
+      ).then(() => {
+        callback()
+      }).catch(() => {
+        // 用户取消操作，不执行任何操作
+      })
+    },
+
+    /**
+     * 重置流程逻辑（不显示提示）
+     */
+    resetFlowLogic() {
       // 重置所有步骤的流程逻辑
       this.formData.steps.forEach(step => {
-        this.$set(step.flowLogic, 'nextStep', null);
-        this.$set(step.flowLogic, 'onSuccessStep', null);
-        this.$set(step.flowLogic, 'onFailureStep', null);
-      });
+        this.$set(step.flowLogic, 'nextStep', null)
+        this.$set(step.flowLogic, 'onSuccessStep', null)
+        this.$set(step.flowLogic, 'onFailureStep', null)
+      })
+    },
 
+    /**
+     * 重置流程逻辑并显示提示（保留原方法以兼容其他可能的调用）
+     */
+    resetFlowLogicAndNotify() {
+      this.resetFlowLogic()
       this.$alert('工序步骤的移动/删除操作已导致流程逻辑重置，请重新配置相关步骤的下一步设置。', '重要提示', {
         confirmButtonText: '确定',
         type: 'warning'
-      });
+      })
     },
     
     /**
