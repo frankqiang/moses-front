@@ -228,6 +228,17 @@ export default {
     disableInitialValidation: {
       type: Boolean,
       default: false
+    },
+
+    /**
+     * 是否同步内部变更到外部data
+     * 当启用时，组件内部formModel的变更会自动同步到外部传入的data属性
+     * 适用于复杂交互场景，如表单与其他组件联动时需要保持数据一致性
+     * @since 2024-12-19
+     */
+    syncChanges: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -302,13 +313,18 @@ export default {
 
     // 监听表单数据变化进行验证
     formModel: {
-      handler() {
-        // 只有在允许自动验证且未禁用验证时才执行
+      handler(newVal) {
         if (this.validateOnDataChange && !this.validationDisabled && !this.isInitializingData) {
           this.debouncedValidate()
         }
         if (this.autoSaveInterval > 0) {
           this.scheduleAutoSave()
+        }
+        // 数据同步机制：当启用syncChanges时，将内部formModel变更同步到外部data
+        // 使用JSON比较避免不必要的更新，使用cloneDeep确保数据独立性
+        // 解决复杂交互场景下（如工艺路线编辑器）的数据一致性问题
+        if (this.syncChanges && JSON.stringify(newVal) !== JSON.stringify(this.data)) {
+          this.$emit('update:data', cloneDeep(newVal));
         }
       },
       deep: true

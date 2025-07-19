@@ -149,6 +149,7 @@ export default {
 | validateOnDataChange | Boolean | true | 是否在数据变化时自动验证 |
 | clearValidateOnDataUpdate | Boolean | false | 是否在数据更新时清除验证状态 |
 | disableInitialValidation | Boolean | false | 是否在组件初始化时禁用验证 |
+| syncChanges | Boolean | false | 是否同步内部变更到外部data（v2024.12.19+） |
 
 ## 事件
 
@@ -503,6 +504,36 @@ export default {
 </script>
 ```
 
+## 数据同步机制 (v2024.12.19+)
+
+### syncChanges 属性
+
+当启用 `syncChanges` 属性时，组件内部的 `formModel` 变更会自动同步到外部传入的 `data` 属性。这对于复杂交互场景特别有用，如表单与其他组件联动时需要保持数据一致性。
+
+```vue
+<template>
+  <enhanced-form
+    :data.sync="formData"
+    :sync-changes="true"
+    @submit="handleSubmit"
+  >
+    <!-- 表单内容 -->
+  </enhanced-form>
+</template>
+```
+
+### 使用场景
+
+1. **工艺路线编辑器**：表单基础信息与步骤编辑器需要保持同步
+2. **多步骤表单**：不同步骤间的数据需要实时同步
+3. **表单与预览联动**：表单变更需要实时反映到预览组件
+
+### 性能考虑
+
+- 使用 JSON 比较避免不必要的更新
+- 使用 `cloneDeep` 确保数据独立性
+- 仅在数据真正变更时触发同步
+
 ## 开发者指南
 
 ### 组件扩展
@@ -564,4 +595,4 @@ export default {
 
 ## 与其他组件组合使用
 
-EnhancedForm 组件可以与其他组件自由组合使用，特别是与 BaseDrawer 组件组合可以实现抽屉表单功能。具体示例请参考 `src/components/DrawerForm/example.vue`。 
+EnhancedForm 组件可以与其他组件自由组合使用，特别是与 BaseDrawer 组件组合可以实现抽屉表单功能。具体示例请参考 `src/components/DrawerForm/example.vue`。

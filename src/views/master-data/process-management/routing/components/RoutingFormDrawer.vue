@@ -10,9 +10,14 @@
     <el-row :gutter="20" class="routing-form-container">
       <!-- Left Panel -->
       <el-col :span="18">
+        <!-- 
+          启用sync-changes确保基础表单数据与步骤编辑操作保持同步
+          解决在添加、移动、删除工序步骤时基础信息被意外清空的问题
+          @since 2024-12-19 - 修复数据一致性bug
+        -->
         <enhanced-form
           ref="routingForm"
-          :data="formData"
+          :data.sync="formData"
           :rules="formRules"
           :mode="mode"
           label-width="110px"
@@ -20,6 +25,7 @@
           :clear-validate-on-data-update="true"
           :disable-initial-validation="true"
           :validate-on-data-change="false"
+          :sync-changes="true"
         >
           <template #default="{ form, mode: formMode }">
             <div class="form-section">
@@ -481,6 +487,10 @@ export default {
         
         if (!this.formData.steps || this.formData.steps.length === 0) {
           this.$message.warning('请至少添加一个工序步骤')
+          return
+        }
+        if (!this.formData.applicableProducts || this.formData.applicableProducts.length === 0) {
+          // this.$message.warning('请至少选择一个适用产品')
           return
         }
 
