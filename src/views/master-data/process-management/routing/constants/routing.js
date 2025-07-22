@@ -80,7 +80,65 @@ export const ROUTING_TYPE_RULES = {
   }
 }
 
+// 权限常量定义
+export const ROUTING_PERMISSIONS = {
+  // 基础权限
+  VIEW: 'routing:view',
+  CREATE: 'routing:create',
+  EDIT: 'routing:edit',
+  DELETE: 'routing:delete',
+  
+  // 业务操作权限
+  NEW_VERSION: 'routing:new-version',
+  SUBMIT_APPROVAL: 'routing:submit-approval',
+  APPROVE: 'routing:approve',
+  REJECT: 'routing:reject',
+  ARCHIVE: 'routing:archive',
+  
+  // 数据操作权限
+  EXPORT: 'routing:export',
+  IMPORT: 'routing:import'
+}
+
+// 状态与可用操作的映射关系
+export const STATUS_ACTIONS_MAP = {
+  Draft: ['view', 'edit', 'delete', 'submitApproval'],
+  PendingApproval: ['view', 'approve', 'reject'],
+  Enabled: ['view', 'newVersion', 'archive'],
+  Archived: ['view']
+}
+
+// 操作按钮权限映射
+export const ACTION_PERMISSIONS_MAP = {
+  view: ROUTING_PERMISSIONS.VIEW,
+  edit: ROUTING_PERMISSIONS.EDIT,
+  delete: ROUTING_PERMISSIONS.DELETE,
+  newVersion: ROUTING_PERMISSIONS.NEW_VERSION,
+  submitApproval: ROUTING_PERMISSIONS.SUBMIT_APPROVAL,
+  approve: ROUTING_PERMISSIONS.APPROVE,
+  reject: ROUTING_PERMISSIONS.REJECT,
+  archive: ROUTING_PERMISSIONS.ARCHIVE
+}
+
 // 获取路线类型规则
 export function getRoutingTypeRule(type) {
   return ROUTING_TYPE_RULES[type] || ROUTING_TYPE_RULES.Standard
+}
+
+/**
+ * 获取指定状态下可用的操作列表
+ * @param {string} status - 工艺路线状态
+ * @returns {Array} 可用操作列表
+ */
+export function getAvailableActions(status) {
+  return STATUS_ACTIONS_MAP[status] || []
+}
+
+/**
+ * 获取操作对应的权限码
+ * @param {string} action - 操作类型
+ * @returns {string} 权限码
+ */
+export function getActionPermission(action) {
+  return ACTION_PERMISSIONS_MAP[action] || null
 }

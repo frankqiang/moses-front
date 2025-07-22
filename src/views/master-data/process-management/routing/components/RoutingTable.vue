@@ -88,7 +88,9 @@ import {
   TABLE_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
   ROUTING_TYPE_OPTIONS,
-  ROUTING_STATUS_CONFIG as STATUS_CONFIG
+  ROUTING_STATUS_CONFIG as STATUS_CONFIG,
+  getAvailableActions,
+  getActionPermission
 } from '../constants'
 
 export default {
@@ -193,31 +195,136 @@ export default {
       const option = ROUTING_TYPE_OPTIONS.find(opt => opt.value === type)
       return option ? option.label : type
     },
+    /**
+     * 生成操作按钮列表
+     * @param {Object} row - 工艺路线数据行
+     * @returns {Array} 操作按钮配置数组
+     */
     generateActions(row) {
-      if (!row) {
+      if (!row || !row.status) {
         return []
       }
       
-      const actionsMap = {
-        'Draft': [
-          { action: 'edit', text: '编辑', icon: 'el-icon-edit', tooltip: '编辑工艺路线' },
-          { action: 'submit', text: '提交审批', icon: 'el-icon-s-promotion', class: 'success', tooltip: '提交以供审批' },
-          { action: 'delete', text: '删除', icon: 'el-icon-delete', class: 'danger', tooltip: '删除此草稿' }
-        ],
-        'Enabled': [
-          { action: 'view', text: '查看', icon: 'el-icon-view', tooltip: '查看详情' },
-          { action: 'newVersion', text: '创建新版本', icon: 'el-icon-plus', tooltip: '基于此版本创建新版' }
-        ],
-        'PendingApproval': [
-          { action: 'view', text: '查看', icon: 'el-icon-view', tooltip: '查看详情' }
-        ],
-        'Archived': [
-          { action: 'view', text: '查看', icon: 'el-icon-view', tooltip: '查看已归档的工艺路线' },
-          { action: 'delete', text: '删除', icon: 'el-icon-delete', class: 'danger', tooltip: '永久删除此记录' }
-        ]
-      }
-      return actionsMap[row.status] || []
-    }
+      // 获取当前状态下可用的操作
+      const availableActions = getAvailableActions(row.status)
+      
+      // 操作按钮配置映射
+       const actionConfigMap = {
+         view: {
+           action: 'view',
+           text: '查看',
+           icon: 'el-icon-view',
+           tooltip: '查看详情',
+           permission: getActionPermission('view')
+         },
+         edit: {
+           action: 'edit',
+           text: '编辑',
+           icon: 'el-icon-edit',
+           tooltip: '编辑工艺路线',
+           permission: getActionPermission('edit')
+         },
+         delete: {
+           action: 'delete',
+           text: '删除',
+           icon: 'el-icon-delete',
+           class: 'danger',
+           tooltip: row.status === 'Draft' ? '删除此草稿' : '永久删除此记录',
+           permission: getActionPermission('delete')
+         },
+         newVersion: {
+           action: 'newVersion',
+           text: '创建新版本',
+           icon: 'el-icon-plus',
+           tooltip: '基于此版本创建新版本',
+           permission: getActionPermission('newVersion'),
+           // 创建新版本的特殊可见性条件
+           visible: this.checkNewVersionVisibility(row)
+         },
+         submitApproval: {
+           action: 'submit',
+           text: '提交审批',
+           icon: 'el-icon-s-promotion',
+           class: 'success',
+           tooltip: '提交以供审批',
+           permission: getActionPermission('submitApproval')
+         },
+         approve: {
+           action: 'approve',
+           text: '批准',
+           icon: 'el-icon-check',
+           class: 'success',
+           tooltip: '批准此工艺路线',
+           permission: getActionPermission('approve')
+         },
+         reject: {
+           action: 'reject',
+           text: '驳回',
+           icon: 'el-icon-close',
+           class: 'danger',
+           tooltip: '驳回此工艺路线',
+           permission: getActionPermission('reject')
+         },
+         archive: {
+           action: 'archive',
+           text: '归档',
+           icon: 'el-icon-folder',
+           tooltip: '归档此工艺路线',
+           permission: getActionPermission('archive')
+         }
+       }
+
+       // 根据可用操作生成按钮配置
+       const actions = availableActions
+         .map(actionKey => actionConfigMap[actionKey])
+         .filter(config => {
+           if (!config) return false
+
+           // 检查权限（如果配置了权限）
+           if (config.permission && !this.checkPermission(config.permission)) {
+             return false
+           }
+
+           // 检查自定义可见性条件
+           if (config.hasOwnProperty('visible') && !config.visible) {
+             return false
+           }
+
+           return true
+         })
+
+       return actions
+     },
+
+     /**
+      * 检查用户权限
+      * @param {string} permission - 权限码
+      * @returns {boolean} 是否有权限
+      */
+     checkPermission(permission) {
+       // TODO: 集成实际的权限检查逻辑
+       // 这里可以调用全局的权限检查方法或从store中获取用户权限
+       // 暂时返回true，实际项目中需要替换为真实的权限检查
+       return true
+     },
+
+     /**
+      * 检查创建新版本按钮的可见性
+      * @param {Object} row - 工艺路线数据行
+      * @returns {boolean} 是否可见
+      */
+     checkNewVersionVisibility(row) {
+       // 只有生效状态的工艺路线才能创建新版本
+       if (row.status !== 'Enabled') {
+         return false
+       }
+
+       // 检查是否已有更新的版本（可选的业务逻辑）
+       // 如果当前版本不是最新版本，则不显示创建新版本按钮
+       // 这里可以根据实际业务需求进行调整
+
+       return true
+     }
   }
 }
 </script>
@@ -232,4 +339,4 @@ export default {
   margin: 16px 0 8px;
   color: #909399;
 }
-</style> 
+</style>
