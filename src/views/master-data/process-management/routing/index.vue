@@ -157,13 +157,15 @@ export default {
     },
     handleFormSuccess(payload = {}) {
       console.log('handleFormSuccess called with payload:', payload);
-      if (payload.continue) {
+      if (payload.continueEdit) {
         console.log('Continue mode: refreshing list without closing drawer');
         this.getList();
+        console.log(222222222)
       } else {
         console.log('Default mode: closing drawer and refreshing list');
         this.formDrawerVisible = false;
         this.getList();
+        console.log(3333333333)
       }
     },
     handleFormClose() {

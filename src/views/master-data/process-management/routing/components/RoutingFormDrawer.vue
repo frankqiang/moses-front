@@ -164,7 +164,7 @@
         v-if="mode === 'create'"
         type="primary"
         :loading="loading"
-        @click="handleSubmitAndContinue"
+        @click="handleSubmit(true)"
       >
         保存并继续
       </el-button>
@@ -172,7 +172,7 @@
         v-if="mode !== 'view'"
         type="primary"
         :loading="loading"
-        @click="handleSubmit"
+        @click="handleSubmit(false)"
       >
         {{ mode === 'create' ? '确认保存' : '保存修改' }}
       </el-button>
@@ -519,7 +519,7 @@ export default {
         this.$emit('success', { mode: this.mode, data: this.formData, continueEdit: andContinue })
         
         if (andContinue) {
-          // 保存并继续 - 重置表单
+          // 保存并继续 - 重置表单但不关闭抽屉
           this.handleReset()
         } else {
           // 普通保存 - 关闭抽屉
@@ -532,9 +532,6 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-    handleSubmitAndContinue() {
-      this.handleSubmit(true)
     },
     handleCancel() {
       this.drawerVisible = false
