@@ -14,7 +14,7 @@ alwaysApply: false
 [可选详细描述]
 [可选关联问题]
 ```
-- **范围 (scope)** 是可选的，用于说明此次提交影响的模块或功能区域
+- **范围 (scope)** 虽然在语法上是可选的，但【强烈推荐】为所有类型的提交都添加scope，用于说明此次提交影响的模块或功能区域
 - 范围可以使用中文模块名，如 `routing`、`mock`、`component` 等
 - 支持多级范围，如 `process-management/routing`、`routing-form` 等
 
@@ -31,11 +31,13 @@ alwaysApply: false
 - `chore`: 构建/工具变动
 
 ## 范围 (Scope)
-【推荐】提供提交影响的范围，例如：
+【强烈推荐】为所有类型的提交都提供影响的范围，例如：
 - `feat(auth)`: 认证相关功能
 - `fix(routing)`: 工艺路线模块修复
 - `feat(mock)`: Mock数据相关功能
 - `refactor(router)`: 路由代码重构
+- `refactor(routing)`: 工艺路线代码重构
+- `refactor(component)`: 组件代码重构
 - `fix(routing-form)`: 工艺路线表单修复
 - `feat(process-management/routing)`: 工序管理中的工艺路线功能
 - `docs(routing)`: 工艺路线相关文档
@@ -90,7 +92,8 @@ feat(mock): 统一响应工具函数
 
 在执行 `git commit` 之前，【必须】逐项确认以下内容：
 
-- [ ] **[P0]** 提交消息格式：本次提交的 commit message 是否严格遵循了 `<类型>([可选范围]): <简短描述>` 格式？（包括类型选择、描述简洁性、时态、标点等）
+- [ ] **[P0]** 提交消息格式：本次提交的 commit message 是否严格遵循了 `<类型>([可选范围]): <简短描述>` 格式？（包括类型选择、scope范围、描述简洁性、时态、标点等）
+- [ ] **[P0]** 范围标识：是否为所有类型的提交（包括refactor、feat、fix等）都添加了合适的scope范围标识？
 - [ ] **[P0]** 代码质量：提交的代码是否无语法错误、无编译警告或错误？
 - [ ] **[P0]** 类型定义 (TypeScript)：所有相关的 TypeScript 类型定义是否完整、准确且已通过类型检查？
 - [ ] **[P0]** 代码规范符合性：代码是否遵循了项目约定的代码风格（如 ESLint, Prettier 配置）和命名规范？

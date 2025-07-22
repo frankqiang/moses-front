@@ -89,8 +89,7 @@ import {
   DEFAULT_VISIBLE_COLUMNS,
   ROUTING_TYPE_OPTIONS,
   ROUTING_STATUS_CONFIG as STATUS_CONFIG,
-  getAvailableActions,
-  getActionPermission
+  getAvailableActions
 } from '../constants'
 
 export default {
@@ -214,30 +213,26 @@ export default {
            action: 'view',
            text: '查看',
            icon: 'el-icon-view',
-           tooltip: '查看详情',
-           permission: getActionPermission('view')
+           tooltip: '查看详情'
          },
          edit: {
            action: 'edit',
            text: '编辑',
            icon: 'el-icon-edit',
-           tooltip: '编辑工艺路线',
-           permission: getActionPermission('edit')
+           tooltip: '编辑工艺路线'
          },
          delete: {
            action: 'delete',
            text: '删除',
            icon: 'el-icon-delete',
            class: 'danger',
-           tooltip: row.status === 'Draft' ? '删除此草稿' : '永久删除此记录',
-           permission: getActionPermission('delete')
+           tooltip: row.status === 'Draft' ? '删除此草稿' : '永久删除此记录'
          },
          newVersion: {
            action: 'newVersion',
            text: '创建新版本',
            icon: 'el-icon-plus',
            tooltip: '基于此版本创建新版本',
-           permission: getActionPermission('newVersion'),
            // 创建新版本的特殊可见性条件
            visible: this.checkNewVersionVisibility(row)
          },
@@ -246,31 +241,27 @@ export default {
            text: '提交审批',
            icon: 'el-icon-s-promotion',
            class: 'success',
-           tooltip: '提交以供审批',
-           permission: getActionPermission('submitApproval')
+           tooltip: '提交以供审批'
          },
          approve: {
            action: 'approve',
            text: '批准',
            icon: 'el-icon-check',
            class: 'success',
-           tooltip: '批准此工艺路线',
-           permission: getActionPermission('approve')
+           tooltip: '批准此工艺路线'
          },
          reject: {
            action: 'reject',
            text: '驳回',
            icon: 'el-icon-close',
            class: 'danger',
-           tooltip: '驳回此工艺路线',
-           permission: getActionPermission('reject')
+           tooltip: '驳回此工艺路线'
          },
          archive: {
            action: 'archive',
            text: '归档',
            icon: 'el-icon-folder',
-           tooltip: '归档此工艺路线',
-           permission: getActionPermission('archive')
+           tooltip: '归档此工艺路线'
          }
        }
 
@@ -279,11 +270,6 @@ export default {
          .map(actionKey => actionConfigMap[actionKey])
          .filter(config => {
            if (!config) return false
-
-           // 检查权限（如果配置了权限）
-           if (config.permission && !this.checkPermission(config.permission)) {
-             return false
-           }
 
            // 检查自定义可见性条件
            if (config.hasOwnProperty('visible') && !config.visible) {
@@ -296,17 +282,7 @@ export default {
        return actions
      },
 
-     /**
-      * 检查用户权限
-      * @param {string} permission - 权限码
-      * @returns {boolean} 是否有权限
-      */
-     checkPermission(permission) {
-       // TODO: 集成实际的权限检查逻辑
-       // 这里可以调用全局的权限检查方法或从store中获取用户权限
-       // 暂时返回true，实际项目中需要替换为真实的权限检查
-       return true
-     },
+
 
      /**
       * 检查创建新版本按钮的可见性
@@ -314,11 +290,6 @@ export default {
       * @returns {boolean} 是否可见
       */
      checkNewVersionVisibility(row) {
-       // 只有生效状态的工艺路线才能创建新版本
-       if (row.status !== 'Enabled') {
-         return false
-       }
-
        // 检查是否已有更新的版本（可选的业务逻辑）
        // 如果当前版本不是最新版本，则不显示创建新版本按钮
        // 这里可以根据实际业务需求进行调整
