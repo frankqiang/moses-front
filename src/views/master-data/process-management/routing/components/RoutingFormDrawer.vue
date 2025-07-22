@@ -490,10 +490,9 @@ export default {
           return
         }
         if (!this.formData.applicableProducts || this.formData.applicableProducts.length === 0) {
-          // this.$message.warning('请至少选择一个适用产品')
           return
         }
-
+    
         // 验证路线类型特定规则
         try {
           this.validateTypeSpecificRules()
@@ -501,7 +500,7 @@ export default {
           this.$message.warning(validationError.message)
           return
         }
-
+    
         // 校验所选产品的有效性
         if (this.formData.applicableProducts && this.formData.applicableProducts.length > 0) {
           const validationResult = await this.validateSelectedProducts()
@@ -510,26 +509,28 @@ export default {
             return
           }
         }
-
+    
         this.loading = true
         const apiCall = this.mode === 'create' ? createRouting : updateRouting
         const response = await apiCall(this.formData)
         
         this.$message.success(response.message || '操作成功')
-
+        
+        this.$emit('success', { mode: this.mode, data: this.formData, continueEdit: andContinue })
+        
         if (andContinue) {
-          this.$emit('success', { continue: true })
+          // 保存并继续 - 重置表单
           this.handleReset()
         } else {
-          this.$emit('success')
+          // 普通保存 - 关闭抽屉
           this.drawerVisible = false
         }
       } catch (error) {
-        if (error && error.message) {
-           console.error('API请求失败:', error)
-        }
+        const errorMessage = error.response?.data?.message || error.message || '操作失败，请稍后重试';
+        this.$message.error(errorMessage);
+        return; // 确保API失败时不继续执行
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     handleSubmitAndContinue() {
@@ -555,8 +556,7 @@ export default {
         {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
-          type: 'warning',
-          dangerouslyUseHTMLString: false
+          type: 'warning'
         }
       ).then(() => {
         callback()

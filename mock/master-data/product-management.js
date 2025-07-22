@@ -5,8 +5,8 @@ const data = Mock.mock({
   'items|1000': [{
     'id|+1': 1, // 产品ID
     'code': function() {
-      const alloys = ['1100', '8011', '3003', '8021']
-      const states = ['H18', 'O', 'H22', 'H24']
+      // const alloys = ['1100', '8011', '3003', '8021']
+      // const states = ['H18', 'O', 'H22', 'H24']
       const thickness = (Math.random() * 0.02 + 0.005).toFixed(4) // 厚度 0.005-0.025mm
       const width = Math.floor(Math.random() * 1000 + 500) // 宽度 500-1500mm
       return `AF-${this.alloy}-${this.state}-${thickness}x${width}`
@@ -441,11 +441,20 @@ module.exports = [
       
       // 根据搜索关键词过滤
       if (search) {
-        const searchLower = search.toLowerCase()
-        filteredItems = filteredItems.filter(item => 
-          item.code.toLowerCase().includes(searchLower) ||
-          item.name.toLowerCase().includes(searchLower)
-        )
+        // 检查是否为逗号分隔的多个产品代码（精确匹配模式）
+        if (search.includes(',')) {
+          const searchCodes = search.split(',').map(code => code.trim()).filter(code => code)
+          filteredItems = filteredItems.filter(item => 
+            searchCodes.includes(item.code)
+          )
+        } else {
+          // 单个关键词的模糊匹配模式
+          const searchLower = search.toLowerCase()
+          filteredItems = filteredItems.filter(item => 
+            item.code.toLowerCase().includes(searchLower) ||
+            item.name.toLowerCase().includes(searchLower)
+          )
+        }
       }
       
       // 限制返回数量

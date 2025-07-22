@@ -156,13 +156,14 @@ export default {
       }).catch(() => {})
     },
     handleFormSuccess(payload = {}) {
+      console.log('handleFormSuccess called with payload:', payload);
       if (payload.continue) {
-        // "保存并继续" 模式，列表刷新即可，抽屉不关闭
-        this.getList()
+        console.log('Continue mode: refreshing list without closing drawer');
+        this.getList();
       } else {
-        // 默认模式，关闭抽屉并刷新列表
-        this.formDrawerVisible = false
-        this.getList()
+        console.log('Default mode: closing drawer and refreshing list');
+        this.formDrawerVisible = false;
+        this.getList();
       }
     },
     handleFormClose() {
