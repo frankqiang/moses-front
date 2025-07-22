@@ -290,11 +290,13 @@ export default {
       * @returns {boolean} 是否可见
       */
      checkNewVersionVisibility(row) {
-       // 检查是否已有更新的版本（可选的业务逻辑）
-       // 如果当前版本不是最新版本，则不显示创建新版本按钮
-       // 这里可以根据实际业务需求进行调整
-
-       return true
+       // 根据文档要求，仅当工艺路线状态为"生效 (Enabled)"时显示该按钮
+       // 对于"草稿 (Draft)"、"待审批 (InApproval)"、"历史/归档 (Archived)"状态必须隐藏按钮
+       if (!row || !row.status) {
+         return false
+       }
+       
+       return row.status === 'Enabled'
      }
   }
 }

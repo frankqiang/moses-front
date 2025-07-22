@@ -61,10 +61,23 @@ export function checkRoutingCodeUnique(code) {
   })
 }
 
+/**
+ * 创建工艺路线的新版本
+ * @param {string} id 源工艺路线ID
+ * @description 基于现有的工艺路线创建一个新的草稿版本
+ */
+export function createNewVersion(id) {
+  return request({
+    url: `${BASE_URL}/${id}/new-version`,
+    method: 'post'
+  })
+}
+
 export default {
   getRoutingList,
   createRouting,
   updateRouting,
   deleteRouting,
-  checkRoutingCodeUnique
+  checkRoutingCodeUnique,
+  createNewVersion
 }

@@ -27,7 +27,10 @@ const ROUTES = {
   
   // 单个工艺路线操作（getDetail, update, delete）
   // 使用负向前瞻避免与 check-code-unique 冲突
-  ITEM_DETAIL: `${BASE_PATH}/(?!check-code-unique)[a-zA-Z0-9_-]+$` 
+  ITEM_DETAIL: `${BASE_PATH}/(?!check-code-unique)[a-zA-Z0-9_-]+$`,
+  
+  // 创建新版本
+  NEW_VERSION: `${BASE_PATH}/[a-zA-Z0-9_-]+/new-version$`
 }
 
 /**
@@ -157,6 +160,89 @@ const handlers = {
       // }
       return success({ unique: false }, '路线代码已被使用')
     }
+  },
+  
+  /**
+   * 创建工艺路线新版本
+   * @param {Object} config - 请求配置
+   * @returns {Object} 响应对象
+   * @description 实现核心处理流程，包括前置条件校验、数据克隆、新版本属性赋值和数据持久化
+   */
+  createNewVersion(config) {
+    // 从URL中提取ID
+    const id = config.url.split('/').slice(-2)[0]
+    
+    // 前置条件校验 - 存在性校验
+    const existingRouting = dataCache.find(r => r.id === id)
+    if (!existingRouting) {
+      return error('NOT_FOUND', `ID为 '${id}' 的工艺路线未找到`, 404)
+    }
+    
+    // 前置条件校验 - 状态一致性校验
+    if (existingRouting.status !== 'Enabled') {
+      return error('INVALID_STATUS', '只有生效状态的工艺路线才能创建新版本', 400)
+    }
+    
+    // 前置条件校验 - 草稿唯一性校验
+    // 注意：由于数据结构中没有baseId字段，这里使用code字段来判断同一工艺路线的不同版本
+    const hasDraft = dataCache.some(r => 
+      r.code === existingRouting.code && 
+      r.status === 'Draft' && 
+      r.id !== existingRouting.id
+    )
+    
+    if (hasDraft) {
+      return error('DUPLICATE_DRAFT', '已存在该工艺路线的草稿版本，请先处理现有草稿', 409)
+    }
+    
+    // 数据克隆 - 深度克隆现有工艺路线数据
+    const newVersion = JSON.parse(JSON.stringify(existingRouting))
+    
+    // 新版本属性赋值
+    // 生成唯一ID
+    newVersion.id = uuidv4()
+    
+    // 注意：由于数据结构中没有baseId字段，这里不设置baseId
+    // 同一工艺路线的不同版本通过相同的code字段来识别
+    
+    // 版本号递增
+    const currentVersion = parseFloat(existingRouting.version) || 1.0
+    newVersion.version = (currentVersion + 0.1).toFixed(1)
+    
+    // 状态设为草稿
+    newVersion.status = 'Draft'
+    
+    // 更新审计字段
+    newVersion.createdBy = 'admin' // 实际应用中应使用当前登录用户
+    newVersion.createdAt = new Date().toISOString()
+    newVersion.updatedBy = 'admin' // 实际应用中应使用当前登录用户
+    newVersion.updatedAt = new Date().toISOString()
+    
+    // 步骤ID重新生成
+    if (newVersion.steps && newVersion.steps.length > 0) {
+      newVersion.steps = newVersion.steps.map(step => ({
+        ...step,
+        stepId: `step-${newVersion.id.split('-')[1]}-${step.stepNumber / 10}`
+      }))
+    }
+    
+    // 添加版本变更记录
+    if (!newVersion.changelog) {
+      newVersion.changelog = []
+    }
+    
+    newVersion.changelog.unshift({
+      version: newVersion.version,
+      user: newVersion.updatedBy,
+      timestamp: newVersion.updatedAt,
+      note: `基于 v${existingRouting.version} 创建新版本`
+    })
+    
+    // 数据持久化 - 将新版本添加到数据缓存中
+    dataCache.unshift(newVersion)
+    
+    // 成功反馈
+    return success(newVersion, `工艺路线 "${existingRouting.name}" 的新版本 v${newVersion.version} 创建成功`, 201)
   }
 }
 
@@ -174,6 +260,12 @@ module.exports = [
     url: ROUTES.CHECK_CODE_UNIQUE,
     type: 'get',
     response: config => handlers.checkCodeUnique(config)
+  },
+  // 创建新版本
+  {
+    url: ROUTES.NEW_VERSION,
+    type: 'post',
+    response: config => handlers.createNewVersion(config)
   },
   // 通用集合操作
   {

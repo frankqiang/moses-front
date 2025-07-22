@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { getRoutingList, deleteRouting } from './api'
+import { getRoutingList, deleteRouting, createNewVersion } from './api'
 import SearchForm from './components/SearchForm.vue'
 import RoutingTable from './components/RoutingTable.vue'
 import RoutingFormDrawer from './components/RoutingFormDrawer.vue'
@@ -63,7 +63,9 @@ export default {
       // 表单抽屉相关状态
       formDrawerVisible: false,
       formMode: 'create',
-      currentRouting: null
+      currentRouting: null,
+      // 操作状态标志
+      isCreatingNewVersion: false // 防止重复创建新版本
     }
   },
   created() {
@@ -153,6 +155,12 @@ export default {
      * @param {Object} row - 工艺路线数据行
      */
     async handleNewVersion(row) {
+      // 防重复操作检查
+      if (this.isCreatingNewVersion) {
+        this.$message.warning('正在处理中，请勿重复操作')
+        return
+      }
+      
       try {
         // 前置条件校验
         const validationResult = this.validateNewVersionConditions(row)
@@ -161,19 +169,23 @@ export default {
           return
         }
         
-        // 用户意图确认
+        // 用户意图确认 - 符合文档要求的确认对话框
         const confirmResult = await this.confirmNewVersionCreation(row)
         if (!confirmResult) {
+          // 用户取消操作
           return
         }
         
-        // 执行创建新版本操作
+        // 执行创建新版本操作 - 包含页面遮罩和防重复操作
         await this.executeNewVersionCreation(row)
         
       } catch (error) {
+        // 错误处理
         console.error('创建新版本失败:', error)
         const errorMessage = error.response?.data?.message || error.message || '创建新版本失败，请稍后重试'
         this.$message.error(errorMessage)
+        // 重置操作状态
+        this.isCreatingNewVersion = false
       }
     },
     
@@ -181,13 +193,38 @@ export default {
      * 验证创建新版本的前置条件
      * @param {Object} row - 工艺路线数据行
      * @returns {Object} 验证结果 { valid: boolean, message: string }
+     * @description 实现前置条件校验，包括存在性校验、状态一致性校验和草稿唯一性校验
      */
     validateNewVersionConditions(row) {
-      // 检查工艺路线状态
+      // 存在性校验 - 检查工艺路线是否存在
+      if (!row || !row.id) {
+        return {
+          valid: false,
+          message: '工艺路线不存在或数据无效'
+        }
+      }
+      
+      // 状态一致性校验 - 检查工艺路线状态
       if (row.status !== 'Enabled') {
         return {
           valid: false,
           message: '只有生效状态的工艺路线才能创建新版本'
+        }
+      }
+      
+      // 草稿唯一性校验 - 检查是否已存在草稿版本
+      // 注意：由于数据结构中没有baseId字段，这里使用code字段来判断同一工艺路线的不同版本
+      // 同一工艺路线的不同版本应该具有相同的code值
+      const hasDraft = this.list.some(item => 
+        item.code === row.code && 
+        item.status === 'Draft' && 
+        item.id !== row.id
+      )
+      
+      if (hasDraft) {
+        return {
+          valid: false,
+          message: '已存在该工艺路线的草稿版本，请先处理现有草稿'
         }
       }
       
@@ -214,35 +251,27 @@ export default {
      * 用户创建新版本意图确认
      * @param {Object} row - 工艺路线数据行
      * @returns {Promise<boolean>} 用户确认结果
+     * @description 实现用户交互与意图确认，显示简洁明了的确认信息
      */
     async confirmNewVersionCreation(row) {
-      const confirmMessage = `
-        <div style="text-align: left; line-height: 1.6;">
-          <p><strong>即将为以下工艺路线创建新版本：</strong></p>
-          <p>• 路线名称：${row.name}</p>
-          <p>• 路线编码：${row.code}</p>
-          <p>• 当前版本：${row.version}</p>
-          <p>• 路线类型：${this.getTypeLabel(row.type)}</p>
-          <br>
-          <p><strong>创建新版本后：</strong></p>
-          <p>• 新版本将基于当前版本的所有配置</p>
-          <p>• 新版本状态为草稿，需要重新配置和审批</p>
-          <p>• 当前版本保持不变</p>
-          <br>
-          <p>确定要继续吗？</p>
-        </div>
-      `
+      // 根据文档要求，显示简洁明了的确认信息
+      // 动态内容：显示"您确定要基于当前[路线名称] v[当前版本号]创建一个新的可编辑草稿版本吗？"
+      const confirmMessage = `您确定要基于当前<strong>${row.name} v${row.version}</strong>创建一个新的可编辑草稿版本吗？`
       
       try {
-        await this.$confirm(confirmMessage, '创建新版本确认', {
-          confirmButtonText: '确定创建',
+        // 使用Element UI的确认对话框
+        await this.$confirm(confirmMessage, '确认创建新版本', {
+          confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'info',
           dangerouslyUseHTMLString: true,
+          closeOnClickModal: false, // 防止误操作，点击遮罩不关闭
+          closeOnPressEscape: true, // 允许按ESC键关闭
           customClass: 'new-version-confirm-dialog'
         })
         return true
       } catch {
+        // 用户取消操作
         this.$message.info('已取消创建新版本')
         return false
       }
@@ -251,9 +280,18 @@ export default {
     /**
      * 执行创建新版本操作
      * @param {Object} row - 工艺路线数据行
+     * @description 实现核心处理流程中的数据持久化部分，包括调用API创建新版本、处理成功反馈和错误处理
      */
     async executeNewVersionCreation(row) {
-      // 显示加载状态
+      // 防重复操作标志
+      if (this.isCreatingNewVersion) {
+        this.$message.warning('正在处理中，请勿重复操作')
+        return
+      }
+      
+      this.isCreatingNewVersion = true
+      
+      // 显示全屏加载状态，实现页面遮罩
       const loading = this.$loading({
         lock: true,
         text: '正在创建新版本...',
@@ -262,26 +300,42 @@ export default {
       })
       
       try {
-        // TODO: 调用创建新版本的API
-        // const response = await createNewVersion(row.id)
+        // 调用创建新版本的API
+        const response = await createNewVersion(row.id)
         
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        // 获取新版本数据
+        const newVersionData = response.data
         
-        // 成功反馈
+        // 成功反馈 - 显示"已创建成功！"成功提示
         this.$message.success({
-          message: `工艺路线 "${row.name}" 的新版本创建成功`,
+          message: `新版本 v${newVersionData?.version || '新版本'} 已创建成功！`,
           duration: 3000
         })
         
         // 刷新列表以显示新创建的版本
         await this.getList()
         
-        // 可选：自动打开新创建的版本进行编辑
-        // this.openNewVersionForEdit(newVersionData)
+        // 自动导航到新创建的版本编辑页面
+        if (newVersionData && newVersionData.id) {
+          // 找到新创建的版本数据
+          const newVersion = this.list.find(item => item.id === newVersionData.id)
+          if (newVersion) {
+            // 打开编辑抽屉
+            this.formMode = 'update'
+            this.currentRouting = newVersion
+            this.formDrawerVisible = true
+          }
+        }
         
+      } catch (error) {
+        // 错误处理
+        console.error('创建新版本失败:', error)
+        const errorMessage = error.response?.data?.message || error.message || '创建新版本失败，请稍后重试'
+        this.$message.error(errorMessage)
       } finally {
+        // 关闭加载状态并重置防重复操作标志
         loading.close()
+        this.isCreatingNewVersion = false
       }
     },
     
