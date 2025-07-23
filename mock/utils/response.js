@@ -5,13 +5,16 @@
  * 
  * 使用示例：
  * ```javascript
- * const { success, error } = require('../utils/response')
+ * const { success, error, errors, ERROR_CODES } = require('../utils/response')
  * 
  * // 成功响应
  * return success(data, '操作成功')
  * 
- * // 错误响应
- * return error('VALIDATION_ERROR', '参数验证失败', 400)
+ * // 错误响应（推荐使用错误码常量）
+ * return error(ERROR_CODES.VALIDATION_ERROR, '参数验证失败', 400)
+ * 
+ * // 快捷错误响应
+ * return errors.validation('参数验证失败')
  * ```
  */
 
@@ -89,30 +92,43 @@ const batch = (successIds, failedIds, operation = '操作', details = null) => {
   }, `${operation}完成：成功${successCount}条，失败${failedCount}条`)
 }
 
+// 引入统一错误码
+const { ERROR_CODES, getErrorDescription } = require('./error-codes')
+
 /**
  * 常用错误响应快捷方法
+ * 使用统一的错误码格式
  */
 const errors = {
   notFound: (resource = '资源', id = '') => 
-    error('NOT_FOUND', `${resource}${id ? `(ID: ${id})` : ''}未找到`, 404),
+    error(ERROR_CODES.NOT_FOUND, `${resource}${id ? `(ID: ${id})` : ''}未找到`, 404),
   
   validation: (message = '参数验证失败') => 
-    error('VALIDATION_ERROR', message, 400),
+    error(ERROR_CODES.VALIDATION_ERROR, message, 400),
   
   duplicate: (field = '数据', value = '') => 
-    error('DUPLICATE_ERROR', `${field}${value ? `'${value}'` : ''}已存在`, 409),
+    error(ERROR_CODES.DUPLICATE_CODE, `${field}${value ? `'${value}'` : ''}已存在`, 409),
+  
+  duplicateDraft: (message = '草稿版本已存在') => 
+    error(ERROR_CODES.DUPLICATE_DRAFT, message, 409),
+  
+  invalidStatus: (message = '状态无效') => 
+    error(ERROR_CODES.INVALID_STATUS, message, 400),
   
   inUse: (resource = '资源', details = null) => 
-    error('RESOURCE_IN_USE', `${resource}正在使用中，无法删除`, 400, details),
+    error(ERROR_CODES.RESOURCE_IN_USE, `${resource}正在使用中，无法删除`, 400, details),
   
   unauthorized: (message = '未授权访问') => 
-    error('UNAUTHORIZED', message, 401),
+    error(ERROR_CODES.UNAUTHORIZED, message, 401),
   
   forbidden: (message = '禁止访问') => 
-    error('FORBIDDEN', message, 403),
+    error(ERROR_CODES.FORBIDDEN, message, 403),
   
   internal: (message = '服务器内部错误') => 
-    error('INTERNAL_ERROR', message, 500)
+    error(ERROR_CODES.INTERNAL_ERROR, message, 500),
+  
+  requiredField: (field = '字段') => 
+    error(ERROR_CODES.REQUIRED_FIELD_MISSING, `${field}不能为空`, 400)
 }
 
 module.exports = {
@@ -120,5 +136,7 @@ module.exports = {
   error,
   paginated,
   batch,
-  errors
+  errors,
+  ERROR_CODES,
+  getErrorDescription
 }

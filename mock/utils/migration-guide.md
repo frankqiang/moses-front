@@ -72,7 +72,7 @@ return errors.notFound('资源', id)
 
 ```diff
 + // 引入统一的响应工具函数
-+ const { success, error, errors } = require('../../utils/index')
++ const { success, error, errors, ERROR_CODES } = require('../../utils/response')
 ```
 
 ### 步骤3：更新响应调用
@@ -98,7 +98,7 @@ return errors.notFound('资源', id)
 ```diff
 // 基本错误响应
 - return error('VALIDATION_ERROR', '参数验证失败', 400)
-+ return error('VALIDATION_ERROR', '参数验证失败', 400)
++ return error(ERROR_CODES.VALIDATION_ERROR, '参数验证失败', 400)
 
 // 使用预定义错误（推荐）
 - return error('NOT_FOUND', `ID为${id}的资源未找到`, 404)
@@ -161,7 +161,7 @@ return errors.notFound('资源', id)
 - }
 
 // 新格式
-+ return error('OPERATION_FAILED', '操作失败', 500)
++ return error(ERROR_CODES.INTERNAL_ERROR, '操作失败', 500)
 ```
 
 ### 2. 复杂错误详情迁移
@@ -172,8 +172,8 @@ return errors.notFound('资源', id)
 -   cannotDeleteIds
 - })
 
-// 新格式（保持不变，已经是正确格式）
-+ return error('OPERATIONS_IN_USE', `有${cannotDeleteIds.length}个工序正在使用中，无法删除`, 400, {
+// 新格式（使用ERROR_CODES常量）
++ return error(ERROR_CODES.RESOURCE_IN_USE, `有${cannotDeleteIds.length}个工序正在使用中，无法删除`, 400, {
 +   cannotDeleteIds
 + })
 ```

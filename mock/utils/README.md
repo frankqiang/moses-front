@@ -26,10 +26,11 @@
 
 ```javascript
 // 导入所有工具函数
-const { success, error, errors, paginated, batch, param2Obj } = require('../utils/index')
+const { success, error, errors, paginated, batch, ERROR_CODES } = require('../utils/response')
+const { param2Obj } = require('../utils/index')
 
 // 或者按需导入
-const { success, error } = require('../utils/index')
+const { success, error, ERROR_CODES } = require('../utils/response')
 const { param2Obj } = require('../utils/index')
 ```
 
@@ -101,13 +102,13 @@ const { param2Obj } = require('../utils/index')
 ### 基本用法
 
 ```javascript
-const { success, error, errors } = require('../../utils/index')
+const { success, error, errors, ERROR_CODES } = require('../../utils/response')
 
 // 成功响应
 return success(data, '操作成功')
 
 // 错误响应
-return error('VALIDATION_ERROR', '参数验证失败', 400)
+return error(ERROR_CODES.VALIDATION_ERROR, '参数验证失败', 400)
 
 // 使用预定义错误
 return errors.notFound('工序', id)
@@ -117,7 +118,7 @@ return errors.duplicate('工序代码', code)
 ### 分页响应
 
 ```javascript
-const { paginated } = require('../../utils/index')
+const { paginated } = require('../../utils/response')
 
 return paginated(items, total, page, limit, '获取成功')
 ```
@@ -125,7 +126,7 @@ return paginated(items, total, page, limit, '获取成功')
 ### 批量操作响应
 
 ```javascript
-const { batch } = require('../../utils/index')
+const { batch } = require('../../utils/response')
 
 return batch(successIds, failedIds, '删除')
 ```
@@ -136,10 +137,10 @@ return batch(successIds, failedIds, '删除')
 
 ```javascript
 // ✅ 推荐：按需导入
-const { success, error, errors } = require('../../utils/index')
+const { success, error, errors, ERROR_CODES } = require('../../utils/response')
 
 // ❌ 避免：全量导入
-const response = require('../../utils/index')
+const response = require('../../utils/response')
 ```
 
 ### 2. 错误处理规范
@@ -151,7 +152,7 @@ return errors.validation('工序代码不能为空')
 return errors.duplicate('工序代码', code)
 
 // ✅ 可接受：自定义错误
-return error('CUSTOM_ERROR', '自定义错误信息', 400)
+return error(ERROR_CODES.BUSINESS_ERROR, '自定义错误信息', 400)
 
 // ❌ 避免：硬编码错误
 return { success: false, error: { code: 'ERROR', message: '错误' } }

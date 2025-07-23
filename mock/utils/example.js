@@ -6,7 +6,8 @@
  */
 
 // 引入统一的响应工具函数
-const { success, error, errors, paginated, batch, param2Obj } = require('./index')
+const { success, error, errors, paginated, batch, ERROR_CODES } = require('./response')
+const { param2Obj } = require('./index')
 
 // 模拟数据
 let mockData = [
@@ -212,7 +213,7 @@ const handlers = {
     
     if (shouldFail) {
       // ✅ 使用自定义错误（当预定义错误不适用时）
-      return error('BUSINESS_RULE_VIOLATION', '违反业务规则：不能在周末执行此操作', 400, {
+      return error(ERROR_CODES.BUSINESS_ERROR, '违反业务规则：不能在周末执行此操作', 400, {
         allowedDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
         currentDay: new Date().toLocaleDateString('en-US', { weekday: 'long' })
       })

@@ -20,7 +20,7 @@ const { data: operationsData } = require('../data/operations')
 const Mock = require('mockjs')
 
 // 引入统一的响应工具函数
-const { success, error, errors } = require('../../../utils/response')
+const { success, error, errors, ERROR_CODES } = require('../../../utils/response')
 
 // 数据缓存和状态管理
 let dataCache = [...operationsData]
@@ -98,7 +98,7 @@ const handlers = {
     const operation = dataCache.find(item => item.id === id)
     
     if (!operation) {
-      return error('OPERATION_NOT_FOUND', `未找到ID为${id}的工序`, 404)
+      return error(ERROR_CODES.NOT_FOUND, `未找到ID为${id}的工序`, 404)
     }
     
     return success(operation)
@@ -109,13 +109,13 @@ const handlers = {
     
     // 验证必填字段
     if (!body.code || !body.name || !body.type) {
-      return error('VALIDATION_ERROR', '工序代码、名称和类型为必填项', 400)
+      return error(ERROR_CODES.VALIDATION_ERROR, '工序代码、名称和类型为必填项', 400)
     }
     
     // 检查代码唯一性
     const codeExists = dataCache.some(item => item.code === body.code)
     if (codeExists) {
-      return error('CODE_EXISTS', `工序代码 ${body.code} 已存在`, 400)
+      return error(ERROR_CODES.DUPLICATE_CODE, `工序代码 ${body.code} 已存在`, 409)
     }
     
     // 创建新工序
@@ -147,13 +147,13 @@ const handlers = {
     
     // 验证必填字段
     if (!body.name || !body.type) {
-      return error('VALIDATION_ERROR', '工序名称和类型为必填项', 400)
+      return error(ERROR_CODES.VALIDATION_ERROR, '工序名称和类型为必填项', 400)
     }
     
     // 查找工序
     const index = dataCache.findIndex(item => item.id === id)
     if (index === -1) {
-      return error('OPERATION_NOT_FOUND', `未找到ID为${id}的工序`, 404)
+      return error(ERROR_CODES.NOT_FOUND, `未找到ID为${id}的工序`, 404)
     }
     
     // 更新工序 - 保留创建信息，更新业务字段
@@ -184,20 +184,20 @@ const handlers = {
     
     // 验证必填字段
     if (!status) {
-      return error('VALIDATION_ERROR', '状态为必填项', 400)
+      return error(ERROR_CODES.VALIDATION_ERROR, '状态为必填项', 400)
     }
     
     // 查找工序
     const index = dataCache.findIndex(item => item.id === id)
     if (index === -1) {
-      return error('OPERATION_NOT_FOUND', `未找到ID为${id}的工序`, 404)
+      return error(ERROR_CODES.NOT_FOUND, `未找到ID为${id}的工序`, 404)
     }
     
     // 验证状态转换
     const currentStatus = dataCache[index].status
     const allowedStatuses = statusRules[currentStatus] || []
     if (!allowedStatuses.includes(status)) {
-      return error('INVALID_STATUS_TRANSITION', `不允许从 ${currentStatus} 转换为 ${status}`, 400)
+      return error(ERROR_CODES.INVALID_STATUS, `不允许从 ${currentStatus} 转换为 ${status}`, 400)
     }
     
     // 更新状态
@@ -214,14 +214,14 @@ const handlers = {
     // 查找工序
     const index = dataCache.findIndex(item => item.id === id)
     if (index === -1) {
-      return error('OPERATION_NOT_FOUND', `未找到ID为${id}的工序`, 404)
+      return error(ERROR_CODES.NOT_FOUND, `未找到ID为${id}的工序`, 404)
     }
     
     // 模拟检查工序是否被工艺路线使用
     // 这里假设有一个工艺路线使用了ID为op-001和op-002的工序
     const usedOperations = ['op-001', 'op-002']
     if (usedOperations.includes(id)) {
-      return error('OPERATION_IN_USE', `该工序正在工艺路线中使用，无法删除`, 400)
+      return error(ERROR_CODES.RESOURCE_IN_USE, `该工序正在工艺路线中使用，无法删除`, 400)
     }
     
     // 删除工序
@@ -236,7 +236,7 @@ const handlers = {
     
     // 验证必填字段
     if (!ids || !ids.length || !status) {
-      return error('VALIDATION_ERROR', 'ID列表和状态为必填项', 400)
+      return error(ERROR_CODES.VALIDATION_ERROR, 'ID列表和状态为必填项', 400)
     }
     
     // 更新状态
@@ -269,7 +269,7 @@ const handlers = {
     
     // 验证必填字段
     if (!ids || !ids.length) {
-      return error('VALIDATION_ERROR', 'ID列表为必填项', 400)
+      return error(ERROR_CODES.VALIDATION_ERROR, 'ID列表为必填项', 400)
     }
     
     // 检查是否有不可删除的工序
@@ -277,7 +277,7 @@ const handlers = {
     const cannotDeleteIds = ids.filter(id => usedOperations.includes(id))
     
     if (cannotDeleteIds.length > 0) {
-      return error('OPERATIONS_IN_USE', `有${cannotDeleteIds.length}个工序正在使用中，无法删除`, 400, {
+      return error(ERROR_CODES.RESOURCE_IN_USE, `有${cannotDeleteIds.length}个工序正在使用中，无法删除`, 400, {
         cannotDeleteIds
       })
     }
@@ -337,7 +337,7 @@ const handlers = {
     const { code, excludeId } = config.query
     
     if (!code) {
-      return error('VALIDATION_ERROR', '工序代码不能为空', 400)
+      return error(ERROR_CODES.VALIDATION_ERROR, '工序代码不能为空', 400)
     }
     
     // 检查代码是否已存在

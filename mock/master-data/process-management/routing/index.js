@@ -7,7 +7,7 @@ let dataCache = [...routingsData]
 // 从dataCache动态获取已存在的路线代码，实现真实唯一性校验
 
 // 引入统一的响应工具函数
-const { success, error, errors } = require('../../../utils/response')
+const { success, error, errors, ERROR_CODES } = require('../../../utils/response')
 
 // API基础路径 (重新定义，确保使用最新的BASE_PATH)
 const BASE_PATH = '/mes/v1/master-data/process-management/routings'
@@ -87,10 +87,10 @@ const handlers = {
   create(config) {
     const newData = config.body
     if (!newData.code || !newData.name) {
-      return error('VALIDATION_ERROR', '路线代码和名称不能为空', 400)
+      return error(ERROR_CODES.VALIDATION_ERROR, '路线代码和名称不能为空', 400)
     }
     if (dataCache.some(r => r.code === newData.code)) {
-      return error('DUPLICATE_CODE', `路线代码 '${newData.code}' 已存在`, 409)
+      return error(ERROR_CODES.DUPLICATE_CODE, `路线代码 '${newData.code}' 已存在`, 409)
     }
 
     const newRouting = {
@@ -124,7 +124,7 @@ const handlers = {
     const index = dataCache.findIndex(r => r.id === id)
 
     if (index === -1) {
-      return error('NOT_FOUND', `ID为 '${id}' 的工艺路线未找到`, 404)
+      return error(ERROR_CODES.NOT_FOUND, `ID为 '${id}' 的工艺路线未找到`, 404)
     }
 
     dataCache[index] = { 
@@ -141,7 +141,7 @@ const handlers = {
   checkCodeUnique(config) {
     const { code } = config.query
     if (!code) {
-      return error('VALIDATION_ERROR', '路线代码不能为空', 400)
+      return error(ERROR_CODES.VALIDATION_ERROR, '路线代码不能为空', 400)
     }
 
     // 检查是否在模拟的已存在代码列表中
@@ -154,9 +154,9 @@ const handlers = {
       // 如果在dataCache中找到，则返回dataCache中的错误信息
       // const foundInCache = dataCache.find(r => r.code.toUpperCase() === code.toUpperCase())
       // if (foundInCache) {
-      //    return error('DUPLICATE_CODE', `路线代码 '${code}' 已存在`, 409) // 使用409 Conflict
-      // } else {
-      //    return error('DUPLICATE_CODE', '该路线代码已被使用', 409) // 使用409 Conflict
+      //    return error(ERROR_CODES.DUPLICATE_CODE, `路线代码 '${code}' 已存在`, 409) // 使用409 Conflict
+    // 或者更通用的消息
+    //    return error(ERROR_CODES.DUPLICATE_CODE, '该路线代码已被使用', 409) // 使用409 Conflict
       // }
       return success({ unique: false }, '路线代码已被使用')
     }
@@ -175,12 +175,12 @@ const handlers = {
     // 前置条件校验 - 存在性校验
     const existingRouting = dataCache.find(r => r.id === id)
     if (!existingRouting) {
-      return error('NOT_FOUND', `ID为 '${id}' 的工艺路线未找到`, 404)
+      return error(ERROR_CODES.NOT_FOUND, `ID为 '${id}' 的工艺路线未找到`, 404)
     }
     
     // 前置条件校验 - 状态一致性校验
     if (existingRouting.status !== 'Enabled') {
-      return error('INVALID_STATUS', '只有生效状态的工艺路线才能创建新版本', 400)
+      return error(ERROR_CODES.INVALID_STATUS, '只有生效状态的工艺路线才能创建新版本', 400)
     }
     
     // 前置条件校验 - 草稿唯一性校验
@@ -192,7 +192,7 @@ const handlers = {
     )
     
     if (hasDraft) {
-      return error('DUPLICATE_DRAFT', '已存在该工艺路线的草稿版本，请先处理现有草稿', 409)
+      return error(ERROR_CODES.DUPLICATE_DRAFT, '已存在该工艺路线的草稿版本，请先处理现有草稿', 409)
     }
     
     // 数据克隆 - 深度克隆现有工艺路线数据
