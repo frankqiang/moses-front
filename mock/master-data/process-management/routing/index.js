@@ -30,7 +30,19 @@ const ROUTES = {
   ITEM_DETAIL: `${BASE_PATH}/(?!check-code-unique)[a-zA-Z0-9_-]+$`,
   
   // 创建新版本
-  NEW_VERSION: `${BASE_PATH}/[a-zA-Z0-9_-]+/new-version$`
+  NEW_VERSION: `${BASE_PATH}/[a-zA-Z0-9_-]+/new-version$`,
+  
+  // 提交审批
+  SUBMIT_APPROVAL: `${BASE_PATH}/[a-zA-Z0-9_-]+/submit-approval$`,
+  
+  // 批准
+  APPROVE: `${BASE_PATH}/[a-zA-Z0-9_-]+/approve$`,
+  
+  // 驳回
+  REJECT: `${BASE_PATH}/[a-zA-Z0-9_-]+/reject$`,
+  
+  // 归档
+  ARCHIVE: `${BASE_PATH}/[a-zA-Z0-9_-]+/archive$`
 }
 
 /**
@@ -163,6 +175,198 @@ const handlers = {
   },
   
   /**
+   * 提交工艺路线审批
+   * @param {Object} config - 请求配置
+   * @returns {Object} 响应对象
+   * @description 将草稿状态的工艺路线提交审批，状态变更为待审批
+   */
+  submitApproval(config) {
+    // 从URL中提取ID
+    const id = config.url.split('/').slice(-2)[0]
+    
+    // 查找工艺路线
+    const index = dataCache.findIndex(r => r.id === id)
+    if (index === -1) {
+      return error(ERROR_CODES.NOT_FOUND, `ID为 '${id}' 的工艺路线未找到`, 404)
+    }
+    
+    const routing = dataCache[index]
+    
+    // 状态校验 - 只有草稿状态才能提交审批
+    if (routing.status !== 'Draft') {
+      return error(ERROR_CODES.INVALID_STATUS, '只有草稿状态的工艺路线才能提交审批', 400)
+    }
+    
+    // 更新状态为待审批
+    dataCache[index] = {
+      ...routing,
+      status: 'PendingApproval',
+      updatedBy: 'admin',
+      updatedAt: new Date().toISOString()
+    }
+    
+    // 添加审批历史记录
+    if (!dataCache[index].approvalHistory) {
+      dataCache[index].approvalHistory = []
+    }
+    
+    dataCache[index].approvalHistory.unshift({
+      id: uuidv4(),
+      action: 'submit',
+      actionBy: config.body?.submittedBy || 'admin',
+      actionAt: new Date().toISOString(),
+      remarks: config.body?.remarks || '提交审批',
+      status: 'PendingApproval'
+    })
+    
+    return success(dataCache[index], '工艺路线已成功提交审批')
+  },
+  
+  /**
+   * 批准工艺路线
+   * @param {Object} config - 请求配置
+   * @returns {Object} 响应对象
+   * @description 批准待审批状态的工艺路线，状态变更为生效
+   */
+  approveRouting(config) {
+    // 从URL中提取ID
+    const id = config.url.split('/').slice(-2)[0]
+    
+    // 查找工艺路线
+    const index = dataCache.findIndex(r => r.id === id)
+    if (index === -1) {
+      return error(ERROR_CODES.NOT_FOUND, `ID为 '${id}' 的工艺路线未找到`, 404)
+    }
+    
+    const routing = dataCache[index]
+    
+    // 状态校验 - 只有待审批状态才能批准
+    if (routing.status !== 'PendingApproval') {
+      return error(ERROR_CODES.INVALID_STATUS, '只有待审批状态的工艺路线才能批准', 400)
+    }
+    
+    // 更新状态为生效
+    dataCache[index] = {
+      ...routing,
+      status: 'Enabled',
+      updatedBy: 'admin',
+      updatedAt: new Date().toISOString()
+    }
+    
+    // 添加审批历史记录
+    if (!dataCache[index].approvalHistory) {
+      dataCache[index].approvalHistory = []
+    }
+    
+    dataCache[index].approvalHistory.unshift({
+      id: uuidv4(),
+      action: 'approve',
+      actionBy: config.body?.approvedBy || 'admin',
+      actionAt: new Date().toISOString(),
+      remarks: config.body?.approvalComments || '批准通过',
+      status: 'Enabled'
+    })
+    
+    return success(dataCache[index], '工艺路线已成功批准')
+  },
+  
+  /**
+   * 驳回工艺路线
+   * @param {Object} config - 请求配置
+   * @returns {Object} 响应对象
+   * @description 驳回待审批状态的工艺路线，状态变更为草稿
+   */
+  rejectRouting(config) {
+    // 从URL中提取ID
+    const id = config.url.split('/').slice(-2)[0]
+    
+    // 查找工艺路线
+    const index = dataCache.findIndex(r => r.id === id)
+    if (index === -1) {
+      return error(ERROR_CODES.NOT_FOUND, `ID为 '${id}' 的工艺路线未找到`, 404)
+    }
+    
+    const routing = dataCache[index]
+    
+    // 状态校验 - 只有待审批状态才能驳回
+    if (routing.status !== 'PendingApproval') {
+      return error(ERROR_CODES.INVALID_STATUS, '只有待审批状态的工艺路线才能驳回', 400)
+    }
+    
+    // 更新状态为草稿
+    dataCache[index] = {
+      ...routing,
+      status: 'Draft',
+      updatedBy: 'admin',
+      updatedAt: new Date().toISOString()
+    }
+    
+    // 添加审批历史记录
+    if (!dataCache[index].approvalHistory) {
+      dataCache[index].approvalHistory = []
+    }
+    
+    dataCache[index].approvalHistory.unshift({
+      id: uuidv4(),
+      action: 'reject',
+      actionBy: config.body?.rejectedBy || 'admin',
+      actionAt: new Date().toISOString(),
+      remarks: config.body?.rejectReason || '驳回',
+      status: 'Draft'
+    })
+    
+    return success(dataCache[index], '工艺路线已驳回，状态已变更为草稿')
+  },
+  
+  /**
+   * 归档工艺路线
+   * @param {Object} config - 请求配置
+   * @returns {Object} 响应对象
+   * @description 将生效状态的工艺路线归档，状态变更为已归档
+   */
+  archiveRouting(config) {
+    // 从URL中提取ID
+    const id = config.url.split('/').slice(-2)[0]
+    
+    // 查找工艺路线
+    const index = dataCache.findIndex(r => r.id === id)
+    if (index === -1) {
+      return error(ERROR_CODES.NOT_FOUND, `ID为 '${id}' 的工艺路线未找到`, 404)
+    }
+    
+    const routing = dataCache[index]
+    
+    // 状态校验 - 只有生效状态才能归档
+    if (routing.status !== 'Enabled') {
+      return error(ERROR_CODES.INVALID_STATUS, '只有生效状态的工艺路线才能归档', 400)
+    }
+    
+    // 更新状态为已归档
+    dataCache[index] = {
+      ...routing,
+      status: 'Archived',
+      updatedBy: 'admin',
+      updatedAt: new Date().toISOString()
+    }
+    
+    // 添加审批历史记录
+    if (!dataCache[index].approvalHistory) {
+      dataCache[index].approvalHistory = []
+    }
+    
+    dataCache[index].approvalHistory.unshift({
+      id: uuidv4(),
+      action: 'archive',
+      actionBy: config.body?.archivedBy || 'admin',
+      actionAt: new Date().toISOString(),
+      remarks: config.body?.archiveReason || '归档',
+      status: 'Archived'
+    })
+    
+    return success(dataCache[index], '工艺路线已成功归档')
+  },
+
+  /**
    * 创建工艺路线新版本
    * @param {Object} config - 请求配置
    * @returns {Object} 响应对象
@@ -266,6 +470,30 @@ module.exports = [
     url: ROUTES.NEW_VERSION,
     type: 'post',
     response: config => handlers.createNewVersion(config)
+  },
+  // 提交审批
+  {
+    url: ROUTES.SUBMIT_APPROVAL,
+    type: 'post',
+    response: config => handlers.submitApproval(config)
+  },
+  // 批准
+  {
+    url: ROUTES.APPROVE,
+    type: 'post',
+    response: config => handlers.approveRouting(config)
+  },
+  // 驳回
+  {
+    url: ROUTES.REJECT,
+    type: 'post',
+    response: config => handlers.rejectRouting(config)
+  },
+  // 归档
+  {
+    url: ROUTES.ARCHIVE,
+    type: 'post',
+    response: config => handlers.archiveRouting(config)
   },
   // 通用集合操作
   {

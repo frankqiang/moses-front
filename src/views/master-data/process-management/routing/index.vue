@@ -197,6 +197,8 @@ export default {
         
         // 执行提交审批操作
         const response = await submitRoutingApproval(row.id, {
+          code: row.code, // 添加路线代码
+          name: row.name, // 添加路线名称
           submittedBy: 'current_user', // 实际应用中应从用户状态获取
           submittedAt: new Date().toISOString(),
           remarks: '提交审批' // 可以后续扩展为用户输入
