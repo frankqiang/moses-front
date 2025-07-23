@@ -20,7 +20,7 @@
     "core-js": "3.6.5",
     "dayjs": "^1.11.10",
     "echarts": "^5.4.3",
-    "element-ui": "2.13.2",
+    "element-ui": "2.15.14",
     "js-cookie": "2.2.0",
     "lodash.clonedeep": "^4.5.0",
     "lodash.debounce": "^4.0.8",

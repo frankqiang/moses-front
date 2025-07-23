@@ -84,10 +84,10 @@ export const ROUTING_TYPE_RULES = {
 
 // 状态与可用操作的映射关系
 export const STATUS_ACTIONS_MAP = {
-  Draft: ['view', 'edit', 'delete', 'submitApproval'],
-  PendingApproval: ['view', 'approve', 'reject'],
-  Enabled: ['view', 'newVersion', 'archive'],
-  Archived: ['view']
+  Draft: ['view', 'edit', 'delete', 'submitApproval', 'history'],
+  PendingApproval: ['view', 'approve', 'reject', 'history'],
+  Enabled: ['view', 'newVersion', 'archive', 'history'],
+  Archived: ['view', 'history']
 }
 
 

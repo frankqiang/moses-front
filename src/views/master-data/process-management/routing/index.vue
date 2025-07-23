@@ -17,9 +17,13 @@
       @edit="handleEdit"
       @view="handleView"
       @delete="handleDelete"
-      @submit="handleSubmit"
+      @submit="handleSubmitApproval"
+      @approve="handleApprove"
+      @reject="handleReject"
+      @archive="handleArchive"
       @newVersion="handleNewVersion"
       @refresh="getList"
+      @history="handleHistory"
     />
 
     <!-- 工艺路线表单抽屉 -->
@@ -30,15 +34,33 @@
       @success="handleFormSuccess"
       @close="handleFormClose"
     />
+    
+    <!-- 历史记录查看对话框 -->
+    <routing-history-dialog
+      :visible.sync="historyDialogVisible"
+      :routing-data="currentHistoryRouting"
+      @close="handleHistoryDialogClose"
+    />
 
   </div>
 </template>
 
 <script>
-import { getRoutingList, deleteRouting, createNewVersion } from './api'
+import { 
+  getRoutingList, 
+  deleteRouting, 
+  createNewVersion,
+  submitRoutingApproval,
+  approveRouting,
+  rejectRouting,
+  archiveRouting,
+  getRoutingHistory,
+  getRoutingApprovalHistory
+} from './api'
 import SearchForm from './components/SearchForm.vue'
 import RoutingTable from './components/RoutingTable.vue'
 import RoutingFormDrawer from './components/RoutingFormDrawer.vue'
+import RoutingHistoryDialog from './components/RoutingHistoryDialog.vue'
 import { debounce } from '@/utils'
 
 export default {
@@ -46,7 +68,8 @@ export default {
   components: {
     SearchForm,
     RoutingTable,
-    RoutingFormDrawer
+    RoutingFormDrawer,
+    RoutingHistoryDialog
   },
   data() {
     return {
@@ -64,6 +87,10 @@ export default {
       formDrawerVisible: false,
       formMode: 'create',
       currentRouting: null,
+
+       // 历史记录对话框相关
+      historyDialogVisible: false,
+      currentHistoryRouting: null,
       // 操作状态标志
       isCreatingNewVersion: false // 防止重复创建新版本
     }
@@ -143,12 +170,197 @@ export default {
         this.$message.info('已取消删除')
       })
     },
-    handleSubmit(row) {
-      this.$confirm(`确定要提交审批工艺路线 "${row.name}" 吗？`, '提交确认', {
-        type: 'info'
-      }).then(() => {
-        this.$message.info(`TODO: 实现提交ID为 ${row.id} 的工艺路线状态变更逻辑`)
-      }).catch(() => {})
+    /**
+     * 处理提交审批操作
+     * @param {Object} row - 工艺路线数据行
+     * @description 将草稿状态的工艺路线提交审批，状态变更为待审批
+     */
+    async handleSubmitApproval(row) {
+      try {
+        // 状态校验
+        if (row.status !== 'Draft') {
+          this.$message.warning('只有草稿状态的工艺路线才能提交审批')
+          return
+        }
+        
+        // 用户确认
+        await this.$confirm(
+          `确定要提交审批工艺路线 "${row.name}" 吗？\n提交后将无法继续编辑，需要等待审批结果。`, 
+          '提交审批确认', 
+          {
+            confirmButtonText: '确定提交',
+            cancelButtonText: '取消',
+            type: 'warning',
+            dangerouslyUseHTMLString: true
+          }
+        )
+        
+        // 执行提交审批操作
+        const response = await submitRoutingApproval(row.id, {
+          submittedBy: 'current_user', // 实际应用中应从用户状态获取
+          submittedAt: new Date().toISOString(),
+          remarks: '提交审批' // 可以后续扩展为用户输入
+        })
+        
+        this.$message.success(response.message || '提交审批成功')
+        this.getList() // 刷新列表
+        
+      } catch (error) {
+        if (error === 'cancel') {
+          this.$message.info('已取消提交')
+        } else {
+          console.error('提交审批失败:', error)
+          const errorMessage = error.response?.data?.message || error.message || '提交审批失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
+      }
+    },
+    
+    /**
+     * 处理批准操作
+     * @param {Object} row - 工艺路线数据行
+     * @description 批准待审批状态的工艺路线，状态变更为生效
+     */
+    async handleApprove(row) {
+      try {
+        // 状态校验
+        if (row.status !== 'PendingApproval') {
+          this.$message.warning('只有待审批状态的工艺路线才能批准')
+          return
+        }
+        
+        // 用户确认
+        await this.$confirm(
+          `确定要批准工艺路线 "${row.name}" 吗？\n批准后该工艺路线将立即生效。`, 
+          '批准确认', 
+          {
+            confirmButtonText: '确定批准',
+            cancelButtonText: '取消',
+            type: 'success',
+            dangerouslyUseHTMLString: true
+          }
+        )
+        
+        // 执行批准操作
+        const response = await approveRouting(row.id, {
+          approvedBy: 'current_user', // 实际应用中应从用户状态获取
+          approvedAt: new Date().toISOString(),
+          approvalComments: '批准通过' // 可以后续扩展为用户输入
+        })
+        
+        this.$message.success(response.message || '批准成功')
+        this.getList() // 刷新列表
+        
+      } catch (error) {
+        if (error === 'cancel') {
+          this.$message.info('已取消批准')
+        } else {
+          console.error('批准失败:', error)
+          const errorMessage = error.response?.data?.message || error.message || '批准失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
+      }
+    },
+    
+    /**
+     * 处理驳回操作
+     * @param {Object} row - 工艺路线数据行
+     * @description 驳回待审批状态的工艺路线，状态变更为草稿
+     */
+    async handleReject(row) {
+      try {
+        // 状态校验
+        if (row.status !== 'PendingApproval') {
+          this.$message.warning('只有待审批状态的工艺路线才能驳回')
+          return
+        }
+        
+        // 获取驳回原因（可以后续扩展为更复杂的表单）
+        const { value: rejectReason } = await this.$prompt(
+          '请输入驳回原因：', 
+          '驳回工艺路线', 
+          {
+            confirmButtonText: '确定驳回',
+            cancelButtonText: '取消',
+            inputType: 'textarea',
+            inputPlaceholder: '请详细说明驳回原因...',
+            inputValidator: (value) => {
+              if (!value || value.trim().length === 0) {
+                return '驳回原因不能为空'
+              }
+              if (value.trim().length < 5) {
+                return '驳回原因至少需要5个字符'
+              }
+              return true
+            }
+          }
+        )
+        
+        // 执行驳回操作
+        const response = await rejectRouting(row.id, {
+          rejectedBy: 'current_user', // 实际应用中应从用户状态获取
+          rejectedAt: new Date().toISOString(),
+          rejectReason: rejectReason.trim()
+        })
+        
+        this.$message.success(response.message || '驳回成功')
+        this.getList() // 刷新列表
+        
+      } catch (error) {
+        if (error === 'cancel') {
+          this.$message.info('已取消驳回')
+        } else {
+          console.error('驳回失败:', error)
+          const errorMessage = error.response?.data?.message || error.message || '驳回失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
+      }
+    },
+    
+    /**
+     * 处理归档操作
+     * @param {Object} row - 工艺路线数据行
+     * @description 将生效状态的工艺路线归档，状态变更为已归档
+     */
+    async handleArchive(row) {
+      try {
+        // 状态校验
+        if (row.status !== 'Enabled') {
+          this.$message.warning('只有生效状态的工艺路线才能归档')
+          return
+        }
+        
+        // 用户确认
+        await this.$confirm(
+          `确定要归档工艺路线 "${row.name}" 吗？\n归档后该工艺路线将不再可用，但可以查看历史记录。`, 
+          '归档确认', 
+          {
+            confirmButtonText: '确定归档',
+            cancelButtonText: '取消',
+            type: 'warning',
+            dangerouslyUseHTMLString: true
+          }
+        )
+        
+        // 执行归档操作
+        const response = await archiveRouting(row.id, {
+          archivedBy: 'current_user', // 实际应用中应从用户状态获取
+          archivedAt: new Date().toISOString(),
+          archiveReason: '手动归档' // 可以后续扩展为用户输入
+        })
+        
+        this.$message.success(response.message || '归档成功')
+        this.getList() // 刷新列表
+        
+      } catch (error) {
+        if (error === 'cancel') {
+          this.$message.info('已取消归档')
+        } else {
+          console.error('归档失败:', error)
+          const errorMessage = error.response?.data?.message || error.message || '归档失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
+      }
     },
     /**
      * 处理创建新版本操作
@@ -340,6 +552,23 @@ export default {
     },
     
     /**
+     * 查看历史记录
+     * @param {Object} routing - 工艺路线数据
+     */
+    handleHistory(routing) {
+      this.currentHistoryRouting = routing
+      this.historyDialogVisible = true
+    },
+
+    /**
+     * 关闭历史记录对话框
+     */
+    handleHistoryDialogClose() {
+      this.historyDialogVisible = false
+      this.currentHistoryRouting = null
+    },
+
+    /**
      * 获取路线类型标签
      * @param {string} type - 路线类型值
      * @returns {string} 类型标签
@@ -354,16 +583,14 @@ export default {
       return option ? option.label : type
     },
     handleFormSuccess(payload = {}) {
-      console.log('handleFormSuccess called with payload:', payload);
+      console.log('handleFormSuccess called with payload:', payload)
       if (payload.continueEdit) {
-        console.log('Continue mode: refreshing list without closing drawer');
-        this.getList();
-        console.log(222222222)
+        console.log('Continue mode: refreshing list without closing drawer')
+        this.getList()
       } else {
-        console.log('Default mode: closing drawer and refreshing list');
-        this.formDrawerVisible = false;
-        this.getList();
-        console.log(3333333333)
+        console.log('Default mode: closing drawer and refreshing list')
+        this.formDrawerVisible = false
+        this.getList()
       }
     },
     handleFormClose() {

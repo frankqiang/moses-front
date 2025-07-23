@@ -262,6 +262,12 @@ export default {
            text: '归档',
            icon: 'el-icon-folder',
            tooltip: '归档此工艺路线'
+         },
+         history: {
+           action: 'history',
+           text: '历史记录',
+           icon: 'el-icon-time',
+           tooltip: '查看变更和审批历史'
          }
        }
 
