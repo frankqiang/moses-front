@@ -1,6 +1,7 @@
 <template>
   <div class="routing-table-container">
     <table-toolbar
+      ref="toolbar"
       :enable-column-settings="true"
       :column-options="columnOptions"
       :storage-key="columnSettingsKey"
@@ -14,6 +15,7 @@
       :delete-confirm="false"
       :table-data="data"
       :custom-actions="customBatchActions"
+      :refresh-feedback-mode="'all'"
       @refresh="handleRefresh"
       @column-change="handleColumnChange"
       @batch-delete="handleBatchDelete"
@@ -202,11 +204,36 @@ export default {
   created() {
     this.allColumns = this.columnOptions
     this.loadColumnSettings()
-    this.debouncedRefresh = debounce(() => this.$emit('refresh'), 300)
     // 初始化导出参数
     this.updateExportParams()
   },
+  mounted() {
+    // 初始化防抖刷新函数
+    this.debouncedRefresh = debounce(() => {
+      this.$emit('refresh')
+    }, 300)
+  },
   methods: {
+    /**
+     * 公开方法，供父组件调用 - 刷新成功提示
+     * @param {string} message - 成功提示信息
+     */
+    refreshSucceed(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshSucceed(message)
+      }
+    },
+
+    /**
+     * 公开方法，供父组件调用 - 刷新失败提示
+     * @param {string} message - 失败提示信息
+     */
+    refreshFail(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshFail(message)
+      }
+    },
+
     /**
      * 更新导出参数
      */
@@ -220,6 +247,9 @@ export default {
         this.$emit('add')
       }
     },
+    /**
+     * 处理刷新事件 - 使用防抖功能
+     */
     handleRefresh() {
       this.debouncedRefresh()
     },

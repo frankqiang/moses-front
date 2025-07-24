@@ -7,6 +7,7 @@
     />
 
     <routing-table
+      ref="routingTable"
       :data="list"
       :total="total"
       :loading="loading"
@@ -108,10 +109,18 @@ export default {
         const { data } = await getRoutingList(this.listQuery)
         this.list = data.items
         this.total = data.total
+        // 刷新成功时调用RoutingTable的refreshSucceed方法
+        if (this.$refs.routingTable) {
+          this.$refs.routingTable.refreshSucceed('数据刷新成功')
+        }
       } catch (error) {
         console.error('获取工艺路线列表失败:', error)
         const errorMessage = error.response?.data?.message || error.message || '获取工艺路线列表失败'
         this.$message.error(errorMessage)
+        // 刷新失败时调用RoutingTable的refreshFail方法
+        if (this.$refs.routingTable) {
+          this.$refs.routingTable.refreshFail(errorMessage)
+        }
       } finally {
         this.loading = false
       }
