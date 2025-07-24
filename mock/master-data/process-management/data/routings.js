@@ -89,7 +89,22 @@ const generateRoutingsData = () => {
         { "version": "2.0", "user": "admin", "timestamp": "2024-05-18T16:00:00Z", "note": "升级至新版数据结构，支持动态时间配置" }
       ],
       "approvalHistory": [
-        { "version": "2.0", "approver": "system_arch", "timestamp": "2024-05-18T17:00:00Z", "result": "Approved", "comment": "模型升级通过" }
+        { 
+          "id": "ah-001-1",
+          "action": "submit", 
+          "actionBy": "admin", 
+          "actionAt": "2024-05-18T15:30:00Z", 
+          "status": "PendingApproval", 
+          "remarks": "提交v2.0版本审批，增加动态时间配置功能" 
+        },
+        { 
+          "id": "ah-001-2",
+          "action": "approve", 
+          "actionBy": "system_arch", 
+          "actionAt": "2024-05-18T17:00:00Z", 
+          "status": "Enabled", 
+          "remarks": "模型升级通过，新功能测试正常" 
+        }
       ],
       "createdBy": "admin",
       "createdAt": "2023-10-01T10:00:00Z",
@@ -105,8 +120,53 @@ const generateRoutingsData = () => {
       "type": "Standard",
       "applicableProducts": ["P-1235-DZ"],
       "steps": [],
-      "changelog": [],
-      "approvalHistory": [],
+      "changelog": [
+        { "version": "1.0", "user": "system", "timestamp": "2022-01-01T00:00:00Z", "note": "初始创建" },
+        { "version": "2.0", "user": "process_engineer", "timestamp": "2022-03-15T09:00:00Z", "note": "更新工艺参数" },
+        { "version": "2.5", "user": "quality_manager", "timestamp": "2022-06-20T14:00:00Z", "note": "优化质检流程" }
+      ],
+      "approvalHistory": [
+        { 
+          "id": "ah-004-1",
+          "action": "submit", 
+          "actionBy": "process_engineer", 
+          "actionAt": "2022-03-15T09:30:00Z", 
+          "status": "PendingApproval", 
+          "remarks": "提交v2.0版本审批" 
+        },
+        { 
+          "id": "ah-004-2",
+          "action": "approve", 
+          "actionBy": "manager", 
+          "actionAt": "2022-03-16T11:00:00Z", 
+          "status": "Enabled", 
+          "remarks": "参数更新合理，同意生效" 
+        },
+        { 
+          "id": "ah-004-3",
+          "action": "submit", 
+          "actionBy": "quality_manager", 
+          "actionAt": "2022-06-20T14:30:00Z", 
+          "status": "PendingApproval", 
+          "remarks": "提交v2.5版本审批，优化质检流程" 
+        },
+        { 
+          "id": "ah-004-4",
+          "action": "approve", 
+          "actionBy": "director", 
+          "actionAt": "2022-06-21T09:00:00Z", 
+          "status": "Enabled", 
+          "remarks": "质检流程优化合理，同意生效" 
+        },
+        { 
+          "id": "ah-004-5",
+          "action": "archive", 
+          "actionBy": "admin", 
+          "actionAt": "2022-12-31T16:00:00Z", 
+          "status": "Archived", 
+          "remarks": "产品已停产，归档相关工艺路线" 
+        }
+      ],
       "createdBy": "admin",
       "createdAt": "2023-11-01T10:00:00Z",
       "updatedBy": "admin",
@@ -138,7 +198,16 @@ const generateRoutingsData = () => {
       "changelog": [
         { "version": "1.0", "user": "admin", "timestamp": "2024-01-05T10:00:00Z", "note": "初始创建并提交审批" }
       ],
-      "approvalHistory": [],
+      "approvalHistory": [
+        { 
+          "id": "ah-003-1",
+          "action": "submit", 
+          "actionBy": "admin", 
+          "actionAt": "2024-01-05T10:30:00Z", 
+          "status": "PendingApproval", 
+          "remarks": "提交特殊合金工艺路线审批，请重点关注热轧工序参数" 
+        }
+      ],
       "createdBy": "admin",
       "createdAt": "2024-01-05T10:00:00Z",
       "updatedBy": "admin",
@@ -262,4 +331,4 @@ const { v4: uuidv4 } = require('uuid') // 确保 uuidv4 在这里被引入
 module.exports = {
   generateRoutingsData,
   data: generateRoutingsData()
-} 
+}

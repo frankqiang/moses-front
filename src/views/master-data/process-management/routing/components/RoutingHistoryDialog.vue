@@ -428,7 +428,8 @@ export default {
         'submit': '提交审批',
         'approve': '批准',
         'reject': '驳回',
-        'withdraw': '撤回'
+        'withdraw': '撤回',
+        'archive': '归档'
       }
       return labelMap[action] || action
     },
@@ -443,7 +444,8 @@ export default {
         'submit': '已提交',
         'approve': '已批准',
         'reject': '已驳回',
-        'withdraw': '已撤回'
+        'withdraw': '已撤回',
+        'archive': '已归档'
       }
       return labelMap[action] || action
     },
@@ -458,7 +460,8 @@ export default {
         'submit': 'primary',
         'approve': 'success',
         'reject': 'danger',
-        'withdraw': 'warning'
+        'withdraw': 'warning',
+        'archive': 'info'
       }
       return typeMap[action] || 'info'
     },
@@ -470,6 +473,12 @@ export default {
      */
     getStatusTagType(status) {
       const typeMap = {
+        'Draft': 'info',
+        'PendingApproval': 'warning',
+        'Enabled': 'success',
+        'Rejected': 'danger',
+        'Archived': '',
+        // 兼容小写
         'draft': 'info',
         'pending': 'warning',
         'approved': 'success',
@@ -486,6 +495,12 @@ export default {
      */
     getStatusLabel(status) {
       const labelMap = {
+        'Draft': '草稿',
+        'PendingApproval': '待审批',
+        'Enabled': '已生效',
+        'Rejected': '已驳回',
+        'Archived': '已归档',
+        // 兼容小写
         'draft': '草稿',
         'pending': '待审批',
         'approved': '已批准',
@@ -535,7 +550,8 @@ export default {
         'submit': 'el-icon-upload',
         'approve': 'el-icon-check',
         'reject': 'el-icon-close',
-        'withdraw': 'el-icon-back'
+        'withdraw': 'el-icon-back',
+        'archive': 'el-icon-box'
       }
       return iconMap[action] || 'el-icon-info'
     }

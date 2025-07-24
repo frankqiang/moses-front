@@ -42,7 +42,13 @@ const ROUTES = {
   REJECT: `${BASE_PATH}/[a-zA-Z0-9_-]+/reject$`,
   
   // 归档
-  ARCHIVE: `${BASE_PATH}/[a-zA-Z0-9_-]+/archive$`
+  ARCHIVE: `${BASE_PATH}/[a-zA-Z0-9_-]+/archive$`,
+  
+  // 获取变更历史
+  HISTORY: `${BASE_PATH}/[a-zA-Z0-9_-]+/history$`,
+  
+  // 获取审批历史
+  APPROVAL_HISTORY: `${BASE_PATH}/[a-zA-Z0-9_-]+/approval-history$`
 }
 
 /**
@@ -447,6 +453,70 @@ const handlers = {
     
     // 成功反馈
     return success(newVersion, `工艺路线 "${existingRouting.name}" 的新版本 v${newVersion.version} 创建成功`, 201)
+  },
+
+  /**
+   * 获取工艺路线变更历史
+   * @param {Object} config - 请求配置
+   * @returns {Object} 响应对象
+   */
+  getRoutingHistory(config) {
+    // 从URL中提取ID
+    const id = config.url.split('/').slice(-2)[0]
+    
+    // 查找工艺路线
+    const routing = dataCache.find(r => r.id === id)
+    if (!routing) {
+      return error(ERROR_CODES.NOT_FOUND, `ID为 '${id}' 的工艺路线未找到`, 404)
+    }
+    
+    // 返回变更历史，如果没有则返回空数组
+    const changelog = routing.changelog || []
+    
+    // 格式化变更历史数据
+    const formattedChangelog = changelog.map(item => ({
+      id: item.id || uuidv4(),
+      type: item.type || 'update',
+      version: item.version,
+      timestamp: item.timestamp,
+      operator: item.user || item.operator || '系统',
+      description: item.note || item.description || '版本更新',
+      details: item.details || []
+    }))
+    
+    return success(formattedChangelog, '获取变更历史成功')
+  },
+
+  /**
+   * 获取工艺路线审批历史
+   * @param {Object} config - 请求配置
+   * @returns {Object} 响应对象
+   */
+  getRoutingApprovalHistory(config) {
+    // 从URL中提取ID
+    const id = config.url.split('/').slice(-2)[0]
+    
+    // 查找工艺路线
+    const routing = dataCache.find(r => r.id === id)
+    if (!routing) {
+      return error(ERROR_CODES.NOT_FOUND, `ID为 '${id}' 的工艺路线未找到`, 404)
+    }
+    
+    // 返回审批历史，如果没有则返回空数组
+    const approvalHistory = routing.approvalHistory || []
+    
+    // 格式化审批历史数据
+    const formattedApprovalHistory = approvalHistory.map(item => ({
+      id: item.id || uuidv4(),
+      action: item.action,
+      timestamp: item.actionAt || item.timestamp,
+      approver: item.actionBy || item.approver || '系统',
+      status: item.status,
+      comments: item.remarks || item.comments || '',
+      result: item.result || (item.action === 'approve' ? 'approved' : item.action === 'reject' ? 'rejected' : 'pending')
+    }))
+    
+    return success(formattedApprovalHistory, '获取审批历史成功')
   }
 }
 
@@ -494,6 +564,18 @@ module.exports = [
     url: ROUTES.ARCHIVE,
     type: 'post',
     response: config => handlers.archiveRouting(config)
+  },
+  // 获取变更历史
+  {
+    url: ROUTES.HISTORY,
+    type: 'get',
+    response: config => handlers.getRoutingHistory(config)
+  },
+  // 获取审批历史
+  {
+    url: ROUTES.APPROVAL_HISTORY,
+    type: 'get',
+    response: config => handlers.getRoutingApprovalHistory(config)
   },
   // 通用集合操作
   {
