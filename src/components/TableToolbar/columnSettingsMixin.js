@@ -212,9 +212,8 @@ export default {
     handleColumnChange(columns) {
       this.internalVisibleColumns = columns
       this.visibleColumns = columns
-      // 通过配置存储服务保存设置
+      // 通过配置存储服务保存设置 - 统一使用columnSettingsKey避免重复存储
       tableConfigStore.saveColumnConfig(this.columnSettingsKey, columns)
-      tableConfigStore.saveColumnConfig(this.tableStorageKey, columns)
     },
 
     // 处理多选变化
@@ -297,9 +296,9 @@ export default {
      * 初始化可见列
      */
     initVisibleColumns() {
-      // 从配置存储服务获取列设置
+      // 从配置存储服务获取列设置 - 统一使用columnSettingsKey
       this.visibleColumns = tableConfigStore.getColumnConfig(
-        this.tableStorageKey,
+        this.columnSettingsKey,
         this.computedDefaultVisibleColumns
       )
     },

@@ -45,6 +45,9 @@ if (process.env.NODE_ENV === 'production') {
   mockXHR()
 }
 
+// 导入存储清理初始化
+import initStorageCleanupAsync from '@/utils/init-storage-cleanup'
+
 // 开发环境下导入存储清理工具
 if (process.env.NODE_ENV === 'development') {
   import('@/utils/cleanup-duplicate-storage')
@@ -78,5 +81,9 @@ new Vue({
   el: '#app',
   router,
   store,
-  render: h => h(App)
+  render: h => h(App),
+  mounted() {
+    // 在应用挂载后初始化存储清理
+    initStorageCleanupAsync()
+  }
 })
