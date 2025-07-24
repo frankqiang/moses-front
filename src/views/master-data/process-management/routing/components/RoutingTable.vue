@@ -168,7 +168,8 @@ export default {
           label: '批量归档',
           type: 'warning',
           icon: 'el-icon-folder',
-          disabled: false
+          disabled: false,
+          successMessage: false // 禁用自动成功提示，由业务逻辑处理
         })
       }
       

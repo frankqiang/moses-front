@@ -153,12 +153,29 @@ export default {
       this.currentRouting = row
       this.formDrawerVisible = true
     },
+    /**
+     * 处理单个工艺路线删除操作
+     * @param {Object} row - 工艺路线数据行
+     * @description 根据文档要求，仅当工艺路线状态为"草稿"或"已归档"时才可删除
+     */
     handleDelete(row) {
-      this.$confirm(`确定要删除工艺路线 "${row.name}" 吗？`, '删除确认', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async() => {
+      // 状态校验：根据文档要求，仅当工艺路线的所有版本都处于"草稿"或"已归档"状态时才可删除
+      if (row.status !== 'Draft' && row.status !== 'Archived') {
+        this.$message.warning(
+          `无法删除该工艺路线，因为它处于"${this.getStatusText(row.status)}"状态。只有草稿或已归档状态的工艺路线才能删除。`
+        )
+        return
+      }
+      
+      this.$confirm(
+        `您确定要永久删除工艺路线 "${row.code} - ${row.name}" 吗？此操作不可恢复。`, 
+        '删除确认', 
+        {
+          confirmButtonText: '确定删除',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).then(async() => {
         try {
           const response = await deleteRouting(row.id)
           this.$message.success(response.message || '删除成功')
@@ -603,24 +620,64 @@ export default {
     /**
      * 处理批量删除操作
      * @param {Array} rows - 选中的工艺路线数据
+     * @description 根据文档要求，实现智能预检和分类确认对话框
      */
     async handleBatchDelete(rows) {
       if (!rows || rows.length === 0) {
         this.$message.warning('请至少选择一条记录')
         return
       }
-      
+      // 智能预检：检查所有选中的路线删除权限
+      const deletableRows = []
+      const undeletableRows = []
+
+      rows.forEach(row => {
+        // 根据文档要求：仅当工艺路线的所有版本都处于"草稿"或"已归档"状态时才可删除
+        // 如果存在任何"生效"或"待审批"的版本，则不可删除
+        if (row.status === 'Draft' || row.status === 'Archived') {
+          deletableRows.push(row)
+        } else {
+          undeletableRows.push(row)
+        }
+      })
+
+      // 分类确认对话框
+      let confirmMessage = ''
+      let confirmTitle = '批量删除确认'
+
+      if (undeletableRows.length === 0) {
+        // 所有选中路线均可删除
+        confirmMessage = `您确定要永久删除选中的 ${rows.length} 条工艺路线吗？此操作不可恢复。`
+      } else if (deletableRows.length === 0) {
+        // 所有选中路线均不可删除
+        this.$message.warning(
+          `选中的工艺路线无法删除，因为它们包含生效或待审批的版本。只有草稿或已归档状态的工艺路线才能删除。`
+        )
+        return
+      } else {
+        // 部分路线不可删除
+        const undeletableList = undeletableRows.map(row => `${row.code} - ${row.name} (${this.getStatusText(row.status)})`).join('\n')
+        confirmMessage = `以下 ${undeletableRows.length} 条路线无法删除，因为它们包含生效或待审批的版本：\n\n${undeletableList}\n\n是否继续删除剩余的 ${deletableRows.length} 条可删除路线？`
+        confirmTitle = '部分路线无法删除'
+      }
+
       try {
         await this.$confirm(
-          `确定要删除选中的 ${rows.length} 条工艺路线吗？此操作不可恢复。`,
-          '批量删除确认',
+          confirmMessage,
+          confirmTitle,
           {
-            confirmButtonText: '确定删除',
+            confirmButtonText: deletableRows.length > 0 ? '确定删除' : '我知道了',
             cancelButtonText: '取消',
-            type: 'warning'
+            type: 'warning',
+            dangerouslyUseHTMLString: true
           }
         )
-        
+
+        // 如果没有可删除的路线，直接返回
+        if (deletableRows.length === 0) {
+          return
+        }
+
         // 显示加载状态
         const loading = this.$loading({
           lock: true,
@@ -628,13 +685,18 @@ export default {
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
-        
+
         try {
-          // 批量删除API调用
-          const deletePromises = rows.map(row => deleteRouting(row.id))
+          // 仅删除符合条件的路线
+          const deletePromises = deletableRows.map(row => deleteRouting(row.id))
           await Promise.all(deletePromises)
-          
-          this.$message.success(`成功删除 ${rows.length} 条工艺路线`)
+
+          // 用户反馈
+          let successMessage = `${deletableRows.length} 条工艺路线已成功删除。`
+          if (undeletableRows.length > 0) {
+            successMessage += ` ${undeletableRows.length} 条路线因状态限制未删除。`
+          }
+          this.$message.success(successMessage)
           this.getList()
         } catch (error) {
           console.error('批量删除失败:', error)
@@ -647,6 +709,21 @@ export default {
         this.$message.info('已取消删除')
       }
     },
+
+    /**
+     * 获取状态文本
+     * @param {string} status - 状态值
+     * @returns {string} 状态文本
+     */
+    getStatusText(status) {
+      const statusMap = {
+        'Draft': '草稿',
+        'PendingApproval': '待审批',
+        'Enabled': '生效',
+        'Archived': '已归档'
+      }
+      return statusMap[status] || status
+    },
     /**
      * 处理批量归档操作
      * @param {Array} rows - 选中的工艺路线数据
@@ -656,14 +733,14 @@ export default {
         this.$message.warning('请至少选择一条记录')
         return
       }
-      
+
       // 检查所有选中项是否都是生效状态
       const invalidRows = rows.filter(row => row.status !== 'Enabled')
       if (invalidRows.length > 0) {
         this.$message.warning('只有生效状态的工艺路线才能归档')
         return
       }
-      
+
       try {
         await this.$confirm(
           `确定要归档选中的 ${rows.length} 条工艺路线吗？归档后将不再可用。`,
@@ -674,7 +751,7 @@ export default {
             type: 'warning'
           }
         )
-        
+
         // 显示加载状态
         const loading = this.$loading({
           lock: true,
@@ -682,12 +759,12 @@ export default {
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
-        
+
         try {
           // 批量归档API调用
           const archivePromises = rows.map(row => archiveRouting(row.id))
           await Promise.all(archivePromises)
-          
+
           this.$message.success(`成功归档 ${rows.length} 条工艺路线`)
           this.getList()
         } catch (error) {

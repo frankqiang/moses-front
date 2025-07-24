@@ -83,11 +83,12 @@ export const ROUTING_TYPE_RULES = {
 
 
 // 状态与可用操作的映射关系
+// 根据文档要求，删除操作仅在Draft和Archived状态下可用
 export const STATUS_ACTIONS_MAP = {
   Draft: ['view', 'edit', 'delete', 'submitApproval', 'history'],
   PendingApproval: ['view', 'approve', 'reject', 'history'],
   Enabled: ['view', 'newVersion', 'archive', 'history'],
-  Archived: ['view', 'history']
+  Archived: ['view', 'delete', 'history'] // 已归档状态也可以删除
 }
 
 
