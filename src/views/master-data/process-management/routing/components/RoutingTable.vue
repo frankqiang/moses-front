@@ -5,15 +5,25 @@
       :column-options="columnOptions"
       :storage-key="columnSettingsKey"
       :default-visible-columns="defaultVisibleColumns"
+      :enable-batch-actions="true"
+      :selected-rows="selectedRows"
       :enable-export="true"
       :export-api="exportApiFunction"
+      :export-params="exportParams"
+      :hide-status-buttons="true"
+      :delete-confirm="false"
+      :table-data="data"
+      :custom-actions="customBatchActions"
       @refresh="handleRefresh"
       @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete"
+      @custom-action="handleCustomBatchAction"
     >
       <template #toolbar-left>
         <action-buttons
           :buttons="toolbarButtons"
           mode="normal"
+          :show-tooltip="true"
           @click="handleToolbarAction"
         />
       </template>
@@ -59,6 +69,7 @@
           :buttons="generateActions(row)"
           :row="row"
           mode="text"
+          :show-tooltip="true"
           @click="handleActionClick"
         />
       </template>
@@ -133,14 +144,35 @@ export default {
       columnSettingsKeyPrefix: 'routing_columns',
       selectedRows: [],
       currentPage: this.page,
-      pageSize: this.limit
+      pageSize: this.limit,
+      // 导出参数
+      exportParams: {}
     }
   },
   computed: {
     statusTextMap() { return STATUS_CONFIG.textMap },
     statusTypeMap() { return STATUS_CONFIG.typeMap },
     toolbarButtons() {
-      return [{ action: 'add', text: '新建工艺路线', type: 'primary', icon: 'el-icon-plus' }]
+      return [
+        { action: 'add', text: '新建工艺路线', type: 'primary', icon: 'el-icon-plus' }
+      ]
+    },
+    customBatchActions() {
+      const actions = []
+      
+      // 批量归档操作 - 仅当选中的都是生效状态时显示
+      const enabledRows = this.selectedRows.filter(row => row.status === 'Enabled')
+      if (enabledRows.length > 0 && enabledRows.length === this.selectedRows.length) {
+        actions.push({
+          key: 'batchArchive',
+          label: '批量归档',
+          type: 'warning',
+          icon: 'el-icon-folder',
+          disabled: false
+        })
+      }
+      
+      return actions
     },
     columnOptions() { return TABLE_COLUMNS },
     defaultVisibleColumns() { return DEFAULT_VISIBLE_COLUMNS },
@@ -170,10 +202,22 @@ export default {
     this.allColumns = this.columnOptions
     this.loadColumnSettings()
     this.debouncedRefresh = debounce(() => this.$emit('refresh'), 300)
+    // 初始化导出参数
+    this.updateExportParams()
   },
   methods: {
+    /**
+     * 更新导出参数
+     */
+    updateExportParams() {
+      this.exportParams = {
+        // 导出时可以添加额外参数
+      }
+    },
     handleToolbarAction({ action }) {
-      if (action === 'add') this.$emit('add')
+      if (action === 'add') {
+        this.$emit('add')
+      }
     },
     handleRefresh() {
       this.debouncedRefresh()
@@ -189,6 +233,38 @@ export default {
     },
     handleActionClick(payload) {
       this.$emit(payload.action, payload.row)
+    },
+    /**
+     * 处理批量删除操作
+     * @param {Array} rows - 选中的工艺路线数据
+     */
+    handleBatchDelete(rows) {
+      if (!rows || rows.length === 0) {
+        this.$message.warning('请至少选择一条记录')
+        return
+      }
+      this.$emit('batch-delete', rows)
+    },
+    /**
+     * 处理自定义批量操作
+     * @param {Object} action - 批量操作配置
+     * @param {Array} rows - 选中的工艺路线数据
+     */
+    handleCustomBatchAction(action, rows) {
+      if (action.key === 'batchArchive') {
+        this.handleBatchArchive(rows)
+      }
+    },
+    /**
+     * 处理批量归档操作
+     * @param {Array} rows - 选中的工艺路线数据
+     */
+    handleBatchArchive(rows) {
+      if (!rows || rows.length === 0) {
+        this.$message.warning('请至少选择一条记录')
+        return
+      }
+      this.$emit('batch-archive', rows)
     },
     getTypeLabel(type) {
       const option = ROUTING_TYPE_OPTIONS.find(opt => opt.value === type)

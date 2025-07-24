@@ -99,11 +99,12 @@ export const TABLE_COLUMNS = [
     minWidth: 230,
     fixed: 'right',
     align: 'center',
-    slotName: 'actions'
+    slotName: 'actions',
+    showOverflowTooltip: false
   }
 ]
 
 // 默认可见列
 export const DEFAULT_VISIBLE_COLUMNS = [
   'code', 'name', 'version', 'status', 'type', 'applicableProducts', 'createdBy', 'createdAt', 'actions'
-] 
+]

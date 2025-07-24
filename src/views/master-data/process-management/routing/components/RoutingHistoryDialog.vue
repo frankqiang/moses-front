@@ -12,11 +12,12 @@
     width="1000px"
     direction="rtl"
     :before-close="handleClose"
+    :show-footer="false"
     class="routing-history-drawer"
     @close="handleClose"
   >
     <!-- 抽屉头部自定义内容 -->
-    <template #header>
+    <template #title>
       <div class="drawer-title">
         <div class="title-content">
           <i class="el-icon-time title-icon" />
@@ -586,6 +587,8 @@ export default {
     }
 
     .title-actions {
+      margin-right: 30px;
+      
       .el-button {
         padding: 6px 12px;
         font-size: 13px;

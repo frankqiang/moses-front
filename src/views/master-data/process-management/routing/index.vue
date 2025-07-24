@@ -24,6 +24,8 @@
       @newVersion="handleNewVersion"
       @refresh="getList"
       @history="handleHistory"
+      @batch-delete="handleBatchDelete"
+      @batch-archive="handleBatchArchive"
     />
 
     <!-- 工艺路线表单抽屉 -->
@@ -597,6 +599,107 @@ export default {
     },
     handleFormClose() {
       this.currentRouting = null
+    },
+    /**
+     * 处理批量删除操作
+     * @param {Array} rows - 选中的工艺路线数据
+     */
+    async handleBatchDelete(rows) {
+      if (!rows || rows.length === 0) {
+        this.$message.warning('请至少选择一条记录')
+        return
+      }
+      
+      try {
+        await this.$confirm(
+          `确定要删除选中的 ${rows.length} 条工艺路线吗？此操作不可恢复。`,
+          '批量删除确认',
+          {
+            confirmButtonText: '确定删除',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
+        
+        // 显示加载状态
+        const loading = this.$loading({
+          lock: true,
+          text: '正在删除...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        })
+        
+        try {
+          // 批量删除API调用
+          const deletePromises = rows.map(row => deleteRouting(row.id))
+          await Promise.all(deletePromises)
+          
+          this.$message.success(`成功删除 ${rows.length} 条工艺路线`)
+          this.getList()
+        } catch (error) {
+          console.error('批量删除失败:', error)
+          const errorMessage = error.response?.data?.message || error.message || '批量删除失败，请稍后重试'
+          this.$message.error(errorMessage)
+        } finally {
+          loading.close()
+        }
+      } catch {
+        this.$message.info('已取消删除')
+      }
+    },
+    /**
+     * 处理批量归档操作
+     * @param {Array} rows - 选中的工艺路线数据
+     */
+    async handleBatchArchive(rows) {
+      if (!rows || rows.length === 0) {
+        this.$message.warning('请至少选择一条记录')
+        return
+      }
+      
+      // 检查所有选中项是否都是生效状态
+      const invalidRows = rows.filter(row => row.status !== 'Enabled')
+      if (invalidRows.length > 0) {
+        this.$message.warning('只有生效状态的工艺路线才能归档')
+        return
+      }
+      
+      try {
+        await this.$confirm(
+          `确定要归档选中的 ${rows.length} 条工艺路线吗？归档后将不再可用。`,
+          '批量归档确认',
+          {
+            confirmButtonText: '确定归档',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
+        
+        // 显示加载状态
+        const loading = this.$loading({
+          lock: true,
+          text: '正在归档...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        })
+        
+        try {
+          // 批量归档API调用
+          const archivePromises = rows.map(row => archiveRouting(row.id))
+          await Promise.all(archivePromises)
+          
+          this.$message.success(`成功归档 ${rows.length} 条工艺路线`)
+          this.getList()
+        } catch (error) {
+          console.error('批量归档失败:', error)
+          const errorMessage = error.response?.data?.message || error.message || '批量归档失败，请稍后重试'
+          this.$message.error(errorMessage)
+        } finally {
+          loading.close()
+        }
+      } catch {
+        this.$message.info('已取消归档')
+      }
     }
   }
 }

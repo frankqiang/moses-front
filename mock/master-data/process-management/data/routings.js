@@ -85,8 +85,9 @@ const generateRoutingsData = () => {
         }
       ],
       "changelog": [
-        { "version": "1.2", "user": "li_guan", "timestamp": "2023-10-20T11:00:00Z", "note": "增加返工流程并审批通过" },
-        { "version": "2.0", "user": "admin", "timestamp": "2024-05-18T16:00:00Z", "note": "升级至新版数据结构，支持动态时间配置" }
+        { "type": "create", "version": "1.0", "user": "admin", "timestamp": "2023-10-01T10:00:00Z", "note": "初始创建工艺路线" },
+        { "type": "update", "version": "1.2", "user": "li_guan", "timestamp": "2023-10-20T11:00:00Z", "note": "增加返工流程并审批通过" },
+        { "type": "version", "version": "2.0", "user": "admin", "timestamp": "2024-05-18T16:00:00Z", "note": "升级至新版数据结构，支持动态时间配置" }
       ],
       "approvalHistory": [
         { 
@@ -121,9 +122,10 @@ const generateRoutingsData = () => {
       "applicableProducts": ["P-1235-DZ"],
       "steps": [],
       "changelog": [
-        { "version": "1.0", "user": "system", "timestamp": "2022-01-01T00:00:00Z", "note": "初始创建" },
-        { "version": "2.0", "user": "process_engineer", "timestamp": "2022-03-15T09:00:00Z", "note": "更新工艺参数" },
-        { "version": "2.5", "user": "quality_manager", "timestamp": "2022-06-20T14:00:00Z", "note": "优化质检流程" }
+        { "type": "create", "version": "1.0", "user": "system", "timestamp": "2022-01-01T00:00:00Z", "note": "初始创建" },
+        { "type": "update", "version": "2.0", "user": "process_engineer", "timestamp": "2022-03-15T09:00:00Z", "note": "更新工艺参数" },
+        { "type": "version", "version": "2.5", "user": "quality_manager", "timestamp": "2022-06-20T14:00:00Z", "note": "优化质检流程" },
+        { "type": "delete", "version": "2.6", "user": "admin", "timestamp": "2022-12-31T15:30:00Z", "note": "删除过时的工序步骤" }
       ],
       "approvalHistory": [
         { 
@@ -196,7 +198,7 @@ const generateRoutingsData = () => {
         }
       ],
       "changelog": [
-        { "version": "1.0", "user": "admin", "timestamp": "2024-01-05T10:00:00Z", "note": "初始创建并提交审批" }
+        { "type": "create", "version": "1.0", "user": "admin", "timestamp": "2024-01-05T10:00:00Z", "note": "初始创建并提交审批" }
       ],
       "approvalHistory": [
         { 

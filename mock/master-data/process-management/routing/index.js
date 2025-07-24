@@ -155,6 +155,28 @@ const handlers = {
     return success(dataCache[index], '工艺路线更新成功')
   },
 
+  /**
+   * 删除工艺路线
+   * @param {Object} config - 请求配置
+   * @returns {Object} 响应对象
+   */
+  delete(config) {
+    const id = config.url.split('/').pop()
+    
+    const index = dataCache.findIndex(r => r.id === id)
+    
+    if (index === -1) {
+      return error(ERROR_CODES.NOT_FOUND, `ID为 '${id}' 的工艺路线未找到`, 404)
+    }
+    
+    const routing = dataCache[index]
+    
+    // 删除数据
+    dataCache.splice(index, 1)
+    
+    return success(null, `工艺路线 "${routing.name}" 删除成功`)
+  },
+
   // 新增：检查路线代码唯一性
   checkCodeUnique(config) {
     const { code } = config.query
@@ -597,6 +619,6 @@ module.exports = [
   {
     url: ROUTES.ITEM_DETAIL,
     type: 'delete',
-    response: config => handlers.deleteRouting(config) // 注意：这里使用了错误的函数名，应为 handlers.delete
+    response: config => handlers.delete(config)
   }
 ]
