@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<memory>
+  <item id="mem_1753431394960_ha1rp4xz1" time="2025/07/25 16:16">
+    <content>
+      Git提交消息规范文档内容：
+    
+      格式要求：&lt;类型&gt;([可选范围]): &lt;简短描述&gt;
+    
+      类型标识：feat(新功能)、fix(修复bug)、docs(文档)、style(格式)、refactor(重构)、perf(性能)、test(测试)、chore(构建/工具)
+    
+      范围推荐：routing(工艺路线)、process-management(工序管理)、mock(Mock数据)、component(组件)、router(路由)、form(表单)、table(表格)、api(接口)等
+    
+      描述规范：使用中文、动词开头现在时、不以句号结尾、简洁明了
+    
+      提交前检查清单：格式正确性、范围标识、代码质量、类型定义、代码规范、功能完整性、错误处理、测试覆盖、本地工具检查、提交内容相关性等
+    
+      示例：feat(routing): 为工序选择模态框添加分页功能
+    </content>
+    <tags>#工具使用</tags>
+  </item>
+</memory>
