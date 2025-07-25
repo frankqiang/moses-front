@@ -1,676 +1,1023 @@
 # 后端开发专业知识
 
-## 知识库标识
-- **知识ID**: backend-development-specifics
-- **适用角色**: backend-developer
-- **知识类型**: 技术专业知识
-- **应用场景**: 后端开发、系统设计、技术决策
+## Node.js核心技术
 
-## 项目特定约束
+### 1. Node.js基础架构
 
-### 技术栈约束
-- **开发语言**: Java 8+ (推荐Java 11)
-- **框架**: Spring Boot 2.7.x + Spring Security
-- **数据库**: MySQL 8.0 + MyBatis Plus
-- **缓存**: Redis 6.x
-- **消息队列**: RabbitMQ 3.x
-- **构建工具**: Maven 3.6+
-- **容器化**: Docker + Docker Compose
+#### 事件循环机制
+```javascript
+// 事件循环阶段示例
+console.log('1: 同步代码')
 
-### 项目结构约束
-```
-src/main/java/
-├── com.company.admin/
-│   ├── config/          # 配置类
-│   ├── controller/      # 控制器层
-│   ├── service/         # 服务层
-│   │   └── impl/        # 服务实现
-│   ├── mapper/          # 数据访问层
-│   ├── entity/          # 实体类
-│   ├── dto/             # 数据传输对象
-│   ├── vo/              # 视图对象
-│   ├── common/          # 公共组件
-│   │   ├── exception/   # 异常处理
-│   │   ├── utils/       # 工具类
-│   │   └── constants/   # 常量定义
-│   └── AdminApplication.java
+setImmediate(() => {
+  console.log('2: setImmediate')
+})
+
+process.nextTick(() => {
+  console.log('3: process.nextTick')
+})
+
+setTimeout(() => {
+  console.log('4: setTimeout')
+}, 0)
+
+Promise.resolve().then(() => {
+  console.log('5: Promise.resolve')
+})
+
+console.log('6: 同步代码结束')
+
+// 输出顺序: 1 -> 6 -> 3 -> 5 -> 4 -> 2
 ```
 
-### 代码规范约束
-- **命名规范**:
-  - 类名: PascalCase (如: UserService)
-  - 方法名: camelCase (如: getUserById)
-  - 常量名: UPPER_SNAKE_CASE (如: MAX_RETRY_COUNT)
-  - 包名: 全小写 (如: com.company.admin.service)
+#### 流(Streams)处理
+```javascript
+const fs = require('fs')
+const { Transform } = require('stream')
 
-## Spring Boot开发特性
+// 创建转换流
+const upperCaseTransform = new Transform({
+  transform(chunk, encoding, callback) {
+    this.push(chunk.toString().toUpperCase())
+    callback()
+  }
+})
 
-### 项目配置结构
-```yaml
-# application.yml
-spring:
-  profiles:
-    active: dev
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/admin_db?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:password}
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
-    database: 0
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+// 流式文件处理
+fs.createReadStream('input.txt')
+  .pipe(upperCaseTransform)
+  .pipe(fs.createWriteStream('output.txt'))
+  .on('finish', () => {
+    console.log('文件处理完成')
+  })
 
-mybatis-plus:
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-```
-
-### 统一响应格式
-```java
-/**
- * 统一API响应格式
- */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class ApiResponse<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+// 处理大文件的内存友好方式
+const processLargeFile = (filePath) => {
+  return new Promise((resolve, reject) => {
+    const readStream = fs.createReadStream(filePath, { highWaterMark: 16 * 1024 })
+    let lineCount = 0
+    let buffer = ''
     
-    public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(200, "操作成功", data, System.currentTimeMillis());
-    }
+    readStream.on('data', (chunk) => {
+      buffer += chunk.toString()
+      const lines = buffer.split('\n')
+      buffer = lines.pop() // 保留不完整的行
+      
+      lineCount += lines.length
+    })
     
-    public static <T> ApiResponse<T> error(Integer code, String message) {
-        return new ApiResponse<>(code, message, null, System.currentTimeMillis());
-    }
+    readStream.on('end', () => {
+      if (buffer.length > 0) lineCount++ // 处理最后一行
+      resolve(lineCount)
+    })
+    
+    readStream.on('error', reject)
+  })
 }
 ```
 
-### 异常处理机制
-```java
-/**
- * 全局异常处理器
- */
-@RestControllerAdvice
-@Slf4j
-public class GlobalExceptionHandler {
+### 2. Express.js框架深度应用
+
+#### 高级中间件模式
+```javascript
+const express = require('express')
+const app = express()
+
+// 错误处理中间件
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next)
+}
+
+// 请求限流中间件
+const rateLimit = require('express-rate-limit')
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15分钟
+  max: 100, // 限制每个IP 100次请求
+  message: {
+    code: 429,
+    message: '请求过于频繁，请稍后再试'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
+// 请求日志中间件
+const requestLogger = (req, res, next) => {
+  const start = Date.now()
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start
+    console.log(`${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`)
+  })
+  
+  next()
+}
+
+// 应用中间件
+app.use(requestLogger)
+app.use('/api/', limiter)
+
+// 路由处理
+app.get('/api/users/:id', asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const user = await User.findByPk(id)
+  
+  if (!user) {
+    return res.status(404).json({
+      code: 404,
+      message: '用户不存在'
+    })
+  }
+  
+  res.json({
+    code: 200,
+    data: user
+  })
+}))
+
+// 全局错误处理
+app.use((error, req, res, next) => {
+  console.error('Error:', error)
+  
+  if (error.name === 'ValidationError') {
+    return res.status(400).json({
+      code: 400,
+      message: '数据验证失败',
+      errors: error.errors
+    })
+  }
+  
+  res.status(500).json({
+    code: 500,
+    message: '服务器内部错误'
+  })
+})
+```
+
+#### RESTful API设计模式
+```javascript
+// controllers/baseController.js
+class BaseController {
+  constructor(service) {
+    this.service = service
+  }
+  
+  // 通用CRUD操作
+  getAll = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, ...filters } = req.query
+    const result = await this.service.findAll({
+      page: parseInt(page),
+      limit: parseInt(limit),
+      filters
+    })
     
-    @ExceptionHandler(BusinessException.class)
-    public ApiResponse<Void> handleBusinessException(BusinessException e) {
-        log.warn("业务异常: {}", e.getMessage());
-        return ApiResponse.error(e.getCode(), e.getMessage());
+    res.json({
+      code: 200,
+      data: result.data,
+      pagination: result.pagination
+    })
+  })
+  
+  getById = asyncHandler(async (req, res) => {
+    const { id } = req.params
+    const item = await this.service.findById(id)
+    
+    if (!item) {
+      return res.status(404).json({
+        code: 404,
+        message: '资源不存在'
+      })
     }
     
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ApiResponse<Void> handleValidationException(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getFieldError().getDefaultMessage();
-        log.warn("参数验证异常: {}", message);
-        return ApiResponse.error(400, message);
-    }
+    res.json({
+      code: 200,
+      data: item
+    })
+  })
+  
+  create = asyncHandler(async (req, res) => {
+    const item = await this.service.create(req.body)
     
-    @ExceptionHandler(Exception.class)
-    public ApiResponse<Void> handleException(Exception e) {
-        log.error("系统异常", e);
-        return ApiResponse.error(500, "系统内部错误");
+    res.status(201).json({
+      code: 201,
+      message: '创建成功',
+      data: item
+    })
+  })
+  
+  update = asyncHandler(async (req, res) => {
+    const { id } = req.params
+    const item = await this.service.update(id, req.body)
+    
+    res.json({
+      code: 200,
+      message: '更新成功',
+      data: item
+    })
+  })
+  
+  delete = asyncHandler(async (req, res) => {
+    const { id } = req.params
+    await this.service.delete(id)
+    
+    res.status(204).send()
+  })
+}
+
+module.exports = BaseController
+```
+
+### 3. 数据库技术
+
+#### Sequelize ORM高级用法
+```javascript
+// models/associations.js
+const User = require('./User')
+const Post = require('./Post')
+const Comment = require('./Comment')
+const Tag = require('./Tag')
+const PostTag = require('./PostTag')
+
+// 定义关联关系
+User.hasMany(Post, { foreignKey: 'authorId', as: 'posts' })
+Post.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
+
+Post.hasMany(Comment, { foreignKey: 'postId', as: 'comments' })
+Comment.belongsTo(Post, { foreignKey: 'postId', as: 'post' })
+Comment.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
+
+// 多对多关系
+Post.belongsToMany(Tag, {
+  through: PostTag,
+  foreignKey: 'postId',
+  otherKey: 'tagId',
+  as: 'tags'
+})
+Tag.belongsToMany(Post, {
+  through: PostTag,
+  foreignKey: 'tagId',
+  otherKey: 'postId',
+  as: 'posts'
+})
+
+// 复杂查询示例
+const getPostsWithDetails = async (options = {}) => {
+  const { page = 1, limit = 10, authorId, tagIds } = options
+  
+  const whereClause = {}
+  if (authorId) whereClause.authorId = authorId
+  
+  const includeClause = [
+    {
+      model: User,
+      as: 'author',
+      attributes: ['id', 'username', 'avatar']
+    },
+    {
+      model: Comment,
+      as: 'comments',
+      include: [{
+        model: User,
+        as: 'author',
+        attributes: ['id', 'username']
+      }],
+      limit: 5,
+      order: [['createdAt', 'DESC']]
+    },
+    {
+      model: Tag,
+      as: 'tags',
+      attributes: ['id', 'name', 'color'],
+      through: { attributes: [] } // 排除中间表字段
     }
+  ]
+  
+  // 标签过滤
+  if (tagIds && tagIds.length > 0) {
+    includeClause[2].where = {
+      id: { [Op.in]: tagIds }
+    }
+  }
+  
+  const { count, rows } = await Post.findAndCountAll({
+    where: whereClause,
+    include: includeClause,
+    limit,
+    offset: (page - 1) * limit,
+    order: [['createdAt', 'DESC']],
+    distinct: true // 避免JOIN导致的重复计数
+  })
+  
+  return {
+    data: rows,
+    pagination: {
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit)
+    }
+  }
 }
 ```
 
-## 数据库设计规范
+#### 数据库事务处理
+```javascript
+const { sequelize } = require('../config/database')
 
-### 表结构设计
-```sql
--- 基础表结构模板
-CREATE TABLE `sys_user` (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `username` varchar(50) NOT NULL COMMENT '用户名',
-  `password` varchar(100) NOT NULL COMMENT '密码',
-  `email` varchar(100) DEFAULT NULL COMMENT '邮箱',
-  `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
-  `status` tinyint DEFAULT '1' COMMENT '状态(0:禁用,1:启用)',
-  `deleted` tinyint DEFAULT '0' COMMENT '删除标记(0:未删除,1:已删除)',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `create_by` bigint DEFAULT NULL COMMENT '创建人',
-  `update_by` bigint DEFAULT NULL COMMENT '更新人',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_username` (`username`),
-  KEY `idx_status` (`status`),
-  KEY `idx_create_time` (`create_time`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
-```
-
-### MyBatis Plus配置
-```java
-/**
- * MyBatis Plus配置
- */
-@Configuration
-public class MybatisPlusConfig {
+// 手动事务管理
+const transferMoney = async (fromUserId, toUserId, amount) => {
+  const transaction = await sequelize.transaction()
+  
+  try {
+    // 检查余额
+    const fromUser = await User.findByPk(fromUserId, {
+      lock: transaction.LOCK.UPDATE,
+      transaction
+    })
     
-    /**
-     * 分页插件
-     */
-    @Bean
-    public MybatisPlusInterceptor mybatisPlusInterceptor() {
-        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
-        return interceptor;
+    if (fromUser.balance < amount) {
+      throw new Error('余额不足')
     }
     
-    /**
-     * 自动填充配置
-     */
-    @Bean
-    public MetaObjectHandler metaObjectHandler() {
-        return new MetaObjectHandler() {
-            @Override
-            public void insertFill(MetaObject metaObject) {
-                this.strictInsertFill(metaObject, "createTime", LocalDateTime.class, LocalDateTime.now());
-                this.strictInsertFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
-            }
-            
-            @Override
-            public void updateFill(MetaObject metaObject) {
-                this.strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
-            }
-        };
-    }
+    // 扣除发送方余额
+    await fromUser.update(
+      { balance: fromUser.balance - amount },
+      { transaction }
+    )
+    
+    // 增加接收方余额
+    const toUser = await User.findByPk(toUserId, {
+      lock: transaction.LOCK.UPDATE,
+      transaction
+    })
+    
+    await toUser.update(
+      { balance: toUser.balance + amount },
+      { transaction }
+    )
+    
+    // 记录转账记录
+    await Transaction.create({
+      fromUserId,
+      toUserId,
+      amount,
+      type: 'transfer',
+      status: 'completed'
+    }, { transaction })
+    
+    await transaction.commit()
+    return { success: true, message: '转账成功' }
+  } catch (error) {
+    await transaction.rollback()
+    throw error
+  }
+}
+
+// 自动事务管理
+const createUserWithProfile = async (userData, profileData) => {
+  return await sequelize.transaction(async (t) => {
+    const user = await User.create(userData, { transaction: t })
+    
+    const profile = await Profile.create({
+      ...profileData,
+      userId: user.id
+    }, { transaction: t })
+    
+    return { user, profile }
+  })
 }
 ```
 
-## 权限认证系统
+### 4. 缓存策略
 
-### JWT认证配置
-```java
-/**
- * JWT工具类
- */
-@Component
-@Slf4j
-public class JwtUtils {
+#### Redis缓存模式
+```javascript
+const redis = require('redis')
+const client = redis.createClient({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD
+})
+
+// 缓存装饰器
+const cache = (ttl = 300) => {
+  return (target, propertyName, descriptor) => {
+    const method = descriptor.value
     
-    @Value("${jwt.secret:mySecret}")
-    private String secret;
-    
-    @Value("${jwt.expiration:86400}")
-    private Long expiration;
-    
-    /**
-     * 生成JWT Token
-     */
-    public String generateToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("username", userDetails.getUsername());
-        return createToken(claims, userDetails.getUsername());
+    descriptor.value = async function(...args) {
+      const cacheKey = `${target.constructor.name}:${propertyName}:${JSON.stringify(args)}`
+      
+      // 尝试从缓存获取
+      const cached = await client.get(cacheKey)
+      if (cached) {
+        return JSON.parse(cached)
+      }
+      
+      // 执行原方法
+      const result = await method.apply(this, args)
+      
+      // 缓存结果
+      await client.setex(cacheKey, ttl, JSON.stringify(result))
+      
+      return result
     }
+  }
+}
+
+// 使用缓存装饰器
+class UserService {
+  @cache(600) // 缓存10分钟
+  async getUserProfile(userId) {
+    const user = await User.findByPk(userId, {
+      include: ['profile', 'posts']
+    })
+    return user
+  }
+  
+  // 缓存失效模式
+  async updateUser(userId, data) {
+    const user = await User.update(data, {
+      where: { id: userId },
+      returning: true
+    })
     
-    /**
-     * 验证Token
-     */
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    }
+    // 清除相关缓存
+    await this.clearUserCache(userId)
     
-    private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
-                .signWith(SignatureAlgorithm.HS512, secret)
-                .compact();
+    return user
+  }
+  
+  async clearUserCache(userId) {
+    const pattern = `UserService:getUserProfile:*${userId}*`
+    const keys = await client.keys(pattern)
+    if (keys.length > 0) {
+      await client.del(keys)
     }
+  }
+}
+
+// 分布式锁实现
+class DistributedLock {
+  constructor(redis, key, ttl = 10000) {
+    this.redis = redis
+    this.key = `lock:${key}`
+    this.ttl = ttl
+    this.value = `${Date.now()}-${Math.random()}`
+  }
+  
+  async acquire() {
+    const result = await this.redis.set(
+      this.key,
+      this.value,
+      'PX',
+      this.ttl,
+      'NX'
+    )
+    return result === 'OK'
+  }
+  
+  async release() {
+    const script = `
+      if redis.call('get', KEYS[1]) == ARGV[1] then
+        return redis.call('del', KEYS[1])
+      else
+        return 0
+      end
+    `
+    return await this.redis.eval(script, 1, this.key, this.value)
+  }
+}
+
+// 使用分布式锁
+const processUniqueTask = async (taskId) => {
+  const lock = new DistributedLock(client, `task:${taskId}`)
+  
+  if (await lock.acquire()) {
+    try {
+      // 执行任务逻辑
+      console.log(`处理任务 ${taskId}`)
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    } finally {
+      await lock.release()
+    }
+  } else {
+    console.log(`任务 ${taskId} 正在被其他进程处理`)
+  }
 }
 ```
 
-### 权限控制注解
-```java
-/**
- * 权限控制注解
- */
-@Target({ElementType.METHOD, ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface RequiresPermissions {
-    String[] value() default {};
-    Logical logical() default Logical.AND;
-}
+### 5. 认证与授权
 
-/**
- * 权限检查切面
- */
-@Aspect
-@Component
-@Slf4j
-public class PermissionAspect {
+#### JWT认证实现
+```javascript
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
+const crypto = require('crypto')
+
+class AuthService {
+  // 用户注册
+  async register(userData) {
+    const { username, email, password } = userData
     
-    @Around("@annotation(requiresPermissions)")
-    public Object checkPermission(ProceedingJoinPoint joinPoint, RequiresPermissions requiresPermissions) throws Throwable {
-        // 获取当前用户
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UnauthorizedException("用户未登录");
+    // 检查用户是否已存在
+    const existingUser = await User.findOne({
+      where: {
+        [Op.or]: [{ username }, { email }]
+      }
+    })
+    
+    if (existingUser) {
+      throw new Error('用户名或邮箱已存在')
+    }
+    
+    // 密码加密
+    const saltRounds = 12
+    const hashedPassword = await bcrypt.hash(password, saltRounds)
+    
+    // 创建用户
+    const user = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      emailVerificationToken: crypto.randomBytes(32).toString('hex')
+    })
+    
+    // 发送验证邮件
+    await this.sendVerificationEmail(user)
+    
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email
+    }
+  }
+  
+  // 用户登录
+  async login(email, password) {
+    const user = await User.findOne({
+      where: { email },
+      include: ['roles']
+    })
+    
+    if (!user) {
+      throw new Error('用户不存在')
+    }
+    
+    if (!user.emailVerified) {
+      throw new Error('请先验证邮箱')
+    }
+    
+    // 验证密码
+    const isValidPassword = await bcrypt.compare(password, user.password)
+    if (!isValidPassword) {
+      throw new Error('密码错误')
+    }
+    
+    // 生成JWT令牌
+    const payload = {
+      userId: user.id,
+      username: user.username,
+      roles: user.roles.map(role => role.name)
+    }
+    
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: '15m'
+    })
+    
+    const refreshToken = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: '7d' }
+    )
+    
+    // 保存刷新令牌
+    await RefreshToken.create({
+      token: refreshToken,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    })
+    
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        roles: user.roles
+      }
+    }
+  }
+  
+  // 刷新令牌
+  async refreshToken(refreshToken) {
+    try {
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
+      
+      const tokenRecord = await RefreshToken.findOne({
+        where: {
+          token: refreshToken,
+          userId: decoded.userId,
+          expiresAt: { [Op.gt]: new Date() }
         }
-        
-        // 检查权限
-        String[] permissions = requiresPermissions.value();
-        if (permissions.length > 0) {
-            boolean hasPermission = checkUserPermissions(authentication, permissions, requiresPermissions.logical());
-            if (!hasPermission) {
-                throw new ForbiddenException("权限不足");
-            }
+      })
+      
+      if (!tokenRecord) {
+        throw new Error('刷新令牌无效')
+      }
+      
+      const user = await User.findByPk(decoded.userId, {
+        include: ['roles']
+      })
+      
+      const payload = {
+        userId: user.id,
+        username: user.username,
+        roles: user.roles.map(role => role.name)
+      }
+      
+      const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: '15m'
+      })
+      
+      return { accessToken: newAccessToken }
+    } catch (error) {
+      throw new Error('刷新令牌无效')
+    }
+  }
+}
+```
+
+#### RBAC权限控制
+```javascript
+// models/Role.js
+const Role = sequelize.define('Role', {
+  name: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true
+  },
+  description: {
+    type: DataTypes.TEXT
+  },
+  permissions: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  }
+})
+
+// models/Permission.js
+const Permission = sequelize.define('Permission', {
+  resource: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  action: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  conditions: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  }
+})
+
+// 权限检查服务
+class PermissionService {
+  // 检查用户权限
+  async checkPermission(userId, resource, action, context = {}) {
+    const user = await User.findByPk(userId, {
+      include: [{
+        model: Role,
+        include: [Permission]
+      }]
+    })
+    
+    if (!user) return false
+    
+    // 检查用户角色权限
+    for (const role of user.roles) {
+      for (const permission of role.permissions) {
+        if (permission.resource === resource && permission.action === action) {
+          // 检查条件
+          if (this.evaluateConditions(permission.conditions, context)) {
+            return true
+          }
         }
-        
-        return joinPoint.proceed();
+      }
     }
+    
+    return false
+  }
+  
+  // 评估权限条件
+  evaluateConditions(conditions, context) {
+    if (!conditions || Object.keys(conditions).length === 0) {
+      return true
+    }
+    
+    for (const [key, value] of Object.entries(conditions)) {
+      if (context[key] !== value) {
+        return false
+      }
+    }
+    
+    return true
+  }
+  
+  // 获取用户权限列表
+  async getUserPermissions(userId) {
+    const user = await User.findByPk(userId, {
+      include: [{
+        model: Role,
+        include: [Permission]
+      }]
+    })
+    
+    const permissions = new Set()
+    
+    user.roles.forEach(role => {
+      role.permissions.forEach(permission => {
+        permissions.add(`${permission.resource}:${permission.action}`)
+      })
+    })
+    
+    return Array.from(permissions)
+  }
 }
 ```
 
-## 缓存策略
+### 6. 性能优化技术
 
-### Redis缓存配置
-```java
-/**
- * Redis缓存配置
- */
-@Configuration
-@EnableCaching
-public class RedisConfig {
+#### 数据库查询优化
+```javascript
+// 查询优化示例
+class OptimizedUserService {
+  // 使用索引优化查询
+  async findUsersByStatus(status, page = 1, limit = 10) {
+    // 确保status字段有索引
+    return await User.findAndCountAll({
+      where: { status },
+      limit,
+      offset: (page - 1) * limit,
+      order: [['createdAt', 'DESC']],
+      attributes: ['id', 'username', 'email', 'status'], // 只选择需要的字段
+    })
+  }
+  
+  // 批量查询优化
+  async getUsersWithPosts(userIds) {
+    // 避免N+1查询问题
+    const users = await User.findAll({
+      where: { id: { [Op.in]: userIds } },
+      include: [{
+        model: Post,
+        as: 'posts',
+        limit: 5,
+        order: [['createdAt', 'DESC']]
+      }]
+    })
     
-    @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        
-        // 设置序列化器
-        Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(Object.class);
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        mapper.activateDefaultTyping(LazyLoadingEnabled.LAZY_LOADING_ENABLED, ObjectMapper.DefaultTyping.NON_FINAL);
-        serializer.setObjectMapper(mapper);
-        
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(serializer);
-        
-        template.afterPropertiesSet();
-        return template;
-    }
+    return users
+  }
+  
+  // 使用原生SQL进行复杂查询
+  async getTopActiveUsers(limit = 10) {
+    const [results] = await sequelize.query(`
+      SELECT 
+        u.id,
+        u.username,
+        COUNT(p.id) as post_count,
+        COUNT(c.id) as comment_count,
+        (COUNT(p.id) * 2 + COUNT(c.id)) as activity_score
+      FROM users u
+      LEFT JOIN posts p ON u.id = p.author_id
+      LEFT JOIN comments c ON u.id = c.author_id
+      WHERE u.status = 'active'
+      GROUP BY u.id, u.username
+      ORDER BY activity_score DESC
+      LIMIT :limit
+    `, {
+      replacements: { limit },
+      type: QueryTypes.SELECT
+    })
     
-    @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(30))
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
-        
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(config)
-                .build();
-    }
+    return results
+  }
 }
 ```
 
-### 缓存使用示例
-```java
-/**
- * 用户服务实现
- */
-@Service
-@Slf4j
-public class UserServiceImpl implements UserService {
-    
-    @Autowired
-    private UserMapper userMapper;
-    
-    @Override
-    @Cacheable(value = "user", key = "#id")
-    public User getUserById(Long id) {
-        log.info("从数据库查询用户: {}", id);
-        return userMapper.selectById(id);
-    }
-    
-    @Override
-    @CacheEvict(value = "user", key = "#user.id")
-    public void updateUser(User user) {
-        userMapper.updateById(user);
-        log.info("更新用户并清除缓存: {}", user.getId());
-    }
-    
-    @Override
-    @CacheEvict(value = "user", allEntries = true)
-    public void clearAllUserCache() {
-        log.info("清除所有用户缓存");
-    }
+#### 内存优化和垃圾回收
+```javascript
+// 内存监控
+const monitorMemory = () => {
+  const used = process.memoryUsage()
+  
+  console.log('内存使用情况:')
+  for (let key in used) {
+    console.log(`${key}: ${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB`)
+  }
+  
+  // 检查内存泄漏
+  if (used.heapUsed > 500 * 1024 * 1024) { // 500MB
+    console.warn('内存使用过高，可能存在内存泄漏')
+  }
 }
-```
 
-## 消息队列集成
+// 定期监控
+setInterval(monitorMemory, 60000) // 每分钟检查一次
 
-### RabbitMQ配置
-```java
-/**
- * RabbitMQ配置
- */
-@Configuration
-@EnableRabbit
-public class RabbitConfig {
+// 流式处理大数据
+const processLargeDataset = async (dataStream) => {
+  return new Promise((resolve, reject) => {
+    let processedCount = 0
+    const batchSize = 1000
+    let batch = []
     
-    public static final String USER_QUEUE = "user.queue";
-    public static final String USER_EXCHANGE = "user.exchange";
-    public static final String USER_ROUTING_KEY = "user.create";
-    
-    @Bean
-    public Queue userQueue() {
-        return QueueBuilder.durable(USER_QUEUE).build();
-    }
-    
-    @Bean
-    public DirectExchange userExchange() {
-        return new DirectExchange(USER_EXCHANGE);
-    }
-    
-    @Bean
-    public Binding userBinding() {
-        return BindingBuilder.bind(userQueue()).to(userExchange()).with(USER_ROUTING_KEY);
-    }
-    
-    @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate template = new RabbitTemplate(connectionFactory);
-        template.setMessageConverter(new Jackson2JsonMessageConverter());
-        return template;
-    }
-}
-```
-
-### 消息生产者和消费者
-```java
-/**
- * 消息生产者
- */
-@Component
-@Slf4j
-public class UserMessageProducer {
-    
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
-    
-    public void sendUserCreateMessage(User user) {
+    dataStream.on('data', async (record) => {
+      batch.push(record)
+      
+      if (batch.length >= batchSize) {
+        // 暂停流
+        dataStream.pause()
+        
         try {
-            rabbitTemplate.convertAndSend(RabbitConfig.USER_EXCHANGE, RabbitConfig.USER_ROUTING_KEY, user);
-            log.info("发送用户创建消息: {}", user.getId());
-        } catch (Exception e) {
-            log.error("发送消息失败", e);
+          await processBatch(batch)
+          processedCount += batch.length
+          batch = []
+          
+          // 恢复流
+          dataStream.resume()
+        } catch (error) {
+          reject(error)
         }
-    }
+      }
+    })
+    
+    dataStream.on('end', async () => {
+      if (batch.length > 0) {
+        await processBatch(batch)
+        processedCount += batch.length
+      }
+      resolve(processedCount)
+    })
+    
+    dataStream.on('error', reject)
+  })
 }
 
-/**
- * 消息消费者
- */
-@Component
-@Slf4j
-public class UserMessageConsumer {
-    
-    @RabbitListener(queues = RabbitConfig.USER_QUEUE)
-    public void handleUserCreateMessage(User user) {
-        try {
-            log.info("处理用户创建消息: {}", user.getId());
-            // 处理业务逻辑
-            processUserCreation(user);
-        } catch (Exception e) {
-            log.error("处理消息失败", e);
-            throw new AmqpRejectAndDontRequeueException("消息处理失败", e);
-        }
-    }
-}
-```
-
-## 性能优化策略
-
-### 数据库优化
-```java
-/**
- * 数据库查询优化示例
- */
-@Service
-public class OptimizedUserService {
-    
-    /**
-     * 批量查询优化
-     */
-    public List<User> getUsersByIds(List<Long> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyList();
-        }
-        
-        // 使用IN查询替代多次单独查询
-        return userMapper.selectBatchIds(ids);
-    }
-    
-    /**
-     * 分页查询优化
-     */
-    public IPage<User> getUserPage(UserQueryDTO queryDTO) {
-        Page<User> page = new Page<>(queryDTO.getCurrent(), queryDTO.getSize());
-        
-        // 使用QueryWrapper构建动态查询条件
-        QueryWrapper<User> wrapper = new QueryWrapper<>();
-        wrapper.like(StringUtils.isNotBlank(queryDTO.getUsername()), "username", queryDTO.getUsername())
-               .eq(queryDTO.getStatus() != null, "status", queryDTO.getStatus())
-               .ge(queryDTO.getStartTime() != null, "create_time", queryDTO.getStartTime())
-               .le(queryDTO.getEndTime() != null, "create_time", queryDTO.getEndTime())
-               .orderByDesc("create_time");
-        
-        return userMapper.selectPage(page, wrapper);
-    }
+const processBatch = async (batch) => {
+  // 批量处理数据
+  await SomeModel.bulkCreate(batch, {
+    updateOnDuplicate: ['updatedAt']
+  })
+  
+  // 强制垃圾回收（仅在开发环境）
+  if (process.env.NODE_ENV === 'development' && global.gc) {
+    global.gc()
+  }
 }
 ```
 
-### 异步处理
-```java
-/**
- * 异步任务配置
- */
-@Configuration
-@EnableAsync
-public class AsyncConfig {
-    
-    @Bean("taskExecutor")
-    public ThreadPoolTaskExecutor taskExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);
-        executor.setMaxPoolSize(20);
-        executor.setQueueCapacity(200);
-        executor.setKeepAliveSeconds(60);
-        executor.setThreadNamePrefix("async-task-");
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        executor.setWaitForTasksToCompleteOnShutdown(true);
-        executor.setAwaitTerminationSeconds(60);
-        return executor;
-    }
+### 7. 监控和日志
+
+#### 结构化日志
+```javascript
+const winston = require('winston')
+const { ElasticsearchTransport } = require('winston-elasticsearch')
+
+// 创建日志器
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: {
+    service: 'api-server',
+    version: process.env.APP_VERSION
+  },
+  transports: [
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error'
+    }),
+    new winston.transports.File({
+      filename: 'logs/combined.log'
+    })
+  ]
+})
+
+// 开发环境添加控制台输出
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple()
+  }))
 }
 
-/**
- * 异步服务示例
- */
-@Service
-@Slf4j
-public class AsyncUserService {
-    
-    @Async("taskExecutor")
-    public CompletableFuture<Void> sendWelcomeEmail(User user) {
-        try {
-            // 模拟发送邮件
-            Thread.sleep(2000);
-            log.info("发送欢迎邮件给用户: {}", user.getEmail());
-            return CompletableFuture.completedFuture(null);
-        } catch (Exception e) {
-            log.error("发送邮件失败", e);
-            return CompletableFuture.failedFuture(e);
-        }
-    }
+// 生产环境添加Elasticsearch
+if (process.env.NODE_ENV === 'production') {
+  logger.add(new ElasticsearchTransport({
+    level: 'info',
+    clientOpts: {
+      node: process.env.ELASTICSEARCH_URL
+    },
+    index: 'api-logs'
+  }))
 }
-```
 
-## 监控和日志
-
-### 日志配置
-```xml
-<!-- logback-spring.xml -->
-<configuration>
-    <springProfile name="dev">
-        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-            <encoder>
-                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-            </encoder>
-        </appender>
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-        </root>
-    </springProfile>
+// 请求追踪中间件
+const requestTracker = (req, res, next) => {
+  const requestId = require('uuid').v4()
+  req.requestId = requestId
+  
+  // 添加到响应头
+  res.setHeader('X-Request-ID', requestId)
+  
+  // 记录请求开始
+  logger.info('Request started', {
+    requestId,
+    method: req.method,
+    url: req.originalUrl,
+    userAgent: req.get('User-Agent'),
+    ip: req.ip
+  })
+  
+  const start = Date.now()
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start
     
-    <springProfile name="prod">
-        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-            <file>logs/admin.log</file>
-            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                <fileNamePattern>logs/admin.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-                <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                    <maxFileSize>100MB</maxFileSize>
-                </timeBasedFileNamingAndTriggeringPolicy>
-                <maxHistory>30</maxHistory>
-            </rollingPolicy>
-            <encoder>
-                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-            </encoder>
-        </appender>
-        <root level="INFO">
-            <appender-ref ref="FILE"/>
-        </root>
-    </springProfile>
-</configuration>
-```
-
-### 健康检查
-```java
-/**
- * 自定义健康检查
- */
-@Component
-public class CustomHealthIndicator implements HealthIndicator {
-    
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-    
-    @Override
-    public Health health() {
-        try {
-            // 检查Redis连接
-            redisTemplate.opsForValue().get("health_check");
-            return Health.up()
-                    .withDetail("redis", "连接正常")
-                    .withDetail("timestamp", System.currentTimeMillis())
-                    .build();
-        } catch (Exception e) {
-            return Health.down()
-                    .withDetail("redis", "连接异常")
-                    .withDetail("error", e.getMessage())
-                    .build();
-        }
-    }
+    logger.info('Request completed', {
+      requestId,
+      method: req.method,
+      url: req.originalUrl,
+      statusCode: res.statusCode,
+      duration,
+      contentLength: res.get('Content-Length')
+    })
+  })
+  
+  next()
 }
+
+module.exports = { logger, requestTracker }
 ```
 
-## 部署配置
+#### 应用性能监控(APM)
+```javascript
+// 性能指标收集
+const prometheus = require('prom-client')
 
-### Docker配置
-```dockerfile
-# Dockerfile
-FROM openjdk:11-jre-slim
+// 创建指标
+const httpRequestDuration = new prometheus.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'HTTP请求持续时间',
+  labelNames: ['method', 'route', 'status_code'],
+  buckets: [0.1, 0.5, 1, 2, 5]
+})
 
-VOLUME /tmp
+const httpRequestTotal = new prometheus.Counter({
+  name: 'http_requests_total',
+  help: 'HTTP请求总数',
+  labelNames: ['method', 'route', 'status_code']
+})
 
-COPY target/admin-backend-*.jar app.jar
+const activeConnections = new prometheus.Gauge({
+  name: 'active_connections',
+  help: '当前活跃连接数'
+})
 
-EXPOSE 8080
+// 监控中间件
+const metricsMiddleware = (req, res, next) => {
+  const start = Date.now()
+  
+  activeConnections.inc()
+  
+  res.on('finish', () => {
+    const duration = (Date.now() - start) / 1000
+    const route = req.route ? req.route.path : req.path
+    
+    httpRequestDuration
+      .labels(req.method, route, res.statusCode)
+      .observe(duration)
+    
+    httpRequestTotal
+      .labels(req.method, route, res.statusCode)
+      .inc()
+    
+    activeConnections.dec()
+  })
+  
+  next()
+}
 
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app.jar"]
+// 健康检查端点
+app.get('/metrics', (req, res) => {
+  res.set('Content-Type', prometheus.register.contentType)
+  res.end(prometheus.register.metrics())
+})
+
+module.exports = { metricsMiddleware }
 ```
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-
-services:
-  admin-backend:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - DB_HOST=mysql
-      - REDIS_HOST=redis
-      - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      - mysql
-      - redis
-      - rabbitmq
-    networks:
-      - admin-network
-
-  mysql:
-    image: mysql:8.0
-    environment:
-      - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=admin_db
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - admin-network
-
-  redis:
-    image: redis:6-alpine
-    networks:
-      - admin-network
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=password
-    ports:
-      - "15672:15672"
-    networks:
-      - admin-network
-
-volumes:
-  mysql_data:
-
-networks:
-  admin-network:
-    driver: bridge
-```
-
----
-
-*此知识库为后端开发工程师提供项目特定的技术约束和专业知识指导*

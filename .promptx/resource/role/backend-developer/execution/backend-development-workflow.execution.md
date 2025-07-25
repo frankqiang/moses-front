@@ -1,266 +1,626 @@
 # 后端开发工作流程
 
-## 执行规范标识
-- **执行ID**: backend-development-workflow
-- **适用角色**: backend-developer
-- **流程类型**: 技术开发流程
-- **应用场景**: 后端服务开发、API实现、系统架构
+## 项目初始化流程
 
-## 核心约束条件
+### 环境准备
+```bash
+# 1. 检查Node.js版本
+node --version  # 推荐 >= 18.x LTS
+npm --version   # 或使用 yarn/pnpm
 
-### 技术约束
-- **开发语言**: Java 8+、Spring Boot 2.x
-- **数据库**: MySQL 8.0、Redis 6.x
-- **消息队列**: RabbitMQ 3.x
-- **容器化**: Docker、Kubernetes
-- **API规范**: RESTful API设计规范
+# 2. 初始化项目
+npm init -y
+# 或使用脚手架
+npx create-express-app my-api
+npx nest new my-api
 
-### 质量约束
-- **代码覆盖率**: 单元测试覆盖率不低于80%
-- **API响应时间**: 接口响应时间不超过500ms
-- **系统可用性**: 服务可用性不低于99.9%
-- **并发处理**: 支持1000+并发请求
-- **数据一致性**: 确保数据的ACID特性
+# 3. 安装核心依赖
+npm install express cors helmet morgan
+npm install -D nodemon eslint prettier
 
-## 开发流程规范
+# 4. 启动开发服务器
+npm run dev
+```
+
+### 项目结构设置
+```
+src/
+├── controllers/     # 控制器层
+├── services/        # 业务逻辑层
+├── models/          # 数据模型层
+├── middleware/      # 中间件
+├── routes/          # 路由定义
+├── utils/           # 工具函数
+├── config/          # 配置文件
+├── validators/      # 数据验证
+└── tests/           # 测试文件
+```
+
+## API开发流程
 
 ### 1. 需求分析阶段
+- [ ] 理解业务需求和数据流
+- [ ] 设计API接口规范
+- [ ] 确定数据库表结构
+- [ ] 评估性能和安全要求
 
-#### 需求理解流程
-```
-业务需求 → 技术分析 → 架构设计 → 接口设计 → 数据建模
-    ↓         ↓         ↓         ↓         ↓
-功能拆解   技术选型   系统架构   API规范   数据库设计
-```
-
-#### 具体执行步骤
-1. **业务需求分析**
-   - 深入理解业务场景和用户需求
-   - 识别核心业务流程和数据流
-   - 分析非功能性需求（性能、安全、可用性）
-
-2. **技术方案设计**
-   - 分析技术实现路径和难点
-   - 选择合适的技术栈和框架
-   - 设计系统架构和模块划分
-   - 规划数据库结构和关系
-
-3. **接口规范设计**
-   - 设计RESTful API接口
-   - 定义请求和响应数据格式
-   - 制定错误码和异常处理规范
-   - 编写API文档和接口说明
-
-### 2. 开发实施阶段
-
-#### 代码开发流程
-```
-环境准备 → 数据库设计 → 业务开发 → 接口实现 → 单元测试
-    ↓         ↓           ↓         ↓         ↓
-项目搭建   表结构创建   业务逻辑   API接口   测试用例
-```
-
-#### 具体执行步骤
-1. **开发环境准备**
-   ```bash
-   # 创建功能分支
-   git checkout -b feature/功能名称
-   
-   # 启动开发环境
-   docker-compose up -d
-   
-   # 运行项目
-   mvn spring-boot:run
-   ```
-
-2. **数据库设计实现**
-   - 创建数据库表结构
-   - 建立表间关系和约束
-   - 创建必要的索引
-   - 编写数据库迁移脚本
-
-3. **业务逻辑开发**
-   - 实现领域模型和业务实体
-   - 开发业务服务层逻辑
-   - 实现数据访问层（DAO/Repository）
-   - 添加事务管理和异常处理
-
-4. **API接口实现**
-   - 实现Controller层接口
-   - 添加参数验证和数据转换
-   - 实现统一的响应格式
-   - 集成权限认证和授权
-
-5. **代码质量检查**
-   ```bash
-   # 代码格式检查
-   mvn checkstyle:check
-   
-   # 运行单元测试
-   mvn test
-   
-   # 代码覆盖率检查
-   mvn jacoco:report
-   
-   # 静态代码分析
-   mvn sonar:sonar
-   ```
-
-### 3. 测试验证阶段
-
-#### 测试流程
-```
-单元测试 → 集成测试 → 接口测试 → 性能测试 → 安全测试
-    ↓         ↓         ↓         ↓         ↓
-方法测试   模块测试   API测试   压力测试   安全扫描
+### 2. 接口设计阶段
+```javascript
+// API设计示例 - OpenAPI/Swagger规范
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: 获取用户列表
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: 页码
+ *     responses:
+ *       200:
+ *         description: 成功返回用户列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ */
+router.get('/users', userController.getUsers)
 ```
 
-#### 测试执行标准
-1. **单元测试**
-   - 测试业务逻辑方法
-   - 测试数据访问层
-   - 测试工具类和帮助方法
-   - 模拟外部依赖
+### 3. 数据模型开发
+```javascript
+// 使用Sequelize ORM示例
+const { DataTypes } = require('sequelize')
+const sequelize = require('../config/database')
 
-2. **集成测试**
-   - 测试服务间集成
-   - 测试数据库操作
-   - 测试消息队列集成
-   - 测试缓存功能
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  username: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true,
+    validate: {
+      len: [3, 50],
+      isAlphanumeric: true
+    }
+  },
+  email: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true
+    }
+  },
+  password: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+    validate: {
+      len: [6, 255]
+    }
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'inactive', 'suspended'),
+    defaultValue: 'active'
+  }
+}, {
+  tableName: 'users',
+  timestamps: true,
+  paranoid: true, // 软删除
+  hooks: {
+    beforeCreate: async (user) => {
+      user.password = await bcrypt.hash(user.password, 10)
+    }
+  }
+})
 
-3. **接口测试**
-   - 使用Postman/Swagger测试API
-   - 验证请求参数和响应格式
-   - 测试异常情况和错误处理
-   - 验证权限控制
-
-4. **性能测试**
-   - 使用JMeter进行压力测试
-   - 测试并发处理能力
-   - 分析响应时间和吞吐量
-   - 识别性能瓶颈
-
-### 4. 部署发布阶段
-
-#### 部署流程
+module.exports = User
 ```
-CI构建 → 镜像构建 → 测试环境 → 预生产 → 生产发布
-   ↓        ↓        ↓        ↓        ↓
-自动构建  Docker镜像  功能验证  性能验证  正式上线
+
+### 4. 控制器开发
+```javascript
+// controllers/userController.js
+const userService = require('../services/userService')
+const { validationResult } = require('express-validator')
+const logger = require('../utils/logger')
+
+class UserController {
+  /**
+   * 获取用户列表
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   * @param {Function} next - 下一个中间件
+   */
+  async getUsers(req, res, next) {
+    try {
+      // 参数验证
+      const errors = validationResult(req)
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          code: 400,
+          message: '参数验证失败',
+          errors: errors.array()
+        })
+      }
+
+      const { page = 1, limit = 10, search } = req.query
+      
+      // 调用服务层
+      const result = await userService.getUsers({
+        page: parseInt(page),
+        limit: parseInt(limit),
+        search
+      })
+
+      // 记录日志
+      logger.info('用户列表查询成功', {
+        userId: req.user?.id,
+        params: { page, limit, search },
+        resultCount: result.data.length
+      })
+
+      res.json({
+        code: 200,
+        message: '获取成功',
+        data: result.data,
+        pagination: result.pagination
+      })
+    } catch (error) {
+      logger.error('获取用户列表失败', {
+        error: error.message,
+        stack: error.stack,
+        userId: req.user?.id
+      })
+      next(error)
+    }
+  }
+
+  async createUser(req, res, next) {
+    try {
+      const errors = validationResult(req)
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          code: 400,
+          message: '参数验证失败',
+          errors: errors.array()
+        })
+      }
+
+      const userData = req.body
+      const user = await userService.createUser(userData)
+
+      logger.info('用户创建成功', {
+        userId: req.user?.id,
+        newUserId: user.id,
+        username: user.username
+      })
+
+      res.status(201).json({
+        code: 201,
+        message: '用户创建成功',
+        data: user
+      })
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({
+          code: 409,
+          message: '用户名或邮箱已存在'
+        })
+      }
+      next(error)
+    }
+  }
+}
+
+module.exports = new UserController()
 ```
 
-#### 部署执行标准
-1. **CI/CD流水线**
-   - 自动化构建和测试
-   - Docker镜像构建和推送
-   - 自动化部署到测试环境
-   - 健康检查和回滚机制
+### 5. 服务层开发
+```javascript
+// services/userService.js
+const User = require('../models/User')
+const { Op } = require('sequelize')
+const redis = require('../config/redis')
 
-2. **环境管理**
-   - 开发环境：本地开发和调试
-   - 测试环境：功能测试和集成测试
-   - 预生产环境：性能测试和压力测试
-   - 生产环境：正式服务运行
+class UserService {
+  /**
+   * 获取用户列表
+   * @param {Object} options - 查询选项
+   * @returns {Object} 用户列表和分页信息
+   */
+  async getUsers(options) {
+    const { page, limit, search } = options
+    const offset = (page - 1) * limit
 
-## 日常工作安排
+    // 构建查询条件
+    const whereClause = {}
+    if (search) {
+      whereClause[Op.or] = [
+        { username: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } }
+      ]
+    }
 
-### 每日工作流程
-- **09:00-09:30**: 查看监控告警，了解系统运行状态
-- **09:30-12:00**: 核心开发时间，专注功能实现
-- **14:00-15:30**: 代码审查、技术讨论、问题排查
-- **15:30-17:30**: 功能开发、接口联调、文档编写
-- **17:30-18:00**: 代码提交、工作总结、明日计划
+    // 缓存键
+    const cacheKey = `users:list:${JSON.stringify({ page, limit, search })}`
+    
+    // 尝试从缓存获取
+    const cached = await redis.get(cacheKey)
+    if (cached) {
+      return JSON.parse(cached)
+    }
 
-### 每周工作安排
-- **周一**: 制定本周开发计划，参加技术会议
-- **周二-周四**: 专注功能开发和实现
-- **周五**: 代码审查、技术分享、系统优化
+    // 数据库查询
+    const { count, rows } = await User.findAndCountAll({
+      where: whereClause,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+      attributes: { exclude: ['password'] } // 排除敏感字段
+    })
 
-### 每月工作重点
-- **第1周**: 新功能开发启动，架构设计
-- **第2-3周**: 功能开发和实现
-- **第4周**: 测试、优化、发布准备
+    const result = {
+      data: rows,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit)
+      }
+    }
 
-## 质量评估标准
+    // 缓存结果（5分钟）
+    await redis.setex(cacheKey, 300, JSON.stringify(result))
 
-### 代码质量评估
-1. **代码规范性** (25%)
-   - 代码风格一致性
-   - 命名规范性
-   - 注释完整性
-   - 静态代码分析通过率
+    return result
+  }
 
-2. **功能完整性** (30%)
-   - 需求实现度
-   - 业务逻辑正确性
-   - 异常处理完善性
-   - 边界条件处理
+  async createUser(userData) {
+    // 数据预处理
+    const { username, email, password } = userData
+    
+    // 检查用户是否已存在
+    const existingUser = await User.findOne({
+      where: {
+        [Op.or]: [{ username }, { email }]
+      }
+    })
 
-3. **性能表现** (25%)
-   - 接口响应时间
-   - 数据库查询效率
-   - 内存使用优化
-   - 并发处理能力
+    if (existingUser) {
+      throw new Error('用户名或邮箱已存在')
+    }
 
-4. **可维护性** (20%)
-   - 代码可读性
-   - 模块耦合度
-   - 测试覆盖率
-   - 文档完整性
+    // 创建用户
+    const user = await User.create({
+      username,
+      email,
+      password
+    })
 
-### 交付质量标准
-- **功能正确性**: 100%符合需求规格
-- **代码质量**: 静态代码分析0严重问题
-- **测试覆盖**: 单元测试覆盖率≥80%
-- **性能指标**: API响应时间≤500ms
-- **安全性**: 通过安全扫描检查
+    // 清除相关缓存
+    await this.clearUserListCache()
 
-## 工具和资源
+    // 返回用户信息（排除密码）
+    const { password: _, ...userWithoutPassword } = user.toJSON()
+    return userWithoutPassword
+  }
 
-### 开发工具
-- **IDE**: IntelliJ IDEA + 插件
-- **版本控制**: Git + GitLab/GitHub
-- **构建工具**: Maven/Gradle
-- **数据库工具**: Navicat、DBeaver
+  async clearUserListCache() {
+    const keys = await redis.keys('users:list:*')
+    if (keys.length > 0) {
+      await redis.del(keys)
+    }
+  }
+}
 
-### 测试工具
-- **单元测试**: JUnit 5 + Mockito
-- **集成测试**: Spring Boot Test
-- **接口测试**: Postman、Swagger
-- **性能测试**: JMeter、Gatling
+module.exports = new UserService()
+```
 
-### 运维工具
-- **容器化**: Docker、Kubernetes
-- **CI/CD**: Jenkins、GitLab CI
-- **监控工具**: Prometheus、Grafana
-- **日志管理**: ELK Stack
+## 中间件开发
 
-### 协作工具
-- **项目管理**: Jira、Trello
-- **文档协作**: Confluence、GitBook
-- **API文档**: Swagger、Postman
-- **沟通工具**: Slack、钉钉
+### 认证中间件
+```javascript
+// middleware/auth.js
+const jwt = require('jsonwebtoken')
+const User = require('../models/User')
+const logger = require('../utils/logger')
 
-## 最佳实践
+const authMiddleware = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '')
+    
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        message: '访问令牌缺失'
+      })
+    }
 
-### 代码开发最佳实践
-- **SOLID原则**: 遵循面向对象设计原则
-- **DRY原则**: 避免重复代码
-- **KISS原则**: 保持代码简单
-- **YAGNI原则**: 不要过度设计
+    // 验证JWT令牌
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    
+    // 获取用户信息
+    const user = await User.findByPk(decoded.userId, {
+      attributes: { exclude: ['password'] }
+    })
 
-### API设计最佳实践
-- **RESTful规范**: 遵循REST设计原则
-- **统一响应格式**: 标准化API响应结构
-- **版本管理**: 合理的API版本策略
-- **错误处理**: 统一的错误码和消息
+    if (!user || user.status !== 'active') {
+      return res.status(401).json({
+        code: 401,
+        message: '用户不存在或已被禁用'
+      })
+    }
 
-### 数据库最佳实践
-- **索引优化**: 合理创建和使用索引
-- **查询优化**: 避免N+1查询问题
-- **事务管理**: 合理使用事务边界
-- **连接池**: 优化数据库连接池配置
+    req.user = user
+    next()
+  } catch (error) {
+    logger.error('认证失败', {
+      error: error.message,
+      token: req.header('Authorization')
+    })
+    
+    res.status(401).json({
+      code: 401,
+      message: '令牌无效或已过期'
+    })
+  }
+}
 
----
+module.exports = authMiddleware
+```
 
-*此工作流程为后端开发工程师提供标准化的开发执行规范*
+### 权限控制中间件
+```javascript
+// middleware/permission.js
+const checkPermission = (requiredPermission) => {
+  return async (req, res, next) => {
+    try {
+      const user = req.user
+      
+      if (!user) {
+        return res.status(401).json({
+          code: 401,
+          message: '用户未认证'
+        })
+      }
+
+      // 检查用户权限
+      const hasPermission = await user.hasPermission(requiredPermission)
+      
+      if (!hasPermission) {
+        logger.warn('权限不足', {
+          userId: user.id,
+          requiredPermission,
+          userPermissions: user.permissions
+        })
+        
+        return res.status(403).json({
+          code: 403,
+          message: '权限不足'
+        })
+      }
+
+      next()
+    } catch (error) {
+      logger.error('权限检查失败', {
+        error: error.message,
+        userId: req.user?.id
+      })
+      
+      res.status(500).json({
+        code: 500,
+        message: '权限检查失败'
+      })
+    }
+  }
+}
+
+module.exports = checkPermission
+```
+
+## 测试开发流程
+
+### 单元测试
+```javascript
+// tests/services/userService.test.js
+const UserService = require('../../src/services/userService')
+const User = require('../../src/models/User')
+const redis = require('../../src/config/redis')
+
+// Mock依赖
+jest.mock('../../src/models/User')
+jest.mock('../../src/config/redis')
+
+describe('UserService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  describe('getUsers', () => {
+    it('应该返回用户列表和分页信息', async () => {
+      // 准备测试数据
+      const mockUsers = [
+        { id: 1, username: 'user1', email: 'user1@example.com' },
+        { id: 2, username: 'user2', email: 'user2@example.com' }
+      ]
+      
+      User.findAndCountAll.mockResolvedValue({
+        count: 2,
+        rows: mockUsers
+      })
+      
+      redis.get.mockResolvedValue(null)
+      redis.setex.mockResolvedValue('OK')
+
+      // 执行测试
+      const result = await UserService.getUsers({ page: 1, limit: 10 })
+
+      // 验证结果
+      expect(result.data).toEqual(mockUsers)
+      expect(result.pagination.total).toBe(2)
+      expect(User.findAndCountAll).toHaveBeenCalledWith({
+        where: {},
+        limit: 10,
+        offset: 0,
+        order: [['createdAt', 'DESC']],
+        attributes: { exclude: ['password'] }
+      })
+    })
+
+    it('应该从缓存返回数据', async () => {
+      const cachedData = JSON.stringify({
+        data: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
+      })
+      
+      redis.get.mockResolvedValue(cachedData)
+
+      const result = await UserService.getUsers({ page: 1, limit: 10 })
+
+      expect(result.data).toEqual([])
+      expect(User.findAndCountAll).not.toHaveBeenCalled()
+    })
+  })
+})
+```
+
+### 集成测试
+```javascript
+// tests/integration/users.test.js
+const request = require('supertest')
+const app = require('../../src/app')
+const User = require('../../src/models/User')
+
+describe('Users API', () => {
+  let authToken
+  
+  beforeAll(async () => {
+    // 创建测试用户并获取认证令牌
+    const user = await User.create({
+      username: 'testuser',
+      email: 'test@example.com',
+      password: 'password123'
+    })
+    
+    const loginResponse = await request(app)
+      .post('/api/auth/login')
+      .send({
+        email: 'test@example.com',
+        password: 'password123'
+      })
+    
+    authToken = loginResponse.body.data.token
+  })
+
+  afterAll(async () => {
+    // 清理测试数据
+    await User.destroy({ where: {} })
+  })
+
+  describe('GET /api/users', () => {
+    it('应该返回用户列表', async () => {
+      const response = await request(app)
+        .get('/api/users')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200)
+
+      expect(response.body.code).toBe(200)
+      expect(response.body.data).toBeInstanceOf(Array)
+      expect(response.body.pagination).toBeDefined()
+    })
+
+    it('应该支持搜索功能', async () => {
+      const response = await request(app)
+        .get('/api/users?search=test')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200)
+
+      expect(response.body.code).toBe(200)
+    })
+  })
+})
+```
+
+## 部署和监控
+
+### Docker部署
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 复制package文件
+COPY package*.json ./
+
+# 安装依赖
+RUN npm ci --only=production
+
+# 复制源代码
+COPY src/ ./src/
+
+# 创建非root用户
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+
+# 切换到非root用户
+USER nodejs
+
+EXPOSE 3000
+
+CMD ["node", "src/app.js"]
+```
+
+### 健康检查
+```javascript
+// routes/health.js
+const express = require('express')
+const router = express.Router()
+const sequelize = require('../config/database')
+const redis = require('../config/redis')
+
+router.get('/health', async (req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    checks: {}
+  }
+
+  try {
+    // 检查数据库连接
+    await sequelize.authenticate()
+    health.checks.database = 'ok'
+  } catch (error) {
+    health.checks.database = 'error'
+    health.status = 'error'
+  }
+
+  try {
+    // 检查Redis连接
+    await redis.ping()
+    health.checks.redis = 'ok'
+  } catch (error) {
+    health.checks.redis = 'error'
+    health.status = 'error'
+  }
+
+  const statusCode = health.status === 'ok' ? 200 : 503
+  res.status(statusCode).json(health)
+})
+
+module.exports = router
+```

@@ -3,8 +3,14 @@
   "stateHistory": [
     {
       "from": "initial",
+      "command": "welcome",
+      "timestamp": "2025-07-25T07:29:07.863Z",
+      "args": []
+    },
+    {
+      "from": "service_discovery",
       "command": "init",
-      "timestamp": "2025-07-25T03:09:17.233Z",
+      "timestamp": "2025-07-25T07:29:17.733Z",
       "args": [
         {
           "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template",
@@ -15,121 +21,13 @@
     {
       "from": "initialized",
       "command": "welcome",
-      "timestamp": "2025-07-25T03:09:24.073Z",
+      "timestamp": "2025-07-25T07:29:24.437Z",
       "args": []
     },
     {
       "from": "service_discovery",
-      "command": "action",
-      "timestamp": "2025-07-25T03:10:17.344Z",
-      "args": [
-        "luban"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-07-25T05:53:04.639Z",
-      "args": [
-        "noface"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-07-25T05:53:10.904Z",
-      "args": [
-        "noface"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-07-25T05:53:51.502Z",
-      "args": [
-        "nuwa"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-07-25T05:53:58.908Z",
-      "args": [
-        "nuwa"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-07-25T05:54:27.539Z",
-      "args": [
-        "luban"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-07-25T05:57:52.336Z",
-      "args": [
-        "nuwa"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-07-25T05:57:56.818Z",
-      "args": [
-        "nuwa"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
       "command": "init",
-      "timestamp": "2025-07-25T06:00:16.173Z",
-      "args": [
-        {
-          "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template",
-          "ideType": "trae"
-        }
-      ]
-    },
-    {
-      "from": "initialized",
-      "command": "init",
-      "timestamp": "2025-07-25T06:03:55.586Z",
-      "args": [
-        {
-          "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template",
-          "ideType": "trae"
-        }
-      ]
-    },
-    {
-      "from": "initialized",
-      "command": "init",
-      "timestamp": "2025-07-25T06:08:20.536Z",
-      "args": [
-        {
-          "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template",
-          "ideType": "trae"
-        }
-      ]
-    },
-    {
-      "from": "initialized",
-      "command": "init",
-      "timestamp": "2025-07-25T06:12:50.555Z",
-      "args": [
-        {
-          "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template",
-          "ideType": "trae"
-        }
-      ]
-    },
-    {
-      "from": "initialized",
-      "command": "init",
-      "timestamp": "2025-07-25T06:18:49.275Z",
+      "timestamp": "2025-07-25T07:31:47.554Z",
       "args": [
         {
           "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template",
@@ -140,13 +38,13 @@
     {
       "from": "initialized",
       "command": "welcome",
-      "timestamp": "2025-07-25T06:19:53.086Z",
+      "timestamp": "2025-07-25T07:31:53.381Z",
       "args": []
     },
     {
       "from": "service_discovery",
       "command": "action",
-      "timestamp": "2025-07-25T06:24:25.558Z",
+      "timestamp": "2025-07-25T07:32:24.729Z",
       "args": [
         "nuwa"
       ]
@@ -154,26 +52,32 @@
     {
       "from": "role_activated_with_memory",
       "command": "init",
-      "timestamp": "2025-07-25T06:28:18.110Z",
+      "timestamp": "2025-07-25T07:35:59.362Z",
       "args": [
         {
           "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template",
-          "ideType": "trae"
+          "ideType": "cursor"
         }
       ]
     },
     {
       "from": "initialized",
+      "command": "welcome",
+      "timestamp": "2025-07-25T07:36:05.578Z",
+      "args": []
+    },
+    {
+      "from": "service_discovery",
       "command": "action",
-      "timestamp": "2025-07-25T06:28:40.511Z",
+      "timestamp": "2025-07-25T07:36:13.392Z",
       "args": [
-        "test-engineer"
+        "frontend-developer"
       ]
     },
     {
       "from": "role_activated_with_memory",
       "command": "init",
-      "timestamp": "2025-07-25T06:35:10.472Z",
+      "timestamp": "2025-07-25T07:41:17.169Z",
       "args": [
         {
           "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template",
@@ -183,12 +87,18 @@
     },
     {
       "from": "initialized",
+      "command": "welcome",
+      "timestamp": "2025-07-25T07:41:23.387Z",
+      "args": []
+    },
+    {
+      "from": "service_discovery",
       "command": "action",
-      "timestamp": "2025-07-25T06:35:16.143Z",
+      "timestamp": "2025-07-25T07:41:30.583Z",
       "args": [
-        "tech-writer"
+        "backend-developer"
       ]
     }
   ],
-  "lastUpdated": "2025-07-25T06:35:16.152Z"
+  "lastUpdated": "2025-07-25T07:41:30.589Z"
 }

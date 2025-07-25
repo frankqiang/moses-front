@@ -4,11 +4,25 @@
   "metadata": {
     "version": "2.0.0",
     "description": "project 级资源注册表",
-    "createdAt": "2025-07-25T06:35:10.476Z",
-    "updatedAt": "2025-07-25T06:35:10.494Z",
-    "resourceCount": 24
+    "createdAt": "2025-07-25T07:41:17.175Z",
+    "updatedAt": "2025-07-25T07:41:17.191Z",
+    "resourceCount": 26
   },
   "resources": [
+    {
+      "id": "backend-developer",
+      "source": "project",
+      "protocol": "role",
+      "name": "Backend Developer 角色",
+      "description": "专业角色，提供特定领域的专业能力",
+      "reference": "@project://.promptx/resource/role/backend-developer/backend-developer.role.md",
+      "metadata": {
+        "createdAt": "2025-07-25T07:41:17.178Z",
+        "updatedAt": "2025-07-25T07:41:17.178Z",
+        "scannedAt": "2025-07-25T07:41:17.178Z",
+        "path": "role/backend-developer/backend-developer.role.md"
+      }
+    },
     {
       "id": "backend-development-specifics",
       "source": "project",
@@ -17,10 +31,24 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/backend-developer/knowledge/backend-development-specifics.knowledge.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.479Z",
-        "updatedAt": "2025-07-25T06:35:10.479Z",
-        "scannedAt": "2025-07-25T06:35:10.479Z",
+        "createdAt": "2025-07-25T07:41:17.178Z",
+        "updatedAt": "2025-07-25T07:41:17.178Z",
+        "scannedAt": "2025-07-25T07:41:17.178Z",
         "path": "role/backend-developer/knowledge/backend-development-specifics.knowledge.md"
+      }
+    },
+    {
+      "id": "frontend-developer",
+      "source": "project",
+      "protocol": "role",
+      "name": "Frontend Developer 角色",
+      "description": "专业角色，提供特定领域的专业能力",
+      "reference": "@project://.promptx/resource/role/frontend-developer/frontend-developer.role.md",
+      "metadata": {
+        "createdAt": "2025-07-25T07:41:17.180Z",
+        "updatedAt": "2025-07-25T07:41:17.180Z",
+        "scannedAt": "2025-07-25T07:41:17.180Z",
+        "path": "role/frontend-developer/frontend-developer.role.md"
       }
     },
     {
@@ -31,9 +59,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/frontend-developer/knowledge/frontend-development-specifics.knowledge.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.481Z",
-        "updatedAt": "2025-07-25T06:35:10.481Z",
-        "scannedAt": "2025-07-25T06:35:10.481Z",
+        "createdAt": "2025-07-25T07:41:17.180Z",
+        "updatedAt": "2025-07-25T07:41:17.180Z",
+        "scannedAt": "2025-07-25T07:41:17.180Z",
         "path": "role/frontend-developer/knowledge/frontend-development-specifics.knowledge.md"
       }
     },
@@ -45,9 +73,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/product-manager/execution/product-workflow.execution.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.483Z",
-        "updatedAt": "2025-07-25T06:35:10.483Z",
-        "scannedAt": "2025-07-25T06:35:10.483Z",
+        "createdAt": "2025-07-25T07:41:17.181Z",
+        "updatedAt": "2025-07-25T07:41:17.181Z",
+        "scannedAt": "2025-07-25T07:41:17.181Z",
         "path": "role/product-manager/execution/product-workflow.execution.md"
       }
     },
@@ -59,9 +87,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/product-manager/knowledge/product-management-specifics.knowledge.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.483Z",
-        "updatedAt": "2025-07-25T06:35:10.483Z",
-        "scannedAt": "2025-07-25T06:35:10.483Z",
+        "createdAt": "2025-07-25T07:41:17.182Z",
+        "updatedAt": "2025-07-25T07:41:17.182Z",
+        "scannedAt": "2025-07-25T07:41:17.182Z",
         "path": "role/product-manager/knowledge/product-management-specifics.knowledge.md"
       }
     },
@@ -73,9 +101,9 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/product-manager/product-manager.role.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.484Z",
-        "updatedAt": "2025-07-25T06:35:10.484Z",
-        "scannedAt": "2025-07-25T06:35:10.484Z",
+        "createdAt": "2025-07-25T07:41:17.182Z",
+        "updatedAt": "2025-07-25T07:41:17.182Z",
+        "scannedAt": "2025-07-25T07:41:17.182Z",
         "path": "role/product-manager/product-manager.role.md"
       }
     },
@@ -87,9 +115,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/product-manager/thought/product-thinking.thought.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.484Z",
-        "updatedAt": "2025-07-25T06:35:10.484Z",
-        "scannedAt": "2025-07-25T06:35:10.484Z",
+        "createdAt": "2025-07-25T07:41:17.183Z",
+        "updatedAt": "2025-07-25T07:41:17.183Z",
+        "scannedAt": "2025-07-25T07:41:17.183Z",
         "path": "role/product-manager/thought/product-thinking.thought.md"
       }
     },
@@ -101,9 +129,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/project-manager/execution/project-execution-workflow.execution.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.486Z",
-        "updatedAt": "2025-07-25T06:35:10.486Z",
-        "scannedAt": "2025-07-25T06:35:10.486Z",
+        "createdAt": "2025-07-25T07:41:17.183Z",
+        "updatedAt": "2025-07-25T07:41:17.183Z",
+        "scannedAt": "2025-07-25T07:41:17.183Z",
         "path": "role/project-manager/execution/project-execution-workflow.execution.md"
       }
     },
@@ -115,9 +143,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/project-manager/knowledge/software-project-specifics.knowledge.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.486Z",
-        "updatedAt": "2025-07-25T06:35:10.486Z",
-        "scannedAt": "2025-07-25T06:35:10.486Z",
+        "createdAt": "2025-07-25T07:41:17.184Z",
+        "updatedAt": "2025-07-25T07:41:17.184Z",
+        "scannedAt": "2025-07-25T07:41:17.184Z",
         "path": "role/project-manager/knowledge/software-project-specifics.knowledge.md"
       }
     },
@@ -129,9 +157,9 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/project-manager/project-manager.role.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.487Z",
-        "updatedAt": "2025-07-25T06:35:10.487Z",
-        "scannedAt": "2025-07-25T06:35:10.487Z",
+        "createdAt": "2025-07-25T07:41:17.184Z",
+        "updatedAt": "2025-07-25T07:41:17.184Z",
+        "scannedAt": "2025-07-25T07:41:17.184Z",
         "path": "role/project-manager/project-manager.role.md"
       }
     },
@@ -143,9 +171,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/project-manager/thought/project-management-thinking.thought.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.487Z",
-        "updatedAt": "2025-07-25T06:35:10.487Z",
-        "scannedAt": "2025-07-25T06:35:10.487Z",
+        "createdAt": "2025-07-25T07:41:17.184Z",
+        "updatedAt": "2025-07-25T07:41:17.184Z",
+        "scannedAt": "2025-07-25T07:41:17.184Z",
         "path": "role/project-manager/thought/project-management-thinking.thought.md"
       }
     },
@@ -157,9 +185,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/tech-writer/documentation-methodology.thought.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.487Z",
-        "updatedAt": "2025-07-25T06:35:10.487Z",
-        "scannedAt": "2025-07-25T06:35:10.487Z",
+        "createdAt": "2025-07-25T07:41:17.185Z",
+        "updatedAt": "2025-07-25T07:41:17.185Z",
+        "scannedAt": "2025-07-25T07:41:17.185Z",
         "path": "role/tech-writer/documentation-methodology.thought.md"
       }
     },
@@ -171,9 +199,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/tech-writer/documentation-workflow.execution.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.487Z",
-        "updatedAt": "2025-07-25T06:35:10.487Z",
-        "scannedAt": "2025-07-25T06:35:10.487Z",
+        "createdAt": "2025-07-25T07:41:17.186Z",
+        "updatedAt": "2025-07-25T07:41:17.186Z",
+        "scannedAt": "2025-07-25T07:41:17.186Z",
         "path": "role/tech-writer/documentation-workflow.execution.md"
       }
     },
@@ -185,9 +213,9 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/tech-writer/tech-writer.role.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.488Z",
-        "updatedAt": "2025-07-25T06:35:10.488Z",
-        "scannedAt": "2025-07-25T06:35:10.488Z",
+        "createdAt": "2025-07-25T07:41:17.186Z",
+        "updatedAt": "2025-07-25T07:41:17.186Z",
+        "scannedAt": "2025-07-25T07:41:17.186Z",
         "path": "role/tech-writer/tech-writer.role.md"
       }
     },
@@ -199,9 +227,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/tech-writer/technical-writing-standards.knowledge.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.488Z",
-        "updatedAt": "2025-07-25T06:35:10.488Z",
-        "scannedAt": "2025-07-25T06:35:10.488Z",
+        "createdAt": "2025-07-25T07:41:17.186Z",
+        "updatedAt": "2025-07-25T07:41:17.186Z",
+        "scannedAt": "2025-07-25T07:41:17.186Z",
         "path": "role/tech-writer/technical-writing-standards.knowledge.md"
       }
     },
@@ -213,9 +241,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/tech-writer/vue-admin-documentation.knowledge.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.488Z",
-        "updatedAt": "2025-07-25T06:35:10.488Z",
-        "scannedAt": "2025-07-25T06:35:10.488Z",
+        "createdAt": "2025-07-25T07:41:17.187Z",
+        "updatedAt": "2025-07-25T07:41:17.187Z",
+        "scannedAt": "2025-07-25T07:41:17.187Z",
         "path": "role/tech-writer/vue-admin-documentation.knowledge.md"
       }
     },
@@ -227,9 +255,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/test-engineer/execution/testing-workflow.execution.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.489Z",
-        "updatedAt": "2025-07-25T06:35:10.489Z",
-        "scannedAt": "2025-07-25T06:35:10.489Z",
+        "createdAt": "2025-07-25T07:41:17.187Z",
+        "updatedAt": "2025-07-25T07:41:17.187Z",
+        "scannedAt": "2025-07-25T07:41:17.187Z",
         "path": "role/test-engineer/execution/testing-workflow.execution.md"
       }
     },
@@ -241,9 +269,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/test-engineer/knowledge/frontend-testing-stack.knowledge.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.490Z",
-        "updatedAt": "2025-07-25T06:35:10.490Z",
-        "scannedAt": "2025-07-25T06:35:10.490Z",
+        "createdAt": "2025-07-25T07:41:17.188Z",
+        "updatedAt": "2025-07-25T07:41:17.188Z",
+        "scannedAt": "2025-07-25T07:41:17.188Z",
         "path": "role/test-engineer/knowledge/frontend-testing-stack.knowledge.md"
       }
     },
@@ -255,9 +283,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/test-engineer/knowledge/vue-admin-testing.knowledge.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.491Z",
-        "updatedAt": "2025-07-25T06:35:10.491Z",
-        "scannedAt": "2025-07-25T06:35:10.491Z",
+        "createdAt": "2025-07-25T07:41:17.188Z",
+        "updatedAt": "2025-07-25T07:41:17.188Z",
+        "scannedAt": "2025-07-25T07:41:17.188Z",
         "path": "role/test-engineer/knowledge/vue-admin-testing.knowledge.md"
       }
     },
@@ -269,9 +297,9 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/test-engineer/test-engineer.role.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.491Z",
-        "updatedAt": "2025-07-25T06:35:10.491Z",
-        "scannedAt": "2025-07-25T06:35:10.491Z",
+        "createdAt": "2025-07-25T07:41:17.188Z",
+        "updatedAt": "2025-07-25T07:41:17.188Z",
+        "scannedAt": "2025-07-25T07:41:17.188Z",
         "path": "role/test-engineer/test-engineer.role.md"
       }
     },
@@ -283,9 +311,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/test-engineer/thought/testing-methodology.thought.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.492Z",
-        "updatedAt": "2025-07-25T06:35:10.492Z",
-        "scannedAt": "2025-07-25T06:35:10.492Z",
+        "createdAt": "2025-07-25T07:41:17.189Z",
+        "updatedAt": "2025-07-25T07:41:17.189Z",
+        "scannedAt": "2025-07-25T07:41:17.189Z",
         "path": "role/test-engineer/thought/testing-methodology.thought.md"
       }
     },
@@ -297,9 +325,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/ux-ui-designer/execution/design-workflow.execution.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.492Z",
-        "updatedAt": "2025-07-25T06:35:10.492Z",
-        "scannedAt": "2025-07-25T06:35:10.492Z",
+        "createdAt": "2025-07-25T07:41:17.190Z",
+        "updatedAt": "2025-07-25T07:41:17.190Z",
+        "scannedAt": "2025-07-25T07:41:17.190Z",
         "path": "role/ux-ui-designer/execution/design-workflow.execution.md"
       }
     },
@@ -311,9 +339,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/ux-ui-designer/knowledge/ui-design-specifics.knowledge.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.493Z",
-        "updatedAt": "2025-07-25T06:35:10.493Z",
-        "scannedAt": "2025-07-25T06:35:10.493Z",
+        "createdAt": "2025-07-25T07:41:17.190Z",
+        "updatedAt": "2025-07-25T07:41:17.190Z",
+        "scannedAt": "2025-07-25T07:41:17.190Z",
         "path": "role/ux-ui-designer/knowledge/ui-design-specifics.knowledge.md"
       }
     },
@@ -325,9 +353,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/ux-ui-designer/thought/design-thinking.thought.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.493Z",
-        "updatedAt": "2025-07-25T06:35:10.493Z",
-        "scannedAt": "2025-07-25T06:35:10.493Z",
+        "createdAt": "2025-07-25T07:41:17.191Z",
+        "updatedAt": "2025-07-25T07:41:17.191Z",
+        "scannedAt": "2025-07-25T07:41:17.191Z",
         "path": "role/ux-ui-designer/thought/design-thinking.thought.md"
       }
     },
@@ -339,23 +367,23 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/ux-ui-designer/ux-ui-designer.role.md",
       "metadata": {
-        "createdAt": "2025-07-25T06:35:10.494Z",
-        "updatedAt": "2025-07-25T06:35:10.494Z",
-        "scannedAt": "2025-07-25T06:35:10.494Z",
+        "createdAt": "2025-07-25T07:41:17.191Z",
+        "updatedAt": "2025-07-25T07:41:17.191Z",
+        "scannedAt": "2025-07-25T07:41:17.191Z",
         "path": "role/ux-ui-designer/ux-ui-designer.role.md"
       }
     }
   ],
   "stats": {
-    "totalResources": 24,
+    "totalResources": 26,
     "byProtocol": {
+      "role": 7,
       "knowledge": 9,
       "execution": 5,
-      "role": 5,
       "thought": 5
     },
     "bySource": {
-      "project": 24
+      "project": 26
     }
   }
 }

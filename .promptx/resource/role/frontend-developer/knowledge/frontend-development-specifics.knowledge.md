@@ -1,443 +1,620 @@
 # 前端开发专业知识
 
-## 知识库标识
-- **知识ID**: frontend-development-specifics
-- **适用角色**: frontend-developer
-- **知识类型**: 技术专业知识
-- **应用场景**: 前端开发、技术决策、问题解决
+## Vue.js 核心技术
 
-## 项目特定约束
-
-### 技术栈约束
-- **Vue版本**: Vue 2.6.14 (不支持Vue 3)
-- **UI框架**: Element UI 2.15.x
-- **构建工具**: Vue CLI 4.x + Webpack 4.x
-- **CSS预处理**: SCSS
-- **JavaScript标准**: ES6+
-- **包管理器**: npm
-
-### 项目结构约束
-```
-src/
-├── assets/        # 静态资源
-├── components/    # 公共组件
-├── directive/     # 自定义指令
-├── icons/         # 图标资源
-├── layout/        # 布局组件
-├── router/        # 路由配置
-├── store/         # Vuex状态管理
-├── styles/        # 全局样式
-├── utils/         # 工具函数
-└── views/         # 页面组件
-```
-
-### 代码规范约束
-- **ESLint配置**: 基于Vue官方规范
-- **命名规范**: 
-  - 组件名: PascalCase (如: UserProfile)
-  - 文件名: kebab-case (如: user-profile.vue)
-  - 变量名: camelCase (如: userName)
-  - 常量名: UPPER_SNAKE_CASE (如: API_BASE_URL)
-
-## Vue.js开发特性
-
-### 组件开发规范
-```vue
-<template>
-  <!-- 模板内容 -->
-</template>
-
-<script>
-export default {
-  name: 'ComponentName',
-  components: {},
-  props: {},
-  data() {
-    return {}
-  },
-  computed: {},
-  watch: {},
-  created() {},
-  mounted() {},
-  methods: {}
-}
-</script>
-
-<style lang="scss" scoped>
-/* 组件样式 */
-</style>
-```
-
-### 状态管理模式
-- **Vuex Store结构**:
-  ```javascript
-  // store/modules/example.js
-  const state = {}
-  const mutations = {}
-  const actions = {}
-  const getters = {}
-  
-  export default {
-    namespaced: true,
-    state,
-    mutations,
-    actions,
-    getters
-  }
-  ```
-
-### 路由配置模式
+### Vue 2.x 核心概念
 ```javascript
-// router/index.js
+// 1. 响应式原理
+// Vue 2使用Object.defineProperty实现响应式
+Object.defineProperty(obj, 'key', {
+  get() {
+    // 依赖收集
+    return value
+  },
+  set(newVal) {
+    // 派发更新
+    value = newVal
+    notify()
+  }
+})
+
+// 2. 组件通信
+// Props Down, Events Up
+export default {
+  props: ['message'],
+  methods: {
+    handleClick() {
+      this.$emit('custom-event', data)
+    }
+  }
+}
+
+// 3. 生命周期钩子
+export default {
+  created() {
+    // 实例创建完成，数据观测已完成
+  },
+  mounted() {
+    // DOM挂载完成，可以访问$el
+  },
+  updated() {
+    // 数据更新导致虚拟DOM重新渲染
+  },
+  destroyed() {
+    // 实例销毁，清理工作
+  }
+}
+```
+
+### Vue Router 路由管理
+```javascript
+// 路由配置
 const routes = [
   {
-    path: '/example',
-    component: Layout,
-    redirect: '/example/list',
-    name: 'Example',
-    meta: { title: '示例模块', icon: 'example' },
+    path: '/user/:id',
+    component: User,
+    props: true,
+    meta: { requiresAuth: true },
     children: [
       {
-        path: 'list',
-        name: 'ExampleList',
-        component: () => import('@/views/example/list'),
-        meta: { title: '示例列表', icon: 'list' }
+        path: 'profile',
+        component: UserProfile
       }
     ]
   }
 ]
+
+// 路由守卫
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth && !isAuthenticated()) {
+    next('/login')
+  } else {
+    next()
+  }
+})
+
+// 编程式导航
+this.$router.push({ name: 'user', params: { id: 123 }})
+this.$router.replace('/home')
+this.$router.go(-1)
 ```
 
-## Element UI使用规范
-
-### 组件使用约束
-- **表格组件**: 必须使用BaseTable封装组件
-- **表单组件**: 优先使用EnhancedForm组件
-- **弹窗组件**: 使用DialogForm或DrawerForm
-- **按钮组件**: 遵循ActionButtons规范
-
-### 主题定制
-```scss
-// styles/element-ui.scss
-$--color-primary: #409EFF;
-$--color-success: #67C23A;
-$--color-warning: #E6A23C;
-$--color-danger: #F56C6C;
-$--color-info: #909399;
-
-// 导入Element UI样式
-@import '~element-ui/packages/theme-chalk/src/index';
-```
-
-### 响应式设计
-```scss
-// 断点定义
-$mobile: 768px;
-$tablet: 992px;
-$desktop: 1200px;
-
-// 媒体查询混入
-@mixin mobile {
-  @media (max-width: #{$mobile - 1px}) {
-    @content;
-  }
-}
-
-@mixin tablet {
-  @media (min-width: #{$mobile}) and (max-width: #{$tablet - 1px}) {
-    @content;
-  }
-}
-
-@mixin desktop {
-  @media (min-width: #{$desktop}) {
-    @content;
-  }
-}
-```
-
-## 管理后台特性
-
-### 权限系统集成
+### Vuex 状态管理
 ```javascript
-// 路由权限检查
-router.beforeEach(async(to, from, next) => {
-  const hasToken = getToken()
+// Store结构
+const store = new Vuex.Store({
+  state: {
+    user: null,
+    loading: false
+  },
+  getters: {
+    isLoggedIn: state => !!state.user,
+    userName: state => state.user?.name || 'Guest'
+  },
+  mutations: {
+    SET_USER(state, user) {
+      state.user = user
+    },
+    SET_LOADING(state, loading) {
+      state.loading = loading
+    }
+  },
+  actions: {
+    async login({ commit }, credentials) {
+      commit('SET_LOADING', true)
+      try {
+        const user = await api.login(credentials)
+        commit('SET_USER', user)
+        return user
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    }
+  },
+  modules: {
+    user: userModule,
+    products: productModule
+  }
+})
+
+// 组件中使用
+import { mapState, mapGetters, mapActions } from 'vuex'
+
+export default {
+  computed: {
+    ...mapState(['user', 'loading']),
+    ...mapGetters(['isLoggedIn', 'userName'])
+  },
+  methods: {
+    ...mapActions(['login', 'logout'])
+  }
+}
+```
+
+## Element UI 组件库
+
+### 常用组件使用
+```vue
+<template>
+  <!-- 表格组件 -->
+  <el-table
+    :data="tableData"
+    v-loading="loading"
+    @selection-change="handleSelectionChange"
+  >
+    <el-table-column type="selection" width="55" />
+    <el-table-column prop="name" label="姓名" sortable />
+    <el-table-column prop="email" label="邮箱" />
+    <el-table-column label="操作" width="180">
+      <template slot-scope="scope">
+        <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+        <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+      </template>
+    </el-table-column>
+  </el-table>
+
+  <!-- 分页组件 -->
+  <el-pagination
+    @size-change="handleSizeChange"
+    @current-change="handleCurrentChange"
+    :current-page="currentPage"
+    :page-sizes="[10, 20, 50, 100]"
+    :page-size="pageSize"
+    layout="total, sizes, prev, pager, next, jumper"
+    :total="total"
+  />
+
+  <!-- 表单组件 -->
+  <el-form :model="form" :rules="rules" ref="form">
+    <el-form-item label="用户名" prop="username">
+      <el-input v-model="form.username" />
+    </el-form-item>
+    <el-form-item label="邮箱" prop="email">
+      <el-input v-model="form.email" type="email" />
+    </el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="submitForm">提交</el-button>
+      <el-button @click="resetForm">重置</el-button>
+    </el-form-item>
+  </el-form>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      form: {
+        username: '',
+        email: ''
+      },
+      rules: {
+        username: [
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
+        ],
+        email: [
+          { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+        ]
+      }
+    }
+  },
+  methods: {
+    submitForm() {
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          // 提交表单
+        }
+      })
+    }
+  }
+}
+</script>
+```
+
+## JavaScript 高级特性
+
+### ES6+ 语法
+```javascript
+// 1. 解构赋值
+const { name, age, ...rest } = user
+const [first, second, ...others] = array
+
+// 2. 箭头函数
+const add = (a, b) => a + b
+const users = data.map(item => ({ ...item, processed: true }))
+
+// 3. Promise 和 async/await
+async function fetchData() {
+  try {
+    const response = await fetch('/api/data')
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error:', error)
+    throw error
+  }
+}
+
+// 4. 模块化
+// 导出
+export default class User {}
+export { helper, utils }
+
+// 导入
+import User from './User'
+import { helper, utils } from './utils'
+import * as API from './api'
+
+// 5. 类和继承
+class Component {
+  constructor(props) {
+    this.props = props
+  }
   
-  if (hasToken) {
-    if (to.path === '/login') {
-      next({ path: '/' })
-    } else {
-      const hasRoles = store.getters.roles && store.getters.roles.length > 0
-      if (hasRoles) {
-        next()
-      } else {
-        try {
-          const { roles } = await store.dispatch('user/getInfo')
-          const accessRoutes = await store.dispatch('permission/generateRoutes', roles)
-          router.addRoutes(accessRoutes)
-          next({ ...to, replace: true })
-        } catch (error) {
-          await store.dispatch('user/resetToken')
-          next(`/login?redirect=${to.path}`)
+  render() {
+    // 渲染逻辑
+  }
+}
+
+class Button extends Component {
+  handleClick = () => {
+    this.props.onClick?.()
+  }
+}
+```
+
+### 函数式编程
+```javascript
+// 高阶函数
+const withLoading = (fn) => {
+  return async (...args) => {
+    setLoading(true)
+    try {
+      return await fn(...args)
+    } finally {
+      setLoading(false)
+    }
+  }
+}
+
+// 柯里化
+const curry = (fn) => {
+  return function curried(...args) {
+    if (args.length >= fn.length) {
+      return fn.apply(this, args)
+    }
+    return (...nextArgs) => curried(...args, ...nextArgs)
+  }
+}
+
+// 组合函数
+const compose = (...fns) => (value) => fns.reduceRight((acc, fn) => fn(acc), value)
+const pipe = (...fns) => (value) => fns.reduce((acc, fn) => fn(acc), value)
+```
+
+## CSS 和样式处理
+
+### CSS 预处理器 (Sass/Less)
+```scss
+// 变量定义
+$primary-color: #409eff;
+$border-radius: 4px;
+$font-size-base: 14px;
+
+// 混合器
+@mixin button-style($bg-color, $text-color: #fff) {
+  background-color: $bg-color;
+  color: $text-color;
+  border-radius: $border-radius;
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: darken($bg-color, 10%);
+  }
+}
+
+// 嵌套规则
+.user-card {
+  border: 1px solid #ddd;
+  border-radius: $border-radius;
+  
+  .header {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+  }
+  
+  .content {
+    padding: 16px;
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .user-card {
+    margin: 8px;
+    
+    .header {
+      padding: 12px;
+    }
+  }
+}
+```
+
+### CSS-in-JS 和 CSS Modules
+```javascript
+// CSS Modules
+import styles from './Button.module.css'
+
+const Button = ({ children, type = 'default' }) => {
+  return (
+    <button className={`${styles.button} ${styles[type]}`}>
+      {children}
+    </button>
+  )
+}
+
+// Styled Components (如果使用)
+const StyledButton = styled.button`
+  background-color: ${props => props.primary ? '#007bff' : '#6c757d'};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+`
+```
+
+## 构建工具和工程化
+
+### Webpack 配置
+```javascript
+// webpack.config.js
+module.exports = {
+  entry: './src/main.js',
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: '[name].[contenthash].js',
+    clean: true
+  },
+  module: {
+    rules: [
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader'
+      },
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env']
+          }
+        }
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      },
+      {
+        test: /\.(png|jpg|gif|svg)$/,
+        type: 'asset/resource'
+      }
+    ]
+  },
+  plugins: [
+    new VueLoaderPlugin(),
+    new HtmlWebpackPlugin({
+      template: './public/index.html'
+    })
+  ],
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all'
         }
       }
     }
-  } else {
-    if (whiteList.indexOf(to.path) !== -1) {
-      next()
-    } else {
-      next(`/login?redirect=${to.path}`)
-    }
   }
-})
-```
-
-### 数据表格特性
-- **分页处理**: 统一使用Pagination组件
-- **搜索功能**: 使用SearchForm或SearchFormV2
-- **批量操作**: 集成BatchAction组件
-- **导入导出**: 使用ImportButton和ExportButton
-- **列设置**: 支持ColumnSettings动态配置
-
-### API接口规范
-```javascript
-// api/example.js
-import request from '@/utils/request'
-
-export function getList(params) {
-  return request({
-    url: '/example/list',
-    method: 'get',
-    params
-  })
-}
-
-export function createItem(data) {
-  return request({
-    url: '/example',
-    method: 'post',
-    data
-  })
-}
-
-export function updateItem(id, data) {
-  return request({
-    url: `/example/${id}`,
-    method: 'put',
-    data
-  })
-}
-
-export function deleteItem(id) {
-  return request({
-    url: `/example/${id}`,
-    method: 'delete'
-  })
 }
 ```
 
-## 性能优化策略
-
-### 代码分割
+### Vite 配置
 ```javascript
-// 路由懒加载
-const Example = () => import('@/views/example/index')
+// vite.config.js
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { resolve } from 'path'
 
-// 组件懒加载
-const LazyComponent = () => import('@/components/LazyComponent')
-```
-
-### 图片优化
-```javascript
-// 图片懒加载
-<img v-lazy="imageUrl" alt="description">
-
-// 图片压缩
-const compressImage = (file, quality = 0.8) => {
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    const img = new Image()
-    
-    img.onload = () => {
-      canvas.width = img.width
-      canvas.height = img.height
-      ctx.drawImage(img, 0, 0)
-      
-      canvas.toBlob(resolve, 'image/jpeg', quality)
-    }
-    
-    img.src = URL.createObjectURL(file)
-  })
-}
-```
-
-### 缓存策略
-```javascript
-// HTTP缓存
-axios.interceptors.request.use(config => {
-  if (config.method === 'get' && config.cache) {
-    const cacheKey = `${config.url}_${JSON.stringify(config.params)}`
-    const cachedData = localStorage.getItem(cacheKey)
-    
-    if (cachedData) {
-      return Promise.resolve(JSON.parse(cachedData))
-    }
-  }
-  
-  return config
-})
-
-// 组件缓存
-<keep-alive :include="cachedViews">
-  <router-view :key="key" />
-</keep-alive>
-```
-
-## 错误处理机制
-
-### 全局错误处理
-```javascript
-// main.js
-Vue.config.errorHandler = (err, vm, info) => {
-  console.error('Vue Error:', err)
-  console.error('Component:', vm)
-  console.error('Info:', info)
-  
-  // 发送错误报告
-  reportError(err, vm, info)
-}
-
-// 异步错误处理
-window.addEventListener('unhandledrejection', event => {
-  console.error('Unhandled Promise Rejection:', event.reason)
-  reportError(event.reason)
-})
-```
-
-### API错误处理
-```javascript
-// utils/request.js
-service.interceptors.response.use(
-  response => {
-    const res = response.data
-    
-    if (res.code !== 20000) {
-      Message({
-        message: res.message || 'Error',
-        type: 'error',
-        duration: 5 * 1000
-      })
-      
-      return Promise.reject(new Error(res.message || 'Error'))
-    } else {
-      return res
+export default defineConfig({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src')
     }
   },
-  error => {
-    console.log('err' + error)
-    Message({
-      message: error.message,
-      type: 'error',
-      duration: 5 * 1000
-    })
-    return Promise.reject(error)
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'vue-router', 'vuex'],
+          ui: ['element-ui']
+        }
+      }
+    }
   }
-)
+})
 ```
 
-## 测试策略
+## 性能优化技术
 
-### 单元测试
+### 代码分割和懒加载
 ```javascript
-// tests/unit/components/Example.spec.js
-import { shallowMount } from '@vue/test-utils'
-import Example from '@/components/Example.vue'
+// 路由懒加载
+const routes = [
+  {
+    path: '/user',
+    component: () => import('@/views/User.vue')
+  },
+  {
+    path: '/admin',
+    component: () => import(/* webpackChunkName: "admin" */ '@/views/Admin.vue')
+  }
+]
 
-describe('Example.vue', () => {
+// 组件懒加载
+export default {
+  components: {
+    HeavyComponent: () => import('@/components/HeavyComponent.vue')
+  }
+}
+
+// 动态导入
+async function loadModule() {
+  const { default: utils } = await import('@/utils/heavy-utils.js')
+  return utils
+}
+```
+
+### 虚拟滚动
+```vue
+<template>
+  <div class="virtual-list" @scroll="handleScroll">
+    <div class="list-phantom" :style="{ height: totalHeight + 'px' }"></div>
+    <div class="list-container" :style="{ transform: `translateY(${offset}px)` }">
+      <div
+        v-for="item in visibleItems"
+        :key="item.id"
+        class="list-item"
+        :style="{ height: itemHeight + 'px' }"
+      >
+        {{ item.content }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  props: {
+    items: Array,
+    itemHeight: { type: Number, default: 50 },
+    containerHeight: { type: Number, default: 300 }
+  },
+  data() {
+    return {
+      scrollTop: 0
+    }
+  },
+  computed: {
+    totalHeight() {
+      return this.items.length * this.itemHeight
+    },
+    visibleCount() {
+      return Math.ceil(this.containerHeight / this.itemHeight)
+    },
+    startIndex() {
+      return Math.floor(this.scrollTop / this.itemHeight)
+    },
+    endIndex() {
+      return Math.min(this.startIndex + this.visibleCount, this.items.length)
+    },
+    visibleItems() {
+      return this.items.slice(this.startIndex, this.endIndex)
+    },
+    offset() {
+      return this.startIndex * this.itemHeight
+    }
+  },
+  methods: {
+    handleScroll(e) {
+      this.scrollTop = e.target.scrollTop
+    }
+  }
+}
+</script>
+```
+
+## 测试技术
+
+### 单元测试 (Jest + Vue Test Utils)
+```javascript
+// Button.spec.js
+import { shallowMount } from '@vue/test-utils'
+import Button from '@/components/Button.vue'
+
+describe('Button.vue', () => {
   it('renders props.msg when passed', () => {
-    const msg = 'new message'
-    const wrapper = shallowMount(Example, {
+    const msg = 'Click me'
+    const wrapper = shallowMount(Button, {
       propsData: { msg }
     })
     expect(wrapper.text()).toMatch(msg)
   })
-})
-```
 
-### E2E测试
-```javascript
-// tests/e2e/specs/login.js
-describe('Login', () => {
-  it('should login successfully', () => {
-    cy.visit('/login')
-    cy.get('[data-cy=username]').type('admin')
-    cy.get('[data-cy=password]').type('password')
-    cy.get('[data-cy=login-btn]').click()
-    cy.url().should('include', '/dashboard')
+  it('emits click event when clicked', async () => {
+    const wrapper = shallowMount(Button)
+    await wrapper.trigger('click')
+    expect(wrapper.emitted().click).toBeTruthy()
+  })
+
+  it('applies correct class based on type prop', () => {
+    const wrapper = shallowMount(Button, {
+      propsData: { type: 'primary' }
+    })
+    expect(wrapper.classes()).toContain('btn-primary')
   })
 })
 ```
 
-## 部署和构建
-
-### 构建配置
+### E2E测试 (Cypress)
 ```javascript
-// vue.config.js
-module.exports = {
-  publicPath: process.env.NODE_ENV === 'production' ? '/admin/' : '/',
-  outputDir: 'dist',
-  assetsDir: 'static',
-  lintOnSave: process.env.NODE_ENV === 'development',
-  productionSourceMap: false,
-  
-  configureWebpack: {
-    resolve: {
-      alias: {
-        '@': resolve('src')
-      }
-    }
-  },
-  
-  chainWebpack(config) {
-    config.plugins.delete('preload')
-    config.plugins.delete('prefetch')
+// cypress/integration/user-flow.spec.js
+describe('User Management', () => {
+  beforeEach(() => {
+    cy.visit('/users')
+  })
+
+  it('should display user list', () => {
+    cy.get('[data-cy=user-table]').should('be.visible')
+    cy.get('[data-cy=user-row]').should('have.length.greaterThan', 0)
+  })
+
+  it('should create new user', () => {
+    cy.get('[data-cy=add-user-btn]').click()
+    cy.get('[data-cy=user-form]').should('be.visible')
     
-    // 代码分割
-    config.optimization.splitChunks({
-      chunks: 'all',
-      cacheGroups: {
-        libs: {
-          name: 'chunk-libs',
-          test: /[\\/]node_modules[\\/]/,
-          priority: 10,
-          chunks: 'initial'
-        },
-        elementUI: {
-          name: 'chunk-elementUI',
-          priority: 20,
-          test: /[\\/]node_modules[\\/]_?element-ui(.*)/
-        }
-      }
-    })
-  }
-}
+    cy.get('[data-cy=username-input]').type('testuser')
+    cy.get('[data-cy=email-input]').type('test@example.com')
+    cy.get('[data-cy=submit-btn]').click()
+    
+    cy.get('[data-cy=success-message]').should('contain', '用户创建成功')
+  })
+})
 ```
-
-### 环境配置
-```bash
-# .env.development
-ENV = 'development'
-VUE_APP_BASE_API = '/dev-api'
-VUE_APP_MOCK = true
-
-# .env.production
-ENV = 'production'
-VUE_APP_BASE_API = '/prod-api'
-VUE_APP_MOCK = false
-```
-
----
-
-*此知识库为前端开发工程师提供项目特定的技术约束和专业知识指导*
