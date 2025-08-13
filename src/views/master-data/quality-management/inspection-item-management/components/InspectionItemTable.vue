@@ -2,6 +2,8 @@
  * 检验项目表格组件
  * 功能描述：展示检验项目列表数据，提供分页、选择、操作功能，支持批量操作、导入导出等高级功能
  * 创建日期：2024-12-19
+ * 修改记录：
+ *   - 2024-12-23: 修复重复操作列问题，统一操作按钮风格与OperationTable保持一致
  */
 <template>
   <div class="inspection-item-table">
@@ -111,6 +113,15 @@
               </span>
               <span v-else>-</span>
             </template>
+            <!-- 操作列特殊处理 -->
+            <template v-else-if="col.prop === 'actions'">
+              <ActionButtons
+                :buttons="getActionButtons(scope.row)"
+                mode="text"
+                :row="scope.row"
+                @click="handleActionClick"
+              />
+            </template>
             <!-- 其他列的默认处理 -->
             <template v-else-if="col.formatter">
               {{ col.formatter(scope.row[col.prop], scope.row) }}
@@ -125,17 +136,7 @@
         </el-table-column>
       </template>
 
-      <el-table-column label="操作" width="230" align="center" fixed="right">
-        <template slot-scope="scope">
-          <!-- 使用ActionButtons组件替代原来的按钮组 -->
-          <action-buttons
-            :buttons="getActionButtons(scope.row)"
-            mode="text"
-            :row="scope.row"
-            @click="handleActionClick"
-          />
-        </template>
-      </el-table-column>
+      <!-- 操作列通过TABLE_COLUMNS配置自动生成，无需手动添加 -->
     </el-table>
 
     <!-- 分页组件 -->
@@ -384,43 +385,60 @@ export default {
      * 获取操作按钮配置
      */
     getActionButtons(row) {
-      const buttons = [
-        {
-          text: '查看',
-          type: 'primary',
-          action: 'view',
-          icon: 'el-icon-view'
-        },
-        {
-          text: '编辑',
-          type: 'primary',
-          action: 'edit',
-          icon: 'el-icon-edit'
-        }
-      ]
+      if (!row) {
+        console.warn('行数据为空，无法生成操作按钮')
+        return []
+      }
+
+      const buttons = []
+
+      // 添加查看按钮
+      buttons.push({
+        text: '查看',
+        action: 'view',
+        icon: 'el-icon-view',
+        type: 'text',
+        tooltip: '查看检验项目详情'
+      })
+
+      // 添加编辑按钮
+      buttons.push({
+        text: '编辑',
+        action: 'edit',
+        icon: 'el-icon-edit',
+        type: 'text',
+        tooltip: '编辑检验项目信息'
+      })
 
       // 根据状态添加启用/禁用按钮
       if (row.status === 'Active') {
         buttons.push({
           text: '禁用',
-          type: 'warning',
           action: 'disable',
-          icon: 'el-icon-close'
+          icon: 'el-icon-close',
+          type: 'text',
+          class: 'warning',
+          tooltip: '禁用该检验项目'
         })
       } else {
         buttons.push({
           text: '启用',
-          type: 'success',
           action: 'enable',
-          icon: 'el-icon-check'
+          icon: 'el-icon-check',
+          type: 'text',
+          class: 'success',
+          tooltip: '启用该检验项目'
         })
       }
 
+      // 删除按钮总是显示
       buttons.push({
         text: '删除',
-        type: 'danger',
         action: 'delete',
-        icon: 'el-icon-delete'
+        icon: 'el-icon-delete',
+        type: 'text',
+        class: 'danger',
+        tooltip: '删除检验项目'
       })
 
       return buttons
@@ -429,25 +447,32 @@ export default {
     /**
      * 处理操作按钮点击
      */
-    handleActionClick({ action, row }) {
-      switch (action) {
+    handleActionClick(button) {
+      switch (button.action) {
         case 'view':
-          this.$emit('view', row)
+          this.$emit('view', button.row)
           break
         case 'edit':
-          this.$emit('edit', row)
+          this.$emit('edit', button.row)
           break
         case 'delete':
-          this.$emit('delete', row)
+          // 直接发送删除事件，让主页面处理确认逻辑
+          this.$emit('delete', button.row)
           break
         case 'enable':
-          this.$emit('status-change', row, 'Active')
+          this.$emit('status-change', {
+            id: button.row.id,
+            status: 'Active'
+          })
           break
         case 'disable':
-          this.$emit('status-change', row, 'Inactive')
+          this.$emit('status-change', {
+            id: button.row.id,
+            status: 'Inactive'
+          })
           break
         default:
-          console.warn('未知操作:', action)
+          console.warn('未知操作:', button.action)
       }
     },
 
