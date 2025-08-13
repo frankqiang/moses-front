@@ -114,11 +114,13 @@ export default {
   methods: {
     /**
      * 获取列表数据
+     * 纯数据获取方法，不包含提示逻辑
+     * 提示逻辑由mixin统一处理
      */
     async fetchList() {
+      this.listLoading = true
+      
       try {
-        this.listLoading = true
-        
         const params = {
           page: this.pagination.page,
           size: this.pagination.size,
@@ -135,19 +137,15 @@ export default {
           ...this.pagination,
           total: this.total
         }
-        
-        // 刷新成功提示
-        this.$refs.inspectionItemTable?.refreshSucceed()
       } catch (error) {
         console.error('获取检验项目列表失败:', error)
-        const errorMessage = error.response?.data?.message || error.message || '获取数据失败，请稍后重试'
         
         // 重置数据
         this.list = []
         this.total = 0
         
-        // 刷新失败提示
-        this.$refs.inspectionItemTable?.refreshFail(errorMessage)
+        // 重新抛出错误，让mixin处理提示
+        throw error
       } finally {
         this.listLoading = false
       }
