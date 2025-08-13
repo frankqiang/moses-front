@@ -4,11 +4,13 @@
  * 创建日期：2024-12-19
  * 修改记录：
  *   - 2024-12-23: 修复重复操作列问题，统一操作按钮风格与OperationTable保持一致
+ *   - 2024-12-24: 优化状态显示（解决0/1显示问题），添加OverflowTagsPopover支持多值列，完善刷新提示功能
  */
 <template>
   <div class="inspection-item-table">
     <!-- 使用全局表格工具栏组件 -->
     <table-toolbar
+      ref="toolbar"
       :enable-column-settings="true"
       :column-options="allColumns"
       :storage-key="storageKey"
@@ -25,6 +27,7 @@
       :status-confirm="false"
       :delete-confirm="false"
       :table-data="data"
+      :refresh-feedback-mode="'all'"
       @refresh="handleRefresh"
       @column-change="handleColumnChange"
       @batch-delete="handleBatchDelete"
@@ -68,9 +71,28 @@
           <template slot-scope="scope">
             <!-- 检验类别 -->
             <template v-if="col.prop === 'category'">
-              <el-tag :type="getCategoryTagType(scope.row.category)" size="mini">
-                {{ getCategoryLabel(scope.row.category) }}
-              </el-tag>
+              <!-- 如果是数组，使用OverflowTagsPopover组件 -->
+              <template v-if="Array.isArray(scope.row.category)">
+                <OverflowTagsPopover
+                  v-if="scope.row.category && scope.row.category.length > 0"
+                  :data="scope.row.category"
+                  :max-show="1"
+                  :enable-modern-features="true"
+                  size="mini"
+                  type="primary"
+                  title="检验类别"
+                  :popover-width="300"
+                  placement="top"
+                  :formatter="getCategoryLabel"
+                />
+                <span v-else>-</span>
+              </template>
+              <!-- 如果是单个值，显示为标签 -->
+              <template v-else>
+                <el-tag :type="getCategoryTagType(scope.row.category)" size="mini">
+                  {{ getCategoryLabel(scope.row.category) }}
+                </el-tag>
+              </template>
             </template>
             <!-- 数据类型 -->
             <template v-else-if="col.prop === 'dataType'">
@@ -80,15 +102,53 @@
             </template>
             <!-- 检验方法 -->
             <template v-else-if="col.prop === 'inspectionMethod'">
-              <el-tag :type="getMethodTagType(scope.row.inspectionMethod)" size="mini">
-                {{ getMethodLabel(scope.row.inspectionMethod) }}
-              </el-tag>
+              <!-- 如果是数组，使用OverflowTagsPopover组件 -->
+              <template v-if="Array.isArray(scope.row.inspectionMethod)">
+                <OverflowTagsPopover
+                  v-if="scope.row.inspectionMethod && scope.row.inspectionMethod.length > 0"
+                  :data="scope.row.inspectionMethod"
+                  :max-show="1"
+                  :enable-modern-features="true"
+                  size="mini"
+                  type="warning"
+                  title="检验方法"
+                  :popover-width="300"
+                  placement="top"
+                  :formatter="getMethodLabel"
+                />
+                <span v-else>-</span>
+              </template>
+              <!-- 如果是单个值，显示为标签 -->
+              <template v-else>
+                <el-tag :type="getMethodTagType(scope.row.inspectionMethod)" size="mini">
+                  {{ getMethodLabel(scope.row.inspectionMethod) }}
+                </el-tag>
+              </template>
             </template>
             <!-- 适用产品 -->
             <template v-else-if="col.prop === 'applicableProduct'">
-              <el-tag :type="getProductTagType(scope.row.applicableProduct)" size="mini">
-                {{ getProductLabel(scope.row.applicableProduct) }}
-              </el-tag>
+              <!-- 如果是数组，使用OverflowTagsPopover组件 -->
+              <template v-if="Array.isArray(scope.row.applicableProduct)">
+                <OverflowTagsPopover
+                  v-if="scope.row.applicableProduct && scope.row.applicableProduct.length > 0"
+                  :data="scope.row.applicableProduct"
+                  :max-show="1"
+                  :enable-modern-features="true"
+                  size="mini"
+                  type="primary"
+                  title="适用产品"
+                  :popover-width="300"
+                  placement="top"
+                  :formatter="getProductLabel"
+                />
+                <span v-else>-</span>
+              </template>
+              <!-- 如果是单个值，显示为标签 -->
+              <template v-else>
+                <el-tag :type="getProductTagType(scope.row.applicableProduct)" size="mini">
+                  {{ getProductLabel(scope.row.applicableProduct) }}
+                </el-tag>
+              </template>
             </template>
             <!-- 使用StatusTag组件展示状态列 -->
             <template v-else-if="col.prop === 'status'">
@@ -155,6 +215,7 @@ import TableToolbar from '@/components/TableToolbar'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import Pagination from '@/components/Pagination'
+import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import {
   TABLE_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
@@ -171,7 +232,8 @@ export default {
     TableToolbar,
     StatusTag,
     ActionButtons,
-    Pagination
+    Pagination,
+    OverflowTagsPopover
   },
   props: {
     // 表格数据
@@ -517,6 +579,24 @@ export default {
     },
 
     /**
+     * 刷新成功 - 公开方法，供父组件调用
+     */
+    refreshSucceed(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshSucceed(message)
+      }
+    },
+
+    /**
+     * 刷新失败 - 公开方法，供父组件调用
+     */
+    refreshFail(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshFail(message)
+      }
+    },
+
+    /**
      * 处理批量删除
      */
     handleBatchDelete(rows) {
@@ -551,19 +631,7 @@ export default {
       this.$emit('export-success', result)
     },
 
-    /**
-     * 刷新成功
-     */
-    refreshSucceed() {
-      // 可以添加刷新成功的处理逻辑
-    },
 
-    /**
-     * 刷新失败
-     */
-    refreshFail(message) {
-      this.$message.error(message || '刷新失败')
-    }
   }
 }
 </script>

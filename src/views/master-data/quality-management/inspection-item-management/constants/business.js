@@ -62,12 +62,22 @@ export const STATUS_CONFIG = {
   textMap: {
     [INSPECTION_ITEM_STATUS.ACTIVE]: '启用',
     [INSPECTION_ITEM_STATUS.INACTIVE]: '禁用',
-    [INSPECTION_ITEM_STATUS.DRAFT]: '草稿'
+    [INSPECTION_ITEM_STATUS.DRAFT]: '草稿',
+    // 兼容数字状态值
+    1: '启用',
+    0: '禁用',
+    '1': '启用',
+    '0': '禁用'
   },
   typeMap: {
     [INSPECTION_ITEM_STATUS.ACTIVE]: 'success',
     [INSPECTION_ITEM_STATUS.INACTIVE]: 'danger',
-    [INSPECTION_ITEM_STATUS.DRAFT]: 'warning'
+    [INSPECTION_ITEM_STATUS.DRAFT]: 'warning',
+    // 兼容数字状态值
+    1: 'success',
+    0: 'danger',
+    '1': 'success',
+    '0': 'danger'
   }
 }
 

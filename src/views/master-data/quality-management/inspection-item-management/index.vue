@@ -108,6 +108,7 @@ export default {
     }
   },
   created() {
+    // 初始化加载数据
     this.fetchList()
   },
   methods: {
@@ -134,14 +135,19 @@ export default {
           ...this.pagination,
           total: this.total
         }
+        
+        // 刷新成功提示
+        this.$refs.inspectionItemTable?.refreshSucceed()
       } catch (error) {
         console.error('获取检验项目列表失败:', error)
         const errorMessage = error.response?.data?.message || error.message || '获取数据失败，请稍后重试'
-        this.$message.error(errorMessage)
         
         // 重置数据
         this.list = []
         this.total = 0
+        
+        // 刷新失败提示
+        this.$refs.inspectionItemTable?.refreshFail(errorMessage)
       } finally {
         this.listLoading = false
       }
