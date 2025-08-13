@@ -134,6 +134,22 @@ export const constantRoutes = [
             meta: { title: '工艺路线编排',  }
           }
         ]
+      },
+      {
+        path: 'quality-management',
+        name: 'QualityManagement',
+        component: { render: h => h('router-view') },
+        meta: { title: '质量管理', icon: 'el-icon-medal' },
+        alwaysShow: true,
+        redirect: '/master-data/quality-management/inspection-item-management',
+        children: [
+          {
+            path: 'inspection-item-management',
+            component: () => import('@/views/master-data/quality-management/inspection-item-management/index'),
+            name: 'InspectionItemManagement',
+            meta: { title: '检验项目管理' }
+          }
+        ]
       }
       // 后续可以在这里添加其他主数据管理的子页面
     ]

@@ -13,6 +13,7 @@ const processParameter = require('./master-data/process-parameter')
 const furnaceType = require('./master-data/furnace-type')
 const operations = require('./master-data/process-management/operations')
 const routing = require('./master-data/process-management/routing')
+const qualityManagement = require('./master-data/quality-management')
 
 /**
  * Mock 模块加载顺序和路由优先级约定：
@@ -43,7 +44,8 @@ const mocks = [
   ...processParameter,
   ...furnaceType,
   ...operations,
-  ...routing
+  ...routing,
+  ...qualityManagement
 ]
 
 // for front mock
