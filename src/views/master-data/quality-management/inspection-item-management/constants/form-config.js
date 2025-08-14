@@ -61,3 +61,12 @@ export const SEARCH_FORM_CONFIG = [
     ]
   }
 ]
+
+// 初始表单数据常量
+export const INITIAL_FORM_DATA = {
+  keyword: '',
+  category: '',
+  dataType: '',
+  applicableProduct: '',
+  status: ''
+}

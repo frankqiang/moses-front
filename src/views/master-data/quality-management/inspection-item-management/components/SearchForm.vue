@@ -16,7 +16,7 @@
 
 <script>
 import SearchForm from '@/components/SearchForm'
-import { SEARCH_FORM_CONFIG } from '../constants'
+import { SEARCH_FORM_CONFIG, INITIAL_FORM_DATA } from '../constants'
 
 export default {
   name: 'InspectionItemSearchForm',
@@ -38,13 +38,7 @@ export default {
   data() {
     return {
       // 表单模型数据（响应式）
-      formModel: {
-        keyword: '',
-        category: '',
-        dataType: '',
-        applicableProduct: '',
-        status: ''
-      }
+      formModel: { ...INITIAL_FORM_DATA }
     }
   },
   computed: {
@@ -87,16 +81,10 @@ export default {
 
     /**
      * 处理重置事件
+     * 只重置表单数据，不触发事件（避免与mixin形成循环调用）
      */
     handleReset() {
-      this.formModel = {
-        keyword: '',
-        category: '',
-        dataType: '',
-        applicableProduct: '',
-        status: ''
-      }
-      this.$emit('reset')
+      this.formModel = { ...INITIAL_FORM_DATA }
     },
 
     /**
@@ -123,6 +111,14 @@ export default {
      */
     resetForm() {
       this.$refs.searchForm.resetForm()
+    },
+
+    /**
+     * 获取初始表单数据
+     * @returns {Object} 初始表单状态
+     */
+    getInitialFormData() {
+      return { ...INITIAL_FORM_DATA }
     }
   }
 }

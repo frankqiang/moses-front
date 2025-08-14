@@ -52,7 +52,6 @@
 import SearchForm from './components/SearchForm'
 import InspectionItemTable from './components/InspectionItemTable'
 import InspectionItemFormDrawer from './components/InspectionItemFormDrawer'
-import tableRefreshMixin from '@/mixins/tableRefreshMixin'
 import {
   getInspectionItemList,
   deleteInspectionItem,
@@ -64,7 +63,6 @@ import {
 
 export default {
   name: 'InspectionItemManagement',
-  mixins: [tableRefreshMixin],
   components: {
     SearchForm,
     InspectionItemTable,
@@ -72,8 +70,6 @@ export default {
   },
   data() {
     return {
-      // 表格组件ref名称（用于tableRefreshMixin）
-      tableRef: 'inspectionItemTable',
       // 列表数据
       list: [],
       // 总数
@@ -137,15 +133,15 @@ export default {
           ...this.pagination,
           total: this.total
         }
+
+        // 显示刷新成功提示
+        this.$refs.inspectionItemTable.refreshSucceed()
       } catch (error) {
         console.error('获取检验项目列表失败:', error)
         
         // 重置数据
         this.list = []
         this.total = 0
-        
-        // 重新抛出错误，让mixin处理提示
-        throw error
       } finally {
         this.listLoading = false
       }
@@ -153,12 +149,31 @@ export default {
 
     /**
      * 处理搜索
-     * 覆盖mixin中的方法，添加搜索参数处理
+     * 重置到第一页并刷新数据
      */
     handleSearch(searchParams) {
       this.searchParams = { ...searchParams }
-      // 调用mixin中的方法
-      this.$options.mixins[0].methods.handleSearch.call(this)
+      this.pagination.page = 1
+      this.fetchList()
+    },
+
+    /**
+     * 处理重置
+     * 清空搜索条件，重置分页并刷新数据
+     */
+    handleReset() {
+      this.searchParams = {}
+      this.pagination.page = 1
+      this.fetchList()
+    },
+
+    /**
+     * 处理分页变化
+     * @param {Object} paginationData 分页数据
+     */
+    handlePaginationChange(paginationData) {
+      Object.assign(this.pagination, paginationData)
+      this.fetchList()
     },
 
     /**
@@ -214,7 +229,7 @@ export default {
         this.$message.success(response.message || '删除成功')
         
         // 刷新列表
-        this.handleDeleteSuccess()
+        this.fetchList()
       } catch (error) {
         if (error !== 'cancel') {
           console.error('删除检验项目失败:', error)
@@ -249,8 +264,9 @@ export default {
         
         this.$message.success(response.message || '批量删除成功')
         
-        // 批量操作成功处理
-        this.handleBatchSuccess()
+        // 清空选中项并刷新列表
+        this.selectedRows = []
+        this.fetchList()
       } catch (error) {
         if (error !== 'cancel') {
           console.error('批量删除检验项目失败:', error)
@@ -278,8 +294,9 @@ export default {
         
         this.$message.success(response.message || '批量启用成功')
         
-        // 批量操作成功处理
-        this.handleBatchSuccess()
+        // 清空选中项并刷新列表
+        this.selectedRows = []
+        this.fetchList()
       } catch (error) {
         console.error('批量启用检验项目失败:', error)
         const errorMessage = error.response?.data?.message || error.message || '批量启用失败，请稍后重试'
@@ -305,8 +322,9 @@ export default {
         
         this.$message.success(response.message || '批量禁用成功')
         
-        // 批量操作成功处理
-        this.handleBatchSuccess()
+        // 清空选中项并刷新列表
+        this.selectedRows = []
+        this.fetchList()
       } catch (error) {
         console.error('批量禁用检验项目失败:', error)
         const errorMessage = error.response?.data?.message || error.message || '批量禁用失败，请稍后重试'
@@ -414,7 +432,7 @@ export default {
         // const response = await importInspectionItems(formData)
         
         this.$message.success('导入成功')
-        this.handleImportSuccess()
+        this.fetchList()
       } catch (error) {
         console.error('导入检验项目失败:', error)
         const errorMessage = error.response?.data?.message || error.message || '导入失败，请稍后重试'
@@ -452,11 +470,14 @@ export default {
 
     /**
      * 处理表单成功
-     * 覆盖mixin中的方法，添加成功消息提示
+     * 关闭表单抽屉并刷新数据
      */
     handleFormSuccess(data) {
-      // 调用mixin中的方法处理刷新
-      this.$options.mixins[0].methods.handleFormSuccess.call(this)
+      // 关闭表单抽屉
+      this.drawerVisible = false
+      
+      // 刷新列表
+      this.fetchList()
       
       // 添加成功消息提示
       if (this.drawerMode === 'create' && data) {
@@ -471,7 +492,22 @@ export default {
      */
     handleFormClose() {
       this.currentInspectionItem = null
+    },
+
+    /**
+     * 处理刷新
+     * 刷新按钮点击时触发
+     */
+    handleRefresh() {
+      this.fetchList()
     }
+  },
+
+  /**
+   * 组件创建时初始化数据
+   */
+  created() {
+    this.handleRefresh()
   }
 }
 </script>
@@ -481,10 +517,10 @@ export default {
   padding: 20px;
   background-color: #f5f5f5;
   min-height: calc(100vh - 84px);
-  
+
   > * {
     margin-bottom: 20px;
-    
+
     &:last-child {
       margin-bottom: 0;
     }

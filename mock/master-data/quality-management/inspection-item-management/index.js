@@ -6,7 +6,7 @@
  *   - 2024-12-19: 创建检验项目管理API
  */
 
-const { data: inspectionItemsData, inspectionMethods, applicableProducts } = require('./data/inspection-items')
+const { data: inspectionItemsData, inspectionMethods, applicableProducts, inspectionCategories, inspectionCategoryTextMap, dataTypes, dataTypeTextMap } = require('./data/inspection-items')
 const Mock = require('mockjs')
 
 // 引入统一的响应工具函数
@@ -129,6 +129,10 @@ const handlers = {
       id: idCounter++,
       code: body.code,
       name: body.name,
+      category: body.category,
+      categoryText: getCategoryText(body.category),
+      dataType: body.dataType,
+      dataTypeText: getDataTypeText(body.dataType),
       inspectionMethod: body.inspectionMethod,
       inspectionMethodText: getInspectionMethodText(body.inspectionMethod),
       applicableProduct: body.applicableProduct,
@@ -175,6 +179,8 @@ const handlers = {
       ...dataCache[itemIndex],
       ...body,
       id: parseInt(id), // 确保ID不被修改
+      categoryText: body.category ? getCategoryText(body.category) : dataCache[itemIndex].categoryText,
+      dataTypeText: body.dataType ? getDataTypeText(body.dataType) : dataCache[itemIndex].dataTypeText,
       inspectionMethodText: body.inspectionMethod ? getInspectionMethodText(body.inspectionMethod) : dataCache[itemIndex].inspectionMethodText,
       applicableProductText: body.applicableProduct ? getApplicableProductText(body.applicableProduct) : dataCache[itemIndex].applicableProductText,
       updateTime: Mock.mock('@datetime'),
@@ -272,6 +278,24 @@ function getInspectionMethodText(method) {
 function getApplicableProductText(product) {
   const { applicableProductTextMap } = require('./data/inspection-items')
   return applicableProductTextMap[product] || product
+}
+
+/**
+ * 获取检验类别文本
+ * @param {string} category - 检验类别代码
+ * @returns {string} 检验类别文本
+ */
+function getCategoryText(category) {
+  return inspectionCategoryTextMap[category] || category
+}
+
+/**
+ * 获取数据类型文本
+ * @param {string} dataType - 数据类型代码
+ * @returns {string} 数据类型文本
+ */
+function getDataTypeText(dataType) {
+  return dataTypeTextMap[dataType] || dataType
 }
 
 // 基础路径常量

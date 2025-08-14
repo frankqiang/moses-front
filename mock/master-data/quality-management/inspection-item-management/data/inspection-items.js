@@ -27,6 +27,27 @@ const applicableProductTextMap = {
   'ALL': '全部产品'
 }
 
+// 检验类别类型
+const inspectionCategories = ['Appearance', 'Dimension', 'Performance', 'Chemical', 'Physical', 'Mechanical']
+const inspectionCategoryTextMap = {
+  'Appearance': '外观检验',
+  'Dimension': '尺寸检验',
+  'Performance': '性能检验',
+  'Chemical': '化学成分',
+  'Physical': '物理性能',
+  'Mechanical': '机械性能'
+}
+
+// 数据类型
+const dataTypes = ['Numeric', 'Text', 'Boolean', 'Enum', 'Range']
+const dataTypeTextMap = {
+  'Numeric': '数值型',
+  'Text': '文本型',
+  'Boolean': '布尔型',
+  'Enum': '枚举型',
+  'Range': '范围型'
+}
+
 /**
  * 生成检验项目基础数据
  */
@@ -35,11 +56,11 @@ const generateInspectionItemsData = () => {
 
   // 预设一些基础检验项目
   const baseInspectionItems = [
-    { id: 1, code: 'QI-001', name: '外观检验', method: 'VISUAL', product: 'ALL' },
-    { id: 2, code: 'QI-002', name: '尺寸测量', method: 'MEASUREMENT', product: 'PRODUCT_A' },
-    { id: 3, code: 'QI-003', name: '强度测试', method: 'TESTING', product: 'PRODUCT_B' },
-    { id: 4, code: 'QI-004', name: '成分分析', method: 'CHEMICAL', product: 'PRODUCT_C' },
-    { id: 5, code: 'QI-005', name: '抽样检验', method: 'SAMPLING', product: 'ALL' }
+    { id: 1, code: 'QI-001', name: '外观检验', method: 'VISUAL', product: 'ALL', category: 'Appearance', dataType: 'Text' },
+    { id: 2, code: 'QI-002', name: '尺寸测量', method: 'MEASUREMENT', product: 'PRODUCT_A', category: 'Dimension', dataType: 'Numeric' },
+    { id: 3, code: 'QI-003', name: '强度测试', method: 'TESTING', product: 'PRODUCT_B', category: 'Performance', dataType: 'Numeric' },
+    { id: 4, code: 'QI-004', name: '成分分析', method: 'CHEMICAL', product: 'PRODUCT_C', category: 'Chemical', dataType: 'Range' },
+    { id: 5, code: 'QI-005', name: '抽样检验', method: 'SAMPLING', product: 'ALL', category: 'Physical', dataType: 'Boolean' }
   ]
 
   // 添加预设检验项目
@@ -48,6 +69,10 @@ const generateInspectionItemsData = () => {
       id: item.id,
       code: item.code,
       name: item.name,
+      category: item.category,
+      categoryText: inspectionCategoryTextMap[item.category],
+      dataType: item.dataType,
+      dataTypeText: dataTypeTextMap[item.dataType],
       inspectionMethod: item.method,
       inspectionMethodText: inspectionMethodTextMap[item.method],
       applicableProduct: item.product,
@@ -68,11 +93,17 @@ const generateInspectionItemsData = () => {
   for (let i = 6; i <= 50; i++) {
     const method = Mock.mock('@pick(["VISUAL", "MEASUREMENT", "TESTING", "SAMPLING", "CHEMICAL"])')
     const product = Mock.mock('@pick(["PRODUCT_A", "PRODUCT_B", "PRODUCT_C", "ALL"])')
+    const category = Mock.mock('@pick(["Appearance", "Dimension", "Performance", "Chemical", "Physical", "Mechanical"])')
+    const dataType = Mock.mock('@pick(["Numeric", "Text", "Boolean", "Enum", "Range"])')
     
     inspectionItemList.push({
       id: i,
       code: `QI-${String(i).padStart(3, '0')}`,
       name: Mock.mock('@ctitle(3, 8)'),
+      category: category,
+      categoryText: inspectionCategoryTextMap[category],
+      dataType: dataType,
+      dataTypeText: dataTypeTextMap[dataType],
       inspectionMethod: method,
       inspectionMethodText: inspectionMethodTextMap[method],
       applicableProduct: product,
@@ -98,5 +129,9 @@ module.exports = {
   inspectionMethods,
   inspectionMethodTextMap,
   applicableProducts,
-  applicableProductTextMap
+  applicableProductTextMap,
+  inspectionCategories,
+  inspectionCategoryTextMap,
+  dataTypes,
+  dataTypeTextMap
 }

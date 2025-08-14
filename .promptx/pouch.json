@@ -3,14 +3,16 @@
   "stateHistory": [
     {
       "from": "initial",
-      "command": "welcome",
-      "timestamp": "2025-08-13T03:02:57.828Z",
-      "args": []
+      "command": "action",
+      "timestamp": "2025-08-14T01:54:13.396Z",
+      "args": [
+        "foil-master"
+      ]
     },
     {
-      "from": "service_discovery",
+      "from": "role_activated_with_memory",
       "command": "init",
-      "timestamp": "2025-08-13T03:03:04.550Z",
+      "timestamp": "2025-08-14T01:54:17.155Z",
       "args": [
         {
           "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template"
@@ -19,46 +21,8 @@
     },
     {
       "from": "initialized",
-      "command": "welcome",
-      "timestamp": "2025-08-13T03:03:08.632Z",
-      "args": []
-    },
-    {
-      "from": "service_discovery",
       "command": "action",
-      "timestamp": "2025-08-13T03:03:27.425Z",
-      "args": [
-        "foil-master"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-08-13T03:16:35.874Z",
-      "args": [
-        "foil-master"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-08-13T03:26:12.026Z",
-      "args": [
-        "foil-master"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-08-13T03:35:30.033Z",
-      "args": [
-        "foil-master"
-      ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "action",
-      "timestamp": "2025-08-13T06:06:20.471Z",
+      "timestamp": "2025-08-14T01:54:23.704Z",
       "args": [
         "foil-master"
       ]
@@ -66,9 +30,9 @@
     {
       "from": "role_activated_with_memory",
       "command": "welcome",
-      "timestamp": "2025-08-13T06:06:29.498Z",
+      "timestamp": "2025-08-14T01:54:27.788Z",
       "args": []
     }
   ],
-  "lastUpdated": "2025-08-13T06:06:29.501Z"
+  "lastUpdated": "2025-08-14T01:54:27.791Z"
 }
