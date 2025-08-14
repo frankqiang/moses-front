@@ -32,7 +32,7 @@ const handlers = {
    * @returns {Object} 响应数据
    */
   getList(config) {
-    const { page = 1, limit = 10, keyword = '', inspectionMethod = '', applicableProduct = '', status = '' } = config.query
+    const { page = 1, limit = 10, keyword = '', category = '', dataType = '', applicableProduct = '', status = '' } = config.query
 
     // 过滤数据
     let filteredList = [...dataCache]
@@ -47,9 +47,14 @@ const handlers = {
       )
     }
     
-    // 检验方法过滤
-    if (inspectionMethod) {
-      filteredList = filteredList.filter(item => item.inspectionMethod === inspectionMethod)
+    // 检验类别过滤
+    if (category) {
+      filteredList = filteredList.filter(item => item.category === category)
+    }
+    
+    // 数据类型过滤
+    if (dataType) {
+      filteredList = filteredList.filter(item => item.dataType === dataType)
     }
     
     // 适用产品过滤

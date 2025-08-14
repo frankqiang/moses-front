@@ -81,10 +81,14 @@ export default {
 
     /**
      * 处理重置事件
-     * 只重置表单数据，不触发事件（避免与mixin形成循环调用）
+     * 重置表单数据并触发父组件的重置事件
      */
     handleReset() {
+      // 重置表单数据到初始状态
       this.formModel = { ...INITIAL_FORM_DATA }
+      
+      // 触发父组件的重置事件
+      this.$emit('reset')
     },
 
     /**
