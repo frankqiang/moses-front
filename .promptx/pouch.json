@@ -1,10 +1,10 @@
 {
-  "currentState": "role_activated_with_memory",
+  "currentState": "service_discovery",
   "stateHistory": [
     {
       "from": "initial",
       "command": "action",
-      "timestamp": "2025-08-25T01:10:51.330Z",
+      "timestamp": "2025-08-25T02:58:15.790Z",
       "args": [
         "foil-master"
       ]
@@ -12,7 +12,7 @@
     {
       "from": "role_activated_with_memory",
       "command": "init",
-      "timestamp": "2025-08-25T01:10:54.023Z",
+      "timestamp": "2025-08-25T02:58:18.236Z",
       "args": [
         {
           "workingDirectory": "d:\\company\\shangweiji\\code\\vue-admin-template"
@@ -22,7 +22,7 @@
     {
       "from": "initialized",
       "command": "action",
-      "timestamp": "2025-08-25T01:10:56.318Z",
+      "timestamp": "2025-08-25T02:58:20.838Z",
       "args": [
         "foil-master"
       ]
@@ -30,17 +30,9 @@
     {
       "from": "role_activated_with_memory",
       "command": "welcome",
-      "timestamp": "2025-08-25T01:11:22.661Z",
+      "timestamp": "2025-08-25T02:58:23.423Z",
       "args": []
-    },
-    {
-      "from": "service_discovery",
-      "command": "action",
-      "timestamp": "2025-08-25T01:31:38.700Z",
-      "args": [
-        "foil-master"
-      ]
     }
   ],
-  "lastUpdated": "2025-08-25T01:31:38.714Z"
+  "lastUpdated": "2025-08-25T02:58:23.428Z"
 }
