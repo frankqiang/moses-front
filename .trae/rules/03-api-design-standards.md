@@ -174,10 +174,6 @@ interface ErrorResponse {
   timestamp: string;
 }
 ```
-
-
-```
-
 ### API命名规范
 - **获取列表**：`getList`
 - **获取详情**：`getDetail`

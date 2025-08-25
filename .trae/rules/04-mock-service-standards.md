@@ -1,8 +1,4 @@
----
-description: Mock服务开发规范、数据生成原则和业务逻辑模拟标准
-globs: 
-alwaysApply: false
----
+
 # Mock服务开发规范
 
 ## 规则说明与适用范围
@@ -48,39 +44,10 @@ if (process.env.NODE_ENV === 'development') {
 ```
 
 ### Mock服务入口配置
-```javascript
-// mock/index.js
-const Mock = require('mockjs')
-const { param2Obj } = require('./utils')
-
-// 导入所有Mock模块
-const mocks = [
-  ...require('./modules/master-data'),
-  ...require('./modules/production'),
-  ...require('./modules/system'),
-]
-
-// 注册Mock接口
-function mockXHR() {
-  function XHR2ExpressReqWrap(respond) {
-    return function(options) {
-      const { body, type, url } = options
-      const result = respond({
-        method: type,
-        body: JSON.parse(body),
-        query: param2Obj(url)
-      })
-      return Mock.mock(result)
-    }
-  }
-
-  for (const i of mocks) {
-    Mock.mock(new RegExp(i.url), i.type || 'get', XHR2ExpressReqWrap(i.response))
-  }
-}
-
-module.exports = { mocks, mockXHR }
-```
+- **模块导入**：统一导入所有Mock模块
+- **接口注册**：使用MockJS注册API路由
+- **请求包装**：将XHR请求转换为Express格式
+- **响应处理**：统一处理Mock响应数据
 
 ## 目录结构规范
 
@@ -122,252 +89,56 @@ mock/
 【必须】Mock数据必须符合实际业务场景和行业标准：
 
 #### 1. 数据的真实性要求
-```javascript
-// ✅ 正确 - 使用真实的行业数据
-const equipmentTypes = [
-  { code: 'CNC-001', name: '数控机床', category: '加工设备' },
-  { code: 'ROBOT-002', name: '工业机器人', category: '自动化设备' },
-  { code: 'LASER-003', name: '激光切割机', category: '切割设备' }
-]
-
-// ❌ 错误 - 使用无意义的测试数据
-const badData = [
-  { code: 'test123', name: 'aaa', category: 'bbb' }
-]
-```
+- **使用真实行业数据**：设备编码、名称、规格等必须符合实际业务
+- **避免测试数据**：禁止使用`test123`、`aaa`等无意义数据
+- **参考行业标准**：数据格式和内容应符合行业规范
 
 #### 2. 业务参数的合理性
-```javascript
-// ✅ 正确 - 符合实际生产参数范围
-const processParameters = {
-  temperature: Mock.mock('@integer(150, 300)'), // 合理的温度范围
-  pressure: Mock.mock('@float(0.5, 2.0, 1, 2)'), // 合理的压力范围
-  speed: Mock.mock('@integer(100, 1500)'), // 合理的转速范围
-  workTime: Mock.mock('@integer(480, 720)'), // 8-12小时工作时间（分钟）
-}
-```
+- **数值范围合理**：温度、压力、速度等参数在实际生产范围内
+- **单位统一**：时间、重量、尺寸等使用统一单位
+- **精度适当**：根据业务需求设置合适的数值精度
 
 #### 3. 时间数据的逻辑性
-```javascript
-// ✅ 正确 - 符合业务时间逻辑
-const generateWorkOrder = () => {
-  const startTime = Mock.mock('@datetime("yyyy-MM-dd HH:mm:ss")')
-  const startDate = new Date(startTime)
-  const endDate = new Date(startDate.getTime() + Mock.mock('@integer(2, 8)') * 60 * 60 * 1000)
-  
-  return {
-    startTime: startTime,
-    endTime: endDate.toISOString().slice(0, 19).replace('T', ' '),
-    planDuration: Math.floor((endDate - startDate) / (60 * 1000)),
-    actualDuration: Mock.mock('@integer(120, 480)')
-  }
-}
-```
+- **时间顺序正确**：开始时间早于结束时间
+- **工作时间合理**：符合实际生产作业时间
+- **状态时间一致**：状态变更时间与业务流程匹配
 
 ### 数据关联性原则
 【必须】保持数据间的逻辑关联性：
 
-```javascript
-// ✅ 正确 - 保持数据一致性
-const generateProduct = (productType) => {
-  const typeConfig = {
-    '电子产品': {
-      materials: ['硅晶', '铝合金', '塑料'],
-      processes: ['组装', '测试', '包装'],
-      quality: Mock.mock('@float(95, 99.5, 1, 2)')
-    },
-    '机械产品': {
-      materials: ['钢材', '铸铁', '橡胶'],
-      processes: ['加工', '热处理', '组装'],
-      quality: Mock.mock('@float(92, 98, 1, 2)')
-    }
-  }
-  
-  const config = typeConfig[productType]
-  return {
-    type: productType,
-    materials: config.materials,
-    processes: config.processes,
-    qualityRate: config.quality
-  }
-}
-```
+- **产品类型一致性**：产品类型与对应的物料、工艺、质量标准保持匹配
+- **状态流转合理**：设备状态、工单状态等按照业务规则流转
+- **时间关联正确**：相关业务数据的时间戳保持逻辑一致
+- **数量平衡**：库存、消耗、产出等数量关系符合业务逻辑
 
 ## 基础数据生成规范
 
 ### 数据生成器结构
 每个基础数据文件应遵循以下结构：
 
-```javascript
-// mock/modules/master-data/data/equipment.js
-const Mock = require('mockjs')
-
-/**
- * 生成设备基础数据
- */
-const generateEquipmentData = () => {
-  // 预设真实基础数据
-  const baseEquipment = [
-    {
-      id: 1,
-      code: 'CNC-M001',
-      name: 'FANUC数控铣床',
-      model: 'FANUC-31i',
-      manufacturer: '发那科',
-      category: '数控设备',
-      workshop: '机加车间1',
-      status: 'running',
-      specifications: {
-        maxSpindleSpeed: 8000,
-        workTableSize: '1200x800',
-        maxLoad: 2000
-      },
-      purchaseDate: '2020-03-15',
-      warrantyExpiry: '2025-03-15'
-    }
-  ]
-
-  // 生成随机数据，基于真实模板
-  const additionalData = Mock.mock({
-    'items|18': [{
-      'id|+1': baseEquipment.length + 1,
-      'code': () => {
-        const types = ['CNC', 'ROBOT', 'LASER', 'PRESS', 'FURNACE']
-        const type = types[Math.floor(Math.random() * types.length)]
-        const num = Mock.mock('@integer(100, 999)')
-        return `${type}-${String(num).padStart(3, '0')}`
-      },
-      'name|1': ['FANUC数控机床', 'ABB机器人', '激光切割机', '冲压设备', '热处理炉'],
-      'status|1': ['running', 'idle', 'maintenance', 'fault'],
-      'category|1': ['数控设备', '机器人', '激光设备', '压力设备', '热处理设备'],
-      'workshop|1': ['机加车间1', '机加车间2', '自动化车间', '热处理车间', '装配车间']
-    }]
-  }).items
-
-  return [...baseEquipment, ...additionalData]
-}
-
-module.exports = {
-  generateEquipmentData,
-  data: generateEquipmentData()
-}
-```
+- **预设基础数据**：定义真实的业务数据模板
+- **随机数据生成**：基于模板生成符合规范的随机数据
+- **数据导出**：提供生成函数和数据实例的统一导出
+- **数据验证**：确保生成的数据符合业务规则
 
 ### 数据生成工具函数
-```javascript
-// mock/utils/generator.js
-const Mock = require('mockjs')
+提供通用的数据生成工具函数：
 
-/**
- * 生成符合规范的编码
- */
-const generateCode = (prefix, length = 3) => {
-  const number = Mock.mock(`@integer(1, ${Math.pow(10, length) - 1})`)
-  return `${prefix}-${String(number).padStart(length, '0')}`
-}
-
-/**
- * 生成合理的时间范围
- */
-const generateTimeRange = (baseDate = new Date(), daysBefore = 30, daysAfter = 30) => {
-  const base = new Date(baseDate)
-  const startTime = new Date(base.getTime() - daysBefore * 24 * 60 * 60 * 1000)
-  const endTime = new Date(base.getTime() + daysAfter * 24 * 60 * 60 * 1000)
-  
-  return {
-    start: startTime.toISOString().slice(0, 19).replace('T', ' '),
-    end: endTime.toISOString().slice(0, 19).replace('T', ' ')
-  }
-}
-
-/**
- * 生成符合业务规则的状态流转
- */
-const generateNextStatus = (currentStatus, stateRules) => {
-  const allowedNext = stateRules[currentStatus] || []
-  if (allowedNext.length === 0) return currentStatus
-  
-  const randomIndex = Math.floor(Math.random() * allowedNext.length)
-  return allowedNext[randomIndex]
-}
-
-module.exports = {
-  generateCode,
-  generateTimeRange,
-  generateNextStatus
-}
-```
+- **编码生成器**：生成符合规范的业务编码（前缀+序号）
+- **时间范围生成器**：生成合理的时间区间数据
+- **状态流转生成器**：根据业务规则生成状态变更
+- **数值生成器**：生成符合业务范围的数值参数
 
 ## API处理函数设计
 
 ### 标准API处理结构
 每个API处理文件应遵循以下结构：
 
-```javascript
-// mock/modules/master-data/equipment.js
-const { data: equipmentData } = require('./data/equipment')
-const { success, error, paginate } = require('../../utils/response')
-
-// 数据缓存和状态管理
-let dataCache = [...equipmentData]
-let idCounter = Math.max(...dataCache.map(item => item.id)) + 1
-
-// 业务状态转换规则
-const statusRules = {
-  'idle': ['running', 'maintenance'],
-  'running': ['idle', 'fault'],
-  'maintenance': ['idle'],
-  'fault': ['maintenance', 'idle']
-}
-
-/**
- * API处理函数集合
- */
-const handlers = {
-  getList(config) {
-    // 实现列表查询、搜索、过滤、分页逻辑
-    const { page = 1, limit = 10, keyword = '', status = '' } = config.query
-    // ... 具体实现
-    return success(paginatedResult)
-  },
-
-  getDetail(config) {
-    // 实现详情查询逻辑
-    const { id } = config.query
-    // ... 具体实现
-    return success(equipment)
-  },
-
-  create(config) {
-    // 实现创建逻辑：验证 -> 检查唯一性 -> 创建
-    // ... 具体实现
-    return success(newEquipment, '创建成功', 201)
-  },
-
-  update(config) {
-    // 实现更新逻辑：验证 -> 状态转换检查 -> 更新
-    // ... 具体实现
-    return success(updatedEquipment, '更新成功')
-  },
-
-  delete(config) {
-    // 实现删除逻辑：存在性检查 -> 业务规则验证 -> 删除
-    // ... 具体实现
-    return success(null, '删除成功', 204)
-  }
-}
-
-/**
- * 导出Mock路由配置
- */
-module.exports = [
-  { url: '/mes/master-data/equipment/list', type: 'get', response: handlers.getList },
-  { url: '/mes/master-data/equipment/detail', type: 'get', response: handlers.getDetail },
-  { url: '/mes/master-data/equipment', type: 'post', response: handlers.create },
-  { url: '/mes/master-data/equipment', type: 'put', response: handlers.update },
-  { url: '/mes/master-data/equipment', type: 'delete', response: handlers.delete }
-]
-```
+- **数据导入**：导入基础数据和响应工具函数
+- **缓存管理**：使用内存数组缓存数据，支持运行时操作
+- **状态规则**：定义业务状态转换规则和验证逻辑
+- **处理函数**：实现完整的CRUD操作处理逻辑
+- **路由配置**：导出标准的Mock路由配置数组
 
 ### API处理规范
 - **数据缓存**：使用内存数组缓存数据，支持运行时增删改查
@@ -379,181 +150,40 @@ module.exports = [
 ## 响应工具与格式规范
 
 ### 统一响应工具
-```javascript
-// mock/utils/response.js
+提供标准化的响应处理工具：
 
-/**
- * 成功响应
- */
-const success = (data, message = '操作成功', status = 200) => ({
-  success: true,
-  data,
-  message,
-  timestamp: new Date().toISOString(),
-  status
-})
-
-/**
- * 错误响应
- */
-const error = (code, message, status = 500, details = null) => ({
-  success: false,
-  error: {
-    code,
-    message,
-    details
-  },
-  timestamp: new Date().toISOString(),
-  status
-})
-
-/**
- * 分页处理工具
- */
-const paginate = (data, page = 1, limit = 10) => {
-  const pageNum = parseInt(page)
-  const limitNum = parseInt(limit)
-  const offset = (pageNum - 1) * limitNum
-  
-  const items = data.slice(offset, offset + limitNum)
-  const total = data.length
-  const totalPages = Math.ceil(total / limitNum)
-  
-  return {
-    items,
-    total,
-    page: pageNum,
-    limit: limitNum,
-    totalPages,
-    hasNext: pageNum < totalPages,
-    hasPrev: pageNum > 1
-  }
-}
-
-/**
- * 延迟响应（用于模拟网络延迟）
- */
-const delayResponse = (responseFn, delay = 500) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(responseFn())
-    }, delay)
-  })
-}
-
-module.exports = {
-  success,
-  error,
-  paginate,
-  delayResponse
-}
-```
+- **成功响应**：统一的成功响应格式，包含数据、消息、时间戳
+- **错误响应**：标准化的错误响应格式，包含错误码、消息、详情
+- **分页处理**：自动计算分页信息，支持页码、总数、导航状态
+- **延迟响应**：模拟网络延迟，用于测试加载状态
 
 ## 业务逻辑模拟规范
 
 ### 状态管理模拟
-```javascript
-// 工单状态流转示例
-const workOrderStates = {
-  'draft': ['submitted', 'cancelled'],
-  'submitted': ['approved', 'rejected'],
-  'approved': ['in_progress', 'cancelled'],
-  'in_progress': ['completed', 'paused', 'cancelled'],
-  'paused': ['in_progress', 'cancelled'],
-  'completed': ['archived'],
-  'rejected': ['draft'],
-  'cancelled': [],
-  'archived': []
-}
+实现业务状态的管理和转换：
 
-const validateStateTransition = (currentState, newState) => {
-  const allowedStates = workOrderStates[currentState] || []
-  return allowedStates.includes(newState)
-}
-```
+- **状态规则定义**：定义各状态间的合法转换路径
+- **转换验证**：验证状态转换的合法性和业务规则
+- **状态更新**：安全地更新状态并记录变更历史
+- **历史追踪**：记录状态变更的时间、原因和路径
 
 ### 业务规则验证
-```javascript
-// 业务规则验证示例
-const businessRules = {
-  // 设备使用规则
-  canUseEquipment: (equipment, workOrder) => {
-    if (equipment.status !== 'idle') {
-      return { valid: false, message: '设备不在空闲状态' }
-    }
-    
-    if (equipment.category !== workOrder.requiredEquipmentType) {
-      return { valid: false, message: '设备类型不匹配' }
-    }
-    
-    return { valid: true }
-  },
-  
-  // 物料库存检查
-  checkMaterialStock: (material, requiredQuantity) => {
-    if (material.stock < requiredQuantity) {
-      return { 
-        valid: false, 
-        message: `物料库存不足，需要${requiredQuantity}，现有${material.stock}` 
-      }
-    }
-    
-    return { valid: true }
-  }
-}
-```
+实现真实的业务验证逻辑：
+
+- **设备使用规则**：验证设备状态、类型匹配等条件
+- **物料库存检查**：验证库存数量、可用性等条件
+- **权限验证**：检查操作权限和业务角色
+- **时间规则**：验证工作时间、计划时间等约束
 
 ## Mock调试与开发工具
 
 ### 调试技巧
-```javascript
-// 控制台输出调试
-response: (config) => {
-  console.log('🔍 Mock请求调试:', config.method, config.url, config.query)
-  const result = handlers.getList(config)
-  console.log('🔍 Mock响应调试:', result)
-  return result
-}
+提供完善的调试支持：
 
-// 延迟响应测试
-response: (config) => {
-  return delayResponse(() => handlers.getList(config), 1000) // 1秒延迟
-}
-
-// 随机错误模拟
-response: (config) => {
-  // 10% 概率返回错误
-  if (Math.random() < 0.1) {
-    return error('RANDOM_ERROR', '模拟随机错误', 500)
-  }
-  
-  return handlers.getList(config)
-}
-```
-
-### 性能监控
-```javascript
-// 性能监控工具
-const performanceMonitor = {
-  start() {
-    this.startTime = Date.now()
-  },
-  
-  end() {
-    const duration = Date.now() - this.startTime
-    console.log(`⏱️ Mock响应耗时: ${duration}ms`)
-    return duration
-  }
-}
-
-// 在处理函数中使用
-response: (config) => {
-  performanceMonitor.start()
-  const result = handlers.getList(config)
-  performanceMonitor.end()
-  return result
-}
-```
+- **请求日志**：记录API请求的详细信息和参数
+- **响应日志**：记录响应数据、状态和处理时间
+- **错误追踪**：捕获和记录错误信息及上下文
+- **性能监控**：监控API响应时间和数据大小
 
 ## 🔍 Mock服务质量检查清单
 
