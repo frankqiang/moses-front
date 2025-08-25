@@ -52,9 +52,21 @@ export default {
     }
   },
   methods: {
+    /**
+     * 处理登录请求
+     * @param {Object} loginForm - 登录表单数据
+     * @param {string} loginForm.username - 用户名
+     * @param {string} loginForm.password - 密码
+     * @param {boolean} loginForm.rememberMe - 是否记住登录状态
+     */
     handleLogin(loginForm) {
       this.loading = true
-      this.$store.dispatch('user/login', loginForm).then(() => {
+      this.$store.dispatch('user/login', {
+        username: loginForm.username,
+        password: loginForm.password,
+        rememberMe: loginForm.rememberMe
+      }).then(() => {
+        this.$message.success('登录成功')
         this.$router.push({ path: this.redirect || '/' })
         this.loading = false
       }).catch(error => {
