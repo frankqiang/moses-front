@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <!-- 背景 -->
+  <rect width="1920" height="1080" fill="#f0f2f5"/>
+  
+  <!-- 装饰图形 -->
+  <g opacity="0.1">
+    <!-- 左上角装饰 -->
+    <circle cx="200" cy="200" r="100" fill="#1890ff"/>
+    <circle cx="150" cy="150" r="50" fill="#1890ff"/>
+    
+    <!-- 右下角装饰 -->
+    <circle cx="1720" cy="880" r="120" fill="#1890ff"/>
+    <circle cx="1770" cy="930" r="60" fill="#1890ff"/>
+    
+    <!-- 中间装饰线条 -->
+    <path d="M0,400 Q960,300 1920,600" stroke="#1890ff" stroke-width="5" fill="none"/>
+    <path d="M0,600 Q960,700 1920,400" stroke="#1890ff" stroke-width="3" fill="none"/>
+    
+    <!-- 随机点缀 -->
+    <circle cx="500" cy="300" r="20" fill="#1890ff"/>
+    <circle cx="1200" cy="200" r="15" fill="#1890ff"/>
+    <circle cx="800" cy="700" r="25" fill="#1890ff"/>
+    <circle cx="1500" cy="600" r="18" fill="#1890ff"/>
+    <circle cx="300" cy="800" r="22" fill="#1890ff"/>
+    <circle cx="1700" cy="300" r="12" fill="#1890ff"/>
+  </g>
+  
+  <!-- 网格图案 -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1890ff" stroke-width="0.5" opacity="0.05"/>
+  </pattern>
+  <rect width="1920" height="1080" fill="url(#grid)"/>
+</svg>
