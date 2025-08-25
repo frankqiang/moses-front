@@ -1,12 +1,74 @@
----
-description: API接口开发、Mock服务配置、数据生成和接口管理规范
-globs: 
-alwaysApply: false
----
 # API设计与开发规范
 
 ## 规则说明与适用范围
 本规则定义了项目中API接口的设计标准、开发规范和最佳实践。所有API相关开发都需遵循此规范，确保接口的一致性、安全性和可维护性。
+
+## 标准化注释模板
+
+### API文档注释规范
+【必须】每个API接口文件头部使用以下标准化注释模板：
+
+```javascript
+/**
+ * 接口名称
+ * 功能描述：详细说明接口的业务功能和使用场景
+ * 入参说明：
+ *   @param {类型} 参数名 - 参数说明，是否必填，取值范围等
+ *   @param {类型} [可选参数] - 可选参数说明，默认值等
+ * 返回参数说明：
+ *   @returns {类型} 字段名 - 字段说明
+ *   @returns {类型} 对象.子字段 - 嵌套对象字段说明
+ *   @returns {类型[]} 数组字段 - 数组字段说明
+ *     @returns {类型} 数组字段[].子字段 - 数组元素的子字段说明
+ * url地址：完整的API路径
+ * 请求方式：HTTP方法（GET/POST/PUT/DELETE等）
+ */
+```
+
+### 字段注释格式规范
+【必须】参数和返回值字段必须包含以下信息：
+- **数据类型**：string、number、boolean、object、array等
+- **字段说明**：清晰描述字段的含义和用途
+- **是否必填**：使用[]表示可选参数
+- **取值范围**：枚举值、数值范围、字符串长度等
+- **默认值**：可选参数的默认值
+- **特殊说明**：格式要求、业务规则等
+
+### 具体示例
+```javascript
+/**
+ * 获取检验项目列表
+ * 功能描述：查询检验项目数据，支持分页和条件筛选
+ * 入参说明：
+ *   @param {number} page - 页码，从1开始
+ *   @param {number} limit - 每页数量，建议10-100
+ *   @param {string} [keyword] - 搜索关键词，支持项目名称模糊查询
+ *   @param {string} [status] - 状态筛选，可选值：active|inactive|all
+ * 返回参数说明：
+ *   @returns {boolean} success - 请求是否成功
+ *   @returns {InspectionItem[]} data - 检验项目列表
+ *     @returns {string} data[].id - 项目ID
+ *     @returns {string} data[].name - 项目名称
+ *     @returns {string} data[].code - 项目编码
+ *     @returns {string} data[].status - 项目状态
+ *     @returns {string} data[].createdAt - 创建时间
+ *   @returns {PaginationInfo} pagination - 分页信息
+ *     @returns {number} pagination.page - 当前页码
+ *     @returns {number} pagination.limit - 每页数量
+ *     @returns {number} pagination.total - 总记录数
+ *     @returns {boolean} pagination.hasNext - 是否有下一页
+ *     @returns {boolean} pagination.hasPrev - 是否有上一页
+ * url地址：/api/v1/quality/inspection-items
+ * 请求方式：GET
+ */
+export function getInspectionItemList(params) {
+  return request({
+    url: '/api/v1/quality/inspection-items',
+    method: 'get',
+    params: formatQueryParams(params)
+  });
+}
+```
 
 ## RESTful API设计原则
 
@@ -18,55 +80,62 @@ alwaysApply: false
 - **可缓存**：明确标识可缓存的响应
 
 ### HTTP方法使用规范
-```javascript
-const HTTP_METHODS = {
-  GET: '获取资源，幂等，无副作用',
-  POST: '创建资源或执行操作',
-  PUT: '完整更新资源，幂等',
-  PATCH: '部分更新资源，幂等',
-  DELETE: '删除资源，幂等',
-} as const;
-```
+- **GET**：获取资源，幂等，无副作用
+- **POST**：创建资源或执行操作
+- **PUT**：完整更新资源，幂等
+- **PATCH**：部分更新资源，幂等
+- **DELETE**：删除资源，幂等
 
 ### URL路径设计规范
-项目特定路径规范：
-1. 所有API路径必须以`/mes`作为前缀
-2. 【必须】在前缀后添加版本号，如`/mes/v1`，`/mes/v2`
-3. 路径按业务模块组织：`/mes/v1/master-data/xxx`、`/mes/v1/production/xxx`
-4. 使用复数名词表示资源：`/mes/v1/users`、`/mes/v1/orders`
-5. 使用嵌套路径表示关系：`/mes/v1/users/:id/orders`
 
+#### 基础路径结构
+【推荐】采用更简洁的API路径设计：
+```
+/api/v{version}/{module}/{resource}
+```
+
+#### 具体规范
+1. **API前缀**：使用`/api`作为统一前缀，简洁明了
+2. **版本控制**：紧跟版本号`/v1`、`/v2`，便于版本管理
+3. **模块分组**：按业务领域分组，使用简短英文名称
+   - `/api/v1/quality` - 质量管理模块
+   - `/api/v1/production` - 生产管理模块
+   - `/api/v1/master` - 主数据模块
+   - `/api/v1/users` - 用户管理模块
+4. **资源命名**：使用复数名词表示资源集合
+5. **层级关系**：合理使用嵌套路径表示资源关系
+
+#### 路径设计最佳实践
+- **简洁性**：路径层级不超过4层，避免过深嵌套
+- **语义化**：路径能清晰表达资源含义和操作意图
+- **一致性**：同类资源使用统一的命名规范
+- **可读性**：使用连字符分隔多个单词，如`inspection-items`
+
+#### 示例对比
 ```javascript
-// ✅ 正确的URL设计
-const API_ROUTES = {
-  users: '/mes/v1/users',
-  userDetail: '/mes/v1/users/:id',
-  equipmentTypes: '/mes/v1/master-data/equipment-types',
-  workOrders: '/mes/v1/production/work-orders',
-  processOperations: '/mes/v1/process-management/operations/:id/work-orders',
-}
+// ❌ 旧版本（过于冗长）
+/mes/v1/quality-management/inspection-items
+/mes/v1/master-data/material-codes
+
+// ✅ 推荐版本（简洁明了）
+/api/v1/quality/inspection-items
+/api/v1/master/material-codes
 ```
 
 ### API版本控制规范
 【必须】遵循以下版本控制原则：
-1. 在URL路径中明确标识API版本，如`/mes/v1/users`
-2. 主版本号(v1, v2)表示不兼容的API变更
-3. 次版本号变更通过响应头部`X-API-Version`标识，不在URL中体现
-4. 新功能应在新版本中实现，保持旧版本稳定性
-5. 版本升级时提供完整的迁移文档
-
-```javascript
-// API版本管理示例
-const API_VERSIONS = {
-  V1: 'v1', // 当前稳定版本
-  V2: 'v2'  // 开发中的新版本
-};
-
-// 构建带版本的API路径
-export function buildApiPath(resource, version = API_VERSIONS.V1) {
-  return `/mes/${version}/${resource}`;
-}
-```
+1. **URL版本标识**：在URL路径中明确标识API版本，如`/api/v1/users`
+2. **版本号规则**：
+   - 主版本号(v1, v2)：表示不兼容的API变更
+   - 次版本号：通过HTTP头部`API-Version: 1.1`表示兼容性更新
+3. **版本策略**：
+   - 新功能优先在新版本中实现
+   - 保持旧版本的稳定性和向后兼容
+   - 同时维护不超过3个主版本
+4. **版本生命周期**：
+   - 新版本发布后，旧版本至少维护6个月
+   - 提前3个月通知版本废弃计划
+   - 提供完整的版本迁移文档和工具
 
 ## 统一响应格式规范
 
@@ -106,196 +175,13 @@ interface ErrorResponse {
 }
 ```
 
-### 响应构建器工具
-```javascript
-export const createResponse = {
-  success: (data, message = '操作成功') => ({
-    success: true, data, message, timestamp: new Date().toISOString()
-  }),
-  error: (code, message, field?, details?) => ({
-    success: false, error: { code, message, field, details }, timestamp: new Date().toISOString()
-  }),
-};
-```
 
-## HTTP状态码规范
-
-【必须】正确使用HTTP状态码：
-- **2xx 成功**：200(OK)、201(Created)、204(No Content)
-- **4xx 客户端错误**：400(Bad Request)、401(Unauthorized)、403(Forbidden)、404(Not Found)、422(Validation Error)
-- **5xx 服务器错误**：500(Internal Error)、502(Bad Gateway)、503(Service Unavailable)
-
-## 请求验证与安全规范
-
-### 输入验证标准
-【必须】验证所有输入数据，推荐使用第三方验证库如`zod`：
-
-```javascript
-import { z } from 'zod';
-
-const CreateUserSchema = z.object({
-  name: z.string().min(1).max(100),
-  email: z.string().email(),
-  role: z.enum(['admin', 'user']).default('user'),
-});
-
-export function validateData(schema, data) {
-  try {
-    return { success: true, data: schema.parse(data), error: null };
-  } catch (error) {
-    return { success: false, data: null, error: error.errors };
-  }
-}
-```
-
-### 安全防护措施
-```javascript
-// 请求参数清理和验证
-import { formatQueryParams } from '@/utils/formatter'
-
-export function secureApiCall(url, params = {}) {
-  return request({
-    url,
-    params: formatQueryParams(params),
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest'
-    }
-  });
-}
-```
-
-## 错误处理与错误码规范
-
-### 统一错误码系统
-【必须】使用统一的错误码：
-
-```javascript
-export const ERROR_CODES = {
-  // 1xxx 通用错误
-  INTERNAL_ERROR: 'E1000',
-  INVALID_REQUEST: 'E1001',
-  UNAUTHORIZED: 'E1002',
-  FORBIDDEN: 'E1003',
-  NOT_FOUND: 'E1004',
-  
-  // 2xxx 验证错误
-  VALIDATION_ERROR: 'E2000',
-  REQUIRED_FIELD_MISSING: 'E2003',
-  
-  // 3xxx 业务错误
-  USER_NOT_FOUND: 'E3000',
-  USER_ALREADY_EXISTS: 'E3001',
-} as const;
-```
-
-## API模块设计标准
-
-### 模块文件结构
-每个API模块文件应遵循以下结构：
-
-```javascript
-/**
- * 模块名称API
- * 功能描述：提供模块相关的API调用方法
- */
-import request from '@/utils/request'
-import { formatQueryParams } from '@/utils/formatter'
-
-const BASE_URL = '/mes/module-path'
-
-/**
- * 获取列表数据
- */
-export async function getList(query = {}) {
-  try {
-    const response = await request({
-      url: `${BASE_URL}/list`,
-      method: 'get',
-      params: formatQueryParams(query)
-    });
-    return createResponse.success(response.data);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
-
-// 其他API方法...
-export default { getList, getDetail, create, update, remove }
 ```
 
 ### API命名规范
 - **获取列表**：`getList`
 - **获取详情**：`getDetail`
-- **创建记录**：`create`
-- **更新记录**：`update`
-- **删除记录**：`remove`
-- **批量操作**：`batchXxx`
-- **特殊操作**：动词+名词结构
-
-### 目录结构规范
-```
-src/api/
-├── modules/
-│   ├── master-data/
-│   │   ├── index.js          # 模块统一导出
-│   │   ├── equipment.js      # 设备管理API
-│   │   └── material.js       # 物料管理API
-│   └── production/
-├── index.js                  # API总入口
-└── base.js                   # 基础API配置
-```
-
-## 性能优化与最佳实践
-
-### 请求优化
-```javascript
-// 使用防抖避免频繁请求
-import { debounce } from 'lodash-es';
-export const debouncedSearch = debounce(searchApi, 300);
-
-// 请求缓存
-const cache = new Map();
-export async function getCachedData(key, fetcher, ttl = 5 * 60 * 1000) {
-  const cached = cache.get(key);
-  if (cached && Date.now() - cached.timestamp < ttl) {
-    return cached.data;
-  }
-  const data = await fetcher();
-  cache.set(key, { data, timestamp: Date.now() });
-  return data;
-}
-```
-
-### 安全最佳实践
-在[src/utils/request.js](mdc:src/utils/request.js)中配置拦截器：
-- 请求拦截器：添加认证令牌和安全头
-- 响应拦截器：统一处理业务错误和网络错误
-
-## 🔍 API设计质量检查清单
-
-### 核心设计 [P0]
-- [ ] **RESTful设计**：是否遵循资源导向原则，正确使用HTTP方法？
-- [ ] **统一响应**：所有API响应是否遵循统一格式？
-- [ ] **HTTP状态码**：是否根据操作结果正确使用状态码？
-- [ ] **输入验证**：所有输入参数是否都经过严格验证？
-- [ ] **错误处理**：是否定义并使用统一的错误码规范？
-- [ ] **路径规范**：是否使用`/mes/v1`前缀和正确的资源路径？
-- [ ] **版本控制**：是否在URL中包含版本信息（如`/mes/v1/...`）？
-
-### 质量与安全 [P1]
-- [ ] **参数清理**：是否使用`formatQueryParams`清理查询参数？
-- [ ] **认证授权**：是否实施了适当的认证和授权机制？
-- [ ] **分页实现**：列表接口是否正确实现分页逻辑？
-- [ ] **错误边界**：是否有完整的错误处理和用户友好的错误提示？
-- [ ] **API文档**：是否有完整的JSDoc注释说明？
-- [ ] **版本兼容性**：新版本API是否考虑了与旧版本的兼容性问题？
-
-### 性能与维护 [P2]
-- [ ] **防抖节流**：搜索等频繁操作是否添加了防抖处理？
-- [ ] **请求缓存**：是否为适当的接口添加了缓存机制？
-- [ ] **版本迁移**：是否提供了版本升级的迁移文档？
-- [ ] **代码复用**：是否充分利用了基础工具函数和通用组件？
-
-
-
+- **创建资源**：`create`
+- **更新资源**：`update`
+- **删除资源**：`remove`
+- **批量操作**：`batchUpdate`、`batchDelete`
