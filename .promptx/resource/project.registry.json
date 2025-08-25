@@ -4,8 +4,8 @@
   "metadata": {
     "version": "2.0.0",
     "description": "project 级资源注册表",
-    "createdAt": "2025-08-21T02:24:37.486Z",
-    "updatedAt": "2025-08-21T02:24:37.506Z",
+    "createdAt": "2025-08-25T01:10:54.038Z",
+    "updatedAt": "2025-08-25T01:10:54.063Z",
     "resourceCount": 21
   },
   "resources": [
@@ -17,9 +17,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/foil-master/execution/design-principles.execution.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.488Z",
-        "updatedAt": "2025-08-21T02:24:37.488Z",
-        "scannedAt": "2025-08-21T02:24:37.488Z",
+        "createdAt": "2025-08-25T01:10:54.040Z",
+        "updatedAt": "2025-08-25T01:10:54.040Z",
+        "scannedAt": "2025-08-25T01:10:54.040Z",
         "path": "role/foil-master/execution/design-principles.execution.md"
       }
     },
@@ -31,9 +31,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/foil-master/execution/development-workflow.execution.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.489Z",
-        "updatedAt": "2025-08-21T02:24:37.489Z",
-        "scannedAt": "2025-08-21T02:24:37.489Z",
+        "createdAt": "2025-08-25T01:10:54.041Z",
+        "updatedAt": "2025-08-25T01:10:54.041Z",
+        "scannedAt": "2025-08-25T01:10:54.041Z",
         "path": "role/foil-master/execution/development-workflow.execution.md"
       }
     },
@@ -45,9 +45,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/foil-master/execution/industry-operations.execution.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.490Z",
-        "updatedAt": "2025-08-21T02:24:37.490Z",
-        "scannedAt": "2025-08-21T02:24:37.490Z",
+        "createdAt": "2025-08-25T01:10:54.043Z",
+        "updatedAt": "2025-08-25T01:10:54.043Z",
+        "scannedAt": "2025-08-25T01:10:54.043Z",
         "path": "role/foil-master/execution/industry-operations.execution.md"
       }
     },
@@ -59,9 +59,9 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/foil-master/foil-master.role.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.491Z",
-        "updatedAt": "2025-08-21T02:24:37.491Z",
-        "scannedAt": "2025-08-21T02:24:37.491Z",
+        "createdAt": "2025-08-25T01:10:54.044Z",
+        "updatedAt": "2025-08-25T01:10:54.044Z",
+        "scannedAt": "2025-08-25T01:10:54.044Z",
         "path": "role/foil-master/foil-master.role.md"
       }
     },
@@ -73,9 +73,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/foil-master/knowledge/aluminum-foil-industry.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.492Z",
-        "updatedAt": "2025-08-21T02:24:37.492Z",
-        "scannedAt": "2025-08-21T02:24:37.492Z",
+        "createdAt": "2025-08-25T01:10:54.045Z",
+        "updatedAt": "2025-08-25T01:10:54.045Z",
+        "scannedAt": "2025-08-25T01:10:54.045Z",
         "path": "role/foil-master/knowledge/aluminum-foil-industry.knowledge.md"
       }
     },
@@ -87,9 +87,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/foil-master/knowledge/product-management.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.493Z",
-        "updatedAt": "2025-08-21T02:24:37.493Z",
-        "scannedAt": "2025-08-21T02:24:37.493Z",
+        "createdAt": "2025-08-25T01:10:54.046Z",
+        "updatedAt": "2025-08-25T01:10:54.046Z",
+        "scannedAt": "2025-08-25T01:10:54.046Z",
         "path": "role/foil-master/knowledge/product-management.knowledge.md"
       }
     },
@@ -101,9 +101,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/foil-master/knowledge/technical-development.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.494Z",
-        "updatedAt": "2025-08-21T02:24:37.494Z",
-        "scannedAt": "2025-08-21T02:24:37.494Z",
+        "createdAt": "2025-08-25T01:10:54.047Z",
+        "updatedAt": "2025-08-25T01:10:54.047Z",
+        "scannedAt": "2025-08-25T01:10:54.047Z",
         "path": "role/foil-master/knowledge/technical-development.knowledge.md"
       }
     },
@@ -115,9 +115,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/foil-master/knowledge/ux-ui-design.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.495Z",
-        "updatedAt": "2025-08-21T02:24:37.495Z",
-        "scannedAt": "2025-08-21T02:24:37.495Z",
+        "createdAt": "2025-08-25T01:10:54.049Z",
+        "updatedAt": "2025-08-25T01:10:54.049Z",
+        "scannedAt": "2025-08-25T01:10:54.049Z",
         "path": "role/foil-master/knowledge/ux-ui-design.knowledge.md"
       }
     },
@@ -129,9 +129,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/foil-master/thought/cross-domain-integration.thought.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.495Z",
-        "updatedAt": "2025-08-21T02:24:37.495Z",
-        "scannedAt": "2025-08-21T02:24:37.495Z",
+        "createdAt": "2025-08-25T01:10:54.050Z",
+        "updatedAt": "2025-08-25T01:10:54.050Z",
+        "scannedAt": "2025-08-25T01:10:54.050Z",
         "path": "role/foil-master/thought/cross-domain-integration.thought.md"
       }
     },
@@ -143,9 +143,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/foil-master/thought/industry-expertise.thought.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.496Z",
-        "updatedAt": "2025-08-21T02:24:37.496Z",
-        "scannedAt": "2025-08-21T02:24:37.496Z",
+        "createdAt": "2025-08-25T01:10:54.052Z",
+        "updatedAt": "2025-08-25T01:10:54.052Z",
+        "scannedAt": "2025-08-25T01:10:54.052Z",
         "path": "role/foil-master/thought/industry-expertise.thought.md"
       }
     },
@@ -157,9 +157,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/foil-master/thought/product-management.thought.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.497Z",
-        "updatedAt": "2025-08-21T02:24:37.497Z",
-        "scannedAt": "2025-08-21T02:24:37.497Z",
+        "createdAt": "2025-08-25T01:10:54.052Z",
+        "updatedAt": "2025-08-25T01:10:54.052Z",
+        "scannedAt": "2025-08-25T01:10:54.052Z",
         "path": "role/foil-master/thought/product-management.thought.md"
       }
     },
@@ -171,9 +171,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/tech-writer/documentation-methodology.thought.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.498Z",
-        "updatedAt": "2025-08-21T02:24:37.498Z",
-        "scannedAt": "2025-08-21T02:24:37.498Z",
+        "createdAt": "2025-08-25T01:10:54.054Z",
+        "updatedAt": "2025-08-25T01:10:54.054Z",
+        "scannedAt": "2025-08-25T01:10:54.054Z",
         "path": "role/tech-writer/documentation-methodology.thought.md"
       }
     },
@@ -185,9 +185,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/tech-writer/documentation-workflow.execution.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.498Z",
-        "updatedAt": "2025-08-21T02:24:37.498Z",
-        "scannedAt": "2025-08-21T02:24:37.498Z",
+        "createdAt": "2025-08-25T01:10:54.055Z",
+        "updatedAt": "2025-08-25T01:10:54.055Z",
+        "scannedAt": "2025-08-25T01:10:54.055Z",
         "path": "role/tech-writer/documentation-workflow.execution.md"
       }
     },
@@ -199,9 +199,9 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/tech-writer/tech-writer.role.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.499Z",
-        "updatedAt": "2025-08-21T02:24:37.499Z",
-        "scannedAt": "2025-08-21T02:24:37.499Z",
+        "createdAt": "2025-08-25T01:10:54.056Z",
+        "updatedAt": "2025-08-25T01:10:54.056Z",
+        "scannedAt": "2025-08-25T01:10:54.056Z",
         "path": "role/tech-writer/tech-writer.role.md"
       }
     },
@@ -213,9 +213,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/tech-writer/technical-writing-standards.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.501Z",
-        "updatedAt": "2025-08-21T02:24:37.501Z",
-        "scannedAt": "2025-08-21T02:24:37.501Z",
+        "createdAt": "2025-08-25T01:10:54.057Z",
+        "updatedAt": "2025-08-25T01:10:54.057Z",
+        "scannedAt": "2025-08-25T01:10:54.057Z",
         "path": "role/tech-writer/technical-writing-standards.knowledge.md"
       }
     },
@@ -227,9 +227,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/tech-writer/vue-admin-documentation.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.502Z",
-        "updatedAt": "2025-08-21T02:24:37.502Z",
-        "scannedAt": "2025-08-21T02:24:37.502Z",
+        "createdAt": "2025-08-25T01:10:54.058Z",
+        "updatedAt": "2025-08-25T01:10:54.058Z",
+        "scannedAt": "2025-08-25T01:10:54.058Z",
         "path": "role/tech-writer/vue-admin-documentation.knowledge.md"
       }
     },
@@ -241,9 +241,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/test-engineer/execution/testing-workflow.execution.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.503Z",
-        "updatedAt": "2025-08-21T02:24:37.503Z",
-        "scannedAt": "2025-08-21T02:24:37.503Z",
+        "createdAt": "2025-08-25T01:10:54.059Z",
+        "updatedAt": "2025-08-25T01:10:54.059Z",
+        "scannedAt": "2025-08-25T01:10:54.059Z",
         "path": "role/test-engineer/execution/testing-workflow.execution.md"
       }
     },
@@ -255,9 +255,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/test-engineer/knowledge/frontend-testing-stack.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.504Z",
-        "updatedAt": "2025-08-21T02:24:37.504Z",
-        "scannedAt": "2025-08-21T02:24:37.504Z",
+        "createdAt": "2025-08-25T01:10:54.060Z",
+        "updatedAt": "2025-08-25T01:10:54.060Z",
+        "scannedAt": "2025-08-25T01:10:54.060Z",
         "path": "role/test-engineer/knowledge/frontend-testing-stack.knowledge.md"
       }
     },
@@ -269,9 +269,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/test-engineer/knowledge/vue-admin-testing.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.504Z",
-        "updatedAt": "2025-08-21T02:24:37.504Z",
-        "scannedAt": "2025-08-21T02:24:37.504Z",
+        "createdAt": "2025-08-25T01:10:54.061Z",
+        "updatedAt": "2025-08-25T01:10:54.061Z",
+        "scannedAt": "2025-08-25T01:10:54.061Z",
         "path": "role/test-engineer/knowledge/vue-admin-testing.knowledge.md"
       }
     },
@@ -283,9 +283,9 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/test-engineer/test-engineer.role.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.505Z",
-        "updatedAt": "2025-08-21T02:24:37.505Z",
-        "scannedAt": "2025-08-21T02:24:37.505Z",
+        "createdAt": "2025-08-25T01:10:54.062Z",
+        "updatedAt": "2025-08-25T01:10:54.062Z",
+        "scannedAt": "2025-08-25T01:10:54.062Z",
         "path": "role/test-engineer/test-engineer.role.md"
       }
     },
@@ -297,9 +297,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/test-engineer/thought/testing-methodology.thought.md",
       "metadata": {
-        "createdAt": "2025-08-21T02:24:37.506Z",
-        "updatedAt": "2025-08-21T02:24:37.506Z",
-        "scannedAt": "2025-08-21T02:24:37.506Z",
+        "createdAt": "2025-08-25T01:10:54.063Z",
+        "updatedAt": "2025-08-25T01:10:54.063Z",
+        "scannedAt": "2025-08-25T01:10:54.063Z",
         "path": "role/test-engineer/thought/testing-methodology.thought.md"
       }
     }
