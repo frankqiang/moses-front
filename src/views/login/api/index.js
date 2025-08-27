@@ -29,7 +29,7 @@ import request from '@/utils/request'
  */
 export function login(data) {
   return request({
-    url: '/api/v1/auth/login',
+    url: '/auth/login',
     method: 'post',
     data
   })
@@ -58,7 +58,7 @@ export function login(data) {
  */
 export function getInfo(token) {
   return request({
-    url: '/api/v1/auth/user',
+    url: '/auth/user',
     method: 'get',
     params: { token }
   })
@@ -77,7 +77,7 @@ export function getInfo(token) {
  */
 export function logout() {
   return request({
-    url: '/api/v1/auth/logout',
+    url: '/auth/logout',
     method: 'post'
   })
 }

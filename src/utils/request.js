@@ -35,11 +35,11 @@ service.interceptors.request.use(
   config => {
     // 🔐 添加认证token
     if (store.getters.token) {
-      // 保持向后兼容：继续使用X-Token头
+      // 使用标准Authorization头（真实后端API）
+      config.headers['Authorization'] = `Bearer ${getToken()}`
+      
+      // 保持向后兼容：继续使用X-Token头（用于可能的mock接口）
       config.headers['X-Token'] = getToken()
-
-      // 🆕 可选：同时支持标准Authorization头（用于新API）
-      // config.headers['Authorization'] = `Bearer ${getToken()}`
     }
 
     // 🛡️ 添加现代安全头
