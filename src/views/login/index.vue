@@ -27,8 +27,7 @@ import LoginForm from './components/LoginForm'
 import LoginFooter from './components/LoginFooter'
 import './styles/index.scss'
 
-// 导入API
-// import { login } from './api'
+
 
 export default {
   name: 'Login',

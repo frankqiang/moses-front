@@ -192,7 +192,7 @@ export default {
   }
   
   .el-input {
-    height: 47px;
+    // height: 47px;
     padding: 0 15px 0 20px; /* 增加左侧内边距，避免文字被图标遮挡 */
     input {
       height: 47px;
@@ -238,7 +238,7 @@ export default {
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    z-index: 0; /* 降低图标的z-index，避免遮挡输入框文本 */
+    z-index: 1; /* 降低图标的z-index，避免遮挡输入框文本 */
     pointer-events: none; /* 确保图标不会拦截鼠标事件 */
   }
 

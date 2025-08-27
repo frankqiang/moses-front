@@ -1,12 +1,18 @@
-# API设计与开发规范
+# API 设计与开发规范
 
 ## 规则说明与适用范围
-本规则定义了项目中API接口的设计标准、开发规范和最佳实践。所有API相关开发都需遵循此规范，确保接口的一致性、安全性和可维护性。
 
-## 标准化注释模板
+本规则定义了项目中 API 接口的设计标准、开发规范和最佳实践。所有 API 相关开发都需遵循此规范，确保接口的一致性、安全性和可维护性。
 
-### API文档注释规范
-【必须】每个API接口文件头部使用以下标准化注释模板：
+# RESTful API 开发规范
+
+## 项目概述
+
+本文档基于 Moses API 项目制定，适用于 Express.js + Swagger + Joi 验证的 RESTful API 开发。
+
+### API 文档注释规范
+
+【必须】每个 API 接口文件头部使用以下标准化注释模板：
 
 ```javascript
 /**
@@ -26,158 +32,337 @@
 ```
 
 ### 字段注释格式规范
+
 【必须】参数和返回值字段必须包含以下信息：
-- **数据类型**：string、number、boolean、object、array等
+
+- **数据类型**：string、number、boolean、object、array 等
 - **字段说明**：清晰描述字段的含义和用途
 - **是否必填**：使用[]表示可选参数
 - **取值范围**：枚举值、数值范围、字符串长度等
 - **默认值**：可选参数的默认值
 - **特殊说明**：格式要求、业务规则等
 
-### 具体示例
-```javascript
-/**
- * 获取检验项目列表
- * 功能描述：查询检验项目数据，支持分页和条件筛选
- * 入参说明：
- *   @param {number} page - 页码，从1开始
- *   @param {number} limit - 每页数量，建议10-100
- *   @param {string} [keyword] - 搜索关键词，支持项目名称模糊查询
- *   @param {string} [status] - 状态筛选，可选值：active|inactive|all
- * 返回参数说明：
- *   @returns {boolean} success - 请求是否成功
- *   @returns {InspectionItem[]} data - 检验项目列表
- *     @returns {string} data[].id - 项目ID
- *     @returns {string} data[].name - 项目名称
- *     @returns {string} data[].code - 项目编码
- *     @returns {string} data[].status - 项目状态
- *     @returns {string} data[].createdAt - 创建时间
- *   @returns {PaginationInfo} pagination - 分页信息
- *     @returns {number} pagination.page - 当前页码
- *     @returns {number} pagination.limit - 每页数量
- *     @returns {number} pagination.total - 总记录数
- *     @returns {boolean} pagination.hasNext - 是否有下一页
- *     @returns {boolean} pagination.hasPrev - 是否有上一页
- * url地址：/api/v1/quality/inspection-items
- * 请求方式：GET
- */
-export function getInspectionItemList(params) {
-  return request({
-    url: '/api/v1/quality/inspection-items',
-    method: 'get',
-    params: formatQueryParams(params)
-  });
-}
-```
+## REST 设计原则
 
-## RESTful API设计原则
+### 资源设计规范
 
-### 核心设计原则
-【必须】遵循REST架构风格：
-- **资源导向**：使用名词表示资源，HTTP动词表示操作
-- **无状态**：每个请求包含完整的处理信息
-- **统一接口**：标准化的HTTP方法和状态码
-- **可缓存**：明确标识可缓存的响应
+- 使用名词表示资源，避免动词
+- 资源名称使用复数形式
+- 使用层级结构表示资源关系
+- 保持 URL 简洁和语义化
+- 避免深层嵌套，最多 3 层
 
-### HTTP方法使用规范
-- **GET**：获取资源，幂等，无副作用
-- **POST**：创建资源或执行操作
-- **PUT**：完整更新资源，幂等
-- **PATCH**：部分更新资源，幂等
-- **DELETE**：删除资源，幂等
+### HTTP 方法使用
 
-### URL路径设计规范
+- GET 用于获取资源
+- POST 用于创建资源
+- PUT 用于完整更新资源
+- PATCH 用于部分更新资源
+- DELETE 用于删除资源
+- HEAD 用于获取资源元信息
+- OPTIONS 用于获取支持的方法
 
-#### 基础路径结构
-【推荐】采用更简洁的API路径设计：
-```
-/api/v{version}/{module}/{resource}
-```
+### 状态码规范
 
-#### 具体规范
-1. **API前缀**：使用`/api`作为统一前缀，简洁明了
-2. **版本控制**：紧跟版本号`/v1`、`/v2`，便于版本管理
-3. **模块分组**：按业务领域分组，使用简短英文名称
-   - `/api/v1/quality` - 质量管理模块
-   - `/api/v1/production` - 生产管理模块
-   - `/api/v1/master` - 主数据模块
-   - `/api/v1/users` - 用户管理模块
-4. **资源命名**：使用复数名词表示资源集合
-5. **层级关系**：合理使用嵌套路径表示资源关系
+- 2xx 表示成功操作
+- 3xx 表示重定向
+- 4xx 表示客户端错误
+- 5xx 表示服务器错误
+- 使用标准 HTTP 状态码
+- 避免自定义状态码
 
-#### 路径设计最佳实践
-- **简洁性**：路径层级不超过4层，避免过深嵌套
-- **语义化**：路径能清晰表达资源含义和操作意图
-- **一致性**：同类资源使用统一的命名规范
-- **可读性**：使用连字符分隔多个单词，如`inspection-items`
+## API 版本管理
 
-#### 示例对比
-```javascript
-// ❌ 旧版本（过于冗长）
-/mes/v1/quality-management/inspection-items
-/mes/v1/master-data/material-codes
+### 版本控制策略
 
-// ✅ 推荐版本（简洁明了）
-/api/v1/quality/inspection-items
-/api/v1/master/material-codes
-```
-
-### API版本控制规范
-【必须】遵循以下版本控制原则：
-1. **URL版本标识**：在URL路径中明确标识API版本，如`/api/v1/users`
-2. **版本号规则**：
-   - 主版本号(v1, v2)：表示不兼容的API变更
-   - 次版本号：通过HTTP头部`API-Version: 1.1`表示兼容性更新
-3. **版本策略**：
-   - 新功能优先在新版本中实现
-   - 保持旧版本的稳定性和向后兼容
-   - 同时维护不超过3个主版本
-4. **版本生命周期**：
-   - 新版本发布后，旧版本至少维护6个月
-   - 提前3个月通知版本废弃计划
-   - 提供完整的版本迁移文档和工具
-
-## 统一响应格式规范
-
-### 标准响应结构
-【必须】使用一致的响应结构：
+【必须】采用 URL 路径版本控制策略：
 
 ```javascript
-// 基础响应格式
-interface ApiResponse<T = any> {
-  success: boolean;
-  data: T;
-  message: string;
-  timestamp: string;
-}
+// 版本控制 URL 示例
+GET / api / v1 / users; // 版本 1
+GET / api / v2 / users; // 版本 2
+POST / api / v1 / auth / login; // 登录接口版本 1
+```
 
-// 分页响应格式
-interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
+【必须】版本命名和管理规范：
 
-// 错误响应格式
-interface ErrorResponse {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    field?: string;
-    details?: any;
-  };
-  timestamp: string;
+- 使用语义版本号：v1, v2, v3 (主版本)
+- 不兼容变更时递增主版本号
+- 新功能添加使用小版本 v1.1, v1.2
+- Bug 修复使用修订版 v1.1.1, v1.1.2
+
+### 向后兼容策略
+
+【必须】确保版本间的平滑过渡：
+
+- 新版本必须向后兼容至少 6 个月
+- 不能删除现有字段，只能标记为废弃
+- 新增字段设为可选，提供默认值
+- 响应格式保持结构一致
+- 错误码保持向后兼容
+
+## OpenAPI 3.0 规范
+
+### 文档结构要求
+
+- 使用 OpenAPI 3.0 标准
+- 完整定义 API 信息
+- 详细描述请求参数
+- 明确响应数据结构
+- 提供示例数据
+
+### Swagger 集成
+
+- 使用 swagger-jsdoc 生成文档
+- 集成 swagger-ui-express 展示
+- 自动同步代码和文档
+- 提供在线测试功能
+- 支持多环境配置
+
+### 文档维护
+
+- 代码变更同步更新文档
+- 定期审查文档准确性
+- 提供详细的使用示例
+- 维护错误码说明
+- 更新版本变更记录
+
+## 请求和响应规范
+
+### 请求格式标准
+
+【必须】实现请求幂等性保障：
+
+- 使用 JSON 作为数据交换格式
+- 请求头包含 Content-Type
+- 支持 gzip 压缩
+- **实现请求幂等性**：使用幂等键确保操作安全
+- 提供请求追踪 ID
+
+### 响应格式统一
+
+- 统一响应数据结构
+- 包含状态码和消息
+- 提供数据和元信息
+- 支持分页和排序
+- 包含请求处理时间
+
+### 数据传输对象 (DTO)
+
+- 定义清晰的输入输出模型
+- 使用 Joi 进行数据验证
+- 分离内部模型和 API 模型
+- 实现数据转换层
+- 保护敏感字段
+
+## 参数验证规范
+
+### 输入验证要求
+
+- 所有输入参数必须验证
+- 使用 Joi 定义验证规则
+- 提供详细的错误信息
+- 验证数据类型和格式
+- 检查参数范围和长度
+
+### 验证规则定义
+
+- 集中管理验证规则
+- 复用通用验证逻辑
+- 支持自定义验证器
+- 实现条件验证
+- 提供本地化错误消息
+
+### 错误处理机制
+
+- 统一验证错误格式
+- 返回具体错误字段
+- 提供错误修复建议
+- 记录验证失败日志
+- 防止敏感信息泄露
+
+## 安全规范
+
+### 认证和授权
+
+【必须】所有 API 接口都必须实现适当的认证机制：
+
+- 使用 JWT Token 进行身份认证
+- 实现基于角色的访问控制 (RBAC)
+- Token 过期时间不超过 24 小时
+- 提供 Token 刷新机制
+- 敏感操作需要二次验证
+
+### HTTPS 安全传输
+
+【必须】生产环境强制使用 HTTPS：
+
+- 禁止 HTTP 明文传输
+- 使用 TLS 1.2 或更高版本
+- 实现 HSTS 安全头
+- 配置安全的 SSL 证书
+- 定期更新安全证书
+
+### 输入验证和防护
+
+【必须】实现全面的输入验证和安全防护：
+
+- 所有输入参数必须进行严格验证
+- 防止 SQL 注入攻击
+- 防止 XSS 跨站脚本攻击
+- 防止 CSRF 跨站请求伪造
+- 限制文件上传类型和大小
+
+### 跨域资源共享 (CORS)
+
+【必须】正确配置 CORS 策略：
+
+- 明确允许的域名白名单
+- 限制允许的 HTTP 方法
+- 控制允许的请求头
+- 避免使用通配符 (\*)
+- 实现预检请求处理
+
+### 敏感数据保护
+
+【必须】保护敏感数据安全：
+
+- 密码使用强散列算法加密
+- API 响应中不包含敏感信息
+- 日志记录不包含敏感数据
+- 实现数据脱敏机制
+- 遵循数据最小化原则
+
+### 请求限流和防护
+
+【必须】实现请求限流和安全防护：
+
+- 基于 IP 的请求频率限制
+- 基于用户的请求配额管理
+- 防止暴力破解攻击
+- 实现熔断器机制
+- 监控异常访问模式
+
+### 安全头设置
+
+【必须】设置必要的 HTTP 安全头：
+
+```javascript
+// 示例安全头配置
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Content-Security-Policy', "default-src 'self'");
+  next();
+});
+```
+
+## 错误处理规范
+
+### 错误响应格式
+
+【必须】使用统一的错误响应格式：
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "用户友好的错误描述",
+    "details": {
+      "field": "具体字段错误信息",
+      "timestamp": "2024-01-01T12:00:00Z",
+      "traceId": "req-12345"
+    }
+  },
+  "meta": {
+    "requestId": "req-12345",
+    "timestamp": "2024-01-01T12:00:00Z"
+  }
 }
 ```
-### API命名规范
-- **获取列表**：`getList`
-- **获取详情**：`getDetail`
-- **创建资源**：`create`
-- **更新资源**：`update`
-- **删除资源**：`remove`
-- **批量操作**：`batchUpdate`、`batchDelete`
+
+### 标准错误码定义
+
+【必须】使用标准化的错误码体系：
+
+```javascript
+// 错误码定义示例
+const ERROR_CODES = {
+  // 认证相关 (1000-1999)
+  UNAUTHORIZED: 'AUTH_001',
+  TOKEN_EXPIRED: 'AUTH_002',
+  INVALID_TOKEN: 'AUTH_003',
+  INSUFFICIENT_PERMISSIONS: 'AUTH_004',
+
+  // 验证相关 (2000-2999)
+  VALIDATION_ERROR: 'VAL_001',
+  MISSING_REQUIRED_FIELD: 'VAL_002',
+  INVALID_FORMAT: 'VAL_003',
+
+  // 业务逻辑 (3000-3999)
+  RESOURCE_NOT_FOUND: 'BIZ_001',
+  DUPLICATE_RESOURCE: 'BIZ_002',
+  OPERATION_NOT_ALLOWED: 'BIZ_003',
+
+  // 系统错误 (5000-5999)
+  INTERNAL_SERVER_ERROR: 'SYS_001',
+  DATABASE_ERROR: 'SYS_002',
+  EXTERNAL_SERVICE_ERROR: 'SYS_003',
+};
+```
+
+### 错误码体系
+
+- 建立统一错误码规范
+- 使用语义化错误代码
+- 分类业务和系统错误
+- 提供错误描述信息
+- 支持多语言错误消息
+
+### 错误响应格式
+
+- 统一错误响应结构
+- 包含错误码和消息
+- 提供错误详细信息
+- 包含请求追踪信息
+- 避免暴露内部实现
+
+### 异常处理策略
+
+- 捕获所有未处理异常
+- 记录详细错误日志
+- 返回用户友好消息
+- 实现错误恢复机制
+- 监控错误发生频率
+
+## 内容协商
+
+### 媒体类型支持
+
+- 支持 JSON 格式
+- 实现 XML 格式支持
+- 处理 Accept 头
+- 提供格式转换
+- 验证内容类型
+
+### API 文档生命周期
+
+【必须】API 文档与代码保持同步更新：
+
+```javascript
+// 文档更新检查点
+const DOCUMENTATION_CHECKPOINTS = {
+  design_phase: ['创建 API 设计文档', '定义接口规范', '评审设计方案'],
+
+  development_phase: ['更新 OpenAPI 规范', '编写代码注释', '生成 Swagger 文档'],
+
+  testing_phase: ['验证文档准确性', '更新示例代码', '测试文档完整性'],
+
+  release_phase: ['发布正式文档', '更新版本记录', '通知相关团队'],
+
+  maintenance_phase: ['定期审查文档', '修复文档问题', '收集用户反馈'],
+};
+```
