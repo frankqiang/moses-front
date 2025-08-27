@@ -13,11 +13,21 @@ export const DEFAULT_LOGIN_FORM = {
 export const LOGIN_RULES = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
+    { min: 3, max: 50, message: '用户名长度必须在 3 到 50 个字符之间', trigger: 'blur' },
+    {
+      pattern: /^[a-zA-Z0-9_\u4e00-\u9fa5]+$/,
+      message: '用户名只能包含字母、数字、下划线和中文字符',
+      trigger: 'blur'
+    }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 30, message: '长度在 6 到 30 个字符', trigger: 'blur' }
+    { min: 6, max: 20, message: '密码长度必须在 6 到 20 个字符之间', trigger: 'blur' },
+    {
+      pattern: /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,20}$/,
+      message: '密码必须包含至少一个字母和一个数字',
+      trigger: 'blur'
+    }
   ]
 }
 

@@ -10,6 +10,7 @@
       <login-header />
       <!-- 登录表单 -->
       <login-form
+        ref="loginForm"
         :loading="loading"
         @login="handleLogin"
         @forgot-password="handleForgotPassword"
@@ -52,26 +53,68 @@ export default {
   },
   methods: {
     /**
-     * 处理登录请求
-     * @param {Object} loginForm - 登录表单数据
-     * @param {string} loginForm.username - 用户名
-     * @param {string} loginForm.password - 密码
-     * @param {boolean} loginForm.rememberMe - 是否记住登录状态
+     * 处理登录
+     * @param {Object} loginData - 登录数据
+     * @param {string} loginData.username - 用户名
+     * @param {string} loginData.password - 密码
+     * @param {boolean} loginData.rememberMe - 是否记住登录状态
      */
-    handleLogin(loginForm) {
+    async handleLogin(loginData) {
       this.loading = true
-      this.$store.dispatch('user/login', {
-        username: loginForm.username,
-        password: loginForm.password,
-        rememberMe: loginForm.rememberMe
-      }).then(() => {
-        this.$message.success('登录成功')
-        this.$router.push({ path: this.redirect || '/' })
+      try {
+        // 调用store中的登录action
+        const response = await this.$store.dispatch('user/login', loginData)
+        
+        // 检查Moses API响应格式
+        if (response && response.success) {
+          // 通知登录表单组件处理成功
+          this.$refs.loginForm.handleLoginSuccess()
+          
+          // 登录成功提示
+          this.$message({
+            message: response.message || '登录成功',
+            type: 'success'
+          })
+          
+          // 跳转到目标页面
+          this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
+        } else {
+          // API返回失败状态
+          throw new Error(response?.message || '登录失败')
+        }
+      } catch (error) {
+        // 登录失败处理
+        console.error('登录失败:', error)
+        
+        // 根据错误类型显示不同的错误信息
+        let errorMessage = '登录失败，请检查用户名和密码'
+        
+        if (error.response) {
+          // HTTP错误响应
+          const { status, data } = error.response
+          if (status === 401) {
+            errorMessage = '用户名或密码错误'
+          } else if (status === 403) {
+            errorMessage = '账户已被禁用，请联系管理员'
+          } else if (status === 429) {
+            errorMessage = '登录尝试次数过多，请稍后再试'
+          } else if (data && data.message) {
+            errorMessage = data.message
+          }
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+        
+        // 通知登录表单组件处理失败
+        this.$refs.loginForm.handleLoginFailure()
+        
+        this.$message({
+          message: errorMessage,
+          type: 'error'
+        })
+      } finally {
         this.loading = false
-      }).catch(error => {
-        this.$message.error(error.message || '登录失败，请检查用户名和密码')
-        this.loading = false
-      })
+      }
     },
     handleForgotPassword() {
       this.$message.info('密码重置功能正在开发中')

@@ -23,11 +23,13 @@
       <el-input
         ref="username"
         v-model="loginForm.username"
-        placeholder="请输入用户名"
+        placeholder="请输入用户名（3-50字符）"
         name="username"
         type="text"
         tabindex="1"
         auto-complete="on"
+        maxlength="50"
+        show-word-limit
       />
     </el-form-item>
 
@@ -40,33 +42,35 @@
         ref="password"
         v-model="loginForm.password"
         :type="passwordType"
-        placeholder="请输入密码"
+        placeholder="请输入密码（6-20字符）"
         name="password"
         tabindex="2"
         auto-complete="on"
+        maxlength="20"
+        show-word-limit
         @keyup.enter.native="handleLogin"
       />
       <span class="show-pwd" @click="showPwd">
         <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
       </span>
     </el-form-item>
-    
+
     <div class="remember-container">
       <div class="remember-me-section">
-        <el-checkbox 
-          v-model="loginForm.rememberMe" 
+        <el-checkbox
+          v-model="loginForm.rememberMe"
           class="remember-checkbox"
         >
           <span class="remember-text">记住登录状态</span>
-          <el-tooltip 
-            content="勾选后将在本设备保持登录状态，建议仅在个人设备上使用" 
+          <el-tooltip
+            content="勾选后将在本设备保持登录状态，建议仅在个人设备上使用"
             placement="top"
           >
-            <i class="el-icon-question remember-tip"></i>
+            <i class="el-icon-question remember-tip" />
           </el-tooltip>
         </el-checkbox>
         <div v-if="loginForm.rememberMe" class="security-warning">
-          <i class="el-icon-warning-outline"></i>
+          <i class="el-icon-warning-outline" />
           <span>请确保在安全的个人设备上使用此功能</span>
           <a href="javascript:;" class="clear-remembered" @click="clearRememberedState">清除记住的状态</a>
         </div>
@@ -76,7 +80,7 @@
 
     <el-button type="primary" class="login-button" :loading="loading" @click.native.prevent="handleLogin">登录</el-button>
 
-    <div class="tips" v-if="isDev">
+    <div v-if="isDev" class="tips">
       <span>测试账号: admin</span>
       <span>密码: 任意6位以上</span>
     </div>
@@ -103,7 +107,12 @@ export default {
       },
       loginRules: LOGIN_RULES,
       passwordType: 'password',
-      isDev: ENV_CONFIG.isDev
+      isDev: ENV_CONFIG.isDev,
+      loginAttempts: 0,
+      maxLoginAttempts: 5,
+      lockoutTime: 15 * 60 * 1000, // 15分钟
+      isLocked: false,
+      lockoutEndTime: null
     }
   },
   created() {
@@ -133,15 +142,39 @@ export default {
     },
     /**
      * 处理登录提交
+     * 验证表单后调用登录接口
      */
     handleLogin() {
-      this.$refs.loginForm.validate((valid) => {
+      // 检查是否被锁定
+      if (this.isLocked) {
+        const remainingTime = Math.ceil((this.lockoutEndTime - Date.now()) / 1000 / 60)
+        this.$message.error(`登录已被锁定，请在 ${remainingTime} 分钟后重试`)
+        return false
+      }
+
+      this.$refs.loginForm.validate(valid => {
         if (valid) {
-          // 处理记住用户信息
-          this.handleRememberUser()
-          this.$emit('login', this.loginForm)
+          // 验证用户名格式
+          const usernamePattern = /^[a-zA-Z0-9_\u4e00-\u9fa5]{3,50}$/
+          if (!usernamePattern.test(this.loginForm.username)) {
+            this.$message.error('用户名格式不正确，只能包含字母、数字、下划线和中文字符')
+            return false
+          }
+
+          // 验证密码格式
+          const passwordPattern = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,20}$/
+          if (!passwordPattern.test(this.loginForm.password)) {
+            this.$message.error('密码格式不正确，必须包含至少一个字母和一个数字')
+            return false
+          }
+
+          this.$emit('login', {
+            username: this.loginForm.username.trim(),
+            password: this.loginForm.password,
+            rememberMe: this.loginForm.rememberMe
+          })
         } else {
-          console.log('登录表单验证失败')
+          console.log('表单验证失败')
           return false
         }
       })
@@ -178,6 +211,43 @@ export default {
         type: 'success',
         duration: 2000
       })
+    },
+
+    /**
+     * 处理登录失败
+     */
+    handleLoginFailure() {
+      this.loginAttempts++
+
+      if (this.loginAttempts >= this.maxLoginAttempts) {
+        this.isLocked = true
+        this.lockoutEndTime = Date.now() + this.lockoutTime
+
+        // 设置定时器自动解锁
+        setTimeout(() => {
+          this.isLocked = false
+          this.loginAttempts = 0
+          this.lockoutEndTime = null
+        }, this.lockoutTime)
+
+        this.$message.error(`登录失败次数过多，账户已被锁定 ${this.lockoutTime / 1000 / 60} 分钟`)
+      } else {
+        const remainingAttempts = this.maxLoginAttempts - this.loginAttempts
+        this.$message.warning(`登录失败，还有 ${remainingAttempts} 次尝试机会`)
+      }
+    },
+
+    /**
+     * 处理登录成功
+     */
+    handleLoginSuccess() {
+      // 重置登录尝试次数
+      this.loginAttempts = 0
+      this.isLocked = false
+      this.lockoutEndTime = null
+
+      // 处理记住用户信息
+      this.handleRememberUser()
     }
   }
 }
@@ -186,28 +256,28 @@ export default {
 <style lang="scss" scoped>
 .login-form {
   width: 100%;
-  
+
   .el-form-item {
     margin-bottom: 22px;
   }
-  
+
   .el-input {
     // height: 47px;
     padding: 0 15px 0 20px; /* 增加左侧内边距，避免文字被图标遮挡 */
     input {
       height: 47px;
       line-height: 47px;
-      
+
       border-radius: 6px;
       border: 1px solid #dcdfe6;
       background-color: #fff;
       color: #606266;
-      
+
       &:focus {
         border-color: #409eff;
         outline: none;
       }
-      
+
       &::placeholder {
         color: #c0c4cc;
         padding-left: 5px; /* 为placeholder添加额外的左侧内边距 */
@@ -218,7 +288,7 @@ export default {
 
 .title-container {
   margin-bottom: 30px;
-  
+
   .title {
     font-size: 24px;
     color: #303133;
@@ -252,7 +322,7 @@ export default {
   cursor: pointer;
   user-select: none;
   z-index: 1;
-  
+
   &:hover {
     color: #409eff;
   }
@@ -266,29 +336,29 @@ export default {
 
   .remember-me-section {
     flex: 1;
-    
+
     .remember-checkbox {
       display: flex;
       align-items: center;
       margin-bottom: 8px;
-      
+
       .remember-text {
         color: #606266;
         font-size: 14px;
         margin-right: 5px;
       }
-      
+
       .remember-tip {
         color: #909399;
         font-size: 14px;
         cursor: help;
-        
+
         &:hover {
           color: #409EFF;
         }
       }
     }
-    
+
     .security-warning {
       display: flex;
       align-items: center;
@@ -300,24 +370,24 @@ export default {
       color: #e6a23c;
       font-size: 12px;
       margin-top: 5px;
-      
+
       i {
         margin-right: 5px;
         font-size: 14px;
       }
-      
+
       span {
         line-height: 1.4;
         flex: 1;
       }
-      
+
       .clear-remembered {
         color: #409EFF;
         text-decoration: none;
         margin-left: 10px;
         white-space: nowrap;
         font-size: 12px;
-        
+
         &:hover {
           text-decoration: underline;
         }
@@ -352,7 +422,7 @@ export default {
   span {
     display: block;
     line-height: 1.5;
-    
+
     &:first-of-type {
       margin-bottom: 4px;
     }
@@ -362,7 +432,7 @@ export default {
 // 修复输入框图标和密码显示按钮的定位
 .el-form-item {
   position: relative;
-  
+
   .el-input {
     input {
       padding-left: 45px;
