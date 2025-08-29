@@ -28,8 +28,6 @@ import LoginForm from './components/LoginForm'
 import LoginFooter from './components/LoginFooter'
 import './styles/index.scss'
 
-
-
 export default {
   name: 'Login',
   components: {
@@ -64,18 +62,18 @@ export default {
       try {
         // 调用store中的登录action
         const response = await this.$store.dispatch('user/login', loginData)
-        
+
         // 检查Moses API响应格式
         if (response && response.success) {
           // 通知登录表单组件处理成功
           this.$refs.loginForm.handleLoginSuccess()
-          
+
           // 登录成功提示
           this.$message({
             message: response.message || '登录成功',
             type: 'success'
           })
-          
+
           // 跳转到目标页面
           this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
         } else {
@@ -85,33 +83,29 @@ export default {
       } catch (error) {
         // 登录失败处理
         console.error('登录失败:', error)
-        
-        // 根据错误类型显示不同的错误信息
-        let errorMessage = '登录失败，请检查用户名和密码'
-        
-        if (error.response) {
-          // HTTP错误响应
-          const { status, data } = error.response
-          if (status === 401) {
-            errorMessage = '用户名或密码错误'
-          } else if (status === 403) {
-            errorMessage = '账户已被禁用，请联系管理员'
-          } else if (status === 429) {
-            errorMessage = '登录尝试次数过多，请稍后再试'
-          } else if (data && data.message) {
-            errorMessage = data.message
-          }
-        } else if (error.message) {
-          errorMessage = error.message
-        }
-        
+
         // 通知登录表单组件处理失败
         this.$refs.loginForm.handleLoginFailure()
-        
-        this.$message({
-          message: errorMessage,
-          type: 'error'
-        })
+
+        // 只有在特定情况下才显示额外的错误消息，避免与 request.js 中的错误消息重复
+        if (error.response && error.response.status === 401) {
+          // 只对认证错误显示特定消息，网络错误已在 request.js 中处理
+          this.$message({
+            message: '用户名或密码错误',
+            type: 'error'
+          })
+        } else if (error.response && error.response.status === 403) {
+          this.$message({
+            message: '账户已被禁用，请联系管理员',
+            type: 'error'
+          })
+        } else if (error.response && error.response.status === 429) {
+          this.$message({
+            message: '登录尝试次数过多，请稍后再试',
+            type: 'error'
+          })
+        }
+        // 网络错误和其他错误已在 request.js 的拦截器中处理，这里不再重复显示
       } finally {
         this.loading = false
       }

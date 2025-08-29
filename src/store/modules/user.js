@@ -1,6 +1,7 @@
 import { login, logout, getInfo } from '@/views/login/api'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { resetRouter } from '@/router'
+import authStorageManager from '@/utils/auth-storage'
 
 const getDefaultState = () => {
   return {
@@ -54,31 +55,66 @@ const actions = {
           // 如果有refreshToken，也保存起来
           if (refreshToken) {
             // 可以在这里保存refreshToken用于后续刷新
-            localStorage.setItem('refresh_token', refreshToken)
+            authStorageManager.setRefreshToken(refreshToken)
           }
 
           // 登录成功，清除失败次数
-          localStorage.removeItem('login_failed_count')
-          localStorage.removeItem('account_locked_until')
+          authStorageManager.clearLoginFailedCount()
 
           // 返回完整响应给调用方
           resolve(response)
         } else {
           // 登录失败，增加失败次数
-          const failedCount = parseInt(localStorage.getItem('login_failed_count') || '0') + 1
-          localStorage.setItem('login_failed_count', failedCount.toString())
+          const failedCount = authStorageManager.incrementLoginFailedCount()
 
           // 如果失败次数达到5次，锁定账户30分钟
           if (failedCount >= 5) {
-            const lockUntil = Date.now() + (30 * 60 * 1000) // 30分钟后解锁
-            localStorage.setItem('account_locked_until', lockUntil.toString())
+            authStorageManager.lockAccount(30 * 60 * 1000) // 30分钟后解锁
             reject(new Error('账户已被锁定30分钟，请稍后再试'))
           } else {
             reject(new Error(response.message || `登录失败，还可尝试 ${5 - failedCount} 次`))
           }
         }
       }).catch(error => {
-        reject(error)
+        // 处理HTTP错误响应
+        if (error.response) {
+          const status = error.response.status
+          // 根据后端返回的错误格式正确解析错误信息
+          const errorData = error.response.data
+          let errorMessage = error.message
+
+          // 检查是否是新的错误格式 (data.error.message)
+          if (errorData && errorData.error && errorData.error.message) {
+            errorMessage = errorData.error.message
+          } else if (errorData && errorData.message) {
+            // 检查是否是旧的错误格式 (data.message)
+            errorMessage = errorData.message
+          }
+
+          if (status === 401) {
+            // 密码错误或用户名不存在
+            const failedCount = authStorageManager.incrementLoginFailedCount()
+
+            if (failedCount >= 5) {
+              authStorageManager.lockAccount(30 * 60 * 1000) // 30分钟后解锁
+              reject(new Error('账户已被锁定30分钟，请稍后再试'))
+            } else {
+              // 优先显示具体的错误信息（如密码错误），然后显示剩余尝试次数
+              const specificError = errorMessage || '用户名或密码错误'
+              const remainingAttempts = 5 - failedCount
+              reject(new Error(`${specificError}，还可尝试 ${remainingAttempts} 次`))
+            }
+          } else if (status === 429) {
+            // 请求过于频繁
+            reject(new Error(errorMessage || '登录尝试过于频繁，请稍后再试'))
+          } else {
+            // 其他HTTP错误
+            reject(new Error(errorMessage || '登录失败，请稍后再试'))
+          }
+        } else {
+          // 网络错误或其他错误
+          reject(error)
+        }
       })
     })
   },
@@ -128,11 +164,9 @@ const actions = {
           resetRouter()
 
           // 清除refreshToken
-          localStorage.removeItem('refresh_token')
+          authStorageManager.clearAllAuthState()
 
-          // 清除登录失败相关记录
-          localStorage.removeItem('login_failed_count')
-          localStorage.removeItem('account_locked_until')
+          // 清除登录失败相关记录已包含在clearAllAuthState中
 
           resolve()
         } else {
@@ -142,11 +176,9 @@ const actions = {
           resetRouter()
 
           // 清除refreshToken
-          localStorage.removeItem('refresh_token')
+          authStorageManager.clearAllAuthState()
 
-          // 清除登录失败相关记录
-          localStorage.removeItem('login_failed_count')
-          localStorage.removeItem('account_locked_until')
+          // 清除登录失败相关记录已包含在clearAllAuthState中
 
           resolve()
         }
@@ -156,7 +188,7 @@ const actions = {
         commit('SET_NAME', '')
         commit('SET_AVATAR', '')
         removeToken()
-        localStorage.removeItem('refresh_token')
+        authStorageManager.clearAllAuthState()
         resetRouter()
 
         reject(error)

@@ -3,6 +3,35 @@ import { MessageBox, Message } from 'element-ui'
 import store from '@/store'
 import { getToken } from '@/utils/auth'
 
+// 防重复错误消息机制
+const errorMessageCache = new Set()
+const ERROR_MESSAGE_DURATION = 3000 // 3秒内相同错误消息不重复显示
+
+/**
+ * 显示错误消息（防重复）
+ * @param {string} message - 错误消息
+ * @param {string} type - 消息类型
+ * @param {number} duration - 显示时长
+ */
+function showErrorMessage(message, type = 'error', duration = 5000) {
+  // 检查是否已经显示过相同的错误消息
+  if (errorMessageCache.has(message)) {
+    return
+  }
+
+  errorMessageCache.add(message)
+  Message({
+    message,
+    type,
+    duration
+  })
+
+  // 清除缓存
+  setTimeout(() => {
+    errorMessageCache.delete(message)
+  }, ERROR_MESSAGE_DURATION)
+}
+
 /**
  * 🚀 现代化API错误类
  * 提供标准化的错误对象，支持错误码、状态码和详细信息
@@ -37,7 +66,7 @@ service.interceptors.request.use(
     if (store.getters.token) {
       // 使用标准Authorization头（真实后端API）
       config.headers['Authorization'] = `Bearer ${getToken()}`
-      
+
       // 保持向后兼容：继续使用X-Token头（用于可能的mock接口）
       config.headers['X-Token'] = getToken()
     }
@@ -92,19 +121,19 @@ service.interceptors.response.use(
       }
     }
 
+    // 网络错误处理
+    let errorMessage = '网络请求失败，请稍后重试'
+
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      Message({
-        message: '请求超时，请检查网络或稍后重试',
-        type: 'error',
-        duration: 5 * 1000
-      })
-    } else {
-      Message({
-        message: error.message || '网络请求失败，请稍后重试',
-        type: 'error',
-        duration: 5 * 1000
-      })
+      errorMessage = '请求超时，请检查网络连接'
+    } else if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
+      errorMessage = '网络连接失败，请检查网络设置'
+    } else if (error.message.includes('ERR_INTERNET_DISCONNECTED')) {
+      errorMessage = '网络连接已断开，请检查网络连接'
     }
+
+    // 使用防重复错误消息函数
+    showErrorMessage(errorMessage)
 
     return Promise.reject(error)
   }
