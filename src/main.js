@@ -48,6 +48,9 @@ if (process.env.NODE_ENV === 'production') {
 // 导入存储清理初始化
 import initStorageCleanupAsync from '@/utils/init-storage-cleanup'
 
+// 导入数据迁移管理器
+import dataMigrationManager from '@/utils/data-migration'
+
 // 开发环境下导入存储清理工具
 if (process.env.NODE_ENV === 'development') {
   import('@/utils/cleanup-duplicate-storage')
@@ -82,8 +85,23 @@ new Vue({
   router,
   store,
   render: h => h(App),
-  mounted() {
-    // 在应用挂载后初始化存储清理
-    initStorageCleanupAsync()
+  async mounted() {
+    try {
+      // 执行数据迁移（如果需要）
+      if (dataMigrationManager.needsMigration()) {
+        console.log('检测到需要数据迁移，开始执行...')
+        await dataMigrationManager.performMigration()
+        console.log('数据迁移完成')
+      } else {
+        console.log('无需数据迁移')
+      }
+      
+      // 在应用挂载后初始化存储清理
+      initStorageCleanupAsync()
+    } catch (error) {
+      console.error('应用初始化过程中发生错误:', error)
+      // 即使迁移失败，也要继续初始化应用
+      initStorageCleanupAsync()
+    }
   }
 })

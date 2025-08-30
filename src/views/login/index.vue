@@ -84,8 +84,13 @@ export default {
         // 登录失败处理
         console.error('登录失败:', error)
 
-        // 通知登录表单组件处理失败
-        this.$refs.loginForm.handleLoginFailure()
+        // 检查是否为账户锁定状态（423或429），如果是则不调用本地失败处理
+        const isAccountLocked = error.response && (error.response.status === 423 || error.response.status === 429)
+        
+        if (!isAccountLocked) {
+          // 只有非账户锁定的情况才通知登录表单组件处理失败（增加本地计数器）
+          this.$refs.loginForm.handleLoginFailure()
+        }
 
         // 只有在特定情况下才显示额外的错误消息，避免与 request.js 中的错误消息重复
         if (error.response && error.response.status === 401) {
@@ -97,6 +102,16 @@ export default {
         } else if (error.response && error.response.status === 403) {
           this.$message({
             message: '账户已被禁用，请联系管理员',
+            type: 'error'
+          })
+        } else if (error.response && error.response.status === 423) {
+          // 账户锁定错误处理 - 尝试从多个可能的位置提取错误信息
+          const errorMessage = error.response?.data?.message || 
+                              error.response?.data?.error?.message ||
+                              error.response?.data?.error || 
+                              '账户已被锁定，请稍后再试或联系管理员'
+          this.$message({
+            message: errorMessage,
             type: 'error'
           })
         } else if (error.response && error.response.status === 429) {

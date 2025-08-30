@@ -7,7 +7,7 @@
 // 默认配置
 const DEFAULT_CONFIG = {
   // 存储在localStorage中的键名
-  STORAGE_KEY: 'vue_admin_table_configs',
+  STORAGE_KEY: 'moses_table_configs',
   // 配置当前版本
   CURRENT_VERSION: 1,
   // 最大存储数量
@@ -97,32 +97,72 @@ class TableConfigStore {
    * 自动从localStorage中的独立键迁移数据到集中存储
    */
   migrateToV1() {
-    // 查找所有以 table_columns_ 开头的localStorage键
-    const tableKeys = []
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key && key.startsWith('table_columns_')) {
-        tableKeys.push(key)
-      }
-    }
-
-    // 迁移找到的配置
-    tableKeys.forEach(key => {
+    // 从旧的独立键迁移数据
+    const oldKeys = [
+      'vue_admin_template_table_columns_',
+      'vue_admin_table_columns_',
+      'table_columns_'
+    ]
+    
+    // 同时检查旧的集中存储键
+    const oldStorageKeys = [
+      'vue_admin_table_configs',
+      'vue_admin_template_table_configs'
+    ]
+    
+    let migrated = false
+    
+    // 迁移旧的集中存储
+    oldStorageKeys.forEach(oldKey => {
       try {
-        const value = localStorage.getItem(key)
-        if (value) {
-          const columns = JSON.parse(value)
-          // 将旧配置迁移到新存储中
-          this.store.configs[key] = {
-            columns,
-            updatedAt: Date.now(),
-            accessedAt: Date.now()
-          }
+        const oldData = localStorage.getItem(oldKey)
+        if (oldData) {
+          const parsedData = JSON.parse(oldData)
+          // 合并到新的存储键
+          Object.assign(this.store.configs, parsedData.configs || {})
+          localStorage.removeItem(oldKey)
+          migrated = true
         }
-      } catch (error) {
-        console.error(`迁移配置 ${key} 失败:`, error)
+      } catch (e) {
+        console.warn(`迁移旧集中存储失败: ${oldKey}`, e)
+        localStorage.removeItem(oldKey)
       }
     })
+    
+    // 迁移旧的独立键
+    oldKeys.forEach(prefix => {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith(prefix)) {
+          try {
+            const value = localStorage.getItem(key)
+            if (value) {
+              const tableId = key.replace(prefix, '')
+              const config = JSON.parse(value)
+              
+              // 将旧配置迁移到新存储中
+              this.store.configs[tableId] = {
+                columns: config,
+                updatedAt: Date.now(),
+                accessedAt: Date.now()
+              }
+              
+              // 删除旧键
+              localStorage.removeItem(key)
+              migrated = true
+            }
+          } catch (e) {
+            console.warn(`迁移表格配置失败: ${key}`, e)
+            // 删除损坏的数据
+            localStorage.removeItem(key)
+          }
+        }
+      }
+    })
+    
+    if (migrated) {
+      console.log('表格配置迁移完成')
+    }
   }
 
   /**
