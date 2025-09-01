@@ -98,15 +98,25 @@ export default {
           errorMessage = error.message
         }
 
-        // 显示用户友好的错误提示
-        this.$message({
+        // 构造标准化的错误对象
+        const errorObj = {
+          code: error.response?.data?.error?.code || error.code,
           message: errorMessage,
-          type: 'error'
-        })
+          details: error.response?.data?.error?.details
+        }
 
-        // 通知登录表单组件处理失败
+        // 通知登录表单组件处理失败，传递错误对象
+        let handled = false
         if (this.$refs.loginForm && this.$refs.loginForm.handleLoginFailure) {
-          this.$refs.loginForm.handleLoginFailure()
+          handled = this.$refs.loginForm.handleLoginFailure(errorObj)
+        }
+
+        // 如果LoginForm组件没有处理该错误，则显示通用错误提示
+        if (!handled) {
+          this.$message({
+            message: errorMessage,
+            type: 'error'
+          })
         }
       } finally {
         // 确保loading状态被重置

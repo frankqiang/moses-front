@@ -1,28 +1,28 @@
-import axios from 'axios';
-import { MessageBox, Message } from 'element-ui';
-import store from '@/store';
-import router from '@/router';
-import { getToken } from '@/utils/auth';
+import axios from 'axios'
+import { MessageBox, Message } from 'element-ui'
+import store from '@/store'
+import router from '@/router'
+import { getToken } from '@/utils/auth'
 
 // 防重复错误消息机制
-const errorMessageCache = new Set();
-const ERROR_MESSAGE_DURATION = 3000; // 3秒内相同错误消息不重复显示
+const errorMessageCache = new Set()
+const ERROR_MESSAGE_DURATION = 3000 // 3秒内相同错误消息不重复显示
 
 // 请求去重机制
-const pendingRequests = new Map();
-const REQUEST_DEDUP_KEY_PREFIX = 'req_';
+const pendingRequests = new Map()
+const REQUEST_DEDUP_KEY_PREFIX = 'req_'
 
 // 重试配置
 const RETRY_CONFIG = {
   maxRetries: 3,
   retryDelay: 1000,
   retryableErrors: ['NETWORK_TIMEOUT', 'NETWORK_CONNECTION_FAILED', 'NETWORK_DISCONNECTED'],
-  exponentialBackoff: true,
-};
+  exponentialBackoff: true
+}
 
 // 认证失效时的请求队列
-const authFailureRequestQueue = [];
-let isHandlingAuthFailure = false;
+const authFailureRequestQueue = []
+let isHandlingAuthFailure = false
 
 /**
  * 显示错误消息（防重复）
@@ -33,20 +33,20 @@ let isHandlingAuthFailure = false;
 function showErrorMessage(message, type = 'error', duration = 5000) {
   // 检查是否已经显示过相同的错误消息
   if (errorMessageCache.has(message)) {
-    return;
+    return
   }
 
-  errorMessageCache.add(message);
+  errorMessageCache.add(message)
   Message({
     message,
     type,
-    duration,
-  });
+    duration
+  })
 
   // 清除缓存
   setTimeout(() => {
-    errorMessageCache.delete(message);
-  }, ERROR_MESSAGE_DURATION);
+    errorMessageCache.delete(message)
+  }, ERROR_MESSAGE_DURATION)
 }
 
 /**
@@ -55,11 +55,11 @@ function showErrorMessage(message, type = 'error', duration = 5000) {
  */
 export class ApiError extends Error {
   constructor(code, message, status = 500, details = null) {
-    super(message);
-    this.code = code;
-    this.status = status;
-    this.details = details;
-    this.name = 'ApiError';
+    super(message)
+    this.code = code
+    this.status = status
+    this.details = details
+    this.name = 'ApiError'
   }
 }
 /**
@@ -69,8 +69,8 @@ export class ApiError extends Error {
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
   // withCredentials: true, // send cookies when cross-domain requests
-  timeout: 5000, // request timeout
-});
+  timeout: 5000 // request timeout
+})
 
 /**
  * 📤 请求拦截器 - 增强版
@@ -79,23 +79,23 @@ const service = axios.create({
 service.interceptors.request.use(
   (config) => {
     // 📋 请求去重检查
-    const requestKey = generateRequestKey(config);
+    const requestKey = generateRequestKey(config)
     if (pendingRequests.has(requestKey)) {
       // 返回已存在的请求Promise
-      return pendingRequests.get(requestKey);
+      return pendingRequests.get(requestKey)
     }
 
     // 记录请求开始时间用于性能监控
-    config._startTime = Date.now();
+    config._startTime = Date.now()
 
     // 🔐 添加认证token（移除冗余的X-Token）
     if (store.getters.token) {
-      config.headers.Authorization = `Bearer ${getToken()}`;
+      config.headers.Authorization = `Bearer ${getToken()}`
     }
 
     // 🛡️ 添加现代安全头
-    config.headers['X-Requested-With'] = 'XMLHttpRequest';
-    config.headers['Content-Type'] = config.headers['Content-Type'] || 'application/json';
+    config.headers['X-Requested-With'] = 'XMLHttpRequest'
+    config.headers['Content-Type'] = config.headers['Content-Type'] || 'application/json'
 
     // 🐛 开发环境调试日志
     if (process.env.NODE_ENV === 'development') {
@@ -103,17 +103,17 @@ service.interceptors.request.use(
         url: config.url,
         method: config.method,
         params: config.params,
-        data: config.data,
-      });
+        data: config.data
+      })
     }
 
-    return config;
+    return config
   },
   (error) => {
-    console.log('❌ Request Error:', error);
-    return Promise.reject(error);
+    console.log('❌ Request Error:', error)
+    return Promise.reject(error)
   }
-);
+)
 
 /**
  * 📥 响应拦截器 - 现代化版本
@@ -122,12 +122,12 @@ service.interceptors.request.use(
 const responseInterceptor = service.interceptors.response.use(
   (response) => {
     // 📋 清理请求去重缓存
-    const requestKey = generateRequestKey(response.config);
-    pendingRequests.delete(requestKey);
+    const requestKey = generateRequestKey(response.config)
+    pendingRequests.delete(requestKey)
 
     // 📈 性能监控
     if (response.config._startTime) {
-      trackPerformance(response.config, response.config._startTime, response);
+      trackPerformance(response.config, response.config._startTime, response)
     }
 
     if (process.env.NODE_ENV === 'development') {
@@ -135,70 +135,70 @@ const responseInterceptor = service.interceptors.response.use(
         url: response.config.url,
         status: response.status,
         data: response.data,
-        requestId: response.data?.meta?.requestId,
-      });
+        requestId: response.data?.meta?.requestId
+      })
     }
 
-    const res = response.data;
-    return handleModernFormat(res, response.status, response);
+    const res = response.data
+    return handleModernFormat(res, response.status, response)
   },
-  async (error) => {
-    const { config } = error;
+  async(error) => {
+    const { config } = error
 
     // 📋 清理请求去重缓存
     if (config) {
-      const requestKey = generateRequestKey(config);
-      pendingRequests.delete(requestKey);
+      const requestKey = generateRequestKey(config)
+      pendingRequests.delete(requestKey)
     }
 
-    console.error('❌ Response Interceptor Error:', error.response || error);
+    console.error('❌ Response Interceptor Error:', error.response || error)
 
     // 处理后端返回的业务错误
     if (error.response && error.response.data) {
-      const res = error.response.data;
+      const res = error.response.data
       if (res.success !== undefined && !res.success) {
-        return handleModernFormat(res, error.response.status, error.response);
+        return handleModernFormat(res, error.response.status, error.response)
       }
     }
 
     // 🔄 重试机制 - 对网络错误进行重试
     if (config && !config._isRetry) {
       try {
-        return await retryWithBackoff(service, config);
+        return await retryWithBackoff(service, config)
       } catch (retryError) {
         // 重试失败，继续原有错误处理逻辑
-        error = retryError;
+        error = retryError
       }
     }
 
     // 🌐 网络错误统一包装为ApiError实例
-    let errorCode = 'NETWORK_ERROR';
-    let errorMessage = '网络请求失败，请稍后重试';
+    let errorCode = 'NETWORK_ERROR'
+    let errorMessage = '网络请求失败，请稍后重试'
     const errorDetails = {
       originalError: error.code,
       url: error.config?.url,
       method: error.config?.method,
-      timestamp: new Date().toISOString(),
-    };
+      timestamp: new Date().toISOString()
+    }
 
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      errorCode = 'NETWORK_TIMEOUT';
-      errorMessage = '请求超时，请检查网络连接';
+      errorCode = 'NETWORK_TIMEOUT'
+      errorMessage = '请求超时，请检查网络连接'
     } else if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
-      errorCode = 'NETWORK_CONNECTION_FAILED';
-      errorMessage = '网络连接失败，请检查网络设置';
+      errorCode = 'NETWORK_CONNECTION_FAILED'
+      errorMessage = '网络连接失败，请检查网络设置'
     } else if (error.message.includes('ERR_INTERNET_DISCONNECTED')) {
-      errorCode = 'NETWORK_DISCONNECTED';
-      errorMessage = '网络连接已断开，请检查网络连接';
+      errorCode = 'NETWORK_DISCONNECTED'
+      errorMessage = '网络连接已断开，请检查网络连接'
     }
 
     // 显示用户友好的错误消息
-    showErrorMessage(errorMessage);
+    showErrorMessage(errorMessage)
 
     // 统一返回 ApiError 实例
-    return Promise.reject(new ApiError(errorCode, errorMessage, error.response?.status || 0, errorDetails));
+    return Promise.reject(new ApiError(errorCode, errorMessage, error.response?.status || 0, errorDetails))
   }
-);
+)
 
 /**
  * 🚀 现代格式响应处理函数
@@ -216,15 +216,15 @@ function handleModernFormat(res, status, response = null) {
       // 如果已经在处理认证失效，将请求加入队列
       if (isHandlingAuthFailure && response?.config) {
         return new Promise((resolve, reject) => {
-          addToAuthFailureQueue(resolve, reject, response.config);
-        });
+          addToAuthFailureQueue(resolve, reject, response.config)
+        })
       }
 
-      handleAuthError(res.error?.message || 'Authentication Error');
+      handleAuthError(res.error?.message || 'Authentication Error')
     }
 
     // 📋 统一处理常见错误
-    const isHandled = handleCommonErrors(res.error, status, response);
+    const isHandled = handleCommonErrors(res.error, status, response)
 
     // 📋 转换为标准ApiError对象，提供丰富的错误信息
     const errorDetails = {
@@ -238,17 +238,16 @@ function handleModernFormat(res, status, response = null) {
       url: response?.config?.url,
       method: response?.config?.method,
       // 标记是否已在request层处理
-      handledByRequestLayer: isHandled,
-    };
+      handledByRequestLayer: isHandled
+    }
 
     return Promise.reject(
       new ApiError(res.error?.code || 'UNKNOWN_ERROR', res.error?.message || '未知错误', status, errorDetails)
-    );
-    
+    )
   }
 
   // ✅ 成功响应，返回新格式数据（包含meta信息）
-  return res;
+  return res
 }
 
 /**
@@ -260,7 +259,7 @@ function handleModernFormat(res, status, response = null) {
  * @returns {boolean} 是否为认证失效错误
  */
 function isAuthError(errorCode) {
-  if (!errorCode) return false;
+  if (!errorCode) return false
 
   // 1. 后端认证失效错误码（基于errorCodes.js）
   const authFailureCodes = [
@@ -273,13 +272,13 @@ function isAuthError(errorCode) {
     'AUTH_030', // SESSION_EXPIRED - 会话过期
     'AUTH_031', // SESSION_INVALID - 会话无效
     'AUTH_032', // REFRESH_TOKEN_EXPIRED - 刷新令牌过期
-    'AUTH_033', // REFRESH_TOKEN_INVALID - 刷新令牌无效
-  ];
+    'AUTH_033' // REFRESH_TOKEN_INVALID - 刷新令牌无效
+  ]
 
   // 2. 处理通用认证失效错误码（向下兼容）
-  const commonAuthFailureCodes = ['UNAUTHORIZED', 'TOKEN_EXPIRED', 'INVALID_TOKEN', 'FORBIDDEN'];
+  const commonAuthFailureCodes = ['UNAUTHORIZED', 'TOKEN_EXPIRED', 'INVALID_TOKEN', 'FORBIDDEN']
 
-  return authFailureCodes.includes(errorCode) || commonAuthFailureCodes.includes(errorCode);
+  return authFailureCodes.includes(errorCode) || commonAuthFailureCodes.includes(errorCode)
 }
 
 /**
@@ -288,8 +287,8 @@ function isAuthError(errorCode) {
  * @returns {boolean} 是否为验证错误
  */
 function isValidationError(errorCode) {
-  if (!errorCode) return false;
-  return errorCode.startsWith('VAL_');
+  if (!errorCode) return false
+  return errorCode.startsWith('VAL_')
 }
 
 /**
@@ -298,8 +297,8 @@ function isValidationError(errorCode) {
  * @returns {boolean} 是否为系统错误
  */
 function isSystemError(errorCode) {
-  if (!errorCode) return false;
-  return errorCode.startsWith('SYS_');
+  if (!errorCode) return false
+  return errorCode.startsWith('SYS_')
 }
 
 /**
@@ -309,7 +308,7 @@ function isSystemError(errorCode) {
  * @returns {boolean} 是否为速率限制错误
  */
 function isRateLimitError(errorCode, status) {
-  return status === 429 || ['AUTH_020', 'AUTH_021', 'AUTH_022'].includes(errorCode);
+  return status === 429 || ['AUTH_020', 'AUTH_021', 'AUTH_022'].includes(errorCode)
 }
 
 /**
@@ -319,7 +318,7 @@ function isRateLimitError(errorCode, status) {
  * @returns {boolean} 是否为账户锁定错误
  */
 function isAccountLockedError(errorCode, status) {
-  return status === 423 || ['AUTH_014', 'AUTH_015'].includes(errorCode);
+  return status === 423 || ['AUTH_014', 'AUTH_015'].includes(errorCode)
 }
 
 /**
@@ -330,54 +329,54 @@ function isAccountLockedError(errorCode, status) {
  * @returns {boolean} 是否已处理（true表示已处理，false表示需要传递给业务层）
  */
 function handleCommonErrors(errorData, status, response) {
-  const errorCode = errorData?.code;
-  const errorMessage = errorData?.message || '未知错误'; // 👈 直接使用后端返回的message
+  const errorCode = errorData?.code
+  const errorMessage = errorData?.message || '未知错误' // 👈 直接使用后端返回的message
 
   // 1. 验证错误 - 统一显示验证失败消息
   if (isValidationError(errorCode)) {
-    showErrorMessage(errorMessage, 'warning', 4000); // 👈 使用后端消息
-    return false; // 传递给业务层进行具体字段处理
+    showErrorMessage(errorMessage, 'warning', 4000) // 👈 使用后端消息
+    return false // 传递给业务层进行具体字段处理
   }
 
   // 2. 系统错误 - 统一显示系统错误消息
   if (isSystemError(errorCode)) {
     // 对于系统错误，可以选择显示更用户友好的通用消息，或直接使用后端消息
-    const userFriendlyMessage = getUserFriendlySystemMessage(errorCode, errorMessage);
-    showErrorMessage(userFriendlyMessage, 'error', 5000);
-    return true; // 已处理，不传递给业务层
+    const userFriendlyMessage = getUserFriendlySystemMessage(errorCode, errorMessage)
+    showErrorMessage(userFriendlyMessage, 'error', 5000)
+    return true // 已处理，不传递给业务层
   }
 
   // 3. 速率限制错误 - 统一处理
   if (isRateLimitError(errorCode, status)) {
-    const retryAfter = errorData?.details?.retryAfter;
+    const retryAfter = errorData?.details?.retryAfter
     const rateLimitMessage = retryAfter
       ? `${errorMessage}，请在 ${retryAfter} 秒后重试` // 👈 基于后端消息增强
-      : errorMessage; // 👈 直接使用后端消息
+      : errorMessage // 👈 直接使用后端消息
 
-    showErrorMessage(rateLimitMessage, 'warning', 6000);
-    return true; // 已处理
+    showErrorMessage(rateLimitMessage, 'warning', 6000)
+    return true // 已处理
   }
 
   // 4. 账户锁定错误 - 统一处理
   if (isAccountLockedError(errorCode, status)) {
-    showErrorMessage(errorMessage, 'error', 8000); // 👈 直接使用后端消息
-    return true; // 已处理
+    showErrorMessage(errorMessage, 'error', 8000) // 👈 直接使用后端消息
+    return true // 已处理
   }
 
   // 5. HTTP状态码错误 - 统一处理
   if (status >= 500) {
-    const serverErrorMessage = errorMessage || '服务器异常，请稍后重试';
-    showErrorMessage(serverErrorMessage, 'error', 5000);
-    return true; // 已处理
+    const serverErrorMessage = errorMessage || '服务器异常，请稍后重试'
+    showErrorMessage(serverErrorMessage, 'error', 5000)
+    return true // 已处理
   }
 
   if (status === 502 || status === 503) {
-    const serviceErrorMessage = errorMessage || '服务暂时不可用，请稍后重试';
-    showErrorMessage(serviceErrorMessage, 'error', 5000);
-    return true; // 已处理
+    const serviceErrorMessage = errorMessage || '服务暂时不可用，请稍后重试'
+    showErrorMessage(serviceErrorMessage, 'error', 5000)
+    return true // 已处理
   }
 
-  return false; // 未处理，传递给业务层
+  return false // 未处理，传递给业务层
 }
 
 /**
@@ -396,11 +395,11 @@ function getUserFriendlySystemMessage(errorCode, backendMessage) {
     SYS_004: '网络连接异常，请检查网络',
     SYS_005: '服务暂时不可用，请稍后重试',
     SYS_006: '请求处理超时，请稍后重试',
-    SYS_007: '系统配置异常，请联系管理员',
-  };
+    SYS_007: '系统配置异常，请联系管理员'
+  }
 
   // 优先使用后端消息，如果需要更友好的消息可以使用映射
-  return backendMessage || friendlyMessages[errorCode] || '系统异常，请稍后重试';
+  return backendMessage || friendlyMessages[errorCode] || '系统异常，请稍后重试'
 }
 
 /**
@@ -409,10 +408,10 @@ function getUserFriendlySystemMessage(errorCode, backendMessage) {
  * @returns {string} 去重键
  */
 function generateRequestKey(config) {
-  const { method, url, params, data } = config;
-  const paramsStr = params ? JSON.stringify(params) : '';
-  const dataStr = data ? JSON.stringify(data) : '';
-  return `${REQUEST_DEDUP_KEY_PREFIX}${method}_${url}_${paramsStr}_${dataStr}`;
+  const { method, url, params, data } = config
+  const paramsStr = params ? JSON.stringify(params) : ''
+  const dataStr = data ? JSON.stringify(data) : ''
+  return `${REQUEST_DEDUP_KEY_PREFIX}${method}_${url}_${paramsStr}_${dataStr}`
 }
 
 /**
@@ -424,31 +423,31 @@ function generateRequestKey(config) {
  */
 async function retryWithBackoff(fn, config, retryCount = 0) {
   try {
-    return await fn(config);
+    return await fn(config)
   } catch (error) {
     // 检查是否为可重试错误
     const isRetryableError = RETRY_CONFIG.retryableErrors.some(
       (errType) => error.code?.includes(errType) || error.message?.includes(errType)
-    );
+    )
 
     if (!isRetryableError || retryCount >= RETRY_CONFIG.maxRetries) {
-      throw error;
+      throw error
     }
 
     // 计算重试延迟
     const delay = RETRY_CONFIG.exponentialBackoff
       ? RETRY_CONFIG.retryDelay * Math.pow(2, retryCount)
-      : RETRY_CONFIG.retryDelay;
+      : RETRY_CONFIG.retryDelay
 
     if (process.env.NODE_ENV === 'development') {
       console.log(`🔄 请求重试 (${retryCount + 1}/${RETRY_CONFIG.maxRetries}), ${delay}ms后重试:`, {
         url: config.url,
-        error: error.message,
-      });
+        error: error.message
+      })
     }
 
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    return retryWithBackoff(fn, config, retryCount + 1);
+    await new Promise((resolve) => setTimeout(resolve, delay))
+    return retryWithBackoff(fn, config, retryCount + 1)
   }
 }
 
@@ -459,7 +458,7 @@ async function retryWithBackoff(fn, config, retryCount = 0) {
  * @param {Object} config - axios配置
  */
 function addToAuthFailureQueue(resolve, reject, config) {
-  authFailureRequestQueue.push({ resolve, reject, config });
+  authFailureRequestQueue.push({ resolve, reject, config })
 }
 
 /**
@@ -467,20 +466,20 @@ function addToAuthFailureQueue(resolve, reject, config) {
  * @param {boolean} isAuthRecovered - 认证是否恢复
  */
 function processAuthFailureQueue(isAuthRecovered) {
-  const queue = [...authFailureRequestQueue];
-  authFailureRequestQueue.length = 0; // 清空队列
+  const queue = [...authFailureRequestQueue]
+  authFailureRequestQueue.length = 0 // 清空队列
 
   queue.forEach(({ resolve, reject, config }) => {
     if (isAuthRecovered) {
       // 重新发起请求
-      resolve(service(config));
+      resolve(service(config))
     } else {
       // 拒绝所有排队的请求
-      reject(new ApiError('AUTH_001', '认证失效，请重新登录', 401));
+      reject(new ApiError('AUTH_001', '认证失效，请重新登录', 401))
     }
-  });
+  })
 
-  isHandlingAuthFailure = false;
+  isHandlingAuthFailure = false
 }
 
 /**
@@ -490,8 +489,8 @@ function processAuthFailureQueue(isAuthRecovered) {
  * @param {Object} response - 响应对象
  */
 function trackPerformance(config, startTime, response) {
-  const duration = Date.now() - startTime;
-  const requestId = response?.data?.meta?.requestId;
+  const duration = Date.now() - startTime
+  const requestId = response?.data?.meta?.requestId
 
   if (process.env.NODE_ENV === 'development') {
     console.log('📈 性能监控:', {
@@ -499,8 +498,8 @@ function trackPerformance(config, startTime, response) {
       method: config.method,
       duration: `${duration}ms`,
       requestId,
-      status: response.status,
-    });
+      status: response.status
+    })
   }
 
   // 可以在这里添加向监控系统发送数据的逻辑
@@ -508,8 +507,8 @@ function trackPerformance(config, startTime, response) {
     console.warn('⚠️ 慢请求警告:', {
       url: config.url,
       duration: `${duration}ms`,
-      requestId,
-    });
+      requestId
+    })
   }
 }
 /**
@@ -523,41 +522,41 @@ function handleAuthError(message) {
   Message({
     message,
     type: 'error',
-    duration: 5 * 1000,
-  });
+    duration: 5 * 1000
+  })
 
   // 如果正在处理认证失效，直接返回
   if (isHandlingAuthFailure) {
-    return;
+    return
   }
 
-  isHandlingAuthFailure = true;
+  isHandlingAuthFailure = true
 
   // 弹出确认对话框，询问是否重新登录
   MessageBox.confirm('您的登录已过期，请重新登录以继续使用', '登录过期提示', {
     confirmButtonText: '立即登录',
     cancelButtonText: '稍后再说',
-    type: 'warning',
+    type: 'warning'
   })
     .then(() => {
       // 用户确认重新登录 - 使用路由跳转而非页面刷新
       store.dispatch('user/resetToken').then(() => {
         // 记住当前页面，登录成功后可以跳转回来
-        const currentPath = router.currentRoute.fullPath;
+        const currentPath = router.currentRoute.fullPath
         router.push({
           path: '/login',
-          query: currentPath !== '/login' ? { redirect: currentPath } : {},
-        });
+          query: currentPath !== '/login' ? { redirect: currentPath } : {}
+        })
 
         // 认证恢复失败，处理队列
-        processAuthFailureQueue(false);
-      });
+        processAuthFailureQueue(false)
+      })
     })
     .catch(() => {
       // 用户取消，继续停留在当前页面
-      console.log('用户取消重新登录');
-      processAuthFailureQueue(false);
-    });
+      console.log('用户取消重新登录')
+      processAuthFailureQueue(false)
+    })
 }
 
 /**
@@ -567,7 +566,7 @@ function handleAuthError(message) {
  * 📋 导出axios实例和工具类
  * 支持重试、去重、认证队列等现代化特性
  */
-export default service;
+export default service
 
 /**
  * 🔄 带重试功能的axios实例
@@ -576,27 +575,27 @@ export default service;
  * @returns {Promise} 请求结果
  */
 export const serviceWithRetry = (config, retryOptions = {}) => {
-  const mergedRetryConfig = { ...RETRY_CONFIG, ...retryOptions };
-  const originalRetryConfig = { ...RETRY_CONFIG };
+  const mergedRetryConfig = { ...RETRY_CONFIG, ...retryOptions }
+  const originalRetryConfig = { ...RETRY_CONFIG }
 
   // 临时更新重试配置
-  Object.assign(RETRY_CONFIG, mergedRetryConfig);
+  Object.assign(RETRY_CONFIG, mergedRetryConfig)
 
   return service(config).finally(() => {
     // 还原原有配置
-    Object.assign(RETRY_CONFIG, originalRetryConfig);
-  });
-};
+    Object.assign(RETRY_CONFIG, originalRetryConfig)
+  })
+}
 
 /**
  * 🗼️ 清理工具函数
  */
 export const clearRequestCache = () => {
-  pendingRequests.clear();
-  errorMessageCache.clear();
-  authFailureRequestQueue.length = 0;
-  isHandlingAuthFailure = false;
-};
+  pendingRequests.clear()
+  errorMessageCache.clear()
+  authFailureRequestQueue.length = 0
+  isHandlingAuthFailure = false
+}
 
 /**
  * 📈 获取请求统计信息
@@ -606,18 +605,18 @@ export const getRequestStats = () => {
     pendingRequestsCount: pendingRequests.size,
     queuedAuthRequestsCount: authFailureRequestQueue.length,
     isHandlingAuthFailure,
-    cachedErrorMessages: errorMessageCache.size,
-  };
-};
+    cachedErrorMessages: errorMessageCache.size
+  }
+}
 
 /**
  * 🔧 配置更新工具
  */
 export const updateRetryConfig = (newConfig) => {
-  Object.assign(RETRY_CONFIG, newConfig);
-};
+  Object.assign(RETRY_CONFIG, newConfig)
+}
 
-export const getRetryConfig = () => ({ ...RETRY_CONFIG });
+export const getRetryConfig = () => ({ ...RETRY_CONFIG })
 
 /**
  * 🔧 错误检测辅助方法 - 导出给业务层使用
@@ -637,8 +636,8 @@ export const errorUtils = {
   isAuth: (error) => isAuthError(error.code),
 
   // 检查错误是否已被request层处理
-  isHandledByRequestLayer: (error) => error.details?.handledByRequestLayer === true,
-};
+  isHandledByRequestLayer: (error) => error.details?.handledByRequestLayer === true
+}
 
 /**
  * 📖 使用说明和最佳实践

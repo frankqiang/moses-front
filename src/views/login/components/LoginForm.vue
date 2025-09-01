@@ -104,7 +104,21 @@
       <a href="javascript:;" class="forgot-password" @click="handleForgotPassword">忘记密码?</a>
     </div>
 
-    <el-button type="primary" class="login-button" :loading="loading" @click.native.prevent="handleLogin">登录</el-button>
+    <!-- 账户锁定提示 -->
+    <div v-if="isLocked" class="lockout-notice">
+      <i class="el-icon-lock" />
+      <span>账户已被锁定，请在 {{ formatCountdown(lockoutCountdown) }} 后重试</span>
+    </div>
+
+    <el-button 
+      type="primary" 
+      class="login-button" 
+      :loading="loading" 
+      :disabled="isLocked"
+      @click.native.prevent="handleLogin"
+    >
+      {{ isLocked ? `锁定中 (${formatCountdown(lockoutCountdown)})` : '登录' }}
+    </el-button>
 
     <div v-if="isDev" class="tips">
       <span>测试账号: admin</span>
@@ -116,6 +130,7 @@
 <script>
 import { DEFAULT_LOGIN_FORM, LOGIN_RULES, ENV_CONFIG } from '../constants'
 import { getRememberedUser, saveRememberedUser, removeRememberedUser, isRememberMe, clearRememberedState } from '@/utils/auth'
+import authStorageManager from '@/utils/auth-storage'
 
 export default {
   name: 'LoginForm',
@@ -138,12 +153,26 @@ export default {
       maxLoginAttempts: 5,
       lockoutTime: 15 * 60 * 1000, // 15分钟
       isLocked: false,
-      lockoutEndTime: null
+      lockoutEndTime: null,
+      lockoutCountdown: 0,
+      countdownTimer: null
     }
   },
   created() {
     this.redirect = this.$route.query && this.$route.query.redirect
     this.loadRememberedUser()
+    
+    // 检查是否已被锁定
+    if (authStorageManager.isAccountLocked()) {
+      this.startLockoutCountdown()
+    }
+  },
+
+  beforeDestroy() {
+    // 清除定时器
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer)
+    }
   },
   methods: {
     /**
@@ -278,9 +307,39 @@ export default {
 
     /**
      * 处理登录失败
+     * @param {Object} error - 错误对象
+     * @returns {boolean} 是否已处理该错误
      */
-    handleLoginFailure() {
-
+    handleLoginFailure(error) {
+      const errorCode = error?.code
+      const maxAttempts = 5
+      
+      // 如果是密码错误，增加失败次数
+      if (errorCode === 'AUTH_011') {
+        const failedCount = authStorageManager.incrementLoginFailedCount()
+        const remainingAttempts = maxAttempts - failedCount
+        
+        if (remainingAttempts > 0) {
+          this.$message.error(`密码错误，还可尝试 ${remainingAttempts} 次`)
+        }
+        
+        // 如果达到最大尝试次数，锁定账户
+        if (failedCount >= maxAttempts) {
+          authStorageManager.setAccountLocked(15 * 60 * 1000) // 15分钟
+          this.startLockoutCountdown()
+        }
+        return true // 表示已处理该错误
+      }
+      
+      // 如果是账户锁定错误，启动倒计时
+      if (errorCode === 'AUTH_014') {
+        this.startLockoutCountdown()
+        this.$message.error('账户已被锁定，请稍后再试')
+        return true // 表示已处理该错误
+      }
+      
+      // 返回false表示未处理该错误，由父组件显示通用错误信息
+      return false
     },
 
     /**
@@ -291,9 +350,69 @@ export default {
       this.loginAttempts = 0
       this.isLocked = false
       this.lockoutEndTime = null
+      this.lockoutCountdown = 0
+      
+      // 清除倒计时定时器
+      if (this.countdownTimer) {
+        clearInterval(this.countdownTimer)
+        this.countdownTimer = null
+      }
+      
+      // 清除存储的失败次数和锁定状态
+      authStorageManager.clearLoginFailedCount()
 
       // 处理记住用户信息
       this.handleRememberUser()
+    },
+
+    /**
+     * 启动账户锁定倒计时
+     */
+    startLockoutCountdown() {
+      this.isLocked = true
+      const remainingTime = authStorageManager.getAccountLockRemainingTime()
+      
+      if (remainingTime > 0) {
+        this.lockoutCountdown = Math.ceil(remainingTime / 1000)
+        
+        // 清除之前的定时器
+        if (this.countdownTimer) {
+          clearInterval(this.countdownTimer)
+        }
+        
+        // 启动倒计时
+        this.countdownTimer = setInterval(() => {
+          this.lockoutCountdown--
+          
+          if (this.lockoutCountdown <= 0) {
+            this.clearLockout()
+          }
+        }, 1000)
+      }
+    },
+
+    /**
+     * 清除锁定状态
+     */
+    clearLockout() {
+      this.isLocked = false
+      this.lockoutCountdown = 0
+      
+      if (this.countdownTimer) {
+        clearInterval(this.countdownTimer)
+        this.countdownTimer = null
+      }
+      
+      authStorageManager.clearLoginFailedCount()
+    },
+
+    /**
+     * 格式化倒计时显示
+     */
+    formatCountdown(seconds) {
+      const minutes = Math.floor(seconds / 60)
+      const remainingSeconds = seconds % 60
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
     }
   }
 }
@@ -517,6 +636,30 @@ export default {
       margin-bottom: 4px;
     }
   }
+}
+
+.lockout-notice {
+  background-color: #fef0f0;
+  border: 1px solid #fbc4c4;
+  color: #f56c6c;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+
+  i {
+    margin-right: 8px;
+    font-size: 16px;
+  }
+}
+
+.login-button:disabled {
+  background-color: #c0c4cc !important;
+  border-color: #c0c4cc !important;
+  color: #ffffff !important;
+  cursor: not-allowed !important;
 }
 
 // 修复输入框图标和密码显示按钮的定位
