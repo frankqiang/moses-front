@@ -1,5 +1,5 @@
 import { login, logout, getInfo } from '@/views/login/api'
-import { getToken, setToken, removeToken } from '@/utils/auth'
+import { getToken, setToken, removeToken, setTokens } from '@/utils/auth'
 import { resetRouter } from '@/router'
 import authStorageManager from '@/utils/auth-storage'
 
@@ -9,7 +9,8 @@ const getDefaultState = () => {
     name: '',
     avatar: '',
     roles: [],
-    permissions: []
+    permissions: [],
+    rememberMe: false
   }
 }
 
@@ -33,6 +34,9 @@ const mutations = {
   },
   SET_PERMISSIONS: (state, permissions) => {
     state.permissions = permissions
+  },
+  SET_REMEMBER_ME: (state, rememberMe) => {
+    state.rememberMe = rememberMe
   }
 }
 
@@ -49,14 +53,12 @@ const actions = {
           // 设置token到store
           commit('SET_TOKEN', token)
 
-          // 根据rememberMe设置token存储方式
-          setToken(token, rememberMe)
-
-          // 如果有refreshToken，也保存起来
-          if (refreshToken) {
-            // 可以在这里保存refreshToken用于后续刷新
-            authStorageManager.setRefreshToken(refreshToken)
+          // 使用setTokens统一设置access token和refresh token
+          const tokenData = {
+            accessToken: token,
+            refreshToken: refreshToken
           }
+          setTokens(tokenData, rememberMe)
 
           // 登录成功，清除失败次数
           authStorageManager.clearLoginFailedCount()
@@ -108,10 +110,11 @@ const actions = {
   // user logout
   logout({ commit, state, dispatch }) {
     return new Promise((resolve, reject) => {
-      // 获取refreshToken用于登出请求
+      // 获取refreshToken和accessToken用于登出请求
       const refreshToken = authStorageManager.getRefreshToken()
-      
-      logout({ refreshToken }).then(response => {
+      const accessToken = getToken()
+
+      logout(refreshToken, accessToken).then(response => {
         // 处理Moses API响应格式
         if (response.success) {
           // 登出成功，清除本地存储
@@ -147,7 +150,9 @@ const actions = {
         authStorageManager.clearAllAuthState()
         resetRouter()
 
-        reject(error)
+        // 即使网络错误也要resolve，确保前端能正常跳转
+        console.warn('登出接口调用失败，但本地状态已清除:', error)
+        resolve()
       })
     })
   },

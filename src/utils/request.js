@@ -2,7 +2,8 @@ import axios from 'axios'
 import { MessageBox, Message } from 'element-ui'
 import store from '@/store'
 import router from '@/router'
-import { getToken } from '@/utils/auth'
+import { getToken, getRefreshToken, setTokens, removeToken } from '@/utils/auth'
+import { refreshTokens } from '@/views/login/api/index'
 
 // 防重复错误消息机制
 const errorMessageCache = new Set()
@@ -20,9 +21,45 @@ const RETRY_CONFIG = {
   exponentialBackoff: true
 }
 
-// 认证失效时的请求队列
+// 认证失效请求队列
 const authFailureRequestQueue = []
 let isHandlingAuthFailure = false
+
+// Token刷新相关变量
+let isRefreshingToken = false
+const refreshTokenQueue = []
+
+/**
+ * 添加请求到token刷新队列
+ * @param {Function} resolve - Promise resolve函数
+ * @param {Function} reject - Promise reject函数
+ * @param {Object} config - 请求配置
+ */
+function addToRefreshQueue(resolve, reject, config) {
+  refreshTokenQueue.push({ resolve, reject, config })
+}
+
+/**
+ * 处理token刷新队列
+ * @param {boolean} isRefreshSuccess - 刷新是否成功
+ * @param {string} newToken - 新的access token
+ */
+function processRefreshQueue(isRefreshSuccess, newToken = null) {
+  refreshTokenQueue.forEach(({ resolve, reject, config }) => {
+    if (isRefreshSuccess && newToken) {
+      // 更新请求配置中的token
+      config.headers.Authorization = `Bearer ${newToken}`
+      // 重新发送请求
+      resolve(service(config))
+    } else {
+      // 刷新失败，拒绝请求
+      reject(new Error('Token refresh failed'))
+    }
+  })
+
+  // 清空队列
+  refreshTokenQueue.length = 0
+}
 
 /**
  * 显示错误消息（防重复）
@@ -119,7 +156,7 @@ service.interceptors.request.use(
  * 📥 响应拦截器 - 现代化版本
  * 功能：统一错误处理，支持现代API响应格式、重试机制、认证队列等
  */
-const responseInterceptor = service.interceptors.response.use(
+service.interceptors.response.use(
   (response) => {
     // 📋 清理请求去重缓存
     const requestKey = generateRequestKey(response.config)
@@ -163,11 +200,21 @@ const responseInterceptor = service.interceptors.response.use(
 
     // 🔄 重试机制 - 对网络错误进行重试
     if (config && !config._isRetry) {
-      try {
-        return await retryWithBackoff(service, config)
-      } catch (retryError) {
-        // 重试失败，继续原有错误处理逻辑
-        error = retryError
+      // 检查是否为离线状态，如果离线则不进行重试
+      const isOffline = !navigator.onLine ||
+        error.message === 'Network Error' ||
+        error.code === 'ERR_NETWORK' ||
+        error.message.includes('ERR_INTERNET_DISCONNECTED')
+
+      if (!isOffline) {
+        try {
+          return await retryWithBackoff(service, config)
+        } catch (retryError) {
+          // 重试失败，继续原有错误处理逻辑
+          error = retryError
+        }
+      } else {
+        console.warn('🌐 检测到网络离线状态，跳过重试机制')
       }
     }
 
@@ -211,9 +258,14 @@ const responseInterceptor = service.interceptors.response.use(
  */
 function handleModernFormat(res, status, response = null) {
   if (!res.success) {
-    // 🔐 认证错误处理（支持请求队列）
+    // 🔐 认证错误处理（支持token自动刷新）
     if (isAuthError(res.error?.code)) {
-      // 如果已经在处理认证失效，将请求加入队列
+      // 检查是否为token过期错误，尝试自动刷新
+      if (res.error?.code === 'AUTH_002' || res.error?.code === 'TOKEN_EXPIRED') {
+        return handleTokenExpired(response)
+      }
+
+      // 其他认证错误，如果已经在处理认证失效，将请求加入队列
       if (isHandlingAuthFailure && response?.config) {
         return new Promise((resolve, reject) => {
           addToAuthFailureQueue(resolve, reject, response.config)
@@ -279,6 +331,80 @@ function isAuthError(errorCode) {
   const commonAuthFailureCodes = ['UNAUTHORIZED', 'TOKEN_EXPIRED', 'INVALID_TOKEN', 'FORBIDDEN']
 
   return authFailureCodes.includes(errorCode) || commonAuthFailureCodes.includes(errorCode)
+}
+
+/**
+ * 处理token过期，尝试自动刷新
+ * @param {Object} response - 响应对象
+ * @returns {Promise} 返回刷新后的请求或错误
+ */
+async function handleTokenExpired(response) {
+  const refreshToken = getRefreshToken()
+
+  // 如果没有refresh token，直接跳转登录
+  if (!refreshToken) {
+    handleAuthError('登录已过期，请重新登录')
+    return Promise.reject(new Error('No refresh token available'))
+  }
+
+  // 如果正在刷新token，将请求加入队列
+  if (isRefreshingToken) {
+    return new Promise((resolve, reject) => {
+      addToRefreshQueue(resolve, reject, response.config)
+    })
+  }
+
+  // 开始刷新token
+  isRefreshingToken = true
+
+  try {
+    console.log('🔄 Token过期，尝试自动刷新...')
+    const refreshResponse = await refreshTokens(refreshToken)
+
+    if (refreshResponse.data && refreshResponse.data.success) {
+      const { access, refresh } = refreshResponse.data.data
+
+      // 更新token存储
+      setTokens({
+        accessToken: access.token,
+        refreshToken: refresh.token,
+        expiresIn: access.expires
+      }, store.getters.rememberMe || false)
+
+      // 更新store中的token
+      await store.dispatch('user/setToken', access.token)
+
+      console.log('✅ Token刷新成功')
+
+      // 处理队列中的请求
+      processRefreshQueue(true, access.token)
+
+      // 重新发送原始请求
+      response.config.headers.Authorization = `Bearer ${access.token}`
+      return service(response.config)
+    } else {
+      throw new Error('Token refresh response invalid')
+    }
+  } catch (error) {
+    console.error('❌ Token刷新失败:', error)
+
+    // 处理队列中的请求（失败）
+    processRefreshQueue(false)
+
+    // 清除所有token
+    removeToken()
+    await store.dispatch('user/resetToken')
+
+    // 跳转到登录页
+    handleAuthError('登录已过期，请重新登录')
+
+    return Promise.reject(error)
+  } finally {
+    // 使用setTimeout避免竞态条件
+    setTimeout(() => {
+      isRefreshingToken = false
+    }, 0)
+  }
 }
 
 /**
