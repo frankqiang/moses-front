@@ -77,51 +77,39 @@ export default {
           // 跳转到目标页面
           this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
         } else {
-          // API返回失败状态
-          throw new Error(response?.message || '登录失败')
+          console.log(response)
         }
       } catch (error) {
-        // 登录失败处理
         console.error('登录失败:', error)
 
-        // 检查是否为账户锁定状态（423或429），如果是则不调用本地失败处理
-        const isAccountLocked = error.response && (error.response.status === 423 || error.response.status === 429)
-        
-        if (!isAccountLocked) {
-          // 只有非账户锁定的情况才通知登录表单组件处理失败（增加本地计数器）
-          this.$refs.loginForm.handleLoginFailure()
+        // 处理Moses API错误响应格式
+        let errorMessage = '登录失败，请重试'
+
+        if (error.response && error.response.data) {
+          // 处理HTTP响应错误（如400, 401等）
+          const errorData = error.response.data
+          if (errorData.error && errorData.error.message) {
+            errorMessage = errorData.error.message
+          } else if (errorData.message) {
+            errorMessage = errorData.message
+          }
+        } else if (error.message) {
+          // 处理其他类型的错误（如网络错误）
+          errorMessage = error.message
         }
 
-        // 只有在特定情况下才显示额外的错误消息，避免与 request.js 中的错误消息重复
-        if (error.response && error.response.status === 401) {
-          // 只对认证错误显示特定消息，网络错误已在 request.js 中处理
-          this.$message({
-            message: '用户名或密码错误',
-            type: 'error'
-          })
-        } else if (error.response && error.response.status === 403) {
-          this.$message({
-            message: '账户已被禁用，请联系管理员',
-            type: 'error'
-          })
-        } else if (error.response && error.response.status === 423) {
-          // 账户锁定错误处理 - 尝试从多个可能的位置提取错误信息
-          const errorMessage = error.response?.data?.message || 
-                              error.response?.data?.error?.message ||
-                              error.response?.data?.error || 
-                              '账户已被锁定，请稍后再试或联系管理员'
-          this.$message({
-            message: errorMessage,
-            type: 'error'
-          })
-        } else if (error.response && error.response.status === 429) {
-          this.$message({
-            message: '登录尝试次数过多，请稍后再试',
-            type: 'error'
-          })
+        // 显示用户友好的错误提示
+        this.$message({
+          message: errorMessage,
+          type: 'error'
+        })
+
+        // 通知登录表单组件处理失败
+        if (this.$refs.loginForm && this.$refs.loginForm.handleLoginFailure) {
+          this.$refs.loginForm.handleLoginFailure()
         }
-        // 网络错误和其他错误已在 request.js 的拦截器中处理，这里不再重复显示
       } finally {
+        // 确保loading状态被重置
         this.loading = false
       }
     },
