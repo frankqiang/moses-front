@@ -26,13 +26,13 @@ class AuthStorageManager {
   constructor(options = {}) {
     // 合并配置
     this.config = { ...DEFAULT_CONFIG, ...options }
-    
+
     // 存储所有认证数据的对象
     this.authData = null
-    
+
     // 初始化存储
     this.initStorage()
-    
+
     // 设置定期清理
     this.setupCleanup()
   }
@@ -44,11 +44,11 @@ class AuthStorageManager {
     try {
       // 尝试从localStorage读取配置
       const storedData = localStorage.getItem(this.config.STORAGE_KEY)
-      
+
       if (storedData) {
         // 解析存储的配置
         this.authData = JSON.parse(storedData)
-        
+
         // 检查版本并进行迁移
         if (this.authData.version !== this.config.CURRENT_VERSION) {
           this.migrateData()
@@ -104,7 +104,7 @@ class AuthStorageManager {
    */
   migrateFromLegacyStorage() {
     console.log('开始从旧存储键迁移认证数据...')
-    
+
     // 迁移token相关数据
     const oldTokenKey = 'vue_admin_template_token'
     const oldRememberMeKey = 'vue_admin_template_remember_me'
@@ -112,26 +112,26 @@ class AuthStorageManager {
     const oldRefreshTokenKey = 'refresh_token'
     const oldLoginFailedCountKey = 'login_failed_count'
     const oldAccountLockedUntilKey = 'account_locked_until'
-    
+
     // 迁移token
     const token = localStorage.getItem(oldTokenKey) || sessionStorage.getItem(oldTokenKey)
     if (token) {
       this.authData.token.access = token
       this.authData.token.storage = localStorage.getItem(oldTokenKey) ? 'localStorage' : 'sessionStorage'
     }
-    
+
     // 迁移refreshToken
     const refreshToken = localStorage.getItem(oldRefreshTokenKey)
     if (refreshToken) {
       this.authData.token.refresh = refreshToken
     }
-    
+
     // 迁移rememberMe状态
     const rememberMe = localStorage.getItem(oldRememberMeKey)
     if (rememberMe === 'true') {
       this.authData.user.rememberMe = true
     }
-    
+
     // 迁移记住的用户信息
     const rememberedUser = localStorage.getItem(oldRememberedUserKey)
     if (rememberedUser) {
@@ -145,21 +145,21 @@ class AuthStorageManager {
         console.warn('迁移记住用户信息失败:', error)
       }
     }
-    
+
     // 迁移安全相关数据
     const loginFailedCount = localStorage.getItem(oldLoginFailedCountKey)
     if (loginFailedCount) {
       this.authData.security.loginFailedCount = parseInt(loginFailedCount, 10) || 0
     }
-    
+
     const accountLockedUntil = localStorage.getItem(oldAccountLockedUntilKey)
     if (accountLockedUntil) {
       this.authData.security.accountLockedUntil = parseInt(accountLockedUntil, 10)
     }
-    
+
     // 清理旧的存储键
     this.cleanupLegacyStorage()
-    
+
     console.log('认证数据迁移完成')
   }
 
@@ -169,17 +169,20 @@ class AuthStorageManager {
   cleanupLegacyStorage() {
     const legacyKeys = [
       'vue_admin_template_token',
-      'vue_admin_template_remember_me', 
+      'vue_admin_template_remember_me',
       'vue_admin_template_remembered_user',
       'refresh_token',
       'login_failed_count',
-      'account_locked_until'
+      'account_locked_until',
+      'moses_token' // 清理重复的token存储
     ]
-    
+
     legacyKeys.forEach(key => {
       localStorage.removeItem(key)
       sessionStorage.removeItem(key)
     })
+
+    console.log('已清理旧的认证存储键:', legacyKeys)
   }
 
   /**
@@ -188,19 +191,19 @@ class AuthStorageManager {
   migrateData() {
     const oldVersion = this.authData.version || 0
     const newVersion = this.config.CURRENT_VERSION
-    
+
     console.log(`迁移认证数据：从版本 ${oldVersion} 到 ${newVersion}`)
-    
+
     // 根据版本差异执行不同的迁移策略
     if (oldVersion < 1) {
       // 从旧版本迁移到版本1的逻辑
       this.migrateToV1()
     }
-    
+
     // 更新版本号和时间戳
     this.authData.version = newVersion
     this.authData.updatedAt = Date.now()
-    
+
     // 保存更新后的存储
     this.saveAuthData()
   }
@@ -233,7 +236,7 @@ class AuthStorageManager {
     // 检查是否需要清理
     const now = Date.now()
     const lastCleanup = this.authData.lastCleanup || 0
-    
+
     if (now - lastCleanup > this.config.CLEANUP_INTERVAL) {
       this.cleanup()
     }
@@ -245,13 +248,13 @@ class AuthStorageManager {
    */
   cleanup(force = false) {
     const now = Date.now()
-    
+
     if (!force && now - this.authData.lastCleanup < this.config.CLEANUP_INTERVAL) {
       return
     }
-    
+
     console.log('开始清理过期认证数据...')
-    
+
     // 清理过期的记住用户信息
     if (this.authData.user.remembered.savedAt) {
       const savedAt = this.authData.user.remembered.savedAt
@@ -263,18 +266,18 @@ class AuthStorageManager {
         console.log('清理过期的记住用户信息')
       }
     }
-    
+
     // 清理过期的账户锁定状态
     if (this.authData.security.accountLockedUntil && now > this.authData.security.accountLockedUntil) {
       this.authData.security.accountLockedUntil = null
       this.authData.security.loginFailedCount = 0
       console.log('清理过期的账户锁定状态')
     }
-    
+
     // 更新清理时间
     this.authData.lastCleanup = now
     this.saveAuthData()
-    
+
     console.log('认证数据清理完成')
   }
 
@@ -297,16 +300,11 @@ class AuthStorageManager {
     this.authData.token.access = token
     this.authData.token.storage = rememberMe ? 'localStorage' : 'sessionStorage'
     this.authData.user.rememberMe = rememberMe
-    
-    // 根据rememberMe设置实际存储位置
-    if (rememberMe) {
-      localStorage.setItem('moses_token', token)
-      sessionStorage.removeItem('moses_token')
-    } else {
-      sessionStorage.setItem('moses_token', token)
-      localStorage.removeItem('moses_token')
-    }
-    
+
+    // 清理可能存在的重复存储
+    localStorage.removeItem('moses_token')
+    sessionStorage.removeItem('moses_token')
+
     this.saveAuthData()
   }
 
@@ -334,11 +332,11 @@ class AuthStorageManager {
     this.authData.token.access = null
     this.authData.token.refresh = null
     this.authData.token.expiresAt = null
-    
-    // 清理实际存储
+
+    // 清理可能存在的重复存储
     localStorage.removeItem('moses_token')
     sessionStorage.removeItem('moses_token')
-    
+
     this.saveAuthData()
   }
 
@@ -483,6 +481,24 @@ class AuthStorageManager {
   }
 
   /**
+   * 手动清理重复的token存储
+   * 用于解决历史遗留的重复存储问题
+   */
+  cleanupDuplicateTokenStorage() {
+    // 清理重复的token存储
+    localStorage.removeItem('moses_token')
+    sessionStorage.removeItem('moses_token')
+
+    // 清理旧的Cookie
+    if (typeof document !== 'undefined') {
+      document.cookie = 'moses_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+      document.cookie = 'vue_admin_template_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+    }
+
+    console.log('已清理重复的token存储')
+  }
+
+  /**
    * 获取存储统计信息
    * @returns {Object} 统计信息
    */
@@ -512,6 +528,7 @@ if (process.env.NODE_ENV === 'development') {
   console.log('使用方法:')
   console.log('- window.authStorageManager.getStats() // 查看存储统计')
   console.log('- window.authStorageManager.cleanup(true) // 强制清理')
+  console.log('- window.authStorageManager.cleanupDuplicateTokenStorage() // 清理重复token存储')
 }
 
 export default authStorageManager

@@ -1,31 +1,25 @@
 /**
  * 登录模块API
- * 功能描述：提供用户认证相关的API调用，包括登录、获取用户信息和登出功能
- * 创建日期：2024-01-XX
- * 修改记录：
- *   - 2024-01-XX: 将用户认证API模块化到登录模块中
+ * 提供用户登录、获取用户信息、用户登出等功能
+ * 基于Moses API v1接口文档
  */
+
 import request from '@/utils/request'
 
 /**
  * 用户登录
- * 功能描述：用户身份认证，验证用户名和密码，返回访问令牌
- * 入参说明：
- *   @param {Object} data - 登录信息对象
- *   @param {string} data.username - 用户名，必填，长度3-50字符
- *   @param {string} data.password - 密码，必填，长度6-20字符
- *   @param {boolean} [data.rememberMe] - 是否记住登录状态，可选，默认false
- * 返回参数说明：
- *   @returns {Promise<ApiResponse>} 登录响应结果
- *   @returns {boolean} success - 请求是否成功
- *   @returns {Object} data - 登录成功返回的数据
- *     @returns {string} data.token - 访问令牌，用于后续API调用认证
- *     @returns {string} data.refreshToken - 刷新令牌，用于令牌续期
- *     @returns {number} data.expiresIn - 令牌过期时间（秒）
- *   @returns {string} message - 响应消息
- *   @returns {string} timestamp - 响应时间戳
- * url地址：/api/v1/auth/login
- * 请求方式：POST
+ * @param {Object} data - 登录数据
+ * @param {string} [data.username] - 用户名（与email二选一）
+ * @param {string} [data.email] - 邮箱（与username二选一）
+ * @param {string} data.password - 密码
+ * @param {boolean} [data.rememberMe] - 是否记住登录状态，默认false
+ * @returns {Promise} 返回包含token的响应
+ *
+ * 接口信息：
+ * - URL: /auth/login
+ * - 方法: POST
+ * - 入参: { username?: string, email?: string, password: string, rememberMe?: boolean }
+ * - 返回: { success: boolean, data: { token: string, refreshToken: string, expiresIn: number }, message: string, meta: object }
  */
 export function login(data) {
   return request({
@@ -37,47 +31,37 @@ export function login(data) {
 
 /**
  * 获取用户信息
- * 功能描述：根据访问令牌获取当前登录用户的详细信息
- * 入参说明：
- *   @param {string} token - 访问令牌，必填，从登录接口获取
- * 返回参数说明：
- *   @returns {Promise<ApiResponse>} 用户信息响应结果
- *   @returns {boolean} success - 请求是否成功
- *   @returns {Object} data - 用户信息数据
- *     @returns {string} data.id - 用户ID
- *     @returns {string} data.username - 用户名
- *     @returns {string} data.name - 用户真实姓名
- *     @returns {string} data.email - 用户邮箱
- *     @returns {string} data.avatar - 用户头像URL
- *     @returns {Array<string>} data.roles - 用户角色列表
- *     @returns {Array<string>} data.permissions - 用户权限列表
- *   @returns {string} message - 响应消息
- *   @returns {string} timestamp - 响应时间戳
- * url地址：/api/v1/auth/user
- * 请求方式：GET
+ * @returns {Promise} 返回用户信息
+ *
+ * 接口信息：
+ * - URL: /auth/user
+ * - 方法: GET
+ * - 入参: 无（需要Authorization header）
+ * - 返回: { success: boolean, data: { id: string, username: string, name: string, email: string, avatar: string, roles: array, permissions: array }, message: string, meta: object }
  */
-export function getInfo(token) {
+export function getInfo() {
   return request({
     url: '/auth/user',
-    method: 'get',
-    params: { token }
+    method: 'get'
   })
 }
 
 /**
  * 用户登出
- * 功能描述：用户登出，清除服务端会话信息
- * 返回参数说明：
- *   @returns {Promise<ApiResponse>} 登出响应结果
- *   @returns {boolean} success - 请求是否成功
- *   @returns {string} message - 响应消息
- *   @returns {string} timestamp - 响应时间戳
- * url地址：/api/v1/auth/logout
- * 请求方式：POST
+ * @param {Object} data - 登出数据
+ * @param {string} data.refreshToken - 刷新令牌
+ * @returns {Promise} 返回登出结果
+ *
+ * 接口信息：
+ * - URL: /auth/logout
+ * - 方法: POST
+ * - 入参: { refreshToken: string }（需要Authorization header）
+ * - 返回: { success: boolean, data: {}, message: string, meta: object }
  */
-export function logout() {
+export function logout(data) {
   return request({
     url: '/auth/logout',
-    method: 'post'
+    method: 'post',
+    data
   })
 }

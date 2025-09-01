@@ -10,23 +10,23 @@ const TokenKey = 'moses_token'
  * @returns {string|null} token值
  */
 export function getToken() {
-  // 优先从认证存储管理器获取
+  // 从认证存储管理器获取
   let token = authStorageManager.getToken()
   if (token) {
     return token
   }
-  // 从实际存储位置获取（根据rememberMe状态）
-  if (authStorageManager.isRememberMe()) {
-    token = localStorage.getItem(TokenKey)
-  } else {
-    token = sessionStorage.getItem(TokenKey)
-  }
+
+  // 兼容旧版本：从Cookie获取
+  token = Cookies.get('vue_admin_template_token') || Cookies.get(TokenKey)
   if (token) {
-    return token
+    // 如果从Cookie获取到token，迁移到新的存储系统
+    authStorageManager.setToken(token, false)
+    // 清理旧的Cookie
+    Cookies.remove('vue_admin_template_token')
+    Cookies.remove(TokenKey)
   }
 
-  // 最后从Cookie获取（兼容旧版本）
-  return Cookies.get('vue_admin_template_token') || Cookies.get(TokenKey)
+  return token
 }
 
 /**
@@ -37,8 +37,6 @@ export function getToken() {
 export function setToken(token, rememberMe = false) {
   // 使用统一的认证存储管理器设置token
   authStorageManager.setToken(token, rememberMe)
-  // 同时设置Cookie（兼容旧版本）
-  Cookies.set(TokenKey, token)
 }
 
 /**
@@ -47,9 +45,9 @@ export function setToken(token, rememberMe = false) {
 export function removeToken() {
   // 使用统一的认证存储管理器移除token
   authStorageManager.removeTokens()
-  // 清理Cookie
+  // 清理可能存在的旧Cookie
   Cookies.remove(TokenKey)
-  Cookies.remove('vue_admin_template_token') // 清理旧的cookie
+  Cookies.remove('vue_admin_template_token')
 }
 
 /**
