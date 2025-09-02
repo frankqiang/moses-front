@@ -42,12 +42,26 @@ class AuthStorageManager {
    */
   initStorage() {
     try {
-      // 尝试从localStorage读取配置
-      const storedData = localStorage.getItem(this.config.STORAGE_KEY)
+      // 优先从sessionStorage读取（用于非记住我的情况）
+      let storedData = sessionStorage.getItem(this.config.STORAGE_KEY)
+      let fromSessionStorage = true
+      
+      if (!storedData) {
+        // 如果sessionStorage中没有，再从localStorage读取
+        storedData = localStorage.getItem(this.config.STORAGE_KEY)
+        fromSessionStorage = false
+      }
 
       if (storedData) {
         // 解析存储的配置
         this.authData = JSON.parse(storedData)
+        
+        // 如果从localStorage读取但没有token，说明是非记住我模式，需要重新初始化
+        if (!fromSessionStorage && !this.authData.token.access) {
+          this.authData = this.getDefaultAuthData()
+          this.saveAuthData()
+          return
+        }
 
         // 检查版本并进行迁移
         if (this.authData.version !== this.config.CURRENT_VERSION) {
@@ -218,12 +232,33 @@ class AuthStorageManager {
   }
 
   /**
-   * 保存认证数据到localStorage
+   * 保存认证数据到相应的存储位置
    */
   saveAuthData() {
     try {
       this.authData.updatedAt = Date.now()
-      localStorage.setItem(this.config.STORAGE_KEY, JSON.stringify(this.authData))
+      const dataToSave = JSON.stringify(this.authData)
+      
+      // 根据token.storage决定存储位置
+      if (this.authData.token.storage === 'sessionStorage') {
+        // 如果是sessionStorage，将完整数据保存到sessionStorage
+        sessionStorage.setItem(this.config.STORAGE_KEY, dataToSave)
+        // 同时在localStorage中保存一个不包含token的版本（用于记住用户名等非敏感信息）
+        const dataWithoutToken = {
+          ...this.authData,
+          token: {
+            access: null,
+            refresh: null,
+            expiresAt: null,
+            storage: 'sessionStorage'
+          }
+        }
+        localStorage.setItem(this.config.STORAGE_KEY, JSON.stringify(dataWithoutToken))
+      } else {
+        // 如果是localStorage，保存到localStorage并清理sessionStorage
+        localStorage.setItem(this.config.STORAGE_KEY, dataToSave)
+        sessionStorage.removeItem(this.config.STORAGE_KEY)
+      }
     } catch (error) {
       console.error('保存认证数据失败:', error)
     }
@@ -319,10 +354,13 @@ class AuthStorageManager {
   /**
    * 设置刷新token
    * @param {string} refreshToken - refreshToken值
+   * @param {boolean} autoSave - 是否自动保存，默认为true
    */
-  setRefreshToken(refreshToken) {
+  setRefreshToken(refreshToken, autoSave = true) {
     this.authData.token.refresh = refreshToken
-    this.saveAuthData()
+    if (autoSave) {
+      this.saveAuthData()
+    }
   }
 
   /**
@@ -332,10 +370,13 @@ class AuthStorageManager {
     this.authData.token.access = null
     this.authData.token.refresh = null
     this.authData.token.expiresAt = null
+    this.authData.token.storage = 'sessionStorage' // 重置为默认值
 
     // 清理可能存在的重复存储
     localStorage.removeItem('moses_token')
     sessionStorage.removeItem('moses_token')
+    // 清理两个存储位置的认证数据
+    sessionStorage.removeItem(this.config.STORAGE_KEY)
 
     this.saveAuthData()
   }
