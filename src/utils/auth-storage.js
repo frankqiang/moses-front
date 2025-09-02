@@ -45,7 +45,7 @@ class AuthStorageManager {
       // 优先从sessionStorage读取（用于非记住我的情况）
       let storedData = sessionStorage.getItem(this.config.STORAGE_KEY)
       let fromSessionStorage = true
-      
+
       if (!storedData) {
         // 如果sessionStorage中没有，再从localStorage读取
         storedData = localStorage.getItem(this.config.STORAGE_KEY)
@@ -55,7 +55,7 @@ class AuthStorageManager {
       if (storedData) {
         // 解析存储的配置
         this.authData = JSON.parse(storedData)
-        
+
         // 如果从localStorage读取但没有token，说明是非记住我模式，需要重新初始化
         if (!fromSessionStorage && !this.authData.token.access) {
           this.authData = this.getDefaultAuthData()
@@ -238,7 +238,7 @@ class AuthStorageManager {
     try {
       this.authData.updatedAt = Date.now()
       const dataToSave = JSON.stringify(this.authData)
-      
+
       // 根据token.storage决定存储位置
       if (this.authData.token.storage === 'sessionStorage') {
         // 如果是sessionStorage，将完整数据保存到sessionStorage
