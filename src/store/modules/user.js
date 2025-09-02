@@ -143,23 +143,8 @@ const actions = {
           resolve({ success: true, message: response.message || '登出成功' })
         } else {
           // 处理服务端登出失败的详细错误
-          const errorCode = response.error?.code
-          let errorMessage = response.error?.message || response.message || '登出失败'
-          // 根据错误码提供详细的错误处理
-          switch (errorCode) {
-            case 'VAL_002':
-              errorMessage = '请求参数缺失，但本地状态已清除'
-              break
-            case 'AUTH_001':
-              errorMessage = '登录状态已失效，本地状态已清除'
-              break
-            case 'AUTH_033':
-              errorMessage = '刷新令牌无效，本地状态已清除'
-              break
-            default:
-              // 使用后端返回的message，避免硬编码
-              errorMessage = errorMessage.includes('登出失败') ? errorMessage : `${errorMessage}，但本地状态已清除`
-          }
+          // 直接使用后端返回的错误信息，不再硬编码
+          const errorMessage = response.error?.message || response.message || '登出失败，但本地状态已清除'
 
           // 即使服务端登出失败，也清除本地状态
           commit('RESET_STATE')
@@ -184,15 +169,8 @@ const actions = {
         // 网络错误时reject，但提供友好的错误信息
         console.warn('登出接口调用失败，但本地状态已清除:', error)
 
-        // 检查是否是网络错误
-        let errorMessage = '网络连接失败，但本地状态已清除'
-        if (error.response) {
-          // 服务器返回了错误响应
-          const responseData = error.response.data || {}
-          errorMessage = responseData.error?.message || responseData.message || '登出请求失败，但本地状态已清除'
-        } else if (error.message) {
-          errorMessage = `${error.message}，但本地状态已清除`
-        }
+        // 直接使用错误信息，简化处理逻辑
+        const errorMessage = error.message || '登出请求失败，但本地状态已清除'
 
         reject(new Error(errorMessage))
       })
