@@ -109,6 +109,10 @@ class AuthStorageManager {
         loginFailedCount: 0,
         accountLockedUntil: null,
         lastLoginAt: null
+      },
+      session: {
+        lastActivityTime: Date.now(),
+        warningShown: false
       }
     }
   }
@@ -540,8 +544,54 @@ class AuthStorageManager {
   }
 
   /**
+   * 获取最后活动时间
+   * @returns {number} 最后活动时间戳
+   */
+  getLastActivityTime() {
+    return this.authData.session.lastActivityTime
+  }
+
+  /**
+   * 设置最后活动时间
+   * @param {number} timestamp - 活动时间戳
+   */
+  setLastActivityTime(timestamp = Date.now()) {
+    this.authData.session.lastActivityTime = timestamp
+    this.authData.updatedAt = Date.now()
+    this.saveAuthData()
+  }
+
+  /**
+   * 获取警告显示状态
+   * @returns {boolean} 是否已显示警告
+   */
+  getWarningShown() {
+    return this.authData.session.warningShown
+  }
+
+  /**
+   * 设置警告显示状态
+   * @param {boolean} shown - 是否已显示警告
+   */
+  setWarningShown(shown) {
+    this.authData.session.warningShown = shown
+    this.authData.updatedAt = Date.now()
+    this.saveAuthData()
+  }
+
+  /**
+   * 重置会话状态
+   */
+  resetSessionState() {
+    this.authData.session.lastActivityTime = Date.now()
+    this.authData.session.warningShown = false
+    this.authData.updatedAt = Date.now()
+    this.saveAuthData()
+  }
+
+  /**
    * 获取存储统计信息
-   * @returns {Object} 统计信息
+   * @returns {Object} 存储统计信息
    */
   getStats() {
     return {

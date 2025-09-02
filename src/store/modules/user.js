@@ -2,6 +2,7 @@ import { login, logout, getInfo } from '@/views/login/api'
 import { getToken, removeToken, setTokens } from '@/utils/auth'
 import { resetRouter } from '@/router'
 import authStorageManager from '@/utils/auth-storage'
+import sessionManager from '@/utils/sessionManager'
 
 const getDefaultState = () => {
   return {
@@ -75,6 +76,9 @@ const actions = {
           // 登录成功，清除失败次数
           authStorageManager.clearLoginFailedCount()
 
+          // 启动会话超时管理器
+          sessionManager.init()
+
           // 返回完整响应给调用方
           resolve(response)
         } else {
@@ -138,6 +142,9 @@ const actions = {
           // 清除refreshToken
           authStorageManager.clearAllAuthState()
 
+          // 销毁会话管理器
+          sessionManager.destroy()
+
           // 清除登录失败相关记录已包含在clearAllAuthState中
 
           resolve({ success: true, message: response.message || '登出成功' })
@@ -154,6 +161,9 @@ const actions = {
           // 清除refreshToken
           authStorageManager.clearAllAuthState()
 
+          // 销毁会话管理器
+          sessionManager.destroy()
+
           // 清除登录失败相关记录已包含在clearAllAuthState中
 
           // 服务端登出失败时应该reject，让调用方知道失败了
@@ -165,6 +175,9 @@ const actions = {
         removeToken()
         authStorageManager.clearAllAuthState()
         resetRouter()
+
+        // 销毁会话管理器
+        sessionManager.destroy()
 
         // 网络错误时reject，但提供友好的错误信息
         console.warn('登出接口调用失败，但本地状态已清除:', error)
@@ -182,6 +195,10 @@ const actions = {
     return new Promise(resolve => {
       removeToken() // must remove  token  first
       commit('RESET_STATE')
+
+      // 销毁会话管理器
+      sessionManager.destroy()
+
       resolve()
     })
   }

@@ -5,6 +5,7 @@ import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // get token from cookie
 import getPageTitle from '@/utils/get-page-title'
+import sessionManager from '@/utils/sessionManager'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
@@ -28,11 +29,18 @@ router.beforeEach(async(to, from, next) => {
     } else {
       const hasGetUserInfo = store.getters.name
       if (hasGetUserInfo) {
+        // 用户信息已存在，确保会话管理器已启动
+        if (!sessionManager.isActive) {
+          sessionManager.init()
+        }
         next()
       } else {
         try {
           // get user info
           await store.dispatch('user/getInfo')
+
+          // 获取用户信息成功后启动会话管理器
+          sessionManager.init()
 
           next()
         } catch (error) {
