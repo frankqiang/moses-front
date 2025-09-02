@@ -15,6 +15,9 @@ import router from './router'
 import '@/icons' // icon
 import '@/permission' // permission control
 
+// 导入错误处理组件
+import ErrorHandler from '@/components/ErrorHandler'
+
 // 导入全局组件
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
@@ -77,6 +80,10 @@ Vue.component('ExportButton', ExportButton)
 Vue.component('OverflowTagsPopover', OverflowTagsPopover)
 Vue.component('ColumnSettings', ColumnSettings)
 Vue.component('BaseTable', BaseTable)
+Vue.component('ErrorHandler', ErrorHandler)
+
+// 创建全局事件总线
+Vue.prototype.$bus = new Vue()
 
 Vue.config.productionTip = false
 
@@ -84,7 +91,6 @@ new Vue({
   el: '#app',
   router,
   store,
-  render: h => h(App),
   async mounted() {
     try {
       // 执行数据迁移（如果需要）
@@ -95,7 +101,7 @@ new Vue({
       } else {
         console.log('无需数据迁移')
       }
-      
+
       // 在应用挂载后初始化存储清理
       initStorageCleanupAsync()
     } catch (error) {
@@ -103,5 +109,6 @@ new Vue({
       // 即使迁移失败，也要继续初始化应用
       initStorageCleanupAsync()
     }
-  }
+  },
+  render: h => h(App)
 })

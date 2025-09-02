@@ -123,8 +123,15 @@ export default {
         this.loading = false
       }
     },
+    /**
+     * 处理忘记密码
+     * 显示密码重置功能开发中的提示
+     */
     handleForgotPassword() {
-      this.$message.info('密码重置功能正在开发中')
+      this.$message({
+        message: '密码重置功能正在开发中',
+        type: 'info'
+      })
     }
   }
 }

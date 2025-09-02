@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import { login, logout, getInfo } from '@/views/login/api'
 import { getToken, removeToken, setTokens } from '@/utils/auth'
 import { resetRouter } from '@/router'
@@ -11,7 +12,8 @@ const getDefaultState = () => {
     avatar: '',
     roles: [],
     permissions: [],
-    rememberMe: false
+    rememberMe: false,
+    userInfo: {}
   }
 }
 
@@ -27,7 +29,10 @@ const getInitialState = () => {
   }
 }
 
-const state = getInitialState()
+const state = {
+  ...getInitialState(),
+  userInfo: {} // 存储完整的用户信息
+}
 
 const mutations = {
   RESET_STATE: (state) => {
@@ -50,6 +55,9 @@ const mutations = {
   },
   SET_REMEMBER_ME: (state, rememberMe) => {
     state.rememberMe = rememberMe
+  },
+  SET_USER_INFO: (state, userInfo) => {
+    state.userInfo = userInfo
   }
 }
 
@@ -92,32 +100,63 @@ const actions = {
     })
   },
 
-  // get user info
+  // 获取用户信息
   getInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
-      getInfo().then(response => {
-        // 处理Moses API响应格式
-        if (response.success && response.data) {
-          const { name, username, avatar, roles, permissions } = response.data
-
-          // 设置用户信息到store
-          commit('SET_NAME', name || username)
-          commit('SET_AVATAR', avatar || '')
-
-          // 可以在这里保存其他用户信息
-          if (roles) {
-            // 保存用户角色信息
-            commit('SET_ROLES', roles)
-          }
-          if (permissions) {
-            // 保存用户权限信息
-            commit('SET_PERMISSIONS', permissions)
-          }
-          resolve(response.data)
-        } else {
-          reject(new Error(response.message || 'Verification failed, please Login again.'))
+      getInfo(state.token).then(response => {
+        // Moses API 响应格式处理
+        const { data } = response
+        
+        if (!data) {
+          reject('验证失败，请重新登录。')
         }
+        
+        const { id, username, name, email, avatar, roles, permissions } = data
+        
+        // 角色必须是一个非空数组
+        if (!roles || roles.length <= 0) {
+          reject('getInfo: 角色必须是一个非空数组!')
+        }
+        
+        // 存储用户信息到store
+        commit('SET_NAME', name || username)
+        commit('SET_AVATAR', avatar || '') // 头像为空时设置为空字符串
+        commit('SET_ROLES', roles)
+        commit('SET_PERMISSIONS', permissions || [])
+        
+        // 存储完整的用户信息
+        commit('SET_USER_INFO', {
+          id,
+          username,
+          name,
+          email,
+          avatar: avatar || '',
+          roles,
+          permissions: permissions || []
+        })
+        
+        resolve(data)
       }).catch(error => {
+        console.error('获取用户信息失败:', error)
+        
+        // 处理401错误，自动跳转到登录页
+        if (error.response && error.response.status === 401) {
+          // 触发认证错误事件
+          Vue.prototype.$bus.$emit('auth-error', {
+            code: 'AUTH_002',
+            message: '登录已过期，请重新登录'
+          })
+          
+          commit('RESET_STATE')
+          removeToken()
+          // 这里不直接跳转，让调用方处理跳转逻辑
+        } else {
+          // 触发用户信息获取错误事件
+          Vue.prototype.$bus.$emit('user-info-error', {
+            message: error.message || '获取用户信息失败，请稍后重试'
+          })
+        }
+        
         reject(error)
       })
     })

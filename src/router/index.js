@@ -37,6 +37,8 @@ export const constantRoutes = [
     hidden: true
   },
 
+
+
   {
     path: '/404',
     component: () => import('@/views/404'),
