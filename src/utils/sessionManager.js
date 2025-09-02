@@ -147,13 +147,16 @@ class SessionManager {
     // 更新最后活动时间到统一存储
     authStorageManager.setLastActivityTime()
 
-    // 如果警告已显示，隐藏警告并重新开始计时
-    if (authStorageManager.getWarningShown()) {
-      this.hideWarning()
+    // 如果警告已显示但没有弹窗实例，说明是其他标签页的警告，可以隐藏
+    // 如果有弹窗实例存在，不应该因为用户活动而自动关闭，只能通过按钮操作关闭
+    if (authStorageManager.getWarningShown() && !this.dialogInstance) {
+      authStorageManager.setWarningShown(false)
     }
 
-    // 重新启动定时器
-    this.startTimers()
+    // 如果没有弹窗显示，重新启动定时器
+    if (!this.dialogInstance) {
+      this.startTimers()
+    }
   }
 
   /**
