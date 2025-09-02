@@ -52,8 +52,43 @@ export default {
       this.$store.dispatch('app/toggleSideBar')
     },
     async logout() {
-      await this.$store.dispatch('user/logout')
-      this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+      try {
+        const result = await this.$store.dispatch('user/logout')
+        
+        // 显示友好的登出提示
+        if (result && result.success) {
+          this.$message({
+            message: result.message || '登出成功',
+            type: 'success',
+            duration: 2000
+          })
+        } else if (result && result.message) {
+          // 显示错误信息但不阻止跳转
+          this.$message({
+            message: result.message,
+            type: 'warning',
+            duration: 3000
+          })
+        }
+        
+        // 延迟跳转，让用户看到提示消息
+        setTimeout(() => {
+          this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+        }, 1000)
+        
+      } catch (error) {
+        // 处理异常情况
+        this.$message({
+          message: '登出过程中发生错误，但本地状态已清除',
+          type: 'warning',
+          duration: 3000
+        })
+        
+        // 即使出错也要跳转
+        setTimeout(() => {
+          this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+        }, 1000)
+      }
     }
   }
 }

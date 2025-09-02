@@ -1,9 +1,21 @@
 import { login, logout, getInfo } from '@/views/login/api'
-import { getToken, setToken, removeToken, setTokens } from '@/utils/auth'
+import { getToken, removeToken, setTokens } from '@/utils/auth'
 import { resetRouter } from '@/router'
 import authStorageManager from '@/utils/auth-storage'
 
 const getDefaultState = () => {
+  return {
+    token: '',
+    name: '',
+    avatar: '',
+    roles: [],
+    permissions: [],
+    rememberMe: false
+  }
+}
+
+// 获取初始状态时需要从localStorage读取token
+const getInitialState = () => {
   return {
     token: getToken(),
     name: '',
@@ -14,7 +26,7 @@ const getDefaultState = () => {
   }
 }
 
-const state = getDefaultState()
+const state = getInitialState()
 
 const mutations = {
   RESET_STATE: (state) => {
@@ -127,8 +139,27 @@ const actions = {
 
           // 清除登录失败相关记录已包含在clearAllAuthState中
 
-          resolve()
+          resolve({ success: true, message: '登出成功' })
         } else {
+          // 处理服务端登出失败的详细错误
+          const errorCode = response.error?.code
+          let errorMessage = response.error?.message || '登出失败'
+
+          // 根据错误码提供详细的错误处理
+          switch (errorCode) {
+            case 'VAL_002':
+              errorMessage = '请求参数缺失，但本地状态已清除'
+              break
+            case 'AUTH_001':
+              errorMessage = '登录状态已失效，本地状态已清除'
+              break
+            case 'AUTH_033':
+              errorMessage = '刷新令牌无效，本地状态已清除'
+              break
+            default:
+              errorMessage = `登出失败：${errorMessage}，但本地状态已清除`
+          }
+
           // 即使服务端登出失败，也清除本地状态
           commit('RESET_STATE')
           removeToken()
@@ -139,13 +170,11 @@ const actions = {
 
           // 清除登录失败相关记录已包含在clearAllAuthState中
 
-          resolve()
+          resolve({ success: false, message: errorMessage, errorCode })
         }
       }).catch(error => {
         // 网络错误时也要清除本地状态
-        commit('SET_TOKEN', '')
-        commit('SET_NAME', '')
-        commit('SET_AVATAR', '')
+        commit('RESET_STATE')
         removeToken()
         authStorageManager.clearAllAuthState()
         resetRouter()

@@ -98,7 +98,7 @@ export function refreshTokens(refreshToken) {
  */
 export function logout(refreshToken, accessToken) {
   return authService({
-    url: '/v1/auth/logout',
+    url: '/auth/logout',
     method: 'post',
     data: {
       refreshToken
