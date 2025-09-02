@@ -19,6 +19,19 @@ const authService = axios.create({
   timeout: 10000 // token刷新使用更长的超时时间
 })
 
+// 为authService添加响应拦截器，处理Moses API响应格式
+authService.interceptors.response.use(
+  response => {
+    // 直接返回响应数据，保持与主service一致的行为
+    return response.data
+  },
+  error => {
+    // 统一错误处理
+    console.error('AuthService请求失败:', error)
+    return Promise.reject(error)
+  }
+)
+
 /**
  * 用户登录
  * @param {Object} data - 登录数据

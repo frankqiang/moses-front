@@ -128,6 +128,7 @@ const actions = {
 
       logout(refreshToken, accessToken).then(response => {
         // 处理Moses API响应格式
+        // authService已配置响应拦截器，直接使用response
         if (response.success) {
           // 登出成功，清除本地存储
           commit('RESET_STATE')
@@ -139,12 +140,11 @@ const actions = {
 
           // 清除登录失败相关记录已包含在clearAllAuthState中
 
-          resolve({ success: true, message: '登出成功' })
+          resolve({ success: true, message: response.message || '登出成功' })
         } else {
           // 处理服务端登出失败的详细错误
           const errorCode = response.error?.code
-          let errorMessage = response.error?.message || '登出失败'
-
+          let errorMessage = response.error?.message || response.message || '登出失败'
           // 根据错误码提供详细的错误处理
           switch (errorCode) {
             case 'VAL_002':
@@ -157,7 +157,8 @@ const actions = {
               errorMessage = '刷新令牌无效，本地状态已清除'
               break
             default:
-              errorMessage = `登出失败：${errorMessage}，但本地状态已清除`
+              // 使用后端返回的message，避免硬编码
+              errorMessage = errorMessage.includes('登出失败') ? errorMessage : `${errorMessage}，但本地状态已清除`
           }
 
           // 即使服务端登出失败，也清除本地状态
@@ -170,7 +171,8 @@ const actions = {
 
           // 清除登录失败相关记录已包含在clearAllAuthState中
 
-          resolve({ success: false, message: errorMessage, errorCode })
+          // 服务端登出失败时应该reject，让调用方知道失败了
+          reject(new Error(errorMessage))
         }
       }).catch(error => {
         // 网络错误时也要清除本地状态
@@ -179,9 +181,20 @@ const actions = {
         authStorageManager.clearAllAuthState()
         resetRouter()
 
-        // 即使网络错误也要resolve，确保前端能正常跳转
+        // 网络错误时reject，但提供友好的错误信息
         console.warn('登出接口调用失败，但本地状态已清除:', error)
-        resolve()
+
+        // 检查是否是网络错误
+        let errorMessage = '网络连接失败，但本地状态已清除'
+        if (error.response) {
+          // 服务器返回了错误响应
+          const responseData = error.response.data || {}
+          errorMessage = responseData.error?.message || responseData.message || '登出请求失败，但本地状态已清除'
+        } else if (error.message) {
+          errorMessage = `${error.message}，但本地状态已清除`
+        }
+
+        reject(new Error(errorMessage))
       })
     })
   },
