@@ -251,8 +251,8 @@ export function isValidApplicationId(id) {
   if (!id || typeof id !== 'string') {
     return false
   }
-  // 申请ID通常以app-开头，后跟字母数字组合
-  const idRegex = /^app-[a-zA-Z0-9]+$/
+  // 申请ID为UUID格式
+  const idRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/
   return idRegex.test(id.trim())
 }
 

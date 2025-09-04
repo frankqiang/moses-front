@@ -134,10 +134,14 @@ export const REGISTER_FORM_RULES = (formData) => ({
 // 查询表单验证规则
 export const QUERY_FORM_RULES = {
   applicationId: [
-    { required: true, message: '请输入申请ID', trigger: 'blur' },
     {
-      pattern: /^app-[a-zA-Z0-9]+$/,
-      message: '申请ID格式不正确（格式：app- + 字母数字组合）',
+      required: true,
+      message: '申请ID不能为空',
+      trigger: 'blur'
+    },
+    {
+      pattern: /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/,
+      message: '申请ID格式不正确（请输入有效的申请ID）',
       trigger: 'blur'
     }
   ]
