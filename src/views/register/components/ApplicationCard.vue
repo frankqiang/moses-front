@@ -166,6 +166,8 @@
 </template>
 
 <script>
+import { APPLICATION_STATUS_CONFIG } from '@/constants/application-status'
+
 export default {
   name: 'ApplicationCard',
   
@@ -299,45 +301,21 @@ export default {
      * 状态文本映射
      */
     statusTextMap() {
-      return {
-        'pending': '待审核',
-        'under_review': '审核中',
-        'approved': '已通过',
-        'rejected': '已拒绝',
-        'expired': '已过期',
-        'cancelled': '已取消',
-        'draft': '草稿'
-      }
+      return APPLICATION_STATUS_CONFIG.TEXT_MAP
     },
 
     /**
      * 状态类型映射
      */
     statusTypeMap() {
-      return {
-        'pending': 'warning',
-        'under_review': 'primary',
-        'approved': 'success',
-        'rejected': 'danger',
-        'expired': 'info',
-        'cancelled': 'info',
-        'draft': 'info'
-      }
+      return APPLICATION_STATUS_CONFIG.TYPE_MAP
     },
 
     /**
      * 状态图标映射
      */
     statusIconMap() {
-      return {
-        'pending': 'el-icon-time',
-        'under_review': 'el-icon-loading',
-        'approved': 'el-icon-circle-check',
-        'rejected': 'el-icon-circle-close',
-        'expired': 'el-icon-warning-outline',
-        'cancelled': 'el-icon-remove-outline',
-        'draft': 'el-icon-edit-outline'
-      }
+      return APPLICATION_STATUS_CONFIG.ICON_MAP
     }
   },
   

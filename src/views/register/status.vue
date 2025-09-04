@@ -24,9 +24,7 @@
 
       <!-- 查询结果 -->
       <div v-if="applicationData" class="status-result">
-        <div class="result-header">
-          <h3 class="result-title">申请信息</h3>
-        </div>
+
 
         <div class="result-content">
           <!-- 使用ApplicationCard组件展示申请信息 -->
