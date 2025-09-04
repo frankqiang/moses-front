@@ -166,7 +166,7 @@
 </template>
 
 <script>
-import { APPLICATION_STATUS_CONFIG } from '@/constants/application-status'
+import { APPLICATION_STATUS_CONFIG } from '../constants/application-status'
 
 export default {
   name: 'ApplicationCard',
