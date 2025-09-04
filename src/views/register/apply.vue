@@ -20,7 +20,7 @@
               </el-col>
               <el-col :span="12">
                 <FormField v-model="formData.applicantEmail" type="input" input-type="email" label="申请人邮箱"
-                  prop="applicantEmail" placeholder="请输入申请人邮箱" :required="true" validation-type="email"
+                  prop="applicantEmail" placeholder="请输入申请人邮箱" :required="true"
                   help-text="邮箱将用于接收申请状态通知" />
               </el-col>
             </el-row>

@@ -136,8 +136,8 @@ export const QUERY_FORM_RULES = {
   applicationId: [
     { required: true, message: '请输入申请ID', trigger: 'blur' },
     {
-      pattern: /^REG\d{14}$/,
-      message: '申请ID格式不正确（格式：REG + 14位数字）',
+      pattern: /^app-[a-zA-Z0-9]+$/,
+      message: '申请ID格式不正确（格式：app- + 字母数字组合）',
       trigger: 'blur'
     }
   ]

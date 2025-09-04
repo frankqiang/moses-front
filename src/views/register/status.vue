@@ -7,27 +7,12 @@
       </div>
 
       <!-- 查询表单 -->
-      <el-form
-        ref="queryForm"
-        :model="queryForm"
-        :rules="queryRules"
-        class="query-form"
-        @submit.native.prevent="handleQuery"
-      >
+      <el-form ref="queryForm" :model="queryForm" :rules="queryRules" class="query-form"
+        @submit.native.prevent="handleQuery">
         <el-form-item prop="applicationId">
-          <el-input
-            v-model="queryForm.applicationId"
-            placeholder="请输入申请ID"
-            size="large"
-            clearable
-            @keyup.enter.native="handleQuery"
-          >
-            <el-button
-              slot="append"
-              type="primary"
-              :loading="queryLoading"
-              @click="handleQuery"
-            >
+          <el-input v-model="queryForm.applicationId" placeholder="请输入申请ID" size="large" clearable
+            @keyup.enter.native="handleQuery">
+            <el-button slot="append" type="primary" :loading="queryLoading" @click="handleQuery">
               {{ queryLoading ? '查询中...' : '查询' }}
             </el-button>
           </el-input>
@@ -35,11 +20,7 @@
       </el-form>
 
       <!-- 查询加载指示器 -->
-      <LoadingIndicator 
-        v-if="queryLoading" 
-        text="正在查询申请状态..." 
-        class="query-loading"
-      />
+      <LoadingIndicator v-if="queryLoading" text="正在查询申请状态..." class="query-loading" />
 
       <!-- 查询结果 -->
       <div v-if="applicationData" class="status-result">
@@ -50,12 +31,8 @@
 
         <div class="result-content">
           <!-- 使用ApplicationCard组件展示申请信息 -->
-          <ApplicationCard
-            :application="applicationData"
-            :show-actions="false"
-            :show-status="false"
-            class="application-detail-card"
-          />
+          <ApplicationCard :application="applicationData" :show-actions="false" :show-status="false"
+            class="application-detail-card" />
 
           <!-- 状态说明 -->
           <div class="status-description">
@@ -82,11 +59,7 @@
           <el-button @click="handleReset">
             查询其他申请
           </el-button>
-          <el-button
-            v-if="applicationData.status === 'rejected'"
-            type="primary"
-            @click="goToApply"
-          >
+          <el-button v-if="applicationData.status === 'rejected'" type="primary" @click="goToApply">
             重新申请
           </el-button>
         </div>
@@ -101,7 +74,7 @@
           提交新申请
         </el-button>
       </div>
-      
+
       <!-- 登录入口 -->
       <div class="login-section">
         <span class="login-text">已有账号？</span>
@@ -127,7 +100,7 @@ import {
 
 export default {
   name: 'RegisterStatus',
-  
+
   components: {
     ApplicationCard,
     ApplicationStatusTag,
@@ -170,11 +143,11 @@ export default {
 
         // 查询申请状态
         const response = await getApplicationStatus(this.queryForm.applicationId.trim())
-        
+
         if (response.data) {
           this.applicationData = response.data
           this.showEmptyState = false
-          
+
           // 显示查询成功提示
           showStatusQuerySuccess({
             statusText: this.applicationData.statusText || '查询成功'
@@ -246,6 +219,7 @@ export default {
   align-items: flex-start;
   justify-content: center;
   padding: 40px 20px;
+  background-image: url('../../assets/login-bg.svg');
 }
 
 .status-card {
@@ -464,18 +438,18 @@ export default {
   padding-top: 20px;
   border-top: 1px solid #ebeef5;
   font-size: 14px;
-  
+
   .login-text {
     color: #909399;
     margin-right: 8px;
   }
-  
+
   .login-link {
     color: #409eff;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.3s;
-    
+
     &:hover {
       color: #66b1ff;
       text-decoration: underline;
@@ -546,7 +520,7 @@ export default {
       font-size: 48px;
     }
   }
-  
+
   .login-section {
     .login-link {
       display: block;
