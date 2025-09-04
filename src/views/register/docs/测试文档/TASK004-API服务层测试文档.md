@@ -1,433 +1,177 @@
-# TASK004: API服务层开发 - 测试文档
+# TASK004: 用户注册模块 - 测试文档
 
-## 测试概述
+## 1. 测试概述
 
-本文档提供了用户注册管理API服务层的完整测试指南，包括功能测试、错误处理测试和数据验证测试。
+本文档提供了用户注册模块的完整测试指南，涵盖 **API 服务层** 和 **前端 UI 功能**。测试旨在确保注册流程的稳定性、数据准确性、用户体验和视觉一致性。
 
-**测试文件位置:** `src/api/register.js`
-
-**测试范围:** P0阶段所有功能
+**测试范围:**
+- **API 服务层:** `submitRegistration` 和 `getApplicationStatus` 的功能、数据验证和错误处理。
+- **前端 UI 功能:** 注册表单 (`apply.vue`)、状态查询页面 (`status.vue`) 的交互、视觉风格和响应式布局。
+- **视觉一致性:** 确保注册模块的背景、Logo、表单样式与登录模块保持统一。
 
 ---
 
-## 1. 环境准备
+## 2. 环境准备
 
-### 1.1 前置条件
+### 2.1 前置条件
 
 - 确保项目已正确安装依赖：`npm install`
-- 确保后端API服务正常运行
-- 确保网络连接正常
+- 确保开发服务器正在运行：`npm run dev`
+- 确保后端 API 服务可访问。
 
-### 1.2 测试工具
+### 2.2 测试工具
 
-- 浏览器开发者工具（Network面板）
-- Vue DevTools（可选）
-- Postman或类似API测试工具（用于对比验证）
-
----
-
-## 2. 功能测试
-
-### 2.1 注册申请API测试 (submitRegistration)
-
-#### 测试步骤：
-
-1. **在浏览器控制台中导入API模块：**
-   ```javascript
-   // 在项目中任意页面的控制台执行
-   import { submitRegistration } from '@/api/register'
-   ```
-
-2. **测试正常提交：**
-   ```javascript
-   const testData = {
-     applicantName: '张三',
-     applicantEmail: 'zhangsan@example.com',
-     username: 'zhangsan2024',
-     password: 'Test123456!',
-     confirmPassword: 'Test123456!',
-     phoneNumber: '13800138000',
-     department: 'IT部门',
-     position: '软件工程师',
-     reason: '申请系统访问权限用于日常工作'
-   }
-   
-   submitRegistration(testData)
-     .then(response => {
-       console.log('提交成功:', response)
-       // 预期结果：返回包含id、status、createdAt等字段的对象
-     })
-     .catch(error => {
-       console.error('提交失败:', error)
-     })
-   ```
-
-3. **验证响应数据格式：**
-   - 检查返回数据是否包含 `id`、`status`、`createdAt` 字段
-   - 检查 `status` 是否为 'pending'
-   - 检查 `createdAt` 是否为有效的ISO日期格式
-
-#### 预期结果：
-```javascript
-{
-  id: "REG_20240115_001",
-  status: "pending",
-  createdAt: "2024-01-15T10:30:00.000Z",
-  applicantName: "张三",
-  applicantEmail: "zhangsan@example.com",
-  username: "zhangsan2024"
-}
-```
-
-### 2.2 状态查询API测试 (getApplicationStatus)
-
-#### 测试步骤：
-
-1. **使用有效的申请ID查询：**
-   ```javascript
-   import { getApplicationStatus } from '@/api/register'
-   
-   const applicationId = 'REG_20240115_001' // 使用上一步返回的ID
-   
-   getApplicationStatus(applicationId)
-     .then(response => {
-       console.log('查询成功:', response)
-       // 预期结果：返回完整的申请信息
-     })
-     .catch(error => {
-       console.error('查询失败:', error)
-     })
-   ```
-
-2. **验证响应数据格式：**
-   - 检查返回数据包含所有申请字段
-   - 检查状态格式化是否正确
-   - 检查日期格式是否友好显示
-
-#### 预期结果：
-```javascript
-{
-  id: "REG_20240115_001",
-  applicantName: "张三",
-  applicantEmail: "zhangsan@example.com",
-  username: "zhangsan2024",
-  department: "IT部门",
-  position: "软件工程师",
-  reason: "申请系统访问权限用于日常工作",
-  status: "pending",
-  statusDisplay: "待审核",
-  statusIcon: "el-icon-time",
-  statusType: "warning",
-  createdAt: "2024-01-15T10:30:00.000Z",
-  createdAtDisplay: "2024年01月15日 10:30",
-  updatedAt: "2024-01-15T10:30:00.000Z",
-  updatedAtDisplay: "2024年01月15日 10:30"
-}
-```
+- **浏览器:** Chrome (推荐), Firefox, Safari
+- **浏览器开发者工具:** 用于网络请求监控、DOM 检查和响应式布局测试。
+- **Vue DevTools:** 用于组件状态检查和调试。
 
 ---
 
-## 3. 数据验证测试
+## 3. UI 与功能测试
 
-### 3.1 必填字段验证
+### 3.1 注册页面 (`/register/apply`)
 
-#### 测试步骤：
+#### 3.1.1 视觉与布局测试
+1. **背景与 Logo:**
+   - **测试步骤:** 访问 `/register/apply` 页面。
+   - **预期结果:**
+     - 页面背景应与登录页面的背景图片和样式完全一致。
+     - 页面顶部应显示与登录页面相同的 Logo。
+2. **表单布局:**
+   - **测试步骤:** 查看注册表单的布局。
+   - **预期结果:**
+     - 表单应在页面居中显示，并具有合适的宽度。
+     - 表单项应 **每行显示两个**，避免页面出现不必要的垂直滚动条。
+     - 在不同屏幕尺寸下，布局应保持合理，无元素重叠或错位。
 
-1. **测试缺少必填字段：**
-   ```javascript
-   const incompleteData = {
-     applicantName: '张三'
-     // 缺少其他必填字段
-   }
-   
-   submitRegistration(incompleteData)
-     .then(response => {
-       console.log('不应该成功:', response)
-     })
-     .catch(error => {
-       console.log('预期的验证错误:', error.message)
-       // 预期：显示具体缺少哪些字段
-     })
-   ```
+#### 3.1.2 表单功能测试
+1. **必填字段验证:**
+   - **测试步骤:**
+     1. 不填写任何信息，直接点击“提交申请”按钮。
+     2. 逐个填写表单项，观察每个字段的验证提示。
+   - **预期结果:**
+     - 点击提交时，所有未填写的必填字段应显示红色错误提示，如“请输入申请人姓名”。
+     - 表单无法提交。
+2. **数据格式验证:**
+   - **测试步骤:**
+     - **邮箱:** 输入无效格式的邮箱地址 (例如, "test", "test@domain")。
+     - **手机号:** 输入非11位数字的手机号码。
+     - **密码:** 输入不符合强度要求的密码（例如，“123456”），并确保“确认密码”与密码一致。
+   - **预期结果:**
+     - 相应字段下方应显示明确的格式错误提示，如“请输入有效的邮箱地址”。
+     - 表单无法提交。
+3. **成功提交:**
+   - **测试步骤:**
+     1. 填写所有表单项，确保数据格式正确。
+     2. 点击“提交申请”按钮。
+   - **预期结果:**
+     - 页面应显示加载指示器。
+     - 提交成功后，应显示成功提示消息，例如“您的注册申请已成功提交！”。
+     - 页面应自动跳转到状态查询页面 (`/register/status`)，并附带申请ID参数。
 
-#### 预期结果：
-- 抛出验证错误，明确指出缺少的必填字段
+### 3.2 状态查询页面 (`/register/status`)
 
-### 3.2 格式验证测试
-
-#### 测试步骤：
-
-1. **测试邮箱格式验证：**
-   ```javascript
-   const invalidEmailData = {
-     applicantName: '张三',
-     applicantEmail: 'invalid-email', // 无效邮箱格式
-     username: 'zhangsan2024',
-     password: 'Test123456!',
-     confirmPassword: 'Test123456!'
-   }
-   
-   submitRegistration(invalidEmailData)
-     .catch(error => {
-       console.log('邮箱格式错误:', error.message)
-       // 预期：提示邮箱格式不正确
-     })
-   ```
-
-2. **测试用户名格式验证：**
-   ```javascript
-   const invalidUsernameData = {
-     applicantName: '张三',
-     applicantEmail: 'zhangsan@example.com',
-     username: 'ab', // 用户名太短
-     password: 'Test123456!',
-     confirmPassword: 'Test123456!'
-   }
-   
-   submitRegistration(invalidUsernameData)
-     .catch(error => {
-       console.log('用户名格式错误:', error.message)
-       // 预期：提示用户名长度不符合要求
-     })
-   ```
-
-3. **测试密码格式验证：**
-   ```javascript
-   const weakPasswordData = {
-     applicantName: '张三',
-     applicantEmail: 'zhangsan@example.com',
-     username: 'zhangsan2024',
-     password: '123456', // 弱密码
-     confirmPassword: '123456'
-   }
-   
-   submitRegistration(weakPasswordData)
-     .catch(error => {
-       console.log('密码强度错误:', error.message)
-       // 预期：提示密码强度不够
-     })
-   ```
-
-4. **测试手机号格式验证：**
-   ```javascript
-   const invalidPhoneData = {
-     applicantName: '张三',
-     applicantEmail: 'zhangsan@example.com',
-     username: 'zhangsan2024',
-     password: 'Test123456!',
-     confirmPassword: 'Test123456!',
-     phoneNumber: '123' // 无效手机号
-   }
-   
-   submitRegistration(invalidPhoneData)
-     .catch(error => {
-       console.log('手机号格式错误:', error.message)
-       // 预期：提示手机号格式不正确
-     })
-   ```
+#### 3.2.1 视觉与布局测试
+1. **背景与样式:**
+   - **测试步骤:** 通过直接访问或在注册成功后跳转到 `/register/status?id=YOUR_ID`。
+   - **预期结果:**
+     - 页面背景应与 `apply.vue` 和登录页面保持一致。
+     - 状态卡片应在页面居中显示，样式清晰。
+2. **功能测试:**
+   - **测试步骤:**
+     1. 使用一个有效的申请ID访问页面。
+     2. 使用一个无效或不存在的申请ID访问页面。
+   - **预期结果:**
+     - **有效ID:** 页面应正确显示申请状态（如“待审核”）、申请人信息和提交时间。
+     - **无效ID:** 页面应显示“申请记录不存在”或类似的错误提示，并提供返回首页的链接。
 
 ---
 
-## 4. 错误处理测试
+## 4. API 服务层测试 (补充)
 
-### 4.1 业务错误测试
+此部分测试可通过浏览器控制台执行，用于快速验证 API 逻辑。
 
-#### 测试步骤：
+### 4.1 注册申请 API (`submitRegistration`)
+- **测试步骤:**
+  ```javascript
+  // 在浏览器控制台执行
+  import { submitRegistration } from '@/views/register/api/register.js';
 
-1. **测试用户名已存在错误：**
-   ```javascript
-   // 使用已存在的用户名
-   const duplicateUsernameData = {
-     applicantName: '李四',
-     applicantEmail: 'lisi@example.com',
-     username: 'existinguser', // 已存在的用户名
-     password: 'Test123456!',
-     confirmPassword: 'Test123456!'
-   }
-   
-   submitRegistration(duplicateUsernameData)
-     .catch(error => {
-       console.log('用户名冲突错误:', error)
-       // 预期：显示"用户名已被使用，请更换用户名"
-     })
-   ```
+  const validData = {
+    applicantName: '测试员',
+    applicantEmail: 'test@example.com',
+    username: `testuser_${Date.now()}`,
+    password: 'Password123!',
+    confirmPassword: 'Password123!',
+    phoneNumber: '13800138001',
+    department: '测试部',
+    position: '测试工程师',
+    reason: '测试专用'
+  };
 
-2. **测试邮箱已存在错误：**
-   ```javascript
-   // 使用已存在的邮箱
-   const duplicateEmailData = {
-     applicantName: '王五',
-     applicantEmail: 'existing@example.com', // 已存在的邮箱
-     username: 'wangwu2024',
-     password: 'Test123456!',
-     confirmPassword: 'Test123456!'
-   }
-   
-   submitRegistration(duplicateEmailData)
-     .catch(error => {
-       console.log('邮箱冲突错误:', error)
-       // 预期：显示"邮箱已被使用，请更换邮箱"
-     })
-   ```
+  submitRegistration(validData)
+    .then(res => console.log('API提交成功:', res))
+    .catch(err => console.error('API提交失败:', err));
+  ```
+- **预期结果:** 控制台输出成功信息，并返回包含 `id` 和 `status` 的对象。
 
-3. **测试申请记录不存在错误：**
-   ```javascript
-   getApplicationStatus('INVALID_ID')
-     .catch(error => {
-       console.log('记录不存在错误:', error)
-       // 预期：显示"申请记录不存在"
-     })
-   ```
+### 4.2 状态查询 API (`getApplicationStatus`)
+- **测试步骤:**
+  ```javascript
+  // 在浏览器控制台执行
+  import { getApplicationStatus } from '@/views/register/api/register.js';
 
-### 4.2 网络错误测试
+  const applicationId = 'REG_...'; // 替换为有效的申请ID
 
-#### 测试步骤：
-
-1. **模拟网络断开：**
-   - 断开网络连接
-   - 执行API调用
-   - 观察错误处理
-
-2. **模拟服务器错误：**
-   - 在Network面板中模拟500错误
-   - 观察错误处理和用户提示
+  getApplicationStatus(applicationId)
+    .then(res => console.log('API查询成功:', res))
+    .catch(err => console.error('API查询失败:', err));
+  ```
+- **预期结果:** 控制台输出包含完整申请信息的对象。
 
 ---
 
-## 5. 性能测试
+## 5. 验收标准检查清单
 
-### 5.1 响应时间测试
+### ✅ UI 与功能验收
 
-#### 测试步骤：
-
-1. **测量API响应时间：**
-   ```javascript
-   const startTime = performance.now()
-   
-   submitRegistration(testData)
-     .then(response => {
-       const endTime = performance.now()
-       console.log(`API响应时间: ${endTime - startTime}ms`)
-       // 预期：响应时间应在合理范围内（通常<2000ms）
-     })
-   ```
-
-### 5.2 并发请求测试
-
-#### 测试步骤：
-
-1. **测试多个并发请求：**
-   ```javascript
-   const promises = []
-   for (let i = 0; i < 5; i++) {
-     const data = { ...testData, username: `user${i}` }
-     promises.push(submitRegistration(data))
-   }
-   
-   Promise.allSettled(promises)
-     .then(results => {
-       console.log('并发请求结果:', results)
-       // 检查是否所有请求都正确处理
-     })
-   ```
+- [ ] **注册页面 (`apply.vue`)**
+  - [ ] 背景和 Logo 与登录页一致。
+  - [ ] 表单每行显示两个字段，无滚动条。
+  - [ ] 输入验证（必填、格式）功能正常。
+  - [ ] 成功提交后能正确跳转到状态页。
+- [ ] **状态查询页面 (`status.vue`)**
+  - [ ] 背景与登录页一致。
+  - [ ] 能根据有效/无效ID正确显示信息或错误提示。
+- [ ] **API 服务层**
+  - [ ] `submitRegistration` API 功能正常，数据验证有效。
+  - [ ] `getApplicationStatus` API 功能正常，能处理有效和无效ID。
 
 ---
 
-## 6. 验收标准检查清单
-
-### ✅ P0阶段功能验收
-
-- [ ] **submitRegistration API**
-  - [ ] 正常提交返回正确的响应格式
-  - [ ] 包含所有必需的响应字段
-  - [ ] 请求数据验证正常工作
-  - [ ] 错误处理正确显示用户友好消息
-
-- [ ] **getApplicationStatus API**
-  - [ ] 正常查询返回完整申请信息
-  - [ ] 状态格式化正确显示
-  - [ ] 日期格式化用户友好
-  - [ ] 无效ID处理正确
-
-- [ ] **数据验证功能**
-  - [ ] 必填字段验证生效
-  - [ ] 邮箱格式验证正确
-  - [ ] 用户名格式验证正确
-  - [ ] 密码强度验证正确
-  - [ ] 手机号格式验证正确
-
-- [ ] **错误处理功能**
-  - [ ] 业务错误正确分类和显示
-  - [ ] 网络错误正确处理
-  - [ ] 错误消息用户友好
-  - [ ] 错误码映射正确
-
-- [ ] **响应格式化功能**
-  - [ ] 状态显示格式化正确
-  - [ ] 日期显示格式化正确
-  - [ ] 图标和样式类型正确
-
----
-
-## 7. 常见问题排查
-
-### 7.1 API调用失败
-
-**问题现象：** API调用返回错误或无响应
-
-**排查步骤：**
-1. 检查网络连接
-2. 检查后端服务是否运行
-3. 检查API基础URL配置
-4. 检查请求头配置
-5. 查看浏览器Network面板的详细错误信息
-
-### 7.2 数据验证失败
-
-**问题现象：** 数据验证不生效或验证错误
-
-**排查步骤：**
-1. 检查输入数据格式
-2. 检查验证规则配置
-3. 查看控制台错误信息
-4. 确认验证函数逻辑
-
-### 7.3 错误处理不正确
-
-**问题现象：** 错误消息显示不正确或不友好
-
-**排查步骤：**
-1. 检查错误码映射配置
-2. 检查错误处理函数逻辑
-3. 确认后端返回的错误格式
-4. 查看错误处理流程
-
----
-
-## 8. 测试报告模板
+## 6. 测试报告模板
 
 ### 测试执行记录
 
-**测试日期：** ___________
-**测试人员：** ___________
-**测试环境：** ___________
+**测试日期：** `YYYY-MM-DD`
+**测试人员：** `Your Name`
+**测试环境：** `Chrome 12x.x, Windows 11, Node.js v18.x`
 
 | 测试项目 | 测试结果 | 问题描述 | 备注 |
-|---------|---------|---------|------|
-| submitRegistration正常提交 | ☐ 通过 ☐ 失败 | | |
-| getApplicationStatus正常查询 | ☐ 通过 ☐ 失败 | | |
-| 数据验证功能 | ☐ 通过 ☐ 失败 | | |
-| 错误处理功能 | ☐ 通过 ☐ 失败 | | |
-| 响应格式化功能 | ☐ 通过 ☐ 失败 | | |
+|---|---|---|---|
+| 注册页UI一致性 | ☐ 通过 ☐ 失败 | | 背景、Logo、表单布局 |
+| 表单输入验证 | ☐ 通过 ☐ 失败 | | 必填、邮箱、手机、密码 |
+| 注册成功提交流程 | ☐ 通过 ☐ 失败 | | 加载、提示、跳转 |
+| 状态查询页功能 | ☐ 通过 ☐ 失败 | | 有效/无效ID |
+| API - `submitRegistration` | ☐ 通过 ☐ 失败 | | |
+| API - `getApplicationStatus` | ☐ 通过 ☐ 失败 | | |
 
 **总体评价：** ☐ 通过 ☐ 需要修复
 
 **问题汇总：**
-1. ___________
-2. ___________
-3. ___________
+1. ...
+2. ...
 
 **建议：**
-1. ___________
-2. ___________
-3. ___________
+1. ...
+2. ...

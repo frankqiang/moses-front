@@ -120,6 +120,12 @@
       {{ isLocked ? `锁定中 (${formatCountdown(lockoutCountdown)})` : '登录' }}
     </el-button>
 
+    <!-- 注册入口 -->
+    <div class="register-section">
+      <span class="register-text">还没有账号？</span>
+      <router-link to="/register" class="register-link">立即注册</router-link>
+    </div>
+
     <div v-if="isDev" class="tips">
       <span>测试账号: admin</span>
       <span>密码: 任意6位以上</span>
@@ -619,7 +625,30 @@ export default {
 
 .login-button {
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+}
+
+.register-section {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+  
+  .register-text {
+    color: #909399;
+    margin-right: 8px;
+  }
+  
+  .register-link {
+    color: #409eff;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+    
+    &:hover {
+      color: #66b1ff;
+      text-decoration: underline;
+    }
+  }
 }
 
 .tips {

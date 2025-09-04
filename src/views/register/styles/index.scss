@@ -1,0 +1,280 @@
+/**
+ * 注册模块样式文件
+ * 文件描述：定义注册模块的全局样式和主题
+ * 创建日期：2024-12-19
+ */
+
+// 注册模块主题色彩
+$register-primary: #667eea;
+$register-secondary: #764ba2;
+$register-success: #67C23A;
+$register-warning: #E6A23C;
+$register-danger: #F56C6C;
+$register-info: #909399;
+
+// 注册模块布局
+.register-module {
+  // 通用卡片样式
+  .register-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 20px;
+    
+    .card-header {
+      background: linear-gradient(135deg, $register-primary 0%, $register-secondary 100%);
+      color: white;
+      padding: 25px 30px;
+      text-align: center;
+      
+      .card-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+      }
+      
+      .card-subtitle {
+        font-size: 14px;
+        opacity: 0.9;
+        margin: 0;
+      }
+    }
+    
+    .card-body {
+      padding: 30px;
+    }
+  }
+  
+  // 表单样式
+  .register-form {
+    .form-section {
+      margin-bottom: 30px;
+      
+      .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 20px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+    }
+    
+    .el-form-item {
+      margin-bottom: 20px;
+      
+      .el-form-item__label {
+        font-weight: 500;
+        color: #333;
+      }
+      
+      .el-form-item__error {
+        font-size: 12px;
+        color: $register-danger;
+      }
+    }
+    
+    .form-actions {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid #f0f0f0;
+      
+      .el-button {
+        min-width: 120px;
+        
+        &.el-button--primary {
+          background: $register-primary;
+          border-color: $register-primary;
+          
+          &:hover {
+            background: lighten($register-primary, 10%);
+            border-color: lighten($register-primary, 10%);
+          }
+        }
+      }
+    }
+  }
+  
+  // 状态标签样式
+  .status-tag {
+    &.status-pending {
+      background: rgba($register-warning, 0.1);
+      color: $register-warning;
+      border: 1px solid rgba($register-warning, 0.3);
+    }
+    
+    &.status-approved {
+      background: rgba($register-success, 0.1);
+      color: $register-success;
+      border: 1px solid rgba($register-success, 0.3);
+    }
+    
+    &.status-rejected {
+      background: rgba($register-danger, 0.1);
+      color: $register-danger;
+      border: 1px solid rgba($register-danger, 0.3);
+    }
+    
+    &.status-cancelled {
+      background: rgba($register-info, 0.1);
+      color: $register-info;
+      border: 1px solid rgba($register-info, 0.3);
+    }
+  }
+  
+  // 加载指示器
+  .loading-indicator {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    
+    .loading-icon {
+      font-size: 32px;
+      color: $register-primary;
+      margin-bottom: 15px;
+    }
+    
+    .loading-text {
+      font-size: 14px;
+    }
+  }
+  
+  // 成功通知样式
+  .success-notification {
+    background: rgba($register-success, 0.1);
+    border: 1px solid rgba($register-success, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    
+    .success-icon {
+      color: $register-success;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    .success-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: $register-success;
+      margin: 0 0 8px 0;
+    }
+    
+    .success-message {
+      font-size: 14px;
+      color: #333;
+      margin: 0 0 15px 0;
+    }
+    
+    .success-details {
+      font-size: 13px;
+      color: #666;
+      
+      .detail-item {
+        margin-bottom: 5px;
+        
+        .detail-label {
+          font-weight: 500;
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+  
+  // 错误边界样式
+  .error-boundary {
+    text-align: center;
+    padding: 60px 20px;
+    
+    .error-icon {
+      font-size: 48px;
+      color: $register-danger;
+      margin-bottom: 20px;
+    }
+    
+    .error-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 10px 0;
+    }
+    
+    .error-message {
+      font-size: 14px;
+      color: #666;
+      margin: 0 0 20px 0;
+    }
+    
+    .error-actions {
+      .el-button {
+        margin: 0 5px;
+      }
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .register-module {
+    .register-card {
+      border-radius: 8px;
+      margin-bottom: 15px;
+      
+      .card-header {
+        padding: 20px 20px;
+        
+        .card-title {
+          font-size: 20px;
+        }
+        
+        .card-subtitle {
+          font-size: 13px;
+        }
+      }
+      
+      .card-body {
+        padding: 20px;
+      }
+    }
+    
+    .register-form {
+      .form-section {
+        margin-bottom: 25px;
+        
+        .section-title {
+          font-size: 15px;
+        }
+      }
+      
+      .el-form-item {
+        margin-bottom: 18px;
+      }
+      
+      .form-actions {
+        .el-button {
+          width: 100%;
+          margin-bottom: 10px;
+        }
+      }
+    }
+  }
+}
+
+// 动画效果
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active, .slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter, .slide-up-leave-to {
+  transform: translateY(20px);
+  opacity: 0;
+}

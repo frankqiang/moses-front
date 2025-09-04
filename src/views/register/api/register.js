@@ -7,6 +7,7 @@
  */
 
 import request from '@/utils/request'
+import { handleError } from '../utils/errorHandler'
 
 // API基础路径
 const baseURL = '/v1/auth'
@@ -194,37 +195,13 @@ function isValidPhone(phone) {
  * @param {string} error.message - 后端返回的错误消息
  * @returns {string} 用户友好的错误消息
  */
-export function handleRegistrationError(error) {
-  // 如果没有错误对象，返回默认消息
-  if (!error) {
-    return '操作失败，请稍后重试'
-  }
-
-  // 优先使用后端返回的错误消息
-  // 这是最佳实践：后端已经提供了用户友好的错误消息
-  if (error.message && error.message.trim()) {
-    return error.message
-  }
-
-  // 如果后端没有提供消息，但有错误码，则根据错误码类型提供通用提示
-  if (error.code) {
-    // 根据错误码前缀判断错误类型，提供通用提示
-    if (error.code.startsWith('VAL_')) {
-      return '请检查输入信息是否正确'
-    }
-    if (error.code.startsWith('BIZ_')) {
-      return '业务处理失败，请检查数据后重试'
-    }
-    if (error.code.startsWith('AUTH_')) {
-      return '权限验证失败，请重新登录'
-    }
-    if (error.code.includes('NETWORK') || error.code.includes('TIMEOUT')) {
-      return '网络连接异常，请检查网络后重试'
-    }
-  }
-
-  // 最后的兜底处理
-  return '操作失败，请稍后重试'
+export function handleRegistrationError(error, options = {}) {
+  // 使用统一错误处理工具
+  return handleError(error, {
+    context: '注册模块',
+    showMessage: options.showMessage !== false, // 默认显示消息
+    ...options
+  })
 }
 
 /**

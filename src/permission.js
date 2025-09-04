@@ -9,7 +9,7 @@ import sessionManager from '@/utils/sessionManager'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
-const whiteList = ['/login'] // no redirect whitelist
+const whiteList = ['/login', '/register', '/register/apply', '/register/status'] // no redirect whitelist
 
 router.beforeEach(async(to, from, next) => {
   // start progress bar

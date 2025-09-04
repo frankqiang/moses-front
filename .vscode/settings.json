@@ -16,4 +16,7 @@
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
+  "[vue]": {
+    "editor.defaultFormatter": "Vue.volar"
+  },
 }

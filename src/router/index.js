@@ -45,6 +45,30 @@ export const constantRoutes = [
     hidden: true
   },
 
+  // 用户注册页面（独立页面，不使用Layout）
+  {
+    path: '/register',
+    component: () => import('@/views/register/index'),
+    redirect: '/register/apply',
+    hidden: true,
+    name: 'Register',
+    meta: { title: '用户注册' }
+  },
+  {
+    path: '/register/apply',
+    component: () => import('@/views/register/apply'),
+    hidden: true,
+    name: 'RegisterApply',
+    meta: { title: '注册申请' }
+  },
+  {
+    path: '/register/status',
+    component: () => import('@/views/register/status'),
+    hidden: true,
+    name: 'RegisterStatus',
+    meta: { title: '申请状态查询' }
+  },
+
   {
     path: '/',
     component: Layout,
