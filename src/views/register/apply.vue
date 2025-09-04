@@ -16,7 +16,7 @@
               <el-col :span="12">
                 <FormField v-model="formData.applicantName" type="input" label="申请人姓名" prop="applicantName"
                   placeholder="请输入申请人姓名" :maxlength="255" :show-word-limit="true" :required="true"
-                  validation-type="chineseName" help-text="请输入真实姓名，用于身份验证" />
+                  help-text="请输入真实姓名，用于身份验证" />
               </el-col>
               <el-col :span="12">
                 <FormField v-model="formData.applicantEmail" type="input" input-type="email" label="申请人邮箱"
@@ -28,12 +28,12 @@
               <el-col :span="12">
                 <FormField v-model="formData.username" type="input" label="用户名" prop="username"
                   placeholder="3-50字符，支持字母、数字、下划线，不能以数字开头" :maxlength="50" :show-word-limit="true" :required="true"
-                  validation-type="username" help-text="用户名一旦创建不可修改，请谨慎填写" />
+                  help-text="用户名一旦创建不可修改，请谨慎填写" />
               </el-col>
               <el-col :span="12">
                 <FormField v-model="formData.password" type="input" :input-type="passwordVisible ? 'text' : 'password'"
                   label="密码" prop="password" placeholder="至少8位，必须包含字母和数字" :maxlength="50" :required="true"
-                  validation-type="password" :suffix-icon="passwordVisible ? 'el-icon-view' : 'el-icon-view-off'"
+                  :suffix-icon="passwordVisible ? 'el-icon-view' : 'el-icon-view-off'"
                   help-text="密码强度越高，账户越安全" @click-suffix="togglePasswordVisibility" />
               </el-col>
             </el-row>
@@ -41,7 +41,7 @@
               <el-col :span="12">
                 <FormField v-model="formData.confirmPassword" type="input" :input-type="passwordVisible ? 'text' : 'password'"
                   label="确认密码" prop="confirmPassword" placeholder="请再次输入密码" :maxlength="50" :required="true"
-                  validation-type="password" help-text="请确保两次输入的密码一致" />
+                  help-text="请确保两次输入的密码一致" />
               </el-col>
             </el-row>
           </div>
@@ -63,7 +63,7 @@
             <el-row :gutter="20">
               <el-col :span="12">
                 <FormField v-model="formData.phone" type="input" label="手机号码" prop="phone" placeholder="请输入手机号码"
-                  :maxlength="11" validation-type="phone" help-text="手机号用于重要通知和安全验证" />
+                  :maxlength="11" help-text="手机号用于重要通知和安全验证" />
               </el-col>
               <el-col :span="12">
                 <FormField v-model="formData.employeeId" type="input" label="员工ID" prop="employeeId"
@@ -128,11 +128,8 @@ import { submitRegistration, handleRegistrationError } from './api/register'
 import {
   DEFAULT_REGISTER_FORM,
   REGISTER_FORM_RULES,
-  DEPARTMENT_OPTIONS,
+  DEPARTMENT_OPTIONS
 } from './constants'
-
-// 导入工具函数
-import { showErrorMessage } from './utils/errorHandler'
 
 export default {
   name: 'RegisterApply',

@@ -93,8 +93,6 @@ import LoadingIndicator from './components/LoadingIndicator.vue'
 
 // 导入常量
 import {
-  APPLICATION_STATUS,
-  STATUS_CONFIG,
   QUERY_FORM_RULES
 } from './constants'
 
