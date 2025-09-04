@@ -17,10 +17,15 @@
         <p v-if="subtitle" class="application-subtitle">{{ subtitle }}</p>
       </div>
       <div class="header-right">
-        <ApplicationStatusTag
+        <StatusTag
           v-if="applicationData.status"
           :status="applicationData.status"
+          :text-map="statusTextMap"
+          :type-map="statusTypeMap"
+          :icon-map="statusIconMap"
           :clickable="statusClickable"
+          size="medium"
+          effect="light"
           @click="handleStatusClick"
         />
       </div>
@@ -161,13 +166,10 @@
 </template>
 
 <script>
-import ApplicationStatusTag from './ApplicationStatusTag'
-
 export default {
   name: 'ApplicationCard',
   
   components: {
-    ApplicationStatusTag
   },
   
   props: {
@@ -291,6 +293,51 @@ export default {
      */
     isEmpty() {
       return !this.applicationData || Object.keys(this.applicationData).length === 0
+    },
+
+    /**
+     * 状态文本映射
+     */
+    statusTextMap() {
+      return {
+        'pending': '待审核',
+        'under_review': '审核中',
+        'approved': '已通过',
+        'rejected': '已拒绝',
+        'expired': '已过期',
+        'cancelled': '已取消',
+        'draft': '草稿'
+      }
+    },
+
+    /**
+     * 状态类型映射
+     */
+    statusTypeMap() {
+      return {
+        'pending': 'warning',
+        'under_review': 'primary',
+        'approved': 'success',
+        'rejected': 'danger',
+        'expired': 'info',
+        'cancelled': 'info',
+        'draft': 'info'
+      }
+    },
+
+    /**
+     * 状态图标映射
+     */
+    statusIconMap() {
+      return {
+        'pending': 'el-icon-time',
+        'under_review': 'el-icon-loading',
+        'approved': 'el-icon-circle-check',
+        'rejected': 'el-icon-circle-close',
+        'expired': 'el-icon-warning-outline',
+        'cancelled': 'el-icon-remove-outline',
+        'draft': 'el-icon-edit-outline'
+      }
     }
   },
   

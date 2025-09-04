@@ -1,23 +1,14 @@
 /**
- * 注册申请状态标签组件
- * 功能描述：基于全局StatusTag组件扩展，专门用于显示注册申请的各种状态
- * 创建日期：2024-01-20
- * 修改记录：
- *   - 2024-01-20: 初始创建，实现注册申请状态标签功能
- */
+* 注册申请状态标签组件
+* 功能描述：基于全局StatusTag组件扩展，专门用于显示注册申请的各种状态
+* 创建日期：2024-01-20
+* 修改记录：
+* - 2024-01-20: 初始创建，实现注册申请状态标签功能
+*/
 <template>
-  <StatusTag
-    :status="status"
-    :text-map="statusTextMap"
-    :type-map="statusTypeMap"
-    :icon-map="statusIconMap"
-    :color-map="statusColorMap"
-    :enable-modern-features="enableModernFeatures"
-    :clickable="clickable"
-    :closable="closable"
-    v-bind="$attrs"
-    v-on="$listeners"
-  />
+  <StatusTag :status="status" :text-map="statusTextMap" :type-map="statusTypeMap" :icon-map="statusIconMap"
+    :color-map="statusColorMap" :enable-modern-features="enableModernFeatures" :clickable="clickable"
+    :closable="closable" v-bind="$attrs" v-on="$listeners" />
 </template>
 
 <script>

@@ -26,29 +26,13 @@
       <div v-if="applicationData" class="status-result">
         <div class="result-header">
           <h3 class="result-title">申请信息</h3>
-          <StatusTag
-          :status="applicationData.status"
-          :text-map="statusTextMap"
-          :type-map="statusTypeMap"
-          :icon-map="statusIconMap"
-          size="medium"
-          effect="light"
-        />
         </div>
 
         <div class="result-content">
           <!-- 使用ApplicationCard组件展示申请信息 -->
-          <ApplicationCard
-            :application-data="applicationData"
-            :show-actions="false"
-            :show-status="false"
-            :show-basic-info="true"
-            :show-optional-info="true"
-            :show-approval-info="true"
-            title="申请详细信息"
-            subtitle="以下是您的注册申请详细信息"
-            class="application-detail-card"
-          />
+          <ApplicationCard :application-data="applicationData" :show-actions="false" :show-status="true"
+            :show-basic-info="true" :show-optional-info="true" :show-approval-info="true" title="申请详细信息"
+            subtitle="以下是您的注册申请详细信息" class="application-detail-card" />
 
           <!-- 状态说明 -->
           <div class="status-description">
@@ -122,38 +106,7 @@ export default {
       queryRules: QUERY_FORM_RULES,
       queryLoading: false,
       applicationData: null,
-      showEmptyState: false,
-      
-      // 状态映射配置
-       statusTextMap: {
-         'pending': '待审核',
-         'under_review': '审核中',
-         'approved': '已通过',
-         'rejected': '已拒绝',
-         'expired': '已过期',
-         'cancelled': '已取消',
-         'draft': '草稿'
-       },
-
-       statusTypeMap: {
-         'pending': 'warning',
-         'under_review': 'primary',
-         'approved': 'success',
-         'rejected': 'danger',
-         'expired': 'info',
-         'cancelled': 'info',
-         'draft': 'info'
-       },
-
-       statusIconMap: {
-         'pending': 'el-icon-time',
-         'under_review': 'el-icon-loading',
-         'approved': 'el-icon-circle-check',
-         'rejected': 'el-icon-circle-close',
-         'expired': 'el-icon-warning-outline',
-         'cancelled': 'el-icon-remove-outline',
-         'draft': 'el-icon-edit-outline'
-       }
+      showEmptyState: false
     }
   },
   mounted() {
