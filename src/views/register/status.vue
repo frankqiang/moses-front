@@ -26,13 +26,29 @@
       <div v-if="applicationData" class="status-result">
         <div class="result-header">
           <h3 class="result-title">申请信息</h3>
-          <ApplicationStatusTag :status="applicationData.status" size="medium" />
+          <StatusTag
+          :status="applicationData.status"
+          :text-map="statusTextMap"
+          :type-map="statusTypeMap"
+          :icon-map="statusIconMap"
+          size="medium"
+          effect="light"
+        />
         </div>
 
         <div class="result-content">
           <!-- 使用ApplicationCard组件展示申请信息 -->
-          <ApplicationCard :application="applicationData" :show-actions="false" :show-status="false"
-            class="application-detail-card" />
+          <ApplicationCard
+            :application-data="applicationData"
+            :show-actions="false"
+            :show-status="false"
+            :show-basic-info="true"
+            :show-optional-info="true"
+            :show-approval-info="true"
+            title="申请详细信息"
+            subtitle="以下是您的注册申请详细信息"
+            class="application-detail-card"
+          />
 
           <!-- 状态说明 -->
           <div class="status-description">
@@ -88,20 +104,14 @@
 import { getApplicationStatus, handleRegistrationError } from './api/register'
 import { showErrorMessage, showStatusQuerySuccess } from './utils/errorHandler'
 import ApplicationCard from './components/ApplicationCard.vue'
-import ApplicationStatusTag from './components/ApplicationStatusTag.vue'
 import LoadingIndicator from './components/LoadingIndicator.vue'
-
-// 导入常量
-import {
-  QUERY_FORM_RULES
-} from './constants'
+import { QUERY_FORM_RULES } from './constants'
 
 export default {
   name: 'RegisterStatus',
 
   components: {
     ApplicationCard,
-    ApplicationStatusTag,
     LoadingIndicator
   },
   data() {
@@ -112,7 +122,38 @@ export default {
       queryRules: QUERY_FORM_RULES,
       queryLoading: false,
       applicationData: null,
-      showEmptyState: false
+      showEmptyState: false,
+      
+      // 状态映射配置
+       statusTextMap: {
+         'pending': '待审核',
+         'under_review': '审核中',
+         'approved': '已通过',
+         'rejected': '已拒绝',
+         'expired': '已过期',
+         'cancelled': '已取消',
+         'draft': '草稿'
+       },
+
+       statusTypeMap: {
+         'pending': 'warning',
+         'under_review': 'primary',
+         'approved': 'success',
+         'rejected': 'danger',
+         'expired': 'info',
+         'cancelled': 'info',
+         'draft': 'info'
+       },
+
+       statusIconMap: {
+         'pending': 'el-icon-time',
+         'under_review': 'el-icon-loading',
+         'approved': 'el-icon-circle-check',
+         'rejected': 'el-icon-circle-close',
+         'expired': 'el-icon-warning-outline',
+         'cancelled': 'el-icon-remove-outline',
+         'draft': 'el-icon-edit-outline'
+       }
     }
   },
   mounted() {
