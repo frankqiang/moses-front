@@ -37,6 +37,13 @@
                   help-text="密码强度越高，账户越安全" @click-suffix="togglePasswordVisibility" />
               </el-col>
             </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <FormField v-model="formData.confirmPassword" type="input" :input-type="passwordVisible ? 'text' : 'password'"
+                  label="确认密码" prop="confirmPassword" placeholder="请再次输入密码" :maxlength="50" :required="true"
+                  validation-type="password" help-text="请确保两次输入的密码一致" />
+              </el-col>
+            </el-row>
           </div>
 
           <!-- 可选信息 -->
@@ -44,12 +51,12 @@
             <h3 class="section-title">可选信息</h3>
             <el-row :gutter="20">
               <el-col :span="12">
-                <FormField v-model="formData.departmentId" type="select" label="部门" prop="departmentId"
+                <FormField v-model="formData.department" type="select" label="部门" prop="department"
                   placeholder="请选择部门" :options="departmentOptions" :filterable="true" help-text="选择您所属的部门，便于管理员审核" />
               </el-col>
 
               <el-col :span="12">
-                <FormField v-model="formData.jobTitle" type="input" label="职位名称" prop="jobTitle" placeholder="请输入职位名称"
+                <FormField v-model="formData.position" type="input" label="职位名称" prop="position" placeholder="请输入职位名称"
                   :maxlength="100" :show-word-limit="true" help-text="填写您的职位信息，便于权限分配" />
               </el-col>
             </el-row>
@@ -65,11 +72,7 @@
             </el-row>
             <el-row :gutter="20">
               <el-col :span="12">
-                <FormField v-model="formData.employeeId" type="input" label="员工ID" prop="employeeId"
-                  placeholder="请输入员工ID" :maxlength="50" :show-word-limit="true" help-text="如果您已是公司员工，请填写员工ID" />
-              </el-col>
-              <el-col :span="12">
-                <FormField v-model="formData.applicationReason" type="textarea" label="申请原因" prop="applicationReason"
+                <FormField v-model="formData.reason" type="textarea" label="申请原因" prop="reason"
                   placeholder="请输入申请原因" :maxlength="500" :show-word-limit="true" :rows="3"
                   help-text="详细说明申请原因有助于加快审核进度" />
               </el-col>
@@ -95,10 +98,7 @@
         </el-form>
       </div>
 
-      <!-- 表单验证提示组件 -->
-      <ValidationMessage :visible="validationErrors.length > 0" :message-list="validationErrors"
-        :show-summary="validationErrors.length > 3" :closable="true" @close="clearValidationErrors"
-        @item-close="removeValidationError" class="validation-container" />
+
 
       <!-- 成功提示组件 -->
       <SuccessNotification :visible.sync="successDialog.visible" :title="successDialog.title"
@@ -116,7 +116,7 @@
 import FormField from './components/FormField.vue'
 import LoadingIndicator from './components/LoadingIndicator.vue'
 import SuccessNotification from './components/SuccessNotification.vue'
-import ValidationMessage from './components/ValidationMessage.vue'
+
 import ErrorBoundary from './components/ErrorBoundary.vue'
 
 import LoginHeader from '../login/components/LoginHeader.vue'
@@ -142,18 +142,17 @@ export default {
     FormField,
     LoadingIndicator,
     SuccessNotification,
-    ValidationMessage,
+
     ErrorBoundary
   },
 
   data() {
     return {
       formData: { ...DEFAULT_REGISTER_FORM },
-      formRules: REGISTER_FORM_RULES,
       passwordVisible: false,
       submitLoading: false,
       applicationId: '',
-      validationErrors: [],
+
       successDialog: {
         visible: false,
         title: '申请提交成功',
@@ -170,6 +169,11 @@ export default {
       departmentOptions: DEPARTMENT_OPTIONS
     }
   },
+  computed: {
+    formRules() {
+      return REGISTER_FORM_RULES(this.formData)
+    }
+  },
   methods: {
     /**
      * 切换密码可见性
@@ -183,16 +187,10 @@ export default {
      */
     async handleSubmit() {
       try {
-        // 先进行表单验证
-        if (!this.validateForm()) {
-          this.$message.warning('请检查表单中的错误信息')
-          return
-        }
-
         // 表单验证
         const valid = await this.$refs.registerForm.validate()
         if (!valid) {
-          showErrorMessage('请填写完整的申请信息')
+          this.$message.warning('请检查表单中的错误信息')
           return
         }
 
@@ -251,7 +249,6 @@ export default {
     handleReset() {
       this.$refs.registerForm.resetFields()
       this.passwordVisible = false
-      this.clearValidationErrors()
     },
 
     /**
@@ -267,94 +264,7 @@ export default {
       }
     },
 
-    /**
-     * 清除所有验证错误
-     */
-    clearValidationErrors() {
-      this.validationErrors = []
-    },
 
-    /**
-     * 移除单个验证错误
-     */
-    removeValidationError(index) {
-      this.validationErrors.splice(index, 1)
-    },
-
-    /**
-     * 添加验证错误
-     */
-    addValidationError(error) {
-      // 避免重复添加相同的错误
-      const exists = this.validationErrors.some(existing =>
-        existing.field === error.field && existing.message === error.message
-      )
-
-      if (!exists) {
-        this.validationErrors.push(error)
-      }
-    },
-
-    /**
-     * 处理表单验证
-     */
-    validateForm() {
-      this.clearValidationErrors()
-
-      // 验证必填字段
-      const requiredFields = [
-        { field: 'applicantName', label: '申请人姓名' },
-        { field: 'idNumber', label: '身份证号' },
-        { field: 'phone', label: '手机号码' },
-        { field: 'email', label: '邮箱地址' },
-        { field: 'applicationType', label: '申请类型' },
-        { field: 'department', label: '申请部门' },
-        { field: 'reason', label: '申请原因' }
-      ]
-
-      requiredFields.forEach(({ field, label }) => {
-        if (!this.formData[field] || !this.formData[field].trim()) {
-          this.addValidationError({
-            id: `required_${field}`,
-            field,
-            message: `${label}不能为空`,
-            type: 'error'
-          })
-        }
-      })
-
-      // 验证邮箱格式
-      if (this.formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formData.email)) {
-        this.addValidationError({
-          id: 'email_format',
-          field: 'email',
-          message: '邮箱格式不正确',
-          type: 'error'
-        })
-      }
-
-      // 验证手机号格式
-      if (this.formData.phone && !/^1[3-9]\d{9}$/.test(this.formData.phone)) {
-        this.addValidationError({
-          id: 'phone_format',
-          field: 'phone',
-          message: '手机号格式不正确',
-          type: 'error'
-        })
-      }
-
-      // 验证身份证号格式
-      if (this.formData.idNumber && !/^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/.test(this.formData.idNumber)) {
-        this.addValidationError({
-          id: 'id_format',
-          field: 'idNumber',
-          message: '身份证号格式不正确',
-          type: 'error'
-        })
-      }
-
-      return this.validationErrors.length === 0
-    },
 
     /**
       * 跳转到状态查询页面
@@ -398,9 +308,6 @@ export default {
       // 重置表单状态
       this.handleReset()
 
-      // 清除错误状态
-      this.clearValidationErrors()
-
       this.$message.info('正在重试...')
     },
 
@@ -442,7 +349,7 @@ export default {
 <style lang="scss" scoped>
 .register-apply-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-image: url('../../assets/login-bg.svg');
   display: flex;
   align-items: center;
   justify-content: center;
@@ -455,7 +362,7 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   padding: 40px;
   width: 100%;
-  max-width: 600px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 

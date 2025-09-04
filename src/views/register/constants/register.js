@@ -21,7 +21,7 @@ export const DEFAULT_REGISTER_FORM = {
 // 申请状态映射
 export const APPLICATION_STATUS = {
   PENDING: 'pending',
-  APPROVED: 'approved', 
+  APPROVED: 'approved',
   REJECTED: 'rejected',
   CANCELLED: 'cancelled'
 }
@@ -36,7 +36,7 @@ export const STATUS_CONFIG = {
   },
   [APPLICATION_STATUS.APPROVED]: {
     text: '已通过',
-    type: 'success', 
+    type: 'success',
     icon: 'el-icon-circle-check',
     color: '#67C23A'
   },
@@ -55,7 +55,7 @@ export const STATUS_CONFIG = {
 }
 
 // 表单验证规则
-export const REGISTER_FORM_RULES = {
+export const REGISTER_FORM_RULES = (formData) => ({
   applicantName: [
     { required: true, message: '请输入申请人姓名', trigger: 'blur' },
     { min: 2, max: 50, message: '姓名长度必须在 2 到 50 个字符之间', trigger: 'blur' },
@@ -92,7 +92,19 @@ export const REGISTER_FORM_RULES = {
     }
   ],
   confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' }
+    { required: true, message: '请确认密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value === '') {
+          callback(new Error('请再次输入密码'))
+        } else if (value !== formData.password) {
+          callback(new Error('两次输入密码不一致!'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
   ],
   phone: [
     {
@@ -107,8 +119,17 @@ export const REGISTER_FORM_RULES = {
       message: '员工ID格式不正确（6-20位大写字母和数字）',
       trigger: 'blur'
     }
+  ],
+  department: [
+    { required: false, message: '请选择部门', trigger: 'change' }
+  ],
+  position: [
+    { min: 2, max: 100, message: '职位名称长度必须在 2 到 100 个字符之间', trigger: 'blur' }
+  ],
+  reason: [
+    { min: 10, max: 500, message: '申请原因长度必须在 10 到 500 个字符之间', trigger: 'blur' }
   ]
-}
+})
 
 // 查询表单验证规则
 export const QUERY_FORM_RULES = {
