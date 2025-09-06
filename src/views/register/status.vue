@@ -84,7 +84,7 @@
 
 <script>
 import { getApplicationStatus, handleRegistrationError } from './api/register'
-import { showErrorMessage, showStatusQuerySuccess } from './utils/errorHandler'
+import { showStatusQuerySuccess } from './utils/errorHandler'
 import ApplicationCard from './components/ApplicationCard.vue'
 import LoadingIndicator from './components/LoadingIndicator.vue'
 import { QUERY_FORM_RULES } from './constants'

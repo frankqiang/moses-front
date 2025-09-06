@@ -7,41 +7,52 @@
           <login-header />
         </div>
 
-        <el-form ref="registerForm" :model="formData" :rules="formRules" label-width="120px" class="register-form"
-          @submit.native.prevent="handleSubmit">
+        <enhanced-form ref="enhancedForm" :data="formData" :rules="formRules" mode="create" label-width="120px"
+          :show-footer="true" :clear-validate-on-data-update="true" :disable-initial-validation="true"
+          :validate-on-data-change="false" @submit="handleFormSubmit" @reset="handleFormReset">
           <!-- 基本信息 -->
           <div class="form-section">
             <h3 class="section-title">基本信息</h3>
             <el-row :gutter="20">
               <el-col :span="12">
-                <FormField v-model="formData.applicantName" type="input" label="申请人姓名" prop="applicantName"
-                  placeholder="请输入申请人姓名" :maxlength="255" :show-word-limit="true" :required="true"
-                  help-text="请输入真实姓名，用于身份验证" />
+                <el-form-item label="申请人姓名" prop="applicantName">
+                  <el-input v-model="formData.applicantName" placeholder="请输入申请人姓名" :maxlength="255"
+                    :show-word-limit="true" />
+                  <div class="help-text">请输入真实姓名，用于身份验证</div>
+                </el-form-item>
               </el-col>
               <el-col :span="12">
-                <FormField v-model="formData.applicantEmail" type="input" input-type="email" label="申请人邮箱"
-                  prop="applicantEmail" placeholder="请输入申请人邮箱" :required="true"
-                  help-text="邮箱将用于接收申请状态通知" />
-              </el-col>
-            </el-row>
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <FormField v-model="formData.username" type="input" label="用户名" prop="username"
-                  placeholder="3-50字符，支持字母、数字、下划线，不能以数字开头" :maxlength="50" :show-word-limit="true" :required="true"
-                  help-text="用户名一旦创建不可修改，请谨慎填写" />
-              </el-col>
-              <el-col :span="12">
-                <FormField v-model="formData.password" type="input" :input-type="passwordVisible ? 'text' : 'password'"
-                  label="密码" prop="password" placeholder="至少8位，必须包含字母和数字" :maxlength="50" :required="true"
-                  :suffix-icon="passwordVisible ? 'el-icon-view' : 'el-icon-view-off'"
-                  help-text="密码强度越高，账户越安全" @click-suffix="togglePasswordVisibility" />
+                <el-form-item label="申请人邮箱" prop="applicantEmail">
+                  <el-input v-model="formData.applicantEmail" type="email" placeholder="请输入申请人邮箱" />
+                  <div class="help-text">邮箱将用于接收申请状态通知</div>
+                </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="20">
               <el-col :span="12">
-                <FormField v-model="formData.confirmPassword" type="input" :input-type="passwordVisible ? 'text' : 'password'"
-                  label="确认密码" prop="confirmPassword" placeholder="请再次输入密码" :maxlength="50" :required="true"
-                  help-text="请确保两次输入的密码一致" />
+                <el-form-item label="用户名" prop="username">
+                  <el-input v-model="formData.username" placeholder="3-50字符，支持字母、数字、下划线，不能以数字开头" :maxlength="50"
+                    :show-word-limit="true" />
+                  <div class="help-text">用户名一旦创建不可修改，请谨慎填写</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="密码" prop="password">
+                  <el-input v-model="formData.password" :type="passwordVisible ? 'text' : 'password'"
+                    placeholder="至少8位，必须包含字母和数字" :maxlength="50"
+                    :suffix-icon="passwordVisible ? 'el-icon-view' : 'el-icon-view-off'"
+                    @click="togglePasswordVisibility" />
+                  <div class="help-text">密码强度越高，账户越安全</div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="确认密码" prop="confirmPassword">
+                  <el-input v-model="formData.confirmPassword" :type="passwordVisible ? 'text' : 'password'"
+                    placeholder="请再次输入密码" :maxlength="50" />
+                  <div class="help-text">请确保两次输入的密码一致</div>
+                </el-form-item>
               </el-col>
             </el-row>
           </div>
@@ -51,43 +62,47 @@
             <h3 class="section-title">可选信息</h3>
             <el-row :gutter="20">
               <el-col :span="12">
-                <FormField v-model="formData.department" type="select" label="部门" prop="department"
-                  placeholder="请选择部门" :options="departmentOptions" :filterable="true" help-text="选择您所属的部门，便于管理员审核" />
+                <el-form-item label="部门" prop="department">
+                  <el-select v-model="formData.department" placeholder="请选择部门" filterable style="width: 100%">
+                    <el-option v-for="option in departmentOptions" :key="option.value" :label="option.label"
+                      :value="option.value" />
+                  </el-select>
+                  <div class="help-text">选择您所属的部门，便于管理员审核</div>
+                </el-form-item>
               </el-col>
 
               <el-col :span="12">
-                <FormField v-model="formData.position" type="input" label="职位名称" prop="position" placeholder="请输入职位名称"
-                  :maxlength="100" :show-word-limit="true" help-text="填写您的职位信息，便于权限分配" />
+                <el-form-item label="职位名称" prop="position">
+                  <el-input v-model="formData.position" placeholder="请输入职位名称" :maxlength="100"
+                    :show-word-limit="true" />
+                  <div class="help-text">填写您的职位信息，便于权限分配</div>
+                </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="20">
               <el-col :span="12">
-                <FormField v-model="formData.phone" type="input" label="手机号码" prop="phone" placeholder="请输入手机号码"
-                  :maxlength="11" help-text="手机号用于重要通知和安全验证" />
+                <el-form-item label="手机号码" prop="phone">
+                  <el-input v-model="formData.phone" placeholder="请输入手机号码" :maxlength="11" />
+                  <div class="help-text">手机号用于重要通知和安全验证</div>
+                </el-form-item>
               </el-col>
               <el-col :span="12">
-                <FormField v-model="formData.employeeId" type="input" label="员工ID" prop="employeeId"
-                  placeholder="请输入员工ID" :maxlength="50" :show-word-limit="true" help-text="如果您已是公司员工，请填写员工ID" />
+                <el-form-item label="员工ID" prop="employeeId">
+                  <el-input v-model="formData.employeeId" placeholder="请输入员工ID" :maxlength="50"
+                    :show-word-limit="true" />
+                  <div class="help-text">如果您已是公司员工，请填写员工ID</div>
+                </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="20">
               <el-col :span="12">
-                <FormField v-model="formData.reason" type="textarea" label="申请原因" prop="reason"
-                  placeholder="请输入申请原因" :maxlength="500" :show-word-limit="true" :rows="3"
-                  help-text="详细说明申请原因有助于加快审核进度" />
+                <el-form-item label="申请原因" prop="reason">
+                  <el-input v-model="formData.reason" type="textarea" placeholder="请输入申请原因" :maxlength="500"
+                    :show-word-limit="true" :rows="3" />
+                  <div class="help-text">详细说明申请原因有助于加快审核进度</div>
+                </el-form-item>
               </el-col>
             </el-row>
-          </div>
-
-          <!-- 提交按钮 -->
-          <div class="form-actions">
-            <LoadingIndicator v-if="submitLoading" text="正在提交申请..." />
-            <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
-              {{ submitLoading ? '提交中...' : '提交申请' }}
-            </el-button>
-            <el-button @click="handleReset">
-              重置表单
-            </el-button>
           </div>
 
           <!-- 登录入口 -->
@@ -95,7 +110,20 @@
             <span class="login-text">已有账号？</span>
             <router-link to="/login" class="login-link">立即登录</router-link>
           </div>
-        </el-form>
+
+          <!-- 自定义底部按钮 -->
+          <template #footer>
+            <div class="form-actions">
+              <LoadingIndicator v-if="submitLoading" text="正在提交申请..." />
+              <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+                {{ submitLoading ? '提交中...' : '提交申请' }}
+              </el-button>
+              <el-button @click="handleReset">
+                重置表单
+              </el-button>
+            </div>
+          </template>
+        </enhanced-form>
       </div>
 
 
@@ -113,9 +141,9 @@
 
 <script>
 // 导入组件
-import FormField from './components/FormField.vue'
 import LoadingIndicator from './components/LoadingIndicator.vue'
 import SuccessNotification from './components/SuccessNotification.vue'
+import EnhancedForm from '@/components/EnhancedForm'
 
 import ErrorBoundary from './components/ErrorBoundary.vue'
 
@@ -136,9 +164,9 @@ export default {
 
   components: {
     LoginHeader,
-    FormField,
     LoadingIndicator,
     SuccessNotification,
+    EnhancedForm,
 
     ErrorBoundary
   },
@@ -167,6 +195,10 @@ export default {
     }
   },
   computed: {
+    /**
+     * 表单验证规则
+     * @returns {Object} 验证规则对象
+     */
     formRules() {
       return REGISTER_FORM_RULES(this.formData)
     }
@@ -185,7 +217,7 @@ export default {
     async handleSubmit() {
       try {
         // 表单验证
-        const valid = await this.$refs.registerForm.validate()
+        const valid = await this.$refs.enhancedForm.validate()
         if (!valid) {
           this.$message.warning('请检查表单中的错误信息')
           return
@@ -244,8 +276,22 @@ export default {
      * 重置表单
      */
     handleReset() {
-      this.$refs.registerForm.resetFields()
+      this.$refs.enhancedForm.resetFields()
       this.passwordVisible = false
+    },
+
+    /**
+     * 处理表单提交（enhanced-form组件回调）
+     */
+    handleFormSubmit() {
+      this.handleSubmit()
+    },
+
+    /**
+     * 处理表单重置（enhanced-form组件回调）
+     */
+    handleFormReset() {
+      this.handleReset()
     },
 
     /**
@@ -279,7 +325,9 @@ export default {
      */
     submitAnother() {
       this.successDialog.visible = false
-      this.handleReset()
+      this.$refs.enhancedForm.resetFields()
+      this.formData = { ...DEFAULT_REGISTER_FORM }
+      this.passwordVisible = false
       this.applicationId = ''
     },
 
@@ -353,6 +401,8 @@ export default {
   padding: 20px;
 }
 
+
+
 .register-card {
   background: white;
   border-radius: 12px;
@@ -381,9 +431,21 @@ export default {
   }
 }
 
+// 帮助文本样式
+.help-text {
+  font-size: 12px;
+  color: #535457;
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
 .register-form {
+
+
+
   .form-section {
     margin-bottom: 32px;
+
 
     .section-title {
       font-size: 18px;
@@ -394,6 +456,8 @@ export default {
       border-bottom: 2px solid #ecf0f1;
     }
   }
+
+
 
   .password-toggle {
     cursor: pointer;
@@ -496,6 +560,8 @@ export default {
       text-decoration: underline;
     }
   }
+
+
 }
 
 // 响应式设计

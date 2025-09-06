@@ -37,8 +37,6 @@ export const constantRoutes = [
     hidden: true
   },
 
-
-
   {
     path: '/404',
     component: () => import('@/views/404'),
@@ -151,13 +149,13 @@ export const constantRoutes = [
             path: 'operations',
             component: () => import('@/views/master-data/process-management/operations/index'),
             name: 'Operations',
-            meta: { title: '基础工序定义', }
+            meta: { title: '基础工序定义' }
           },
           {
             path: 'routing',
             name: 'RoutingManagement',
             component: () => import('@/views/master-data/process-management/routing/index'),
-            meta: { title: '工艺路线编排',  }
+            meta: { title: '工艺路线编排' }
           }
         ]
       },
