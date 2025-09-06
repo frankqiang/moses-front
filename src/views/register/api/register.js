@@ -10,7 +10,7 @@ import request from '@/utils/request'
 import { handleError } from '../utils/errorHandler'
 
 // API基础路径
-const baseURL = '/auth'
+const baseURL = '/v1/auth'
 
 /**
  * 提交注册申请
