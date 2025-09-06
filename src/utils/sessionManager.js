@@ -14,7 +14,7 @@ import SessionExpiryDialog from '@/components/SessionExpiryDialog'
 // 会话管理配置
 const SESSION_CONFIG = {
   // 会话超时时间：1分钟（测试配置）
-  SESSION_TIMEOUT: 1 * 60 * 1000,
+  SESSION_TIMEOUT: 5 * 60 * 1000,
   // 警告提前时间：20秒（测试配置）
   WARNING_TIME: 20 * 1000,
   // 活动检查间隔：5秒（测试配置）

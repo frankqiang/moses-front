@@ -363,6 +363,12 @@ export default {
 
     // 切换设备状态
     handleStatusChange(row) {
+      // 检查 row 是否存在，避免访问 undefined 对象的属性
+      if (!row) {
+        this.$message.error('数据异常，请刷新页面重试')
+        return
+      }
+
       const newStatus = row.status === 1 ? 0 : 1
       const statusText = newStatus === 1 ? '启用' : '禁用'
 

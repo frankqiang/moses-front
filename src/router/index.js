@@ -79,6 +79,26 @@ export const constantRoutes = [
     }]
   },
 
+  // 用户管理模块
+  {
+    path: '/user-management',
+    component: Layout,
+    redirect: '/user-management/pending-applications',
+    name: 'UserManagement',
+    meta: {
+      title: '用户管理',
+      icon: 'el-icon-user'
+    },
+    children: [
+      {
+        path: 'pending-applications',
+        name: 'PendingApplications',
+        component: () => import('@/views/register/pending'),
+        meta: { title: '待审批申请', icon: 'el-icon-s-check' }
+      }
+    ]
+  },
+
   // 主数据管理模块
   {
     path: '/master-data',

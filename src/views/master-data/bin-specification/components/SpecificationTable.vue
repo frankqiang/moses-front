@@ -293,6 +293,11 @@ export default {
 
     // 获取操作按钮配置
     getActionButtons(row) {
+      // 检查 row 是否存在，避免访问 undefined 对象的属性
+      if (!row) {
+        return generateTableButtons(['edit', 'view'])
+      }
+
       // 创建自定义状态切换按钮
       const statusToggleButton = {
         text: row.status === 1 ? '禁用' : '启用',

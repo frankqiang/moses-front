@@ -267,6 +267,11 @@ export default {
   methods: {
     // 获取操作按钮配置
     getActionButtons(row) {
+      // 检查 row 是否存在，避免访问 undefined 对象的属性
+      if (!row) {
+        return generateTableButtons(['edit'])
+      }
+
       // 使用预设按钮生成操作按钮
       const buttons = generateTableButtons(['edit'])
 

@@ -249,6 +249,12 @@ export default {
 
     // 状态变更
     handleStatusChange(row) {
+      // 检查 row 是否存在，避免访问 undefined 对象的属性
+      if (!row) {
+        this.$message.error('数据异常，请刷新页面重试')
+        return
+      }
+
       const status = row.status === 1 ? 0 : 1
       const statusText = status === 1 ? '启用' : '禁用'
 

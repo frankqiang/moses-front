@@ -10,7 +10,7 @@ import request from '@/utils/request'
 import { handleError } from '../utils/errorHandler'
 
 // API基础路径
-const baseURL = '/v1/auth'
+const baseURL = '/auth'
 
 /**
  * 提交注册申请
@@ -88,6 +88,53 @@ export function submitRegistration(data) {
         ? data.applicationReason.trim()
         : undefined
     }
+  })
+}
+
+/**
+ * 获取待审批申请列表
+ * @param {Object} params - 查询参数
+ * @param {number} [params.page=1] - 页码
+ * @param {number} [params.limit=10] - 每页数量
+ * @param {string} [params.search] - 搜索关键词（申请人姓名、邮箱或用户名）
+ * @param {string} [params.startDate] - 申请开始时间
+ * @param {string} [params.endDate] - 申请结束时间
+ * @param {string} [params.sortBy] - 排序字段
+ * @param {string} [params.sortOrder] - 排序方式，'ASC'或'DESC'
+ * @returns {Promise} 返回待审批申请列表数据
+ * @throws {ApiError} 可能抛出的错误：
+ *   - VAL_001: 分页参数无效
+ *   - AUTH_001: 权限不足，需要管理员权限
+ */
+export function getPendingApplications(params = {}) {
+  // 参数验证
+  const queryParams = {
+    page: params.page || 1,
+    limit: params.limit || 10
+  }
+
+  // 可选参数
+  if (params.search && params.search.trim()) {
+    queryParams.search = params.search.trim()
+  }
+  if (params.startDate) {
+    queryParams.startDate = params.startDate
+  }
+  if (params.endDate) {
+    queryParams.endDate = params.endDate
+  }
+  // 添加排序参数
+  if (params.sortBy) {
+    queryParams.sortBy = params.sortBy
+  }
+  if (params.sortOrder) {
+    queryParams.sortOrder = params.sortOrder
+  }
+
+  return request({
+    url: `${baseURL}/register-applications/pending`,
+    method: 'get',
+    params: queryParams
   })
 }
 
@@ -257,11 +304,73 @@ export function isValidApplicationId(id) {
 }
 
 /**
+ * 批准注册申请
+ * @param {string} id - 申请ID
+ * @param {Object} data - 批准数据
+ * @param {string} [data.notes] - 审批备注（可选）
+ * @returns {Promise} 返回批准结果
+ * @throws {ApiError} 可能抛出的错误：
+ *   - VAL_001: 申请ID不能为空
+ *   - BIZ_018: 申请记录不存在
+ *   - AUTH_001: 权限不足，需要管理员权限
+ */
+export function approveApplication(id, data = {}) {
+  // 参数验证
+  if (!id || id.trim() === '') {
+    throw new Error('申请ID不能为空')
+  }
+
+  return request({
+    url: `${baseURL}/register-application/${id.trim()}/approve`,
+    method: 'put',
+    data: {
+      notes: data.notes ? data.notes.trim() : undefined
+    }
+  })
+}
+
+/**
+ * 拒绝注册申请
+ * @param {string} id - 申请ID
+ * @param {Object} data - 拒绝数据
+ * @param {string} data.reason - 拒绝理由（必填）
+ * @param {string} [data.notes] - 审批备注（可选）
+ * @returns {Promise} 返回拒绝结果
+ * @throws {ApiError} 可能抛出的错误：
+ *   - VAL_001: 申请ID不能为空
+ *   - VAL_001: 拒绝理由不能为空
+ *   - BIZ_018: 申请记录不存在
+ *   - AUTH_001: 权限不足，需要管理员权限
+ */
+export function rejectApplication(id, data) {
+  // 参数验证
+  if (!id || id.trim() === '') {
+    throw new Error('申请ID不能为空')
+  }
+
+  if (!data || !data.reason || data.reason.trim() === '') {
+    throw new Error('拒绝理由不能为空')
+  }
+
+  return request({
+    url: `${baseURL}/register-application/${id.trim()}/reject`,
+    method: 'put',
+    data: {
+      reason: data.reason.trim(),
+      notes: data.notes ? data.notes.trim() : undefined
+    }
+  })
+}
+
+/**
  * 导出默认配置
  */
 export default {
   submitRegistration,
   getApplicationStatus,
+  getPendingApplications,
+  approveApplication,
+  rejectApplication,
   handleRegistrationError,
   formatApplicationStatus,
   isValidApplicationId
