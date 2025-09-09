@@ -11,63 +11,26 @@
 <template>
   <div class="application-table">
     <!-- 使用全局表格工具栏组件 -->
-    <table-toolbar
-      ref="toolbar"
-      :enable-column-settings="true"
-      :column-options="columnOptions"
-      :storage-key="columnSettingsKey"
-      :default-visible-columns="defaultVisibleColumns"
-      :enable-batch-actions="true"
-      :selected-rows="selectedRows"
-      :enable-export="true"
-      :export-api="exportApiFunction"
-      :export-params="exportParams"
-      :hide-status-buttons="true"
-      :table-data="data"
-      @refresh="handleRefresh"
-      @column-change="handleColumnChange"
-      @batch-delete="handleBatchDelete"
-      @export-success="handleExportSuccess"
-    >
-      <template #toolbar-left>
-        <div class="table-title">
-          <i class="el-icon-user" />
-          待审批申请列表
-          <span class="total-count">(共 {{ total }} 条)</span>
-        </div>
-      </template>
+    <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
+      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true"
+      :selected-rows="selectedRows" :enable-export="true" :export-api="exportApiFunction" :export-params="exportParams"
+      :hide-status-buttons="true" :custom-actions="customBatchActions" @refresh="handleRefresh"
+      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @custom-action="handleCustomBatchAction"
+      @export-success="handleExportSuccess">
+
     </table-toolbar>
 
     <!-- 使用全局BaseTable组件 -->
-    <BaseTable
-      ref="baseTable"
-      :data="data"
-      :loading="loading"
-      :load-error="loadError"
-      :columns="baseTableColumns"
-      :pagination="paginationConfig"
-      :show-selection="true"
-      :show-index="true"
-      :index-label="'序号'"
-      :empty-text="emptyText"
-      :enable-virtual-scroll="enableVirtualScroll"
-      :row-class-name="getRowClassName"
-      :default-sort="{ prop: 'createdAt', order: 'descending' }"
-      @pagination-change="handlePaginationChange"
-      @sort-change="handleSortChange"
-      @selection-change="handleSelectionChange"
-      @row-click="handleRowClick"
-      @data-error="handleDataError"
-      @format-error="handleFormatError"
-    >
+    <BaseTable ref="baseTable" :data="data" :loading="loading" :load-error="loadError" :columns="baseTableColumns"
+      :pagination="paginationConfig" :show-selection="true" :show-index="true" :index-label="'序号'"
+      :empty-text="emptyText" :enable-virtual-scroll="enableVirtualScroll" :row-class-name="getRowClassName"
+      :default-sort="{ prop: 'createdAt', order: 'descending' }" @pagination-change="handlePaginationChange"
+      @sort-change="handleSortChange" @selection-change="handleSelectionChange" @row-click="handleRowClick"
+      @data-error="handleDataError" @format-error="handleFormatError">
       <!-- 状态列 -->
       <template #status="{ row }">
-        <StatusTag
-          :status="row.status || 'unknown'"
-          :text-map="statusTextMap"
-          :type-map="statusTypeMap"
-          :default-text="'数据错误'"
-        />
+        <StatusTag :status="row.status || 'unknown'" :text-map="statusTextMap" :type-map="statusTypeMap"
+          :default-text="'数据错误'" />
       </template>
 
       <!-- 操作列 -->
@@ -188,7 +151,30 @@ export default {
       // 当前页码
       currentPage: 1,
       // 每页条数
-      pageSize: 10
+      pageSize: 10,
+      // 自定义批量操作配置
+      customBatchActions: [
+        {
+          key: 'batch-approve',
+          label: '批量批准',
+          icon: 'el-icon-check',
+          type: 'success',
+          disabled: false,
+          needConfirm: false,
+          successMessage: false,
+          minSelection: 1
+        },
+        {
+          key: 'batch-reject',
+          label: '批量拒绝',
+          icon: 'el-icon-close',
+          type: 'danger',
+          disabled: false,
+          needConfirm: false,
+          successMessage: false,
+          minSelection: 1
+        }
+      ]
     }
   },
   computed: {
@@ -379,7 +365,6 @@ export default {
      * @description 更新选中行状态，用于批量操作
      */
     handleSelectionChange(selection) {
-      console.log('选择变化:', selection)
       this.selectedRows = selection
       this.$emit('selection-change', selection)
     },
@@ -436,7 +421,6 @@ export default {
      * @description 当表格排序发生变化时，向父组件发送事件
      */
     handleSortChange(sortInfo) {
-      console.log('表格排序变化:', sortInfo)
       this.$emit('sort-change', sortInfo)
     },
 
@@ -530,6 +514,29 @@ export default {
     },
 
     /**
+     * 处理自定义批量操作
+     * @param {Object} action - 操作配置对象
+     * @description 处理批量审批操作，包括批量批准和批量拒绝
+     */
+    handleCustomBatchAction(action) {
+      if (!this.selectedRows || this.selectedRows.length === 0) {
+        this.$message.warning('请先选择要操作的申请')
+        return
+      }
+
+      switch (action.key) {
+        case 'batch-approve':
+          this.$emit('batch-approve', this.selectedRows)
+          break
+        case 'batch-reject':
+          this.$emit('batch-reject', this.selectedRows)
+          break
+        default:
+          console.warn('未知的批量操作类型:', action.key)
+      }
+    },
+
+    /**
      * 执行批量删除（防抖版本）
      * @param {Array} rows - 要删除的行数据
      * @description 发出事件让父组件处理批量删除逻辑
@@ -548,6 +555,40 @@ export default {
       this.$message.success(`导出成功：${result.filename || '数据已导出'}`)
     },
 
+    /**
+     * 切换全选状态
+     * @description 切换表格的全选/取消全选状态
+     */
+    toggleAllSelection() {
+      if (this.$refs.baseTable) {
+        this.$refs.baseTable.toggleAllSelection()
+      }
+    },
+
+    /**
+     * 清空选择
+     * @description 清空所有选中的行
+     */
+    clearSelection() {
+      if (this.$refs.baseTable) {
+        this.$refs.baseTable.clearSelection()
+      }
+    },
+
+    /**
+     * 设置行选中状态
+     * @param {Object} row - 行数据
+     * @param {Boolean} selected - 是否选中
+     * @description 设置指定行的选中状态
+     */// 设置行选中状态
+    toggleRowSelection(row, selected) {
+      if (this.$refs.baseTable) {
+        this.$refs.baseTable.toggleRowSelection(row, selected)
+      }
+    },
+
+
+
     // 错误处理增强
     handleError(error, context = '操作') {
       console.error(`${context}失败:`, error)
@@ -555,18 +596,7 @@ export default {
       this.$message.error(message)
     },
 
-    // 批量操作确认
-    confirmBatchAction(action, selectedCount) {
-      return this.$confirm(
-        `确定要${action} ${selectedCount} 条记录吗？`,
-        '批量操作确认',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }
-      )
-    },
+
 
     // 获取用户头像
     getUserAvatar(user) {
@@ -671,25 +701,7 @@ export default {
     }
   }
 
-  .table-title {
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    font-weight: 500;
-    color: #303133;
 
-    i {
-      margin-right: 8px;
-      color: #409eff;
-    }
-
-    .total-count {
-      margin-left: 8px;
-      font-size: 14px;
-      color: #909399;
-      font-weight: normal;
-    }
-  }
 
   .applicant-info {
     .name {

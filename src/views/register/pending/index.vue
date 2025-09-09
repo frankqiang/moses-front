@@ -1,25 +1,81 @@
 /**
-* 待审批申请列表页面
-* 功能描述：为管理员提供查看和管理待审批注册申请的界面
-* 创建日期：2024-12-23
-*/
+ * 待审批申请列表页面
+ * 功能描述：为管理员提供查看和管理待审批注册申请的界面
+ * 创建日期：2024-12-23
+ */
 <template>
   <div class="pending-applications">
     <!-- 搜索表单 -->
     <search-form :loading="loading" @search="handleSearch" @reset="handleReset" />
 
     <!-- 申请列表表格 -->
-    <ApplicationTable :data="tableData" :loading="loading" :total="total" :page="pagination.page"
-      :limit="pagination.limit" @pagination-change="handlePaginationChange" @sort-change="handleSortChange"
-      @selection-change="handleSelectionChange" @refresh="fetchList" @view="handleView" @approve="handleApprove"
-      @reject="handleReject" />
+    <ApplicationTable
+      :data="tableData"
+      :loading="loading"
+      :total="total"
+      :page="pagination.page"
+      :limit="pagination.limit"
+      @pagination-change="handlePaginationChange"
+      @sort-change="handleSortChange"
+      @selection-change="handleSelectionChange"
+      @refresh="fetchList"
+      @view="handleView"
+      @approve="handleApprove"
+      @reject="handleReject"
+      @batch-approve="handleBatchApprove"
+      @batch-reject="handleBatchReject"
+    />
+
+    <!-- 拒绝申请对话框 -->
+    <el-dialog
+      :title="rejectDialog.title"
+      :visible.sync="rejectDialog.visible"
+      width="500px"
+      :close-on-click-modal="false"
+      @close="resetRejectionForm"
+    >
+      <div class="reject-form">
+        <p v-if="rejectDialog.isBatch" style="margin-bottom: 10px; color: #E6A23C;">
+          确定要拒绝选中的 {{ selectedRows.length }} 个申请吗？
+        </p>
+        <p class="reject-form-label">拒绝理由：</p>
+        <el-input
+          v-model="rejectionForm.reason"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入拒绝理由"
+          maxlength="500"
+          show-word-limit
+        />
+        <p class="reject-form-label" style="margin-top: 15px">审批备注（可选）：</p>
+        <el-input
+          v-model="rejectionForm.notes"
+          type="textarea"
+          :rows="2"
+          placeholder="请输入审批备注（可选）"
+          maxlength="500"
+          show-word-limit
+        />
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="rejectDialog.visible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmReject">确定拒绝</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import SearchForm from './components/SearchForm.vue'
 import ApplicationTable from './components/ApplicationTable.vue'
-import { getPendingApplications, approveApplication, rejectApplication, handleRegistrationError } from '../api/register'
+import {
+  getPendingApplications,
+  approveApplication,
+  rejectApplication,
+  batchApproveApplications,
+  batchRejectApplications,
+  handleRegistrationError
+} from '../api/register'
 
 export default {
   name: 'PendingApplications',
@@ -55,7 +111,21 @@ export default {
       },
 
       // 选中的行数据
-      selectedRows: []
+      selectedRows: [],
+
+      // 拒绝表单
+      rejectionForm: {
+        reason: '',
+        notes: ''
+      },
+
+      // 拒绝申请对话框
+      rejectDialog: {
+        visible: false,
+        title: '',
+        isBatch: false,
+        target: null // 单个拒绝时的目标行
+      }
     }
   },
   created() {
@@ -77,8 +147,6 @@ export default {
 
         const response = await getPendingApplications(params)
 
-
-
         // 直接使用response.data中的数据
         const responseData = response.data
 
@@ -87,8 +155,6 @@ export default {
         // 分页信息处理
         const pagination = responseData.pagination || {}
         this.total = pagination.total || 0
-
-
       } catch (error) {
         console.error('获取待审批申请列表失败:', error)
         handleRegistrationError(error, {
@@ -245,95 +311,138 @@ export default {
      * 处理拒绝申请
      * @param {Object} row - 申请记录
      */
-    async handleReject(row) {
+    handleReject(row) {
+      this.resetRejectionForm()
+      this.rejectDialog.title = `拒绝申请 - ${row.applicantName || row.applicant?.name || '未知申请人'}`
+      this.rejectDialog.isBatch = false
+      this.rejectDialog.target = row
+      this.rejectDialog.visible = true
+    },
+
+    /**
+     * 处理批量批准申请
+     * @param {Array} selectedRows - 选中的申请记录
+     */
+    async handleBatchApprove(selectedRows) {
+      if (!selectedRows || selectedRows.length === 0) {
+        this.$message.warning('请先选择要批准的申请')
+        return
+      }
+
       try {
-        // 创建表单数据对象
-        const formData = {
-          reason: '',
-          notes: ''
-        }
-        // 使用Element UI的Dialog组件创建一个包含两个输入框的表单
-        const h = this.$createElement
-        await this.$msgbox({
-          title: `拒绝申请 - ${row.companyName || ''}`,
-          message: h('div', null, [
-            h('p', { class: 'reject-form-label' }, '拒绝理由：'),
-            h('el-input', {
-              attrs: {
-                type: 'textarea',
-                rows: 3,
-                placeholder: '请输入拒绝理由',
-                maxlength: 500,
-                'show-word-limit': true
-              },
-              model: {
-                value: formData.reason,
-                callback: (val) => { formData.reason = val }
+        // 弹出确认对话框
+        const { value: notes } = await this.$prompt(
+          `确定要批准选中的 ${selectedRows.length} 个申请吗？\n\n请输入审批备注（可选）：`,
+          '批量批准申请',
+          {
+            confirmButtonText: '确定批准',
+            cancelButtonText: '取消',
+            inputType: 'textarea',
+            inputPlaceholder: '请输入审批备注（可选）',
+            type: 'warning',
+            showCancelButton: true,
+            closeOnClickModal: false,
+            inputValidator: (value) => {
+              if (value && value.length > 500) {
+                return '审批备注不能超过500个字符'
               }
-            }),
-            h('p', { class: 'reject-form-label', style: 'margin-top: 15px' }, '审批备注（可选）：'),
-            h('el-input', {
-              attrs: {
-                type: 'textarea',
-                rows: 2,
-                placeholder: '请输入审批备注（可选）',
-                maxlength: 500,
-                'show-word-limit': true
-              },
-              model: {
-                value: formData.notes,
-                callback: (val) => { formData.notes = val }
-              }
-            })
-          ]),
-          showCancelButton: true,
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          closeOnClickModal: false,
-          beforeClose: (action, instance, done) => {
-            if (action === 'confirm') {
-              // 验证拒绝理由不能为空
-              if (!formData.reason || formData.reason.trim().length === 0) {
-                this.$message.error('拒绝理由不能为空')
-                return
-              }
-              done()
-            } else {
-              done()
+              return true
             }
           }
-        }).catch(() => {
-          // 用户取消，中断后续操作
-          return Promise.reject(new Error('cancel'))
+        )
+
+        // 提取申请ID
+        const applicationIds = selectedRows.map(row => row.id)
+
+        // 调用批量批准接口
+        const response = await batchApproveApplications({
+          applicationIds,
+          notes: notes || ''
         })
-        // 提取表单数据
-        const reason = formData.reason
-        const notes = formData.notes
 
-        // 设置加载状态
-        this.$set(row, 'rejecting', true)
-
-        // 调用拒绝接口
-        const response = await rejectApplication(row.id, { reason, notes })
-
-        this.$message.success(response.message || '申请已拒绝')
+        this.$message.success(response.message || `成功批准 ${selectedRows.length} 个申请`)
         this.fetchList()
       } catch (error) {
-        // 检查是否为用户取消操作
-        if (error && error.message === 'cancel') {
-          // 用户取消操作，不显示错误信息
-          return
+        if (error !== 'cancel') {
+          console.error('批量批准申请失败:', error)
+          handleRegistrationError(error, {
+            showMessage: true,
+            defaultMessage: '批量批准申请失败'
+          })
         }
-        if (error !== 'close') {
+      }
+    },
+
+    /**
+     * 处理批量拒绝申请
+     * @param {Array} selectedRows - 选中的申请记录
+     */
+    handleBatchReject(selectedRows) {
+      if (!selectedRows || selectedRows.length === 0) {
+        this.$message.warning('请先选择要拒绝的申请')
+        return
+      }
+      this.resetRejectionForm()
+      this.rejectDialog.title = `批量拒绝申请 (${selectedRows.length}个)`
+      this.rejectDialog.isBatch = true
+      this.rejectDialog.target = selectedRows
+      this.rejectDialog.visible = true
+    },
+
+    /**
+     * 确认拒绝操作
+     */
+    async confirmReject() {
+      if (!this.rejectionForm.reason || this.rejectionForm.reason.trim().length === 0) {
+        this.$message.error('拒绝理由不能为空')
+        return
+      }
+
+      const { reason, notes } = this.rejectionForm
+      const { isBatch, target } = this.rejectDialog
+
+      if (isBatch) {
+        // 批量拒绝
+        const applicationIds = target.map(row => row.id)
+        try {
+          const response = await batchRejectApplications({ applicationIds, reason, notes })
+          this.$message.success(response.message || `成功拒绝 ${target.length} 个申请`)
+          this.fetchList()
+        } catch (error) {
+          console.error('批量拒绝申请失败:', error)
+          handleRegistrationError(error, {
+            showMessage: true,
+            defaultMessage: '批量拒绝申请失败'
+          })
+        }
+      } else {
+        // 单个拒绝
+        const row = target
+        this.$set(row, 'rejecting', true)
+        try {
+          const response = await rejectApplication(row.id, { reason, notes })
+          this.$message.success(response.message || '申请已拒绝')
+          this.fetchList()
+        } catch (error) {
           console.error('拒绝申请失败:', error)
           handleRegistrationError(error, {
             showMessage: true,
             defaultMessage: '拒绝申请失败'
           })
+        } finally {
+          this.$set(row, 'rejecting', false)
         }
-      } finally {
-        this.$set(row, 'rejecting', false)
       }
+
+      this.rejectDialog.visible = false
+    },
+
+    /**
+     * 重置拒绝表单
+     */
+    resetRejectionForm() {
+      this.rejectionForm.reason = ''
+      this.rejectionForm.notes = ''
     }
   }
 }
@@ -353,19 +462,5 @@ export default {
   font-weight: 500;
   margin-bottom: 8px;
   color: #303133;
-}
-
-// 覆盖Element UI对话框样式
-:deep(.el-message-box__message) {
-  padding: 10px 0;
-}
-
-:deep(.el-message-box) {
-  width: 500px;
-  max-width: 90%;
-}
-
-:deep(.el-textarea__inner) {
-  font-family: inherit;
 }
 </style>

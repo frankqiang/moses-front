@@ -365,12 +365,75 @@ export function rejectApplication(id, data) {
 /**
  * 导出默认配置
  */
+
+/**
+ * 批量批准申请
+ * @param {Object} data - 批量批准数据
+ * @param {Array} data.applicationIds - 申请ID数组
+ * @param {string} [data.notes] - 审批备注
+ * @returns {Promise} 返回批量操作结果
+ */
+export function batchApproveApplications(data) {
+  if (!data || !data.applicationIds || !Array.isArray(data.applicationIds)) {
+    throw new Error('申请ID列表不能为空')
+  }
+
+  if (data.applicationIds.length === 0) {
+    throw new Error('请选择要批准的申请')
+  }
+
+  return request({
+    url: `${baseURL}/register-applications/batch`,
+    method: 'post',
+    data: {
+      action: 'approve',
+      applicationIds: data.applicationIds,
+      notes: data.notes || ''
+    }
+  })
+}
+
+/**
+ * 批量拒绝申请
+ * @param {Object} data - 批量拒绝数据
+ * @param {Array} data.applicationIds - 申请ID数组
+ * @param {string} data.reason - 拒绝理由
+ * @param {string} [data.notes] - 审批备注
+ * @returns {Promise} 返回批量操作结果
+ */
+export function batchRejectApplications(data) {
+  if (!data || !data.applicationIds || !Array.isArray(data.applicationIds)) {
+    throw new Error('申请ID列表不能为空')
+  }
+
+  if (data.applicationIds.length === 0) {
+    throw new Error('请选择要拒绝的申请')
+  }
+
+  if (!data.reason || data.reason.trim() === '') {
+    throw new Error('拒绝理由不能为空')
+  }
+
+  return request({
+    url: `${baseURL}/register-applications/batch`,
+    method: 'post',
+    data: {
+      action: 'reject',
+      applicationIds: data.applicationIds,
+      reason: data.reason.trim(),
+      notes: data.notes || ''
+    }
+  })
+}
+
 export default {
   submitRegistration,
   getApplicationStatus,
   getPendingApplications,
   approveApplication,
   rejectApplication,
+  batchApproveApplications,
+  batchRejectApplications,
   handleRegistrationError,
   formatApplicationStatus,
   isValidApplicationId

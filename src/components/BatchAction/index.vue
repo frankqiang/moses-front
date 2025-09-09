@@ -24,9 +24,7 @@
     <!-- 选中行计数显示 -->
     <transition name="fade-slide">
       <div v-if="showSelectedCount && !hasError" class="selection-summary">
-        <el-badge :value="selectedRows.length" type="primary" class="selection-badge">
-          <i class="el-icon-tickets selection-icon" />
-        </el-badge>
+
         <span class="selection-text">
           已选择 <strong class="count">{{ formatSelectedCount }}</strong> 项
         </span>
@@ -344,7 +342,8 @@ export default {
     smartStatusButtons: {
       type: Boolean,
       default: false
-    }
+    },
+
   },
   data() {
     return {
@@ -411,7 +410,8 @@ export default {
         }
       }
       return this.selectedRows
-    }
+    },
+
   },
   watch: {
     selectedRows: {
@@ -745,6 +745,8 @@ export default {
       }
     },
 
+
+
     // 清理资源
     cleanup() {
       // 清理事件监听器
@@ -847,26 +849,24 @@ export default {
     display: flex;
     align-items: center;
     margin-right: 12px;
-    padding: 4px 8px;
-    background: #f5f7fa;
-    border-radius: 4px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #e8f4fd 0%, #f0f9ff 100%);
+    border: 1px solid #d1ecf1;
+    border-radius: 6px;
     font-size: 13px;
-    color: #606266;
+    color: #2c3e50;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 
     &:hover {
-      background: #ecf5ff;
-      color: #409eff;
+      background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+      border-color: #93c5fd;
+      color: #1e40af;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .selection-badge {
-      margin-right: 8px;
 
-      .selection-icon {
-        font-size: 16px;
-        color: #909399;
-      }
-    }
 
     .selection-text {
       .count {
@@ -1136,31 +1136,6 @@ export default {
 .fade-slide-leave-to {
   opacity: 0;
   transform: translateX(-10px);
-}
-
-// 深色主题支持（可选）
-@media (prefers-color-scheme: dark) {
-  .batch-actions-container {
-    .selection-summary {
-      background: #2d2f36;
-      color: #e5eaf3;
-
-      &:hover {
-        background: #363a45;
-      }
-    }
-
-    .error-banner {
-      background: #3d2626;
-      border-color: #5c3030;
-      color: #f8a2a2;
-    }
-
-    .loading-overlay {
-      background: rgba(45, 47, 54, 0.8);
-      color: #e5eaf3;
-    }
-  }
 }
 
 // 高对比度支持
