@@ -95,12 +95,6 @@ export const constantRoutes = [
         name: 'PendingApplications',
         component: () => import('@/views/register/pending'),
         meta: { title: '待审批申请', icon: 'el-icon-s-check' }
-      },
-      {
-        path: 'application-stats',
-        name: 'ApplicationStats',
-        component: () => import('@/views/register/stats'),
-        meta: { title: '申请统计', icon: 'el-icon-data-analysis' }
       }
     ]
   },

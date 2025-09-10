@@ -70,13 +70,8 @@
     </div>
 
     <!-- 加载状态 -->
-    <div
-      v-if="loading"
-      v-loading="loading"
-      element-loading-text="正在加载统计数据..."
-      element-loading-background="rgba(255, 255, 255, 0.8)"
-      class="stats-loading"
-    />
+    <div v-if="loading" v-loading="loading" element-loading-text="正在加载统计数据..."
+      element-loading-background="rgba(255, 255, 255, 0.8)" class="stats-loading" />
 
     <!-- 错误状态 -->
     <div v-if="error && !loading" class="stats-error">
@@ -87,13 +82,7 @@
       </div>
     </div>
 
-    <!-- 空状态 -->
-    <div v-if="isEmpty && !loading && !error" class="stats-empty">
-      <div class="empty-content">
-        <i class="el-icon-document-remove" />
-        <p>暂无统计数据</p>
-      </div>
-    </div>
+
   </div>
 </template>
 
@@ -174,13 +163,7 @@ export default {
   },
 
   computed: {
-    /**
-     * 是否为空状态
-     * @returns {Boolean}
-     */
-    isEmpty() {
-      return this.statsData.total === 0
-    }
+
   },
 
   watch: {
@@ -399,7 +382,6 @@ export default {
     padding: 16px;
     background: #f8f9fa;
     border-radius: 8px;
-    margin-bottom: 20px;
 
     .rate-item {
       display: flex;
@@ -454,24 +436,7 @@ export default {
     }
   }
 
-  .stats-empty {
-    text-align: center;
-    padding: 40px 20px;
 
-    .empty-content {
-      i {
-        font-size: 48px;
-        color: #c0c4cc;
-        margin-bottom: 16px;
-      }
-
-      p {
-        font-size: 14px;
-        color: #909399;
-        margin: 0;
-      }
-    }
-  }
 }
 
 // 响应式设计

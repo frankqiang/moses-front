@@ -40,10 +40,10 @@
           基本信息
         </h4>
         <el-row :gutter="16" class="info-row">
-          <el-col :span="12" v-if="applicationData.applicationId">
+          <el-col :span="12" v-if="applicationData.id">
             <div class="info-item">
               <span class="info-label">申请ID：</span>
-              <span class="info-value">{{ applicationData.applicationId }}</span>
+              <span class="info-value">{{ applicationData.id }}</span>
             </div>
           </el-col>
           <el-col :span="12" v-if="applicationData.applicantName">
@@ -142,19 +142,27 @@
       </div>
 
       <!-- 申请历史时间线 -->
-      <div v-if="showTimeline && applicationData.applicationId" class="info-section">
+      <div v-if="showTimeline && applicationData.id" class="info-section">
         <ApplicationTimeline
-          :application-id="applicationData.applicationId"
-          :auto-load="timelineAutoLoad"
-          @timeline-loaded="handleTimelineLoaded"
-          @timeline-error="handleTimelineError"
+          :application-id="applicationData.id"
+          @timeline-loaded="$emit('timeline-loaded', $event)"
+          @timeline-error="$emit('timeline-error', $event)"
         />
       </div>
 
-      <!-- 空状态 -->
-      <div v-if="isEmpty" class="empty-state">
-        <i class="el-icon-document empty-icon"></i>
-        <p class="empty-text">{{ emptyText }}</p>
+      <!-- 操作按钮 -->
+      <div v-if="showActions" class="card-actions">
+        <slot name="actions">
+          <el-button
+            v-if="showRefreshButton"
+            type="primary"
+            icon="el-icon-refresh"
+            size="small"
+            @click="handleRefresh"
+          >
+            刷新
+          </el-button>
+        </slot>
       </div>
     </div>
 
