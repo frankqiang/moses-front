@@ -141,6 +141,16 @@
         </el-row>
       </div>
 
+      <!-- 申请历史时间线 -->
+      <div v-if="showTimeline && applicationData.applicationId" class="info-section">
+        <ApplicationTimeline
+          :application-id="applicationData.applicationId"
+          :auto-load="timelineAutoLoad"
+          @timeline-loaded="handleTimelineLoaded"
+          @timeline-error="handleTimelineError"
+        />
+      </div>
+
       <!-- 空状态 -->
       <div v-if="isEmpty" class="empty-state">
         <i class="el-icon-document empty-icon"></i>
@@ -167,11 +177,13 @@
 
 <script>
 import { APPLICATION_STATUS_CONFIG } from '../constants/application-status'
+import ApplicationTimeline from './ApplicationTimeline.vue'
 
 export default {
   name: 'ApplicationCard',
   
   components: {
+    ApplicationTimeline
   },
   
   props: {
@@ -270,6 +282,22 @@ export default {
     emptyText: {
       type: String,
       default: '暂无申请信息'
+    },
+    
+    /**
+     * 是否显示申请历史时间线
+     */
+    showTimeline: {
+      type: Boolean,
+      default: false
+    },
+    
+    /**
+     * 时间线是否自动加载
+     */
+    timelineAutoLoad: {
+      type: Boolean,
+      default: true
     }
   },
   
@@ -356,6 +384,22 @@ export default {
      */
     handleRefresh() {
       this.$emit('refresh', this.applicationData)
+    },
+    
+    /**
+     * 处理时间线加载完成事件
+     * @param {Array} timelineData - 时间线数据
+     */
+    handleTimelineLoaded(timelineData) {
+      this.$emit('timeline-loaded', timelineData)
+    },
+    
+    /**
+     * 处理时间线加载错误事件
+     * @param {Error} error - 错误信息
+     */
+    handleTimelineError(error) {
+      this.$emit('timeline-error', error)
     }
   }
 }

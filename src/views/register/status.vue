@@ -29,8 +29,9 @@
         <div class="result-content">
           <!-- 使用ApplicationCard组件展示申请信息 -->
           <ApplicationCard :application-data="applicationData" :show-actions="false" :show-status="true"
-            :show-basic-info="true" :show-optional-info="true" :show-approval-info="true" title="申请详细信息"
-            subtitle="以下是您的注册申请详细信息" class="application-detail-card" />
+            :show-basic-info="true" :show-optional-info="true" :show-approval-info="true" :show-timeline="true"
+            title="申请详细信息" subtitle="以下是您的注册申请详细信息" class="application-detail-card"
+            @timeline-loaded="handleTimelineLoaded" @timeline-error="handleTimelineError" />
 
           <!-- 状态说明 -->
           <div class="status-description">
@@ -197,6 +198,25 @@ export default {
         console.error('日期格式化失败:', error)
         return dateTime
       }
+    },
+    
+    /**
+     * 处理时间线加载完成事件
+     * @param {Array} timelineData - 时间线数据
+     */
+    handleTimelineLoaded(timelineData) {
+      console.log('申请历史时间线加载完成:', timelineData)
+      this.$emit('timeline-loaded', timelineData)
+    },
+    
+    /**
+     * 处理时间线加载错误事件
+     * @param {Error} error - 错误信息
+     */
+    handleTimelineError(error) {
+      console.error('申请历史时间线加载失败:', error)
+      this.$message.error('加载申请历史失败，请稍后重试')
+      this.$emit('timeline-error', error)
     }
   }
 }

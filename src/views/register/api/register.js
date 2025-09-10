@@ -321,7 +321,7 @@ export function approveApplication(id, data = {}) {
   }
 
   return request({
-    url: `${baseURL}/register-application/${id.trim()}/approve`,
+    url: `${baseURL}/register-applications/${id.trim()}/approve`,
     method: 'put',
     data: {
       notes: data.notes ? data.notes.trim() : undefined
@@ -353,7 +353,7 @@ export function rejectApplication(id, data) {
   }
 
   return request({
-    url: `${baseURL}/register-application/${id.trim()}/reject`,
+    url: `${baseURL}/register-applications/${id.trim()}/reject`,
     method: 'put',
     data: {
       reason: data.reason.trim(),
@@ -426,15 +426,78 @@ export function batchRejectApplications(data) {
   })
 }
 
+/**
+ * 获取申请历史记录
+ * @param {string} id - 申请ID
+ * @returns {Promise} 返回申请的完整审批历史和时间线
+ * @throws {ApiError} 可能抛出的错误：
+ *   - VAL_001: 申请ID不能为空
+ *   - BIZ_018: 申请记录不存在
+ *   - AUTH_003: 权限不足，需要管理员权限
+ */
+export function getApplicationHistory(id) {
+  // 验证申请ID
+  if (!id || typeof id !== 'string' || id.trim() === '') {
+    throw new Error('申请ID不能为空')
+  }
+
+  return request({
+    url: `${baseURL}/register-applications/${id.trim()}/history`,
+    method: 'get'
+  }).catch(error => {
+    throw handleError(error, {
+      context: 'getApplicationHistory',
+      showNotification: true
+    })
+  })
+}
+
+/**
+ * 获取审批统计数据
+ * @param {Object} params - 查询参数
+ * @param {string} [params.dateRange] - 统计日期范围：today/week/month/year
+ * @param {string} [params.approverId] - 指定审批人ID
+ * @returns {Promise} 返回审批统计信息
+ * @throws {ApiError} 可能抛出的错误：
+ *   - AUTH_003: 权限不足，需要管理员权限
+ */
+export function getApplicationStats(params = {}) {
+  const queryParams = {}
+
+  // 处理日期范围参数
+  if (params.dateRange && ['today', 'week', 'month', 'year'].includes(params.dateRange)) {
+    queryParams.dateRange = params.dateRange
+  }
+
+  // 处理审批人ID参数
+  if (params.approverId && typeof params.approverId === 'string' && params.approverId.trim() !== '') {
+    queryParams.approverId = params.approverId.trim()
+  }
+
+  return request({
+    url: `${baseURL}/register-applications/stats`,
+    method: 'get',
+    params: queryParams
+  }).catch(error => {
+    throw handleError(error, {
+      context: 'getApplicationStats',
+      showNotification: true
+    })
+  })
+}
+
 export default {
   submitRegistration,
-  getApplicationStatus,
   getPendingApplications,
+  getApplicationStatus,
   approveApplication,
   rejectApplication,
   batchApproveApplications,
   batchRejectApplications,
+  getApplicationHistory,
+  getApplicationStats,
   handleRegistrationError,
   formatApplicationStatus,
+
   isValidApplicationId
 }

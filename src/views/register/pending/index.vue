@@ -5,6 +5,17 @@
  */
 <template>
   <div class="pending-applications">
+    <!-- 统计数据展示 -->
+    <div class="stats-section">
+      <application-stats
+        :date-range="statsDateRange"
+        :auto-load="true"
+        :refresh-interval="300000"
+        @stats-loaded="handleStatsLoaded"
+        @stats-error="handleStatsError"
+      />
+    </div>
+
     <!-- 搜索表单 -->
     <search-form :loading="loading" @search="handleSearch" @reset="handleReset" />
 
@@ -68,6 +79,7 @@
 <script>
 import SearchForm from './components/SearchForm.vue'
 import ApplicationTable from './components/ApplicationTable.vue'
+import ApplicationStats from '../components/ApplicationStats.vue'
 import {
   getPendingApplications,
   approveApplication,
@@ -81,7 +93,8 @@ export default {
   name: 'PendingApplications',
   components: {
     SearchForm,
-    ApplicationTable
+    ApplicationTable,
+    ApplicationStats
   },
   data() {
     return {
@@ -125,7 +138,10 @@ export default {
         title: '',
         isBatch: false,
         target: null // 单个拒绝时的目标行
-      }
+      },
+
+      // 统计数据相关
+      statsDateRange: 'month' // 默认显示本月统计
     }
   },
   created() {
@@ -443,6 +459,24 @@ export default {
     resetRejectionForm() {
       this.rejectionForm.reason = ''
       this.rejectionForm.notes = ''
+    },
+
+    /**
+     * 处理统计数据加载完成事件
+     * @param {Object} data - 统计数据
+     */
+    handleStatsLoaded(data) {
+      console.log('统计数据加载完成:', data)
+      // 可以在这里处理统计数据，比如更新页面标题等
+    },
+
+    /**
+     * 处理统计数据加载错误事件
+     * @param {Object} error - 错误信息
+     */
+    handleStatsError(error) {
+      console.error('统计数据加载失败:', error)
+      // 统计数据加载失败不影响主要功能，只记录日志
     }
   }
 }
@@ -451,6 +485,14 @@ export default {
 <style lang="scss" scoped>
 .pending-applications {
   padding: 20px;
+
+  .stats-section {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+  }
 
   .search-form {
     margin-bottom: 20px;
