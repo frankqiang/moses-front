@@ -20,8 +20,8 @@ alwaysApply: false
 
 ## 强制使用的全局组件
 
-### 1. SearchFormV2组件
-- **组件标准**：所有列表搜索表单需使用全局SearchFormV2组件
+### 1. SearchForm组件
+- **组件标准**：所有列表搜索表单需使用全局SearchForm组件
 - 通过配置方式定义表单项，支持展开/收起功能
 
 ### 2. TableToolbar组件

@@ -2,10 +2,10 @@
  * 待审批申请搜索表单组件
  * 功能描述：提供搜索和筛选待审批申请的表单界面
  * 创建日期：2024-12-23
- * 重构日期：2024-12-23 - 使用SearchFormV2组件，采用配置化方式
+ * 重构日期：2024-12-23 - 使用SearchForm组件，采用配置化方式
  */
 <template>
-  <search-form-v2
+  <SearchForm
     :items="searchFormConfig"
     :loading="loading"
     @search="handleSearch"

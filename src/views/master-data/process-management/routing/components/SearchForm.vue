@@ -1,5 +1,5 @@
 <template>
-  <search-form-v2
+  <SearchForm
     :items="searchFormConfig"
     :loading="loading"
     @search="handleSearch"
@@ -8,13 +8,13 @@
 </template>
 
 <script>
-import SearchFormV2 from '@/components/SearchFormV2'
+import SearchForm from '@/components/SearchForm'
 import { SEARCH_FORM_CONFIG } from '../constants'
 
 export default {
   name: 'RoutingSearchForm',
   components: {
-    SearchFormV2
+    SearchForm
   },
   props: {
     loading: {
@@ -39,4 +39,4 @@ export default {
     }
   }
 }
-</script> 
+</script>

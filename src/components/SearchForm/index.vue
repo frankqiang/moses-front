@@ -1,244 +1,81 @@
 /**
- * 高级搜索表单组件
+ * 高级搜索表单组件 V2
  * 功能描述：提供统一的搜索表单布局和功能，支持表单项配置、折叠展开、重置等功能
- * 创建日期：2023-11-20
+ * 优化了数据流向，避免死循环问题，减少了模板重复代码，增加了防抖功能
+ * 创建日期：2024-12-16
  */
 <template>
   <div class="search-form-container">
     <el-form
       ref="form"
-      :model="formModel"
+      :model="localFormModel"
       :inline="inline"
       size="small"
       :label-width="labelWidth"
-      @keyup.enter.native="handleSubmit"
+      @keyup.enter.native="handleSubmitWithDebounce"
     >
-      <!-- 始终可见的表单项 -->
-      <template v-for="item in visibleItems">
+      <!-- 表单项渲染（包括可见项和展开项） -->
+      <template v-for="(item, index) in computedFormItems">
         <el-form-item
+          v-show="showMore || index < visibleItemCount"
           :key="item.prop"
           :label="item.label"
           :prop="item.prop"
-          :class="item.class"
+          :class="[item.class, {'hidden-item': !showMore && index >= visibleItemCount}]"
         >
-          <!-- 输入框 -->
-          <el-input
-            v-if="item.type === 'input'"
-            v-model="formModel[item.prop]"
-            :placeholder="item.placeholder"
-            :maxlength="item.maxlength"
-            :disabled="item.disabled"
-            :clearable="item.clearable !== false"
-            @change="item.onChange && item.onChange(formModel[item.prop])"
-            @clear="handleInputClear(item.prop)"
-          />
-
-          <!-- 选择器 -->
-          <el-select
-            v-else-if="item.type === 'select'"
-            v-model="formModel[item.prop]"
-            :placeholder="item.placeholder"
-            :disabled="item.disabled"
-            :clearable="item.clearable !== false"
-            :multiple="item.multiple"
-            :collapse-tags="item.collapseTags"
-            @change="item.onChange && item.onChange(formModel[item.prop])"
-            @clear="handleInputClear(item.prop)"
+          <!-- 表单控件组件 - 使用动态组件渲染不同类型表单项 -->
+          <component
+            :is="getComponentName(item.type)"
+            v-if="!isCustomComponent(item.type)"
+            v-model="localFormModel[item.prop]"
+            v-bind="getComponentProps(item)"
+            @change="handleItemChange(item)"
+            @clear="handleItemClear(item.prop)"
           >
-            <el-option
-              v-for="opt in item.options"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-              :disabled="opt.disabled"
-            />
-          </el-select>
-
-          <!-- 日期选择器 -->
-          <el-date-picker
-            v-else-if="item.type === 'date'"
-            v-model="formModel[item.prop]"
-            :type="item.dateType || 'date'"
-            :placeholder="item.placeholder"
-            :disabled="item.disabled"
-            :clearable="item.clearable !== false"
-            :format="item.format"
-            :value-format="item.valueFormat"
-            :start-placeholder="item.startPlaceholder"
-            :end-placeholder="item.endPlaceholder"
-            @change="item.onChange && item.onChange(formModel[item.prop])"
-          />
-
-          <!-- 时间选择器 -->
-          <el-time-picker
-            v-else-if="item.type === 'time'"
-            v-model="formModel[item.prop]"
-            :placeholder="item.placeholder"
-            :disabled="item.disabled"
-            :clearable="item.clearable !== false"
-            :format="item.format"
-            :value-format="item.valueFormat"
-            @change="item.onChange && item.onChange(formModel[item.prop])"
-          />
-
-          <!-- 单选框组 -->
-          <el-radio-group
-            v-else-if="item.type === 'radio'"
-            v-model="formModel[item.prop]"
-            :disabled="item.disabled"
-            @change="item.onChange && item.onChange(formModel[item.prop])"
-          >
-            <el-radio
-              v-for="opt in item.options"
-              :key="opt.value"
-              :label="opt.value"
-              :disabled="opt.disabled"
-            >
-              {{ opt.label }}
-            </el-radio>
-          </el-radio-group>
-
-          <!-- 复选框组 -->
-          <el-checkbox-group
-            v-else-if="item.type === 'checkbox'"
-            v-model="formModel[item.prop]"
-            :disabled="item.disabled"
-            @change="item.onChange && item.onChange(formModel[item.prop])"
-          >
-            <el-checkbox
-              v-for="opt in item.options"
-              :key="opt.value"
-              :label="opt.value"
-              :disabled="opt.disabled"
-            >
-              {{ opt.label }}
-            </el-checkbox>
-          </el-checkbox-group>
-
-          <!-- 数字输入框 -->
-          <el-input-number
-            v-else-if="item.type === 'number'"
-            v-model="formModel[item.prop]"
-            :min="item.min"
-            :max="item.max"
-            :step="item.step"
-            :precision="item.precision"
-            :disabled="item.disabled"
-            :controls="item.controls !== false"
-            :placeholder="item.placeholder"
-            @change="item.onChange && item.onChange(formModel[item.prop])"
-          />
-
-          <!-- 评分 -->
-          <el-rate
-            v-else-if="item.type === 'rate'"
-            v-model="formModel[item.prop]"
-            :max="item.max"
-            :disabled="item.disabled"
-            :allow-half="item.allowHalf"
-            @change="item.onChange && item.onChange(formModel[item.prop])"
-          />
+            <!-- 渲染options内容（针对select/radio/checkbox等） -->
+            <template v-if="hasOptions(item.type)">
+              <component
+                :is="getOptionComponentName(item.type)"
+                v-for="opt in item.options"
+                :key="opt.value"
+                :label="opt.value"
+                :value="opt.value"
+                :disabled="opt.disabled"
+              >
+                {{ opt.label }}
+              </component>
+            </template>
+          </component>
 
           <!-- 自定义插槽 -->
           <slot
             v-else-if="item.type === 'slot'"
             :name="item.slotName || item.prop"
-            :model="formModel"
-          />
-
-          <!-- 默认为输入框 -->
-          <el-input
-            v-else
-            v-model="formModel[item.prop]"
-            :placeholder="item.placeholder"
-            :maxlength="item.maxlength"
-            :disabled="item.disabled"
-            :clearable="item.clearable !== false"
-            @change="item.onChange && item.onChange(formModel[item.prop])"
+            :model="localFormModel"
           />
         </el-form-item>
       </template>
 
-      <!-- 折叠的表单项 -->
-      <template v-if="showMore && expandedItems.length > 0">
-        <template v-for="item in expandedItems">
-          <el-form-item
-            :key="item.prop"
-            :label="item.label"
-            :prop="item.prop"
-            :class="item.class"
-          >
-            <!-- 与上面相同的表单项逻辑，但是为了更好的性能，只有在展开时才渲染 -->
-            <el-input
-              v-if="item.type === 'input'"
-              v-model="formModel[item.prop]"
-              :placeholder="item.placeholder"
-              :maxlength="item.maxlength"
-              :disabled="item.disabled"
-              :clearable="item.clearable !== false"
-              @change="item.onChange && item.onChange(formModel[item.prop])"
-            />
-
-            <el-select
-              v-else-if="item.type === 'select'"
-              v-model="formModel[item.prop]"
-              :placeholder="item.placeholder"
-              :disabled="item.disabled"
-              :clearable="item.clearable !== false"
-              :multiple="item.multiple"
-              :collapse-tags="item.collapseTags"
-              @change="item.onChange && item.onChange(formModel[item.prop])"
-            >
-              <el-option
-                v-for="opt in item.options"
-                :key="opt.value"
-                :label="opt.label"
-                :value="opt.value"
-                :disabled="opt.disabled"
-              />
-            </el-select>
-
-            <el-date-picker
-              v-else-if="item.type === 'date'"
-              v-model="formModel[item.prop]"
-              :type="item.dateType || 'date'"
-              :placeholder="item.placeholder"
-              :disabled="item.disabled"
-              :clearable="item.clearable !== false"
-              :format="item.format"
-              :value-format="item.valueFormat"
-              :start-placeholder="item.startPlaceholder"
-              :end-placeholder="item.endPlaceholder"
-              @change="item.onChange && item.onChange(formModel[item.prop])"
-            />
-
-            <slot
-              v-else-if="item.type === 'slot'"
-              :name="item.slotName || item.prop"
-              :model="formModel"
-            />
-
-            <el-input
-              v-else
-              v-model="formModel[item.prop]"
-              :placeholder="item.placeholder"
-              :maxlength="item.maxlength"
-              :disabled="item.disabled"
-              :clearable="item.clearable !== false"
-              @change="item.onChange && item.onChange(formModel[item.prop])"
-            />
-          </el-form-item>
-        </template>
-      </template>
-
       <!-- 表单操作按钮 -->
       <el-form-item class="search-buttons">
-        <el-button type="primary" :loading="loading" class="form-button" @click="handleSubmit">查询</el-button>
-        <el-button class="form-button" @click="handleReset">重置</el-button>
+        <el-button
+          type="primary"
+          :loading="loading"
+          class="form-button"
+          @click="handleSubmitWithDebounce"
+        >
+          查询
+        </el-button>
+        <el-button
+          class="form-button"
+          @click="handleReset"
+        >
+          重置
+        </el-button>
 
         <!-- 展开/收起按钮 -->
         <el-button
-          v-if="expandable && expandedItems.length > 0"
+          v-if="expandable && computedFormItems.length > visibleItemCount"
           type="text"
           class="expand-button"
           @click="showMore = !showMore"
@@ -255,15 +92,45 @@
 </template>
 
 <script>
+// 组件映射关系
+const COMPONENT_MAP = {
+  input: 'el-input',
+  select: 'el-select',
+  date: 'el-date-picker',
+  time: 'el-time-picker',
+  radio: 'el-radio-group',
+  checkbox: 'el-checkbox-group',
+  number: 'el-input-number',
+  rate: 'el-rate',
+  switch: 'el-switch',
+  slider: 'el-slider',
+  'input-number': 'el-input-number'
+}
+
+// 选项组件映射
+const OPTION_COMPONENT_MAP = {
+  select: 'el-option',
+  radio: 'el-radio',
+  checkbox: 'el-checkbox'
+}
+
+// 需要选项的组件类型
+const COMPONENTS_WITH_OPTIONS = ['select', 'radio', 'checkbox']
+
 export default {
   name: 'SearchForm',
   props: {
     // 表单项配置数组
     items: {
       type: Array,
-      required: true
+      required: true,
+      validator: items => {
+        return items.every(item => {
+          return typeof item === 'object' && item.prop
+        })
+      }
     },
-    // 表单数据对象
+    // 表单数据对象 (v-model)
     value: {
       type: Object,
       default: () => ({})
@@ -292,78 +159,215 @@ export default {
     loading: {
       type: Boolean,
       default: false
+    },
+    // 重置后是否自动搜索
+    searchAfterReset: {
+      type: Boolean,
+      default: false
+    },
+    // 防抖延迟时间(ms)
+    debounceTime: {
+      type: Number,
+      default: 300
     }
   },
   data() {
     return {
-      // 表单数据模型（内部使用）
-      formModel: {},
+      // 本地表单数据模型
+      localFormModel: {},
       // 是否显示更多表单项
-      showMore: false
+      showMore: false,
+      // 防抖定时器
+      debounceTimer: null,
+      // 标记表单是否正在被重置
+      isResetting: false
     }
   },
   computed: {
-    // 始终可见的表单项
-    visibleItems() {
-      return this.items.slice(0, this.visibleItemCount)
-    },
-    // 折叠的表单项
-    expandedItems() {
-      return this.items.slice(this.visibleItemCount)
+    // 计算所有表单项（包括可见和折叠的）
+    computedFormItems() {
+      return this.items || []
     }
   },
   watch: {
-    // 监听外部传入的value变化
+    // 监听外部传入的value变化 - 使用深度监听
     value: {
-      handler(val) {
-        this.formModel = { ...val }
+      handler(newVal) {
+        // 避免在重置过程中更新表单数据造成循环
+        if (!this.isResetting) {
+          // 深拷贝对象，避免引用问题
+          this.localFormModel = JSON.parse(JSON.stringify(newVal || {}))
+        }
       },
       deep: true,
       immediate: true
     }
   },
+  created() {
+    // 初始化本地表单数据
+    this.initFormModel()
+  },
   methods: {
+    // 初始化表单数据
+    initFormModel() {
+      const model = {}
+
+      // 遍历表单项配置，设置初始值
+      this.items.forEach(item => {
+        if (item.prop) {
+          // 检查value中是否有该字段的值
+          if (this.value && this.value[item.prop] !== undefined) {
+            model[item.prop] = this.value[item.prop]
+          } else {
+            // 根据字段类型设置默认空值
+            if (item.type === 'select' && item.multiple) {
+              model[item.prop] = []
+            } else if (item.type === 'checkbox') {
+              model[item.prop] = []
+            } else if (item.type === 'number' || item.type === 'input-number') {
+              model[item.prop] = undefined
+            } else {
+              model[item.prop] = ''
+            }
+          }
+        }
+      })
+
+      this.localFormModel = model
+    },
+
+    // 获取组件名称
+    getComponentName(type) {
+      return COMPONENT_MAP[type] || 'el-input'
+    },
+
+    // 获取选项组件名称
+    getOptionComponentName(type) {
+      return OPTION_COMPONENT_MAP[type] || 'el-option'
+    },
+
+    // 判断是否为自定义组件类型
+    isCustomComponent(type) {
+      return type === 'slot'
+    },
+
+    // 判断组件是否需要选项
+    hasOptions(type) {
+      return COMPONENTS_WITH_OPTIONS.includes(type)
+    },
+
+    // 获取组件属性
+    getComponentProps(item) {
+      const props = { ...item }
+
+      // 移除非组件属性
+      delete props.prop
+      delete props.label
+      delete props.type
+      delete props.class
+      delete props.slotName
+
+      // 为不同类型组件设置特殊属性
+      if (item.type === 'date') {
+        props.type = item.dateType || 'date'
+      }
+
+      return props
+    },
+
+    // 处理表单项变化
+    handleItemChange(item) {
+      // 触发change事件
+      if (item.onChange && typeof item.onChange === 'function') {
+        item.onChange(this.localFormModel[item.prop])
+      }
+
+      // 同步到父组件
+      this.syncToParent()
+
+      // 如果配置了自动搜索，使用防抖执行搜索
+      if (item.searchOnChange) {
+        this.handleSubmitWithDebounce()
+      }
+    },
+
+    // 处理表单项清空
+    handleItemClear(prop) {
+      // 确保值被清空
+      this.$nextTick(() => {
+        this.localFormModel[prop] = ''
+
+        // 同步到父组件
+        this.syncToParent()
+
+        // 自动触发搜索 - 使用防抖
+        this.handleSubmitWithDebounce()
+      })
+    },
+
+    // 同步数据到父组件
+    syncToParent() {
+      // 创建一个新对象，避免引用问题
+      const formData = JSON.parse(JSON.stringify(this.localFormModel))
+      this.$emit('input', formData)
+    },
+
+    // 创建搜索参数（移除空值）
+    createSearchParams() {
+      const params = {}
+
+      Object.keys(this.localFormModel).forEach(key => {
+        const value = this.localFormModel[key]
+
+        // 检查值是否为空
+        if (
+          value !== undefined &&
+          value !== null &&
+          value !== '' &&
+          !(Array.isArray(value) && value.length === 0)
+        ) {
+          params[key] = value
+        }
+      })
+
+      return params
+    },
+
+    // 带防抖的提交处理
+    handleSubmitWithDebounce() {
+      // 清除之前的定时器
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer)
+      }
+
+      // 设置新的定时器
+      this.debounceTimer = setTimeout(() => {
+        this.handleSubmit()
+      }, this.debounceTime)
+    },
+
     // 提交表单
     handleSubmit() {
       this.$refs.form.validate(valid => {
         if (valid) {
-          // 创建一个新对象，移除空值
-          const submitData = {}
-          Object.keys(this.formModel).forEach(key => {
-            if (this.formModel[key] !== undefined && this.formModel[key] !== null && this.formModel[key] !== '') {
-              submitData[key] = this.formModel[key]
-            }
-          })
-          console.log('提交搜索数据:', submitData)
-          this.$emit('search', submitData)
+          // 创建搜索参数
+          const params = this.createSearchParams()
+
+          // 触发搜索事件
+          this.$emit('search', params)
+
           // 同步到父组件
-          this.$emit('input', this.formModel)
+          this.syncToParent()
         }
-      })
-    },
-
-    // 处理输入框清除事件
-    handleInputClear(prop) {
-      // 确保值被清空并同步到父组件
-      this.$nextTick(() => {
-        this.formModel[prop] = ''
-        this.$emit('input', this.formModel)
-
-        // 创建一个新对象，移除空值
-        const submitData = {}
-        Object.keys(this.formModel).forEach(key => {
-          if (this.formModel[key] !== undefined && this.formModel[key] !== null && this.formModel[key] !== '') {
-            submitData[key] = this.formModel[key]
-          }
-        })
-
-        // 自动触发搜索
-        this.$emit('search', submitData)
       })
     },
 
     // 重置表单
     handleReset() {
+      // 标记重置开始
+      this.isResetting = true
+
+      // 使用el-form的resetFields方法重置表单
       this.$refs.form.resetFields()
 
       // 清空不在表单验证规则中的字段
@@ -373,6 +377,10 @@ export default {
           // 根据字段类型设置默认空值
           if (item.type === 'select' && item.multiple) {
             emptyModel[item.prop] = []
+          } else if (item.type === 'checkbox') {
+            emptyModel[item.prop] = []
+          } else if (item.type === 'number' || item.type === 'input-number') {
+            emptyModel[item.prop] = undefined
           } else {
             emptyModel[item.prop] = ''
           }
@@ -380,20 +388,48 @@ export default {
       })
 
       // 更新内部表单模型
-      this.formModel = { ...emptyModel }
+      this.localFormModel = { ...emptyModel }
 
-      // 确保更新同步到父组件
+      // 确保DOM更新后再继续操作
       this.$nextTick(() => {
-        console.log('重置后的表单数据:', this.formModel)
-        // 触发更新事件
-        this.$emit('input', this.formModel)
+        // 触发重置事件
         this.$emit('reset')
+
+        // 同步到父组件
+        this.syncToParent()
 
         // 如果需要重置后自动查询，则触发查询事件
         if (this.searchAfterReset) {
           this.$emit('search', {})
         }
+
+        // 标记重置结束
+        this.isResetting = false
       })
+    },
+
+    // 公开方法：提交表单 - 供父组件调用
+    submit() {
+      this.handleSubmit()
+    },
+
+    // 公开方法：重置表单 - 供父组件调用
+    reset() {
+      this.handleReset()
+    },
+
+    // 公开方法：设置表单值 - 供父组件调用
+    setValues(values) {
+      if (!values || typeof values !== 'object') return
+
+      Object.keys(values).forEach(key => {
+        if (this.localFormModel.hasOwnProperty(key)) {
+          this.localFormModel[key] = values[key]
+        }
+      })
+
+      // 同步到父组件
+      this.syncToParent()
     }
   }
 }
@@ -406,6 +442,7 @@ export default {
   border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   margin-bottom: 18px;
+  // margin-bottom: 18px;
 
   .el-form {
     display: flex;
@@ -414,6 +451,7 @@ export default {
     .el-form-item {
       margin-right: 18px;
       margin-bottom: 18px;
+      transition: all 0.3s;
 
       &.full-width {
         width: 100%;
@@ -421,6 +459,10 @@ export default {
 
       &.double-width {
         width: calc(50% - 18px);
+      }
+
+      &.hidden-item {
+        display: none;
       }
     }
 

@@ -1,5 +1,5 @@
 <template>
-  <search-form-v2
+  <SearchForm
     :items="searchFormConfig"
     :loading="loading"
     @search="handleSearch"
@@ -36,4 +36,4 @@ export default {
     }
   }
 }
-</script> 
+</script>

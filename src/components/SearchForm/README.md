@@ -1,12 +1,12 @@
-# SearchFormV2 高级搜索表单组件
+# SearchForm 高级搜索表单组件
 
 ## 简介
 
-SearchFormV2是一个优化版的高级搜索表单组件，解决了原SearchForm组件存在的问题，提供了更加稳定、高效的表单处理能力。该组件支持丰富的表单项类型、表单折叠展开、自动搜索等功能，同时优化了数据流向，避免死循环问题。
+SearchForm是一个高级搜索表单组件，提供了稳定、高效的表单处理能力。该组件支持丰富的表单项类型、表单折叠展开、自动搜索等功能，同时优化了数据流向，避免死循环问题。
 
 ## 主要改进
 
-相比原始的SearchForm组件，SearchFormV2做了以下关键改进：
+相比原始的SearchForm组件，新版本做了以下关键改进：
 
 1. **减少模板重复**：使用动态组件和组件映射表，显著减少了模板中的重复代码
 2. **优化数据流向**：采用明确的数据流向设计，避免了数据更新时的死循环问题
@@ -40,11 +40,11 @@ SearchFormV2是一个优化版的高级搜索表单组件，解决了原SearchFo
 </template>
 
 <script>
-import SearchFormV2 from '@/components/SearchFormV2'
+import SearchForm from '@/components/SearchForm'
 
 export default {
   components: {
-    SearchFormV2
+    SearchForm
   },
   data() {
     return {
@@ -213,7 +213,7 @@ export default {
 
 ## 支持的表单项类型
 
-SearchFormV2支持以下表单项类型：
+SearchForm支持以下表单项类型：
 
 - `input` - 输入框
 - `select` - 选择器
@@ -268,7 +268,7 @@ this.$refs.searchForm.setValues({
 
 ## 与原SearchForm的区别
 
-1. **命名**：组件名称为`SearchFormV2`
+1. **命名**：组件名称为`SearchForm`
 2. **防抖**：默认包含搜索防抖功能，可通过`debounceTime`属性调整
 3. **事件参数**：`search`事件只返回非空字段
 4. **数据流向**：使用更清晰的内外部数据流，避免死循环
@@ -284,9 +284,9 @@ this.$refs.searchForm.setValues({
 
 ## 迁移指南
 
-从SearchForm迁移到SearchFormV2只需几个简单步骤：
+从旧版SearchForm迁移到新版SearchForm只需几个简单步骤：
 
-1. 将组件引用从`SearchForm`改为`SearchFormV2`
+1. 将组件引用更新为新的`SearchForm`
 2. 检查表单项配置，确保符合新组件的要求
 3. 如果有使用组件内部变量或方法，请参考本文档调整为新的API
 
@@ -297,7 +297,7 @@ this.$refs.searchForm.setValues({
 import SearchForm from '@/components/SearchForm'
 
 // 新代码
-import SearchFormV2 from '@/components/SearchFormV2'
+import SearchForm from '@/components/SearchForm'
 ```
 
 ## 注意事项
@@ -305,4 +305,4 @@ import SearchFormV2 from '@/components/SearchFormV2'
 1. 组件内部会过滤空值，只有非空值才会包含在search事件的参数中
 2. 重置表单会将所有字段设置为空值，并触发reset事件
 3. 如果需要在重置后自动搜索，请设置searchAfterReset为true
-4. 自定义插槽需要通过slotName属性指定插槽名称 
+4. 自定义插槽需要通过slotName属性指定插槽名称
