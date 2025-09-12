@@ -8,23 +8,16 @@
     <!-- 统计数据展示 -->
     <div class="stats-section">
       <div class="stats-header">
-        <application-stats
-          :date-range="statsDateRange"
+        <ApplicationStats
+          ref="applicationStats"
           :auto-load="true"
-          :refresh-interval="300000"
+          :show-rates="true"
+          :show-date-range-selector="true"
+          :default-date-range="statsDateRange"
           @stats-loaded="handleStatsLoaded"
           @stats-error="handleStatsError"
+          @date-range-change="handleDateRangeChange"
         />
-        <!-- 时间范围选择器 -->
-        <div class="date-range-selector">
-          <span class="range-label">统计时间范围：</span>
-          <el-radio-group v-model="statsDateRange" @change="handleDateRangeChange">
-            <el-radio-button label="week">最近一周</el-radio-button>
-            <el-radio-button label="month">最近一月</el-radio-button>
-            <el-radio-button label="quarter">最近三月</el-radio-button>
-            <el-radio-button label="year">最近一年</el-radio-button>
-          </el-radio-group>
-        </div>
       </div>
     </div>
 
@@ -520,24 +513,6 @@ export default {
       justify-content: space-between;
       align-items: flex-start;
       gap: 20px;
-    }
-  }
-
-  .date-range-selector {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: #ffffff;
-    border: 1px solid #dcdfe6;
-    border-radius: 6px;
-
-    .range-label {
-      font-size: 14px;
-      color: #606266;
-      font-weight: 500;
-      white-space: nowrap;
     }
   }
 

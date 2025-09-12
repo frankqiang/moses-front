@@ -83,13 +83,19 @@ export const constantRoutes = [
   {
     path: '/user-management',
     component: Layout,
-    redirect: '/user-management/pending-applications',
+    redirect: '/user-management/index',
     name: 'UserManagement',
     meta: {
       title: '用户管理',
       icon: 'el-icon-user'
     },
     children: [
+      {
+        path: 'index',
+        name: 'UserManagementIndex',
+        component: () => import('@/views/user-management/index'),
+        meta: { title: '用户管理', icon: 'el-icon-user' }
+      },
       {
         path: 'pending-applications',
         name: 'PendingApplications',

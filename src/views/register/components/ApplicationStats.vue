@@ -57,15 +57,29 @@
       </div>
     </div>
 
-    <!-- 统计比率 -->
-    <div v-if="showRates" class="stats-rates">
-      <div class="rate-item">
-        <span class="rate-label">通过率：</span>
-        <span class="rate-value success">{{ statsData.approvalRate || '0.00' }}%</span>
+    <!-- 统计比率和时间范围选择器 -->
+    <div class="stats-bottom">
+      <!-- 统计比率 -->
+      <div v-if="showRates" class="stats-rates">
+        <div class="rate-item">
+          <span class="rate-label">通过率：</span>
+          <span class="rate-value success">{{ statsData.approvalRate || '0.00' }}%</span>
+        </div>
+        <div class="rate-item">
+          <span class="rate-label">拒绝率：</span>
+          <span class="rate-value danger">{{ statsData.rejectionRate || '0.00' }}%</span>
+        </div>
       </div>
-      <div class="rate-item">
-        <span class="rate-label">拒绝率：</span>
-        <span class="rate-value danger">{{ statsData.rejectionRate || '0.00' }}%</span>
+
+      <!-- 时间范围选择器 -->
+      <div v-if="showDateRangeSelector" class="date-range-selector">
+        <span class="range-label">统计时间范围：</span>
+        <el-radio-group v-model="currentDateRange" @change="handleDateRangeChange">
+          <el-radio-button label="today">今天</el-radio-button>
+          <el-radio-button label="week">最近一周</el-radio-button>
+          <el-radio-button label="month">最近一月</el-radio-button>
+          <el-radio-button label="year">最近一年</el-radio-button>
+        </el-radio-group>
       </div>
     </div>
 
@@ -92,17 +106,7 @@ import { getApplicationStats } from '../api/register'
 export default {
   name: 'ApplicationStats',
   props: {
-    /**
-     * 统计日期范围
-     * @type {String}
-     * @default 'month'
-     * @values 'today', 'week', 'month', 'year'
-     */
-    dateRange: {
-      type: String,
-      default: 'month',
-      validator: (value) => ['today', 'week', 'month', 'year'].includes(value)
-    },
+
 
     /**
      * 指定审批人ID
@@ -121,6 +125,26 @@ export default {
     showRates: {
       type: Boolean,
       default: true
+    },
+
+    /**
+     * 是否显示时间范围选择器
+     * @type {Boolean}
+     * @default false
+     */
+    showDateRangeSelector: {
+      type: Boolean,
+      default: false
+    },
+
+    /**
+     * 默认时间范围
+     * @type {String}
+     * @default 'month'
+     */
+    defaultDateRange: {
+      type: String,
+      default: 'month'
     },
 
     /**
@@ -158,7 +182,8 @@ export default {
         approvalRate: '0.00',
         rejectionRate: '0.00'
       },
-      refreshTimer: null
+      refreshTimer: null,
+      currentDateRange: 'month'
     }
   },
 
@@ -167,18 +192,6 @@ export default {
   },
 
   watch: {
-    /**
-     * 监听日期范围变化
-     */
-    dateRange: {
-      handler() {
-        if (this.autoLoad) {
-          this.loadStats()
-        }
-      },
-      immediate: false
-    },
-
     /**
      * 监听审批人变化
      */
@@ -193,6 +206,9 @@ export default {
   },
 
   mounted() {
+    // 初始化当前时间范围
+    this.currentDateRange = this.defaultDateRange
+
     if (this.autoLoad) {
       this.loadStats()
     }
@@ -220,7 +236,7 @@ export default {
 
         // 构建查询参数
         const params = {
-          dateRange: this.dateRange
+          dateRange: this.currentDateRange
         }
 
         if (this.approverId) {
@@ -239,7 +255,7 @@ export default {
           // 触发加载完成事件
           this.$emit('stats-loaded', {
             data: this.statsData,
-            dateRange: this.dateRange,
+            dateRange: this.currentDateRange,
             approverId: this.approverId
           })
         } else {
@@ -253,7 +269,7 @@ export default {
         // 触发错误事件
         this.$emit('stats-error', {
           error,
-          dateRange: this.dateRange,
+          dateRange: this.currentDateRange,
           approverId: this.approverId
         })
       } finally {
@@ -295,6 +311,17 @@ export default {
         clearInterval(this.refreshTimer)
         this.refreshTimer = null
       }
+    },
+
+    /**
+     * 处理时间范围变化
+     */
+    handleDateRangeChange(value) {
+      this.currentDateRange = value
+      this.$emit('date-range-change', value)
+      if (this.autoLoad) {
+        this.loadStats()
+      }
     }
   }
 }
@@ -302,11 +329,12 @@ export default {
 
 <style lang="scss" scoped>
 .application-stats {
+  width: 100%;
   position: relative;
 
   .stats-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 16px;
     margin-bottom: 20px;
 
@@ -318,6 +346,8 @@ export default {
       display: flex;
       align-items: center;
       transition: all 0.3s ease;
+      flex: 1;
+      min-width: 200px;
 
       &:hover {
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -376,12 +406,22 @@ export default {
     }
   }
 
-  .stats-rates {
+  .stats-bottom {
     display: flex;
-    gap: 24px;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
     padding: 16px;
     background: #f8f9fa;
     border-radius: 8px;
+    border: 1px solid #e9ecef;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .stats-rates {
+    display: flex;
+    gap: 24px;
 
     .rate-item {
       display: flex;
@@ -405,6 +445,18 @@ export default {
           color: #f56c6c;
         }
       }
+    }
+  }
+
+  .date-range-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .range-label {
+      font-size: 14px;
+      color: #606266;
+      white-space: nowrap;
     }
   }
 
@@ -443,11 +495,11 @@ export default {
 @media (max-width: 768px) {
   .application-stats {
     .stats-cards {
-      grid-template-columns: 1fr;
       gap: 12px;
 
       .stat-card {
         padding: 16px;
+        min-width: 150px;
 
         .stat-icon {
           width: 40px;
@@ -471,13 +523,29 @@ export default {
       }
     }
 
+    .stats-bottom {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+    }
+
     .stats-rates {
       flex-direction: column;
       gap: 12px;
-      padding: 12px;
+      width: 100%;
 
       .rate-item {
         justify-content: space-between;
+      }
+    }
+
+    .date-range-selector {
+      width: 100%;
+      justify-content: flex-start;
+
+      .range-label {
+        font-size: 13px;
       }
     }
   }
