@@ -8,8 +8,8 @@
 
 import request from '@/utils/request'
 
-// API基础路径
-const baseURL = '/v1'
+// API基础路径 - 注意：VUE_APP_BASE_API已经包含了/v1，所以这里不需要重复
+const baseURL = ''
 
 /**
  * 获取用户列表
@@ -38,7 +38,7 @@ const baseURL = '/v1'
  */
 export function getUserList(params = {}) {
   return request({
-    url: `${baseURL}/users`,
+    url: '/users',
     method: 'get',
     params
   })

@@ -7,15 +7,8 @@
  */
 <template>
   <div class="app-container">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h2 class="page-title">用户管理</h2>
-      <p class="page-description">管理系统用户信息，包括用户账号、基本信息、权限设置等</p>
-    </div>
-
     <!-- 搜索表单 -->
-    <search-form
-      :items="searchFormItems"
+    <user-search
       :loading="listLoading"
       @search="handleSearch"
       @reset="handleReset"
@@ -46,48 +39,27 @@
     </table-toolbar>
 
     <!-- 用户列表表格 -->
-    <base-table
+    <user-table
       ref="userTable"
-      :data="userList"
-      :columns="tableColumns"
+      :user-list="userList"
       :loading="listLoading"
       :pagination="pagination"
-      :show-selection="true"
       @selection-change="handleSelectionChange"
       @pagination-change="handlePaginationChange"
-    >
-      <!-- 状态列自定义渲染 -->
-      <template #status="{ row }">
-        <status-tag
-          :status="row.status"
-          :type="getStatusType(row.status)"
-        >
-          {{ getStatusText(row.status) }}
-        </status-tag>
-      </template>
-
-      <!-- 操作列 -->
-      <template #actions="{ row }">
-        <action-buttons
-          :buttons="getActionButtons(row)"
-          @view="handleView(row)"
-          @edit="handleEdit(row)"
-          @delete="handleDelete(row)"
-          @enable="handleEnable(row)"
-          @disable="handleDisable(row)"
-          @reset-password="handleResetPassword(row)"
-        />
-      </template>
-    </base-table>
+      @view="handleView"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @enable="handleEnable"
+      @disable="handleDisable"
+      @reset-password="handleResetPassword"
+    />
 
     <!-- 用户表单抽屉 -->
-    <drawer-form
+    <user-form
       ref="userFormDrawer"
       :visible.sync="drawerVisible"
       :title="drawerTitle"
-      :form-items="formItems"
       :form-data="currentUser"
-      :form-rules="formRules"
       :loading="formLoading"
       :readonly="drawerType === 'view'"
       @submit="handleFormSubmit"
@@ -111,16 +83,15 @@
 
 <script>
 // 导入通用组件
-import SearchForm from '@/components/SearchForm'
-import BaseTable from '@/components/BaseTable'
 import TableToolbar from '@/components/TableToolbar'
-import ActionButtons from '@/components/ActionButtons'
-import StatusTag from '@/components/StatusTag'
-import DrawerForm from '@/components/DrawerForm'
 import DialogForm from '@/components/DialogForm'
 
+// 导入用户管理组件
+import UserTable from './components/UserTable.vue'
+import UserForm from './components/UserForm.vue'
+import UserSearch from './components/UserSearch.vue'
+
 // 导入API函数
-/* eslint-disable no-unused-vars */
 import {
   getUserList,
   getUserDetail,
@@ -131,7 +102,6 @@ import {
   updateUserStatus,
   resetUserPassword
 } from './api'
-/* eslint-enable no-unused-vars */
 
 // 导入常量配置
 import {
@@ -142,19 +112,16 @@ import {
 } from './constants'
 
 // 导入工具函数
-// eslint-disable-next-line no-unused-vars
 import { scrollTo } from '@/utils/scroll-to'
 import { parseTime } from '@/utils'
 
 export default {
   name: 'UserManagement',
   components: {
-    SearchForm,
-    BaseTable,
+    UserTable,
+    UserForm,
+    UserSearch,
     TableToolbar,
-    ActionButtons,
-    StatusTag,
-    DrawerForm,
     DialogForm
   },
   data() {
@@ -174,12 +141,12 @@ export default {
       // 搜索条件
       searchQuery: {
         username: '',
-        realName: '',
+        name: '',
         email: '',
-        phone: '',
+        search: '',
         department: '',
         status: '',
-        createTimeRange: []
+        createdTimeRange: []
       },
 
       // 抽屉表单
@@ -199,107 +166,6 @@ export default {
     }
   },
   computed: {
-    /**
-     * 搜索表单配置项
-     */
-    searchFormItems() {
-      return [
-        {
-          prop: 'username',
-          label: '用户名',
-          type: 'input',
-          placeholder: '请输入用户名',
-          clearable: true
-        },
-        {
-          prop: 'realName',
-          label: '真实姓名',
-          type: 'input',
-          placeholder: '请输入真实姓名',
-          clearable: true
-        },
-        {
-          prop: 'email',
-          label: '邮箱',
-          type: 'input',
-          placeholder: '请输入邮箱',
-          clearable: true
-        },
-        {
-          prop: 'phone',
-          label: '手机号',
-          type: 'input',
-          placeholder: '请输入手机号',
-          clearable: true
-        },
-        {
-          prop: 'department',
-          label: '部门',
-          type: 'select',
-          placeholder: '请选择部门',
-          options: DEPARTMENT_OPTIONS,
-          clearable: true
-        },
-        {
-          prop: 'status',
-          label: '状态',
-          type: 'select',
-          placeholder: '请选择状态',
-          options: USER_STATUS_OPTIONS,
-          clearable: true
-        },
-        {
-          prop: 'createTimeRange',
-          label: '创建时间',
-          type: 'date',
-          dateType: 'datetimerange',
-          placeholder: '选择时间范围',
-          startPlaceholder: '开始时间',
-          endPlaceholder: '结束时间',
-          valueFormat: 'yyyy-MM-dd HH:mm:ss',
-          clearable: true
-        }
-      ]
-    },
-
-    /**
-     * 表格列配置
-     */
-    tableColumns() {
-      return [
-        { prop: 'username', label: '用户名', width: '120', sortable: true },
-        { prop: 'realName', label: '真实姓名', width: '100' },
-        { prop: 'email', label: '邮箱', width: '180' },
-        { prop: 'phone', label: '手机号', width: '120' },
-        { prop: 'department', label: '部门', width: '100' },
-        { prop: 'gender', label: '性别', width: '60', formatter: this.formatGender },
-        {
-          prop: 'status',
-          label: '状态',
-          width: '80',
-          slot: 'status'
-        },
-        {
-          prop: 'lastLoginTime',
-          label: '最后登录',
-          width: '150',
-          formatter: (row) => row.lastLoginTime ? parseTime(row.lastLoginTime, '{y}-{m}-{d} {h}:{i}') : '-'
-        },
-        {
-          prop: 'createTime',
-          label: '创建时间',
-          width: '150',
-          formatter: (row) => parseTime(row.createTime, '{y}-{m}-{d} {h}:{i}')
-        },
-        {
-          prop: 'actions',
-          label: '操作',
-          width: '200',
-          fixed: 'right',
-          slot: 'actions'
-        }
-      ]
-    },
 
     /**
      * 抽屉标题
@@ -313,104 +179,7 @@ export default {
       return titleMap[this.drawerType] || '用户信息'
     },
 
-    /**
-     * 表单配置项
-     */
-    formItems() {
-      return [
-        {
-          prop: 'username',
-          label: '用户名',
-          type: 'input',
-          placeholder: '请输入用户名',
-          required: true,
-          disabled: this.drawerType === 'edit'
-        },
-        {
-          prop: 'realName',
-          label: '真实姓名',
-          type: 'input',
-          placeholder: '请输入真实姓名',
-          required: true
-        },
-        {
-          prop: 'email',
-          label: '邮箱',
-          type: 'input',
-          placeholder: '请输入邮箱',
-          required: true
-        },
-        {
-          prop: 'phone',
-          label: '手机号',
-          type: 'input',
-          placeholder: '请输入手机号',
-          required: true
-        },
-        {
-          prop: 'department',
-          label: '部门',
-          type: 'select',
-          placeholder: '请选择部门',
-          options: DEPARTMENT_OPTIONS,
-          required: true
-        },
-        {
-          prop: 'gender',
-          label: '性别',
-          type: 'radio',
-          options: GENDER_OPTIONS,
-          required: true
-        },
-        {
-          prop: 'status',
-          label: '状态',
-          type: 'radio',
-          options: USER_STATUS_OPTIONS,
-          required: true
-        },
-        {
-          prop: 'remark',
-          label: '备注',
-          type: 'textarea',
-          placeholder: '请输入备注信息'
-        }
-      ]
-    },
 
-    /**
-     * 表单验证规则
-     */
-    formRules() {
-      return {
-        username: [
-          { required: true, message: '请输入用户名', trigger: 'blur' },
-          { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' },
-          { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线', trigger: 'blur' }
-        ],
-        realName: [
-          { required: true, message: '请输入真实姓名', trigger: 'blur' },
-          { min: 2, max: 10, message: '姓名长度在 2 到 10 个字符', trigger: 'blur' }
-        ],
-        email: [
-          { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
-        ],
-        phone: [
-          { required: true, message: '请输入手机号', trigger: 'blur' },
-          { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }
-        ],
-        department: [
-          { required: true, message: '请选择部门', trigger: 'change' }
-        ],
-        gender: [
-          { required: true, message: '请选择性别', trigger: 'change' }
-        ],
-        status: [
-          { required: true, message: '请选择状态', trigger: 'change' }
-        ]
-      }
-    },
 
     /**
      * 密码表单配置项
@@ -451,7 +220,7 @@ export default {
       }
     }
   },
-  created() {
+  mounted() {
     this.fetchUserList()
   },
   methods: {
@@ -461,23 +230,40 @@ export default {
     async fetchUserList() {
       this.listLoading = true
       try {
-        // TODO: 调用API获取用户列表
-        // const response = await getUserList({
-        //   ...this.searchQuery,
-        //   page: this.pagination.page,
-        //   limit: this.pagination.limit
-        // })
-        // this.userList = response.data.list
-        // this.pagination.total = response.data.total
-
-        // 模拟数据
-        this.userList = []
-        this.pagination.total = 0
-
-        console.log('获取用户列表')
+        // 基础分页参数
+        const params = {
+          page: this.pagination.page,
+          limit: this.pagination.limit
+        }
+        
+        // 只添加有值的搜索参数
+        Object.keys(this.searchQuery).forEach(key => {
+          const value = this.searchQuery[key]
+          if (value !== '' && value !== null && value !== undefined) {
+            if (Array.isArray(value) && value.length > 0) {
+              params[key] = value
+            } else if (!Array.isArray(value)) {
+              params[key] = value
+            }
+          }
+        })
+        
+        // 处理时间范围参数
+        if (this.searchQuery.createdTimeRange && this.searchQuery.createdTimeRange.length === 2) {
+          params.createdFrom = this.searchQuery.createdTimeRange[0]
+          params.createdTo = this.searchQuery.createdTimeRange[1]
+          delete params.createdTimeRange
+        }
+        
+        const response = await getUserList(params)
+        this.userList = response.data.results || []
+        this.pagination.total = response.data.totalResults || 0
       } catch (error) {
         console.error('获取用户列表失败:', error)
         this.$message.error('获取用户列表失败')
+        // 设置空数据避免页面报错
+        this.userList = []
+        this.pagination.total = 0
       } finally {
         this.listLoading = false
       }
@@ -498,12 +284,12 @@ export default {
     handleReset() {
       this.searchQuery = {
         username: '',
-        realName: '',
+        name: '',
         email: '',
-        phone: '',
+        search: '',
         department: '',
         status: '',
-        createTimeRange: []
+        createdTimeRange: []
       }
       this.pagination.page = 1
       this.fetchUserList()
@@ -776,94 +562,9 @@ export default {
       }
     },
 
-    /**
-     * 获取状态类型
-     */
-    getStatusType(status) {
-      const typeMap = {
-        [USER_STATUS.ACTIVE]: 'success',
-        [USER_STATUS.INACTIVE]: 'danger',
-        [USER_STATUS.LOCKED]: 'warning'
-      }
-      return typeMap[status] || 'info'
-    },
 
-    /**
-     * 获取状态文本
-     */
-    getStatusText(status) {
-      const textMap = {
-        [USER_STATUS.ACTIVE]: '正常',
-        [USER_STATUS.INACTIVE]: '禁用',
-        [USER_STATUS.LOCKED]: '锁定'
-      }
-      return textMap[status] || '未知'
-    },
 
-    /**
-     * 格式化性别
-     */
-    formatGender(row) {
-      const genderMap = {
-        'male': '男',
-        'female': '女'
-      }
-      return genderMap[row.gender] || '-'
-    },
 
-    /**
-     * 获取操作按钮配置
-     */
-    getActionButtons(row) {
-      const buttons = [
-        {
-          key: 'view',
-          label: '查看',
-          type: 'text',
-          icon: 'el-icon-view'
-        },
-        {
-          key: 'edit',
-          label: '编辑',
-          type: 'text',
-          icon: 'el-icon-edit'
-        }
-      ]
-
-      if (row.status === USER_STATUS.ACTIVE) {
-        buttons.push({
-          key: 'disable',
-          label: '禁用',
-          type: 'text',
-          icon: 'el-icon-close'
-        })
-      } else {
-        buttons.push({
-          key: 'enable',
-          label: '启用',
-          type: 'text',
-          icon: 'el-icon-check'
-        })
-      }
-
-      buttons.push(
-        {
-          key: 'reset-password',
-          label: '重置密码',
-          type: 'text',
-          icon: 'el-icon-key'
-        },
-        {
-          key: 'delete',
-          label: '删除',
-          type: 'text',
-          icon: 'el-icon-delete',
-          danger: true
-        }
-      )
-
-      return buttons
-    },
 
     /**
      * 确认密码验证
