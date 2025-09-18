@@ -11,28 +11,13 @@
     <user-search :loading="listLoading" @search="handleSearch" @reset="handleReset" />
 
     <!-- 用户列表表格 -->
-    <user-table
-      ref="userTable"
-      :user-list="userList"
-      :loading="listLoading"
-      :pagination="pagination"
-      :export-api="exportUserList"
-      :export-params="exportParams"
-      :export-filename="'用户列表_' + new Date().toISOString().slice(0, 10)"
-      @selection-change="handleSelectionChange"
-      @pagination-change="handlePaginationChange"
-      @view="handleView"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @enable="handleEnable"
-      @disable="handleDisable"
-      @reset-password="handleResetPassword"
-      @sort-change="handleSortChange"
-      @refresh="handleRefresh"
-      @batch-delete="handleBatchDelete"
-      @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable"
-    >
+    <user-table ref="userTable" :user-list="userList" :loading="listLoading" :pagination="pagination"
+      :export-api="exportUserList" :export-params="exportParams"
+      :export-filename="'用户列表_' + new Date().toISOString().slice(0, 10)" @selection-change="handleSelectionChange"
+      @pagination-change="handlePaginationChange" @view="handleView" @edit="handleEdit" @delete="handleDelete"
+      @enable="handleEnable" @disable="handleDisable" @reset-password="handleResetPassword"
+      @sort-change="handleSortChange" @refresh="handleRefresh" @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="small" @click="handleCreate">
           新增用户
@@ -41,29 +26,19 @@
     </user-table>
 
     <!-- 用户表单抽屉 -->
-    <user-form
+    <user-form-drawer
       ref="userFormDrawer"
       :visible.sync="drawerVisible"
-      :title="drawerTitle"
-      :form-data="currentUser"
-      :loading="formLoading"
-      :readonly="drawerType === 'view'"
-      @submit="handleFormSubmit"
+      :mode="drawerMode"
+      :user-data="currentUser"
+      @success="handleFormSuccess"
       @close="handleDrawerClose"
     />
 
     <!-- 密码重置对话框 -->
-    <dialog-form
-      ref="passwordDialog"
-      :visible.sync="passwordDialogVisible"
-      title="重置密码"
-      :form-items="passwordFormItems"
-      :form-data="passwordFormData"
-      :form-rules="passwordFormRules"
-      :loading="passwordLoading"
-      @submit="handlePasswordSubmit"
-      @close="handlePasswordDialogClose"
-    />
+    <dialog-form ref="passwordDialog" :visible.sync="passwordDialogVisible" title="重置密码" :form-items="passwordFormItems"
+      :form-data="passwordFormData" :form-rules="passwordFormRules" :loading="passwordLoading"
+      @submit="handlePasswordSubmit" @close="handlePasswordDialogClose" />
   </div>
 </template>
 
@@ -73,7 +48,7 @@ import DialogForm from '@/components/DialogForm'
 
 // 导入用户管理组件
 import UserTable from './components/UserTable.vue'
-import UserForm from './components/UserForm.vue'
+import UserFormDrawer from './components/UserFormDrawer.vue'
 import UserSearch from './components/UserSearch.vue'
 
 // 导入API函数
@@ -105,7 +80,7 @@ export default {
   name: 'UserManagement',
   components: {
     UserTable,
-    UserForm,
+    UserFormDrawer,
     UserSearch,
     DialogForm
   },
@@ -142,9 +117,8 @@ export default {
 
       // 抽屉表单
       drawerVisible: false,
-      drawerType: 'create', // create, edit, view
+      drawerMode: 'create', // create, update, view
       currentUser: {},
-      formLoading: false,
 
       // 密码重置对话框
       passwordDialogVisible: false,
@@ -159,15 +133,15 @@ export default {
   computed: {
 
     /**
-     * 抽屉标题
+     * 抽屉标题 (已废弃，由UserFormDrawer内部管理)
      */
     drawerTitle() {
       const titleMap = {
         create: '新增用户',
-        edit: '编辑用户',
+        update: '编辑用户',
         view: '查看用户'
       }
-      return titleMap[this.drawerType] || '用户信息'
+      return titleMap[this.drawerMode] || '用户信息'
     },
 
     /**
@@ -413,11 +387,8 @@ export default {
      * 新增用户
      */
     handleCreate() {
-      this.drawerType = 'create'
-      this.currentUser = {
-        status: USER_STATUS.ACTIVE,
-        gender: 'male'
-      }
+      this.drawerMode = 'create'
+      this.currentUser = {}
       this.drawerVisible = true
     },
 
@@ -425,7 +396,7 @@ export default {
      * 查看用户
      */
     handleView(row) {
-      this.drawerType = 'view'
+      this.drawerMode = 'view'
       this.currentUser = { ...row }
       this.drawerVisible = true
     },
@@ -434,7 +405,7 @@ export default {
      * 编辑用户
      */
     handleEdit(row) {
-      this.drawerType = 'edit'
+      this.drawerMode = 'update'
       this.currentUser = { ...row }
       this.drawerVisible = true
     },
@@ -468,7 +439,7 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(async() => {
+      }).then(async () => {
         try {
           // TODO: 调用删除API
           // await deleteUser(row.id)
@@ -536,7 +507,7 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(async() => {
+      }).then(async () => {
         try {
           // eslint-disable-next-line no-unused-vars
           const userIds = this.selectedUsers.map(user => user.id)
@@ -619,28 +590,17 @@ export default {
     },
 
     /**
-     * 表单提交
+     * 表单提交成功处理
      */
-    async handleFormSubmit(formData) {
-      this.formLoading = true
-      try {
-        if (this.drawerType === 'create') {
-          // TODO: 调用创建API
-          // await createUser(formData)
-          this.$message.success('创建成功')
-        } else if (this.drawerType === 'edit') {
-          // TODO: 调用更新API
-          // await updateUser(this.currentUser.id, formData)
-          this.$message.success('更新成功')
-        }
-
+    handleFormSuccess({ mode, data, continueEdit }) {
+      console.log('用户操作成功:', { mode, data, continueEdit })
+      
+      // 刷新列表数据
+      this.fetchUserList()
+      
+      // 如果不是继续编辑，则关闭抽屉
+      if (!continueEdit) {
         this.drawerVisible = false
-        this.fetchUserList()
-      } catch (error) {
-        console.error('保存用户失败:', error)
-        this.$message.error('保存失败')
-      } finally {
-        this.formLoading = false
       }
     },
 
