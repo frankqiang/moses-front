@@ -26,14 +26,8 @@
     </user-table>
 
     <!-- 用户表单抽屉 -->
-    <user-form-drawer
-      ref="userFormDrawer"
-      :visible.sync="drawerVisible"
-      :mode="drawerMode"
-      :user-data="currentUser"
-      @success="handleFormSuccess"
-      @close="handleDrawerClose"
-    />
+    <user-form-drawer ref="userFormDrawer" :visible.sync="drawerVisible" :mode="drawerMode" :user-data="currentUser"
+      @success="handleFormSuccess" @close="handleDrawerClose" />
 
     <!-- 密码重置对话框 -->
     <dialog-form ref="passwordDialog" :visible.sync="passwordDialogVisible" title="重置密码" :form-items="passwordFormItems"
@@ -594,10 +588,10 @@ export default {
      */
     handleFormSuccess({ mode, data, continueEdit }) {
       console.log('用户操作成功:', { mode, data, continueEdit })
-      
+
       // 刷新列表数据
       this.fetchUserList()
-      
+
       // 如果不是继续编辑，则关闭抽屉
       if (!continueEdit) {
         this.drawerVisible = false

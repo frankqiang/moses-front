@@ -1,10 +1,10 @@
 /**
- * 用户表单抽屉组件
- * 功能描述：提供用户新增、编辑和查看功能的表单，使用BaseDrawer+EnhancedForm组合
- * 创建日期：2024-01-15
- * 修改记录：
- *   - 2024-01-15: 重构为现代化组件架构，参考OperationFormDrawer实现
- */
+* 用户表单抽屉组件
+* 功能描述：提供用户新增、编辑和查看功能的表单，使用BaseDrawer+EnhancedForm组合
+* 创建日期：2024-01-15
+* 修改记录：
+* - 2024-01-15: 重构为现代化组件架构，参考OperationFormDrawer实现
+*/
 <template>
   <base-drawer
     :visible.sync="drawerVisible"
@@ -86,7 +86,7 @@
             </el-col>
           </el-row>
 
-          <el-row :gutter="20" v-if="formMode === 'create'">
+          <el-row v-if="formMode === 'create'" :gutter="20">
             <el-col :span="12">
               <el-form-item label="密码" prop="password">
                 <el-input
@@ -132,7 +132,11 @@
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col :span="24">
               <el-form-item label="状态" prop="status">
                 <el-radio-group v-model="form.status" :disabled="formMode === 'view'">
                   <el-radio
@@ -229,7 +233,8 @@
                     :value="option.value"
                   >
                     <span style="float: left">{{ option.label }}</span>
-                    <span style="float: right; color: #8492a6; font-size: 13px">{{ option.description }}</span>
+                    <span style="float: right; color: #8492a6; font-size: 13px">{{
+                      option.description }}</span>
                   </el-option>
                 </el-select>
                 <div class="field-hint">可选择多个角色，用户权限为所有角色权限的并集</div>
@@ -264,20 +269,10 @@
     <template #footer>
       <el-button @click="handleCancel">{{ innerMode === 'view' ? '关闭' : '取消' }}</el-button>
       <el-button v-if="innerMode !== 'view'" @click="handleReset">重置</el-button>
-      <el-button
-        v-if="innerMode === 'create'"
-        type="primary"
-        :loading="loading"
-        @click="handleSubmitAndContinue"
-      >
+      <el-button v-if="innerMode === 'create'" type="primary" :loading="loading" @click="handleSubmitAndContinue">
         保存并继续
       </el-button>
-      <el-button
-        v-if="innerMode !== 'view'"
-        type="primary"
-        :loading="loading"
-        @click="handleSubmit"
-      >
+      <el-button v-if="innerMode !== 'view'" type="primary" :loading="loading" @click="handleSubmit">
         {{ innerMode === 'create' ? '确认保存' : '保存修改' }}
       </el-button>
     </template>
@@ -450,7 +445,7 @@ export default {
     // 创建防抖的验证函数
     this.debouncedCheckUsername = debounce(this.checkUsernameUniqueness, 500)
     this.debouncedCheckEmail = debounce(this.checkEmailUniqueness, 500)
-    
+
     // 加载选项数据
     this.loadDepartmentOptions()
     this.loadRoleOptions()
@@ -537,17 +532,17 @@ export default {
 
         if (this.mode === 'create') {
           // 移除确认密码字段
-          const { confirmPassword, ...submitData } = formData
+          const { confirmPassword, ...submitData } = formData // eslint-disable-line no-unused-vars
           response = await createUser(submitData)
         } else if (this.mode === 'update') {
           // 移除密码相关字段
-          const { password, confirmPassword, ...submitData } = formData
+          const { password, confirmPassword, ...submitData } = formData // eslint-disable-line no-unused-vars
           response = await updateUser(formData.id, submitData)
         }
 
         // 从API响应中获取消息，提供备选默认消息
         const successMessage = response?.message ||
-          (this.mode === 'create' ? '用户创建成功' : '用户更新成功')
+                    (this.mode === 'create' ? '用户创建成功' : '用户更新成功')
         this.$message.success(successMessage)
 
         this.$emit('success', { mode: this.mode, data: formData, continueEdit })
@@ -751,38 +746,38 @@ export default {
 
 <style lang="scss" scoped>
 .form-section {
-  margin-bottom: 30px;
+    margin-bottom: 30px;
 
-  .section-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-    margin-bottom: 20px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #e4e7ed;
-  }
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #303133;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e4e7ed;
+    }
 }
 
 .field-hint {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 5px;
-  line-height: 1.4;
+    font-size: 12px;
+    color: #909399;
+    margin-top: 5px;
+    line-height: 1.4;
 }
 
 ::v-deep .el-form-item__label {
-  font-weight: 500;
+    font-weight: 500;
 }
 
 ::v-deep .el-textarea__inner {
-  font-family: inherit;
+    font-family: inherit;
 }
 
 ::v-deep .el-radio {
-  margin-right: 20px;
+    margin-right: 20px;
 }
 
 ::v-deep .el-select .el-select__tags {
-  max-width: calc(100% - 30px);
+    max-width: calc(100% - 30px);
 }
 </style>
