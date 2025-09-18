@@ -11,13 +11,28 @@
     <user-search :loading="listLoading" @search="handleSearch" @reset="handleReset" />
 
     <!-- 用户列表表格 -->
-    <user-table ref="userTable" :user-list="userList" :loading="listLoading" :pagination="pagination"
-      :export-api="exportUserList" :export-params="exportParams"
-      :export-filename="'用户列表_' + new Date().toISOString().slice(0, 10)" @selection-change="handleSelectionChange"
-      @pagination-change="handlePaginationChange" @view="handleView" @edit="handleEdit" @delete="handleDelete"
-      @enable="handleEnable" @disable="handleDisable" @reset-password="handleResetPassword"
-      @sort-change="handleSortChange" @refresh="handleRefresh" @batch-delete="handleBatchDelete"
-      @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
+    <user-table
+      ref="userTable"
+      :user-list="userList"
+      :loading="listLoading"
+      :pagination="pagination"
+      :export-api="exportUserList"
+      :export-params="exportParams"
+      :export-filename="'用户列表_' + new Date().toISOString().slice(0, 10)"
+      @selection-change="handleSelectionChange"
+      @pagination-change="handlePaginationChange"
+      @view="handleView"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @enable="handleEnable"
+      @disable="handleDisable"
+      @reset-password="handleResetPassword"
+      @sort-change="handleSortChange"
+      @refresh="handleRefresh"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+    >
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="small" @click="handleCreate">
           新增用户
@@ -26,13 +41,29 @@
     </user-table>
 
     <!-- 用户表单抽屉 -->
-    <user-form ref="userFormDrawer" :visible.sync="drawerVisible" :title="drawerTitle" :form-data="currentUser"
-      :loading="formLoading" :readonly="drawerType === 'view'" @submit="handleFormSubmit" @close="handleDrawerClose" />
+    <user-form
+      ref="userFormDrawer"
+      :visible.sync="drawerVisible"
+      :title="drawerTitle"
+      :form-data="currentUser"
+      :loading="formLoading"
+      :readonly="drawerType === 'view'"
+      @submit="handleFormSubmit"
+      @close="handleDrawerClose"
+    />
 
     <!-- 密码重置对话框 -->
-    <dialog-form ref="passwordDialog" :visible.sync="passwordDialogVisible" title="重置密码" :form-items="passwordFormItems"
-      :form-data="passwordFormData" :form-rules="passwordFormRules" :loading="passwordLoading"
-      @submit="handlePasswordSubmit" @close="handlePasswordDialogClose" />
+    <dialog-form
+      ref="passwordDialog"
+      :visible.sync="passwordDialogVisible"
+      title="重置密码"
+      :form-items="passwordFormItems"
+      :form-data="passwordFormData"
+      :form-rules="passwordFormRules"
+      :loading="passwordLoading"
+      @submit="handlePasswordSubmit"
+      @close="handlePasswordDialogClose"
+    />
   </div>
 </template>
 
@@ -49,26 +80,26 @@ import UserSearch from './components/UserSearch.vue'
 import {
   getUserList,
   getUserDetail,
-  createUser,
-  updateUser,
-  deleteUser,
-  batchDeleteUsers,
-  updateUserStatus,
-  resetUserPassword,
+  createUser, // eslint-disable-line no-unused-vars
+  updateUser, // eslint-disable-line no-unused-vars
+  deleteUser, // eslint-disable-line no-unused-vars
+  batchDeleteUsers, // eslint-disable-line no-unused-vars
+  updateUserStatus, // eslint-disable-line no-unused-vars
+  resetUserPassword, // eslint-disable-line no-unused-vars
   exportUserList
 } from './api'
 
 // 导入常量配置
 import {
   USER_STATUS,
-  USER_STATUS_OPTIONS,
-  GENDER_OPTIONS,
-  DEPARTMENT_OPTIONS
+  USER_STATUS_OPTIONS, // eslint-disable-line no-unused-vars
+  GENDER_OPTIONS, // eslint-disable-line no-unused-vars
+  DEPARTMENT_OPTIONS // eslint-disable-line no-unused-vars
 } from './constants'
 
 // 导入工具函数
-import { scrollTo } from '@/utils/scroll-to'
-import { parseTime } from '@/utils'
+import { scrollTo } from '@/utils/scroll-to' // eslint-disable-line no-unused-vars
+import { parseTime } from '@/utils' // eslint-disable-line no-unused-vars
 
 export default {
   name: 'UserManagement',
@@ -99,7 +130,7 @@ export default {
         email: '',
         search: '',
         department: '',
-        status: [],  // 改为数组支持多选
+        status: [], // 改为数组支持多选
         role: '',
         gender: '',
         createdTimeRange: [],
@@ -138,8 +169,6 @@ export default {
       }
       return titleMap[this.drawerType] || '用户信息'
     },
-
-
 
     /**
      * 密码表单配置项
@@ -300,7 +329,6 @@ export default {
           this.pagination.total = 0
           this.$message.error(response.message || '获取用户列表失败')
         }
-
       } catch (error) {
         console.error('获取用户列表失败:', error)
         this.userList = []
@@ -440,7 +468,7 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(async () => {
+      }).then(async() => {
         try {
           // TODO: 调用删除API
           // await deleteUser(row.id)
@@ -508,7 +536,7 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(async () => {
+      }).then(async() => {
         try {
           // eslint-disable-next-line no-unused-vars
           const userIds = this.selectedUsers.map(user => user.id)
@@ -653,10 +681,6 @@ export default {
         confirmPassword: ''
       }
     },
-
-
-
-
 
     /**
      * 确认密码验证
