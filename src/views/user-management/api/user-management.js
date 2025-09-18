@@ -223,3 +223,20 @@ export function exportUserList(params = {}) {
     responseType: 'blob' // 重要：设置响应类型为blob
   })
 }
+
+/**
+ * 上传用户头像
+ * @param {string|number} id - 用户ID
+ * @param {FormData} formData - 包含头像文件的FormData对象
+ * @returns {Promise} 返回上传结果
+ */
+export function uploadUserAvatar(id, formData) {
+  return request({
+    url: `/users/${id}/avatar`,
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

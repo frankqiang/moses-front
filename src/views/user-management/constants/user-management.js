@@ -24,6 +24,15 @@ export const USER_STATUS_OPTIONS = [
   { label: '已删除', value: USER_STATUS.DELETED }
 ]
 
+// 用户状态映射（用于显示）
+export const USER_STATUS_MAP = {
+  [USER_STATUS.ACTIVE]: '正常',
+  [USER_STATUS.DISABLED]: '禁用',
+  [USER_STATUS.LOCKED]: '锁定',
+  [USER_STATUS.PENDING]: '待激活',
+  [USER_STATUS.DELETED]: '已删除'
+}
+
 // 性别常量
 export const GENDER = {
   MALE: 'male',
@@ -80,6 +89,7 @@ export const ROLE_OPTIONS = [
 export default {
   USER_STATUS,
   USER_STATUS_OPTIONS,
+  USER_STATUS_MAP,
   GENDER,
   GENDER_OPTIONS,
   DEPARTMENT,

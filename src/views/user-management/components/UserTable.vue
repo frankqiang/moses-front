@@ -289,7 +289,8 @@ export default {
     handleActionClick(button) {
       switch (button.action) {
         case 'view':
-          this.$emit('view', button.row)
+          // 直接跳转到用户详情页面
+          this.$router.push(`/user-management/detail/${button.row.id}`)
           break
         case 'edit':
           this.$emit('edit', button.row)

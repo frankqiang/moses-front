@@ -101,6 +101,13 @@ export const constantRoutes = [
         name: 'PendingApplications',
         component: () => import('@/views/register/pending'),
         meta: { title: '待审批申请', icon: 'el-icon-s-check' }
+      },
+      {
+        path: 'detail/:id',
+        name: 'UserDetail',
+        component: () => import('@/views/user-management/detail'),
+        meta: { title: '用户详情', activeMenu: '/user-management/index' },
+        hidden: true
       }
     ]
   },

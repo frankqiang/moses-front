@@ -220,6 +220,11 @@ export default {
   },
   mounted() {
     this.fetchUserList()
+
+    // 处理从详情页面返回时的编辑操作
+    if (this.$route.query.action === 'edit' && this.$route.query.userId) {
+      this.handleEditFromDetail(this.$route.query.userId)
+    }
   },
   methods: {
     /**
@@ -404,6 +409,27 @@ export default {
       this.drawerType = 'edit'
       this.currentUser = { ...row }
       this.drawerVisible = true
+    },
+
+    /**
+     * 处理从详情页面返回的编辑操作
+     */
+    async handleEditFromDetail(userId) {
+      try {
+        // 清除路由查询参数
+        this.$router.replace({ path: this.$route.path })
+
+        // 获取用户详情
+        const response = await getUserDetail(userId)
+        if (response.success) {
+          this.handleEdit(response.data)
+        } else {
+          this.$message.error('获取用户信息失败')
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
+        this.$message.error('获取用户信息失败')
+      }
     },
 
     /**
