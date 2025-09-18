@@ -51,7 +51,7 @@ export function getUserList(params = {}) {
  */
 export function getUserDetail(id) {
   return request({
-    url: `${baseURL}/users/${id}`,
+    url: `/users/${id}`,
     method: 'get'
   })
 }
@@ -72,7 +72,7 @@ export function getUserDetail(id) {
  */
 export function createUser(data) {
   return request({
-    url: `${baseURL}/users`,
+    url: '/users',
     method: 'post',
     data
   })
@@ -86,7 +86,7 @@ export function createUser(data) {
  */
 export function updateUser(id, data) {
   return request({
-    url: `${baseURL}/users/${id}`,
+    url: `/users/${id}`,
     method: 'put',
     data
   })
@@ -99,7 +99,7 @@ export function updateUser(id, data) {
  */
 export function deleteUser(id) {
   return request({
-    url: `${baseURL}/users/${id}`,
+    url: `/users/${id}`,
     method: 'delete'
   })
 }
@@ -111,50 +111,50 @@ export function deleteUser(id) {
  */
 export function batchDeleteUsers(ids) {
   return request({
-    url: `${baseURL}/users/batch-delete`,
+    url: '/users/batch-delete',
     method: 'delete',
     data: { ids }
   })
 }
 
 /**
- * 更新用户状态
+ * 更新用户状态 - 按照接口文档使用PATCH方法
  * @param {string|number} id - 用户ID
- * @param {number} status - 状态值 1-启用 0-禁用
+ * @param {string} status - 状态值（active, locked, disabled, pending, deleted）
  * @returns {Promise} 返回状态更新结果
  */
 export function updateUserStatus(id, status) {
   return request({
-    url: `${baseURL}/users/${id}/status`,
-    method: 'put',
+    url: `/users/${id}/status`,
+    method: 'patch',
     data: { status }
   })
 }
 
 /**
- * 批量更新用户状态
+ * 批量更新用户状态 - 按照接口文档使用PATCH方法
  * @param {Array} ids - 用户ID数组
- * @param {number} status - 状态值 1-启用 0-禁用
+ * @param {string} status - 状态值（active, locked, disabled, pending, deleted）
  * @returns {Promise} 返回批量状态更新结果
  */
 export function batchUpdateUserStatus(ids, status) {
   return request({
-    url: `${baseURL}/users/batch-status`,
-    method: 'put',
-    data: { ids, status }
+    url: '/users/batch/status',
+    method: 'patch',
+    data: { userIds: ids, status }
   })
 }
 
 /**
- * 重置用户密码
+ * 重置用户密码 - 按照接口文档规范
  * @param {string|number} id - 用户ID
  * @param {string} newPassword - 新密码
  * @returns {Promise} 返回密码重置结果
  */
 export function resetUserPassword(id, newPassword) {
   return request({
-    url: `${baseURL}/users/${id}/reset-password`,
-    method: 'put',
+    url: `/users/${id}/reset-password`,
+    method: 'post',
     data: { newPassword }
   })
 }
@@ -166,7 +166,7 @@ export function resetUserPassword(id, newPassword) {
  */
 export function checkUsernameAvailable(username) {
   return request({
-    url: `${baseURL}/users/check-username`,
+    url: '/users/check-username',
     method: 'get',
     params: { username }
   })
@@ -179,7 +179,7 @@ export function checkUsernameAvailable(username) {
  */
 export function checkEmailAvailable(email) {
   return request({
-    url: `${baseURL}/users/check-email`,
+    url: '/users/check-email',
     method: 'get',
     params: { email }
   })
@@ -191,7 +191,7 @@ export function checkEmailAvailable(email) {
  */
 export function getDepartmentList() {
   return request({
-    url: `${baseURL}/users/departments`,
+    url: '/users/departments',
     method: 'get'
   })
 }
@@ -202,7 +202,24 @@ export function getDepartmentList() {
  */
 export function getRoleList() {
   return request({
-    url: `${baseURL}/users/roles`,
+    url: '/users/roles',
     method: 'get'
+  })
+}
+
+/**
+ * 导出用户列表
+ * @param {Object} params - 导出参数（与获取用户列表相同的筛选条件，但不包含分页）
+ * @returns {Promise} 返回导出文件的blob数据
+ */
+export function exportUserList(params = {}) {
+  // 移除分页参数
+  const { page, limit, ...exportParams } = params
+
+  return request({
+    url: '/users/export',
+    method: 'get',
+    params: exportParams,
+    responseType: 'blob' // 重要：设置响应类型为blob
   })
 }

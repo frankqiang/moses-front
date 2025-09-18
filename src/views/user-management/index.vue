@@ -1,89 +1,43 @@
 /**
- * 文件名称：index.vue
- * 文件描述：用户管理主页面，提供用户信息的查询、新增、编辑、删除等功能
- * 创建日期：2024-01-15
- * 修改记录：
- *   - 2024-01-15: 初始创建，实现基础架构
- */
+* 文件名称：index.vue
+* 文件描述：用户管理主页面，提供用户信息的查询、新增、编辑、删除等功能
+* 创建日期：2024-01-15
+* 修改记录：
+* - 2024-01-15: 初始创建，实现基础架构
+*/
 <template>
   <div class="app-container">
     <!-- 搜索表单 -->
-    <user-search
-      :loading="listLoading"
-      @search="handleSearch"
-      @reset="handleReset"
-    />
+    <user-search :loading="listLoading" @search="handleSearch" @reset="handleReset" />
 
-    <!-- 表格工具栏 -->
-    <table-toolbar
-      :selected-count="selectedUsers.length"
-      :show-batch-actions="selectedUsers.length > 0"
-      @add="handleCreate"
-      @batch-delete="handleBatchDelete"
-      @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable"
-      @refresh="handleRefresh"
-      @export="handleExport"
-      @import="handleImport"
-    >
-      <template #actions>
-        <el-button
-          type="primary"
-          icon="el-icon-plus"
-          size="small"
-          @click="handleCreate"
-        >
+    <!-- 用户列表表格 -->
+    <user-table ref="userTable" :user-list="userList" :loading="listLoading" :pagination="pagination"
+      :export-api="exportUserList" :export-params="exportParams"
+      :export-filename="'用户列表_' + new Date().toISOString().slice(0, 10)" @selection-change="handleSelectionChange"
+      @pagination-change="handlePaginationChange" @view="handleView" @edit="handleEdit" @delete="handleDelete"
+      @enable="handleEnable" @disable="handleDisable" @reset-password="handleResetPassword"
+      @sort-change="handleSortChange" @refresh="handleRefresh" @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
+      <template #toolbar-left>
+        <el-button type="primary" icon="el-icon-plus" size="small" @click="handleCreate">
           新增用户
         </el-button>
       </template>
-    </table-toolbar>
-
-    <!-- 用户列表表格 -->
-    <user-table
-      ref="userTable"
-      :user-list="userList"
-      :loading="listLoading"
-      :pagination="pagination"
-      @selection-change="handleSelectionChange"
-      @pagination-change="handlePaginationChange"
-      @view="handleView"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @enable="handleEnable"
-      @disable="handleDisable"
-      @reset-password="handleResetPassword"
-    />
+    </user-table>
 
     <!-- 用户表单抽屉 -->
-    <user-form
-      ref="userFormDrawer"
-      :visible.sync="drawerVisible"
-      :title="drawerTitle"
-      :form-data="currentUser"
-      :loading="formLoading"
-      :readonly="drawerType === 'view'"
-      @submit="handleFormSubmit"
-      @close="handleDrawerClose"
-    />
+    <user-form ref="userFormDrawer" :visible.sync="drawerVisible" :title="drawerTitle" :form-data="currentUser"
+      :loading="formLoading" :readonly="drawerType === 'view'" @submit="handleFormSubmit" @close="handleDrawerClose" />
 
     <!-- 密码重置对话框 -->
-    <dialog-form
-      ref="passwordDialog"
-      :visible.sync="passwordDialogVisible"
-      title="重置密码"
-      :form-items="passwordFormItems"
-      :form-data="passwordFormData"
-      :form-rules="passwordFormRules"
-      :loading="passwordLoading"
-      @submit="handlePasswordSubmit"
-      @close="handlePasswordDialogClose"
-    />
+    <dialog-form ref="passwordDialog" :visible.sync="passwordDialogVisible" title="重置密码" :form-items="passwordFormItems"
+      :form-data="passwordFormData" :form-rules="passwordFormRules" :loading="passwordLoading"
+      @submit="handlePasswordSubmit" @close="handlePasswordDialogClose" />
   </div>
 </template>
 
 <script>
 // 导入通用组件
-import TableToolbar from '@/components/TableToolbar'
 import DialogForm from '@/components/DialogForm'
 
 // 导入用户管理组件
@@ -100,7 +54,8 @@ import {
   deleteUser,
   batchDeleteUsers,
   updateUserStatus,
-  resetUserPassword
+  resetUserPassword,
+  exportUserList
 } from './api'
 
 // 导入常量配置
@@ -121,7 +76,6 @@ export default {
     UserTable,
     UserForm,
     UserSearch,
-    TableToolbar,
     DialogForm
   },
   data() {
@@ -145,9 +99,15 @@ export default {
         email: '',
         search: '',
         department: '',
-        status: '',
-        createdTimeRange: []
+        status: [],  // 改为数组支持多选
+        role: '',
+        gender: '',
+        createdTimeRange: [],
+        lastLoginTimeRange: []
       },
+
+      // 排序条件
+      sortBy: 'created_at:desc',
 
       // 抽屉表单
       drawerVisible: false,
@@ -218,6 +178,44 @@ export default {
           { validator: this.validateConfirmPassword, trigger: 'blur' }
         ]
       }
+    },
+
+    /**
+     * 导出参数 - 移除分页参数，保留筛选条件
+     */
+    exportParams() {
+      const params = {}
+
+      // 添加搜索条件
+      if (this.searchQuery.username) params.username = this.searchQuery.username
+      if (this.searchQuery.name) params.name = this.searchQuery.name
+      if (this.searchQuery.email) params.email = this.searchQuery.email
+      if (this.searchQuery.search) params.search = this.searchQuery.search
+      if (this.searchQuery.status && this.searchQuery.status.length > 0) {
+        if (Array.isArray(this.searchQuery.status)) {
+          params.status = this.searchQuery.status.join(',')
+        } else {
+          params.status = this.searchQuery.status
+        }
+      }
+      if (this.searchQuery.department) params.department = this.searchQuery.department
+      if (this.searchQuery.role) params.role = this.searchQuery.role
+      if (this.searchQuery.gender) params.gender = this.searchQuery.gender
+
+      // 添加时间范围
+      if (this.searchQuery.createdTimeRange && this.searchQuery.createdTimeRange.length === 2) {
+        params.createdFrom = new Date(this.searchQuery.createdTimeRange[0]).toISOString()
+        params.createdTo = new Date(this.searchQuery.createdTimeRange[1]).toISOString()
+      }
+      if (this.searchQuery.lastLoginTimeRange && this.searchQuery.lastLoginTimeRange.length === 2) {
+        params.lastLoginFrom = new Date(this.searchQuery.lastLoginTimeRange[0]).toISOString()
+        params.lastLoginTo = new Date(this.searchQuery.lastLoginTimeRange[1]).toISOString()
+      }
+
+      // 添加排序参数
+      if (this.sortBy) params.sortBy = this.sortBy
+
+      return params
     }
   },
   mounted() {
@@ -226,44 +224,100 @@ export default {
   methods: {
     /**
      * 获取用户列表
+     * 根据接口文档规范实现数据获取和处理
      */
     async fetchUserList() {
       this.listLoading = true
       try {
-        // 基础分页参数
+        // 构建查询参数，严格按照接口文档规范
         const params = {
           page: this.pagination.page,
           limit: this.pagination.limit
         }
-        
-        // 只添加有值的搜索参数
-        Object.keys(this.searchQuery).forEach(key => {
-          const value = this.searchQuery[key]
-          if (value !== '' && value !== null && value !== undefined) {
-            if (Array.isArray(value) && value.length > 0) {
-              params[key] = value
-            } else if (!Array.isArray(value)) {
-              params[key] = value
-            }
-          }
-        })
-        
-        // 处理时间范围参数
-        if (this.searchQuery.createdTimeRange && this.searchQuery.createdTimeRange.length === 2) {
-          params.createdFrom = this.searchQuery.createdTimeRange[0]
-          params.createdTo = this.searchQuery.createdTimeRange[1]
-          delete params.createdTimeRange
+
+        // 添加搜索条件 - 严格按照接口文档参数名
+        if (this.searchQuery.username) {
+          params.username = this.searchQuery.username
         }
-        
+        if (this.searchQuery.name) {
+          params.name = this.searchQuery.name
+        }
+        if (this.searchQuery.email) {
+          params.email = this.searchQuery.email
+        }
+        if (this.searchQuery.search) {
+          params.search = this.searchQuery.search
+        }
+        if (this.searchQuery.status && this.searchQuery.status.length > 0) {
+          // 多选状态处理 - 如果是数组，取第一个值或转换为逗号分隔的字符串
+          if (Array.isArray(this.searchQuery.status)) {
+            params.status = this.searchQuery.status.join(',')
+          } else {
+            params.status = this.searchQuery.status
+          }
+        }
+        if (this.searchQuery.department) {
+          params.department = this.searchQuery.department
+        }
+        if (this.searchQuery.role) {
+          params.role = this.searchQuery.role
+        }
+        if (this.searchQuery.gender) {
+          params.gender = this.searchQuery.gender
+        }
+
+        // 处理时间范围 - 转换为ISO 8601格式
+        if (this.searchQuery.createdTimeRange && this.searchQuery.createdTimeRange.length === 2) {
+          params.createdFrom = new Date(this.searchQuery.createdTimeRange[0]).toISOString()
+          params.createdTo = new Date(this.searchQuery.createdTimeRange[1]).toISOString()
+        }
+
+        // 处理最后登录时间范围
+        if (this.searchQuery.lastLoginTimeRange && this.searchQuery.lastLoginTimeRange.length === 2) {
+          params.lastLoginFrom = new Date(this.searchQuery.lastLoginTimeRange[0]).toISOString()
+          params.lastLoginTo = new Date(this.searchQuery.lastLoginTimeRange[1]).toISOString()
+        }
+
+        // 添加排序参数 - 默认按创建时间倒序
+        params.sortBy = this.sortBy || 'created_at:desc'
+
+        // 调用API
         const response = await getUserList(params)
-        this.userList = response.data.results || []
-        this.pagination.total = response.data.totalResults || 0
+
+        // 根据接口文档处理响应数据
+        if (response.success && response.data) {
+          this.userList = response.data.results || []
+          this.pagination.total = response.data.totalResults || 0
+          this.pagination.page = response.data.page || 1
+          this.pagination.limit = response.data.limit || 20
+        } else {
+          this.userList = []
+          this.pagination.total = 0
+          this.$message.error(response.message || '获取用户列表失败')
+        }
+
       } catch (error) {
         console.error('获取用户列表失败:', error)
-        this.$message.error('获取用户列表失败')
-        // 设置空数据避免页面报错
         this.userList = []
         this.pagination.total = 0
+
+        // 处理不同类型的错误
+        let errorMessage = '获取用户列表失败'
+        if (error.response) {
+          const { status, data } = error.response
+          if (status === 401) {
+            errorMessage = '请先登录'
+            // this.$router.push('/login')
+          } else if (status === 403) {
+            errorMessage = '权限不足'
+          } else if (data && data.error && data.error.message) {
+            errorMessage = data.error.message
+          }
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+
+        this.$message.error(errorMessage)
       } finally {
         this.listLoading = false
       }
@@ -288,8 +342,11 @@ export default {
         email: '',
         search: '',
         department: '',
-        status: '',
-        createdTimeRange: []
+        status: [],
+        role: '',
+        gender: '',
+        createdTimeRange: [],
+        lastLoginTimeRange: []
       }
       this.pagination.page = 1
       this.fetchUserList()
@@ -300,6 +357,15 @@ export default {
      */
     handlePaginationChange(pagination) {
       this.pagination = { ...pagination }
+      this.fetchUserList()
+    },
+
+    /**
+     * 排序变化处理
+     */
+    handleSortChange(sortBy) {
+      this.sortBy = sortBy
+      this.pagination.page = 1 // 重置到第一页
       this.fetchUserList()
     },
 
@@ -348,7 +414,7 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(async() => {
+      }).then(async () => {
         try {
           // TODO: 调用删除API
           // await deleteUser(row.id)
@@ -416,7 +482,7 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(async() => {
+      }).then(async () => {
         try {
           // eslint-disable-next-line no-unused-vars
           const userIds = this.selectedUsers.map(user => user.id)

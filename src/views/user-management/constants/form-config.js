@@ -7,7 +7,7 @@
  */
 import { USER_STATUS_OPTIONS, GENDER_OPTIONS, DEPARTMENT_OPTIONS, ROLE_OPTIONS } from './user-management'
 
-// 搜索表单配置
+// 搜索表单配置 - 支持高级筛选功能
 export const SEARCH_FORM_CONFIG = [
   {
     type: 'input',
@@ -52,13 +52,42 @@ export const SEARCH_FORM_CONFIG = [
     label: '状态',
     placeholder: '请选择状态',
     clearable: true,
-    multiple: false,
+    multiple: true, // 支持多选
     options: USER_STATUS_OPTIONS
+  },
+  {
+    type: 'select',
+    prop: 'role',
+    label: '角色',
+    placeholder: '请选择角色',
+    clearable: true,
+    multiple: false,
+    options: ROLE_OPTIONS
+  },
+  {
+    type: 'select',
+    prop: 'gender',
+    label: '性别',
+    placeholder: '请选择性别',
+    clearable: true,
+    multiple: false,
+    options: GENDER_OPTIONS
   },
   {
     type: 'date',
     prop: 'createdTimeRange',
     label: '创建时间',
+    dateType: 'datetimerange',
+    placeholder: '选择时间范围',
+    startPlaceholder: '开始时间',
+    endPlaceholder: '结束时间',
+    valueFormat: 'yyyy-MM-dd HH:mm:ss',
+    clearable: true
+  },
+  {
+    type: 'date',
+    prop: 'lastLoginTimeRange',
+    label: '最后登录时间',
     dateType: 'datetimerange',
     placeholder: '选择时间范围',
     startPlaceholder: '开始时间',

@@ -1,55 +1,67 @@
 /**
- * 文件名称：UserTable.vue
- * 文件描述：用户管理表格组件，负责用户列表的展示和基础操作
- * 创建日期：2024-01-15
- * 修改记录：
- *   - 2024-01-15: 从index.vue中拆分出来，提高组件复用性
- */
+* 文件名称：UserTable.vue
+* 文件描述：用户管理表格组件，负责用户列表的展示和基础操作
+* 创建日期：2024-01-15
+* 修改记录：
+* - 2024-01-15: 从index.vue中拆分出来，提高组件复用性
+*/
 <template>
-  <base-table
-    ref="userTable"
-    :data="userList"
-    :columns="tableColumns"
-    :loading="loading"
-    :pagination="pagination"
-    :show-selection="true"
-    @selection-change="handleSelectionChange"
-    @pagination-change="handlePaginationChange"
-  >
-    <!-- 状态列自定义渲染 -->
-    <template #status="{ row }">
-      <status-tag
-        v-if="row && row.status !== undefined"
-        :status="row.status"
-        :type="getStatusType(row.status)"
-      >
-        {{ getStatusText(row.status) }}
-      </status-tag>
-      <span v-else>-</span>
-    </template>
+  <div class="user-table">
+    <!-- 表格工具栏 -->
+    <table-toolbar :enable-column-settings="true" :column-options="columnOptions" :storage-key="columnSettingsKey"
+      :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true" :selected-rows="selectedUsers"
+      :enable-export="true" :export-api="exportApi" :export-params="exportParams" :export-filename="exportFilename"
+      :enable-import="false" @refresh="handleRefresh" @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
+      <template #toolbar-left>
+        <slot name="toolbar-left" />
+      </template>
+      <template #toolbar-right>
+        <slot name="toolbar-right" />
+      </template>
+    </table-toolbar>
 
-    <!-- 操作列 -->
-    <template #actions="{ row }">
-      <ActionButtons
-        :buttons="getActionButtons(row)"
-        mode="text"
-        :row="row"
-        @click="handleActionClick"
-      />
-    </template>
-  </base-table>
+    <!-- 数据表格 -->
+    <base-table ref="userTable" :data="userList" :columns="visibleTableColumns" :loading="loading"
+      :pagination="pagination" :show-selection="true" :show-index="true" @selection-change="handleSelectionChange"
+      @pagination-change="handlePaginationChange" @sort-change="handleSortChange">
+      <!-- 状态列自定义渲染 -->
+      <template #status="{ row }">
+        <status-tag v-if="row && row.status !== undefined" :status="row.status" :type="getStatusType(row.status)">
+          {{ getStatusText(row.status) }}
+        </status-tag>
+        <span v-else>-</span>
+      </template>
+
+      <!-- 性别列自定义渲染 -->
+      <template #gender="{ row }">
+        <span v-if="row && row.gender">
+          <i :class="getGenderIcon(row.gender)" style="margin-right: 4px;"></i>
+          {{ getGenderText(row.gender) }}
+        </span>
+        <span v-else>-</span>
+      </template>
+
+      <!-- 操作列 -->
+      <template #actions="{ row }">
+        <ActionButtons :buttons="getActionButtons(row)" mode="text" :row="row" @click="handleActionClick" />
+      </template>
+    </base-table>
+  </div>
 </template>
 
 <script>
 import BaseTable from '@/components/BaseTable'
+import TableToolbar from '@/components/TableToolbar'
 import ActionButtons from '@/components/ActionButtons'
 import StatusTag from '@/components/StatusTag'
-import { 
-  TABLE_COLUMNS, 
-  STATUS_CONFIG, 
-  GENDER_CONFIG, 
+import {
+  TABLE_COLUMNS,
+  STATUS_CONFIG,
+  GENDER_CONFIG,
   ACTION_BUTTONS_CONFIG,
-  ROW_CLASS_CONFIG 
+  ROW_CLASS_CONFIG,
+  DEFAULT_VISIBLE_COLUMNS
 } from '../constants/table-config'
 import { USER_STATUS } from '../constants'
 import { parseTime } from '@/utils'
@@ -58,6 +70,7 @@ export default {
   name: 'UserTable',
   components: {
     BaseTable,
+    TableToolbar,
     ActionButtons,
     StatusTag
   },
@@ -77,6 +90,27 @@ export default {
         limit: 20,
         total: 0
       })
+    },
+    // 导出相关props
+    exportApi: {
+      type: Function,
+      default: null
+    },
+    exportParams: {
+      type: Object,
+      default: () => ({})
+    },
+    exportFilename: {
+      type: String,
+      default: '用户列表'
+    }
+  },
+  data() {
+    return {
+      // 当前可见列
+      visibleColumns: [...DEFAULT_VISIBLE_COLUMNS],
+      // 选中的用户
+      selectedUsers: []
     }
   },
   computed: {
@@ -104,6 +138,40 @@ export default {
         }
         return column
       })
+    },
+
+    /**
+     * 可见的表格列配置
+     */
+    visibleTableColumns() {
+      return this.tableColumns.filter(column =>
+        this.visibleColumns.includes(column.prop) || column.prop === 'actions'
+      )
+    },
+
+    /**
+     * 列选项配置
+     */
+    columnOptions() {
+      return TABLE_COLUMNS.map(column => ({
+        prop: column.prop,
+        label: column.label,
+        visible: this.visibleColumns.includes(column.prop)
+      }))
+    },
+
+    /**
+     * 默认可见列
+     */
+    defaultVisibleColumns() {
+      return DEFAULT_VISIBLE_COLUMNS
+    },
+
+    /**
+     * 列设置存储键
+     */
+    columnSettingsKey() {
+      return 'user_management_columns'
     }
   },
   methods: {
@@ -112,6 +180,20 @@ export default {
      */
     formatGender(row) {
       return GENDER_CONFIG.textMap[row.gender] || '-'
+    },
+
+    /**
+     * 获取性别文本
+     */
+    getGenderText(gender) {
+      return GENDER_CONFIG.textMap[gender] || '未知'
+    },
+
+    /**
+     * 获取性别图标
+     */
+    getGenderIcon(gender) {
+      return GENDER_CONFIG.iconMap[gender] || 'el-icon-question'
     },
 
     /**
@@ -231,6 +313,7 @@ export default {
      * 选择变化处理
      */
     handleSelectionChange(selection) {
+      this.selectedUsers = selection
       this.$emit('selection-change', selection)
     },
 
@@ -281,6 +364,57 @@ export default {
      */
     handleResetPassword(row) {
       this.$emit('reset-password', row)
+    },
+
+    /**
+     * 排序变化处理
+     */
+    handleSortChange({ column, prop, order }) {
+      // 将Element UI的排序参数转换为接口需要的格式
+      let sortBy = ''
+      if (prop && order) {
+        const direction = order === 'ascending' ? 'asc' : 'desc'
+        // 处理嵌套字段
+        const sortField = prop === 'profile.department.name' ? 'department' : prop
+        sortBy = `${sortField}:${direction}`
+      }
+      this.$emit('sort-change', sortBy)
+    },
+
+    /**
+     * 列设置变化处理
+     */
+    handleColumnChange(visibleColumns) {
+      this.visibleColumns = visibleColumns
+      this.$emit('column-change', visibleColumns)
+    },
+
+    /**
+     * 刷新处理
+     */
+    handleRefresh() {
+      this.$emit('refresh')
+    },
+
+    /**
+     * 批量删除处理
+     */
+    handleBatchDelete(selectedRows) {
+      this.$emit('batch-delete', selectedRows)
+    },
+
+    /**
+     * 批量启用处理
+     */
+    handleBatchEnable(selectedRows) {
+      this.$emit('batch-enable', selectedRows)
+    },
+
+    /**
+     * 批量禁用处理
+     */
+    handleBatchDisable(selectedRows) {
+      this.$emit('batch-disable', selectedRows)
     }
   }
 }
