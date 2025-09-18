@@ -8,7 +8,7 @@
 <template>
   <drawer-form
     ref="userFormDrawer"
-    :visible.sync="visible"
+    :visible="visible"
     :title="title"
     :form-items="formItems"
     :form-data="formData"
@@ -17,6 +17,7 @@
     :readonly="readonly"
     @submit="handleSubmit"
     @close="handleClose"
+    @update:visible="handleVisibleChange"
   />
 </template>
 
@@ -120,6 +121,13 @@ export default {
      */
     handleClose() {
       this.$emit('close')
+    },
+
+    /**
+     * 处理visible状态变化
+     */
+    handleVisibleChange(visible) {
+      this.$emit('update:visible', visible)
     }
   }
 }
