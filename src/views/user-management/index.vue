@@ -667,7 +667,12 @@ export default {
       } else {
         callback()
       }
-    }
+    },
+
+    /**
+     * 导出用户列表 - 将导入的API函数暴露给模板
+     */
+    exportUserList
   }
 }
 </script>
