@@ -106,29 +106,14 @@
                     </el-row>
                 </div>
 
-                <!-- 二、部门岗位信息 -->
+                <!-- 二、组织架构信息 -->
                 <div class="form-section">
-                    <div class="section-title">二、部门岗位信息</div>
-                    <el-row :gutter="20">
-                        <el-col :span="12">
-                            <el-form-item label="工号" prop="employeeId">
-                                <el-input v-model="form.employeeId" placeholder="请输入工号" maxlength="30"
-                                    :disabled="formMode === 'view'" />
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="12">
-                            <el-form-item label="职位" prop="jobTitle">
-                                <el-input v-model="form.jobTitle" placeholder="请输入职位" maxlength="50"
-                                    :disabled="formMode === 'view'" />
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-
+                    <div class="section-title">二、组织架构信息</div>
                     <el-row :gutter="20">
                         <el-col :span="12">
                             <el-form-item label="所属部门" prop="departmentId">
                                 <el-select v-model="form.departmentId" placeholder="请选择所属部门" style="width: 100%"
-                                    :disabled="formMode === 'view'" filterable allow-create>
+                                    :disabled="formMode === 'view'" filterable clearable>
                                     <el-option
                                         v-for="dept in departmentOptions"
                                         :key="dept.value"
@@ -141,26 +126,111 @@
                         </el-col>
                         <el-col :span="12">
                             <el-form-item label="岗位" prop="positionId">
-                                <el-input v-model="form.positionId" placeholder="请输入岗位ID或名称" maxlength="50"
-                                    :disabled="formMode === 'view'" />
-                                <div class="field-hint">临时输入，后续对接岗位管理接口</div>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-                    <el-row :gutter="20">
-                        <el-col :span="24">
-                            <el-form-item label="入职日期" prop="hireDate">
-                                <el-date-picker v-model="form.hireDate" type="date" placeholder="请选择入职日期"
-                                    style="width: 100%" :disabled="formMode === 'view'" format="yyyy-MM-dd"
-                                    value-format="yyyy-MM-dd" />
+                                <el-select v-model="form.positionId" placeholder="请选择岗位" style="width: 100%"
+                                    :disabled="formMode === 'view'" filterable clearable>
+                                    <el-option
+                                        v-for="pos in positionOptions"
+                                        :key="pos.value"
+                                        :label="pos.label"
+                                        :value="pos.value"
+                                    />
+                                </el-select>
+                                <div class="field-hint">临时数据，后续对接岗位管理接口</div>
                             </el-form-item>
                         </el-col>
                     </el-row>
                 </div>
 
-                <!-- 三、角色权限 -->
+                <!-- 三、档案信息 -->
                 <div class="form-section">
-                    <div class="section-title">三、角色权限</div>
+                    <div class="section-title">三、档案信息</div>
+                    <el-row :gutter="20">
+                        <el-col :span="12">
+                            <el-form-item label="员工工号" prop="employeeId">
+                                <el-input v-model="form.employeeId" placeholder="请输入员工工号" maxlength="50"
+                                    :disabled="formMode === 'view'" />
+                                <div class="field-hint">工号必须全局唯一</div>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-form-item label="职位名称" prop="jobTitle">
+                                <el-input v-model="form.jobTitle" placeholder="请输入职位名称" maxlength="100"
+                                    :disabled="formMode === 'view'" />
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="12">
+                            <el-form-item label="直属上级" prop="managerId">
+                                <el-select v-model="form.managerId" placeholder="请选择直属上级" style="width: 100%"
+                                    :disabled="formMode === 'view'" filterable clearable>
+                                    <el-option
+                                        v-for="manager in managerOptions"
+                                        :key="manager.value"
+                                        :label="manager.label"
+                                        :value="manager.value"
+                                    />
+                                </el-select>
+                                <div class="field-hint">临时数据，后续对接用户管理接口</div>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-form-item label="出生日期" prop="birthDate">
+                                <el-date-picker v-model="form.birthDate" type="date" placeholder="请选择出生日期"
+                                    style="width: 100%" :disabled="formMode === 'view'" format="yyyy-MM-dd"
+                                    value-format="yyyy-MM-dd" />
+                                <div class="field-hint">年龄需在16-100岁之间</div>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="12">
+                            <el-form-item label="入职日期" prop="hireDate">
+                                <el-date-picker v-model="form.hireDate" type="date" placeholder="请选择入职日期"
+                                    style="width: 100%" :disabled="formMode === 'view'" format="yyyy-MM-dd"
+                                    value-format="yyyy-MM-dd" />
+                                <div class="field-hint">不能是未来日期</div>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-form-item label="家庭住址" prop="address">
+                                <el-input v-model="form.address" placeholder="请输入家庭住址" maxlength="500"
+                                    :disabled="formMode === 'view'" />
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="12">
+                            <el-form-item label="紧急联系人" prop="emergencyContact">
+                                <el-input v-model="form.emergencyContact" placeholder="请输入紧急联系人姓名" maxlength="100"
+                                    :disabled="formMode === 'view'" />
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-form-item label="紧急联系电话" prop="emergencyPhone">
+                                <el-input v-model="form.emergencyPhone" placeholder="请输入紧急联系电话" maxlength="20"
+                                    :disabled="formMode === 'view'" />
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="24">
+                            <el-form-item label="自定义字段" prop="customFields">
+                                <el-input v-model="customFieldsStr" type="textarea" placeholder="请输入JSON格式的自定义字段，例如：{&quot;specialty&quot;: &quot;Java开发&quot;, &quot;level&quot;: &quot;Senior&quot;}" 
+                                    :rows="3" :disabled="formMode === 'view'" />
+                                <div class="field-hint">JSON格式，用于扩展用户信息</div>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+                </div>
+
+                <!-- 四、角色权限 -->
+                <div class="form-section">
+                    <div class="section-title">四、角色权限</div>
                     <el-row>
                         <el-col :span="24">
                             <el-form-item label="分配角色" prop="roleIds">
@@ -182,14 +252,14 @@
                     </el-row>
                 </div>
 
-                <!-- 四、备注信息 -->
+                <!-- 五、备注信息 -->
                 <div class="form-section">
-                    <div class="section-title">四、备注信息</div>
+                    <div class="section-title">五、备注信息</div>
                     <el-row>
                         <el-col :span="24">
-                            <el-form-item label="备注" prop="remark">
-                                <el-input v-model="form.remark" type="textarea" placeholder="请输入备注信息" :rows="3"
-                                    maxlength="200" show-word-limit :disabled="formMode === 'view'" />
+                            <el-form-item label="备注信息" prop="notes">
+                                <el-input v-model="form.notes" type="textarea" placeholder="请输入备注信息" :rows="3"
+                                    maxlength="1000" show-word-limit :disabled="formMode === 'view'" />
                             </el-form-item>
                         </el-col>
                     </el-row>
@@ -279,6 +349,27 @@ export default {
                 { value: 'role-007', label: '运维工程师', description: '负责系统运维' },
                 { value: 'role-008', label: '产品经理', description: '负责产品规划' },
                 { value: 'role-009', label: '用户', description: '普通用户权限' }
+            ],
+            // 岗位选项（临时数据）
+            positionOptions: [
+                { value: 'pos-001', label: '高级软件工程师' },
+                { value: 'pos-002', label: '软件工程师' },
+                { value: 'pos-003', label: '初级软件工程师' },
+                { value: 'pos-004', label: '测试工程师' },
+                { value: 'pos-005', label: '高级测试工程师' },
+                { value: 'pos-006', label: '产品经理' },
+                { value: 'pos-007', label: '项目经理' },
+                { value: 'pos-008', label: '运维工程师' },
+                { value: 'pos-009', label: 'UI设计师' },
+                { value: 'pos-010', label: '技术总监' }
+            ],
+            // 上级选项（临时数据）
+            managerOptions: [
+                { value: 'user-001', label: '王经理 (wang@example.com)' },
+                { value: 'user-002', label: '李总监 (li@example.com)' },
+                { value: 'user-003', label: '张主管 (zhang@example.com)' },
+                { value: 'user-004', label: '陈部长 (chen@example.com)' },
+                { value: 'user-005', label: '刘经理 (liu@example.com)' }
             ]
         }
     },
@@ -310,6 +401,26 @@ export default {
                 { value: 'user', label: '普通用户' },
                 { value: 'admin', label: '管理员' }
             ]
+        },
+        // 自定义字段字符串（用于JSON编辑）
+        customFieldsStr: {
+            get() {
+                return this.form.customFields && Object.keys(this.form.customFields).length > 0
+                    ? JSON.stringify(this.form.customFields, null, 2)
+                    : ''
+            },
+            set(value) {
+                if (!value.trim()) {
+                    this.form.customFields = {}
+                    return
+                }
+                try {
+                    this.form.customFields = JSON.parse(value)
+                } catch (e) {
+                    // JSON格式错误时不更新
+                    console.warn('JSON格式错误:', e.message)
+                }
+            }
         },
         // 表单验证规则
         formRules() {
@@ -351,6 +462,41 @@ export default {
                 ],
                 role: [
                     { required: true, message: '请选择用户角色', trigger: 'change' }
+                ],
+                // 档案信息验证规则
+                employeeId: [
+                    { max: 50, message: '员工工号最多50个字符', trigger: 'blur' }
+                ],
+                jobTitle: [
+                    { max: 100, message: '职位名称最多100个字符', trigger: 'blur' }
+                ],
+                address: [
+                    { max: 500, message: '家庭住址最多500个字符', trigger: 'blur' }
+                ],
+                emergencyContact: [
+                    { max: 100, message: '紧急联系人姓名最多100个字符', trigger: 'blur' }
+                ],
+                emergencyPhone: [
+                    {
+                        pattern: /^1[3-9]\d{9}$/,
+                        message: '请输入正确的手机号码',
+                        trigger: 'blur'
+                    }
+                ],
+                notes: [
+                    { max: 1000, message: '备注信息最多1000个字符', trigger: 'blur' }
+                ],
+                hireDate: [
+                    {
+                        validator: this.validateHireDate,
+                        trigger: 'change'
+                    }
+                ],
+                birthDate: [
+                    {
+                        validator: this.validateBirthDate,
+                        trigger: 'change'
+                    }
                 ]
             }
 
@@ -409,22 +555,32 @@ export default {
         initFormData() {
             return {
                 id: undefined,
+                // 必填字段
                 username: '',
                 name: '',
                 email: '',
-                phone: '',
                 password: '',
                 confirmPassword: '',
-                gender: '',
                 role: 'user', // 接口必填字段
-                status: 'active',
-                employeeId: '',
-                jobTitle: '',
-                departmentId: '', // 接口可选字段
-                positionId: '', // 接口可选字段
-                hireDate: '',
-                roleIds: [], // 接口可选字段
-                remark: ''
+                // 组织架构字段
+                departmentId: '', // 部门ID
+                positionId: '', // 岗位ID
+                roleIds: [], // 角色ID列表
+                // 档案信息字段
+                employeeId: '', // 员工工号
+                jobTitle: '', // 职位名称
+                managerId: '', // 直属上级ID
+                hireDate: '', // 入职日期
+                birthDate: '', // 出生日期
+                gender: '', // 性别
+                address: '', // 家庭住址
+                emergencyContact: '', // 紧急联系人姓名
+                emergencyPhone: '', // 紧急联系人电话
+                notes: '', // 备注信息
+                customFields: {}, // 自定义字段
+                // 其他字段
+                phone: '',
+                status: 'active'
             }
         },
 
@@ -653,6 +809,49 @@ export default {
             }
         },
 
+        // 验证入职日期
+        validateHireDate(rule, value, callback) {
+            if (!value) {
+                callback()
+                return
+            }
+
+            const hireDate = new Date(value)
+            const today = new Date()
+            today.setHours(23, 59, 59, 999) // 设置为今天的最后一毫秒
+
+            if (hireDate > today) {
+                callback(new Error('入职日期不能是未来日期'))
+            } else {
+                callback()
+            }
+        },
+
+        // 验证出生日期
+        validateBirthDate(rule, value, callback) {
+            if (!value) {
+                callback()
+                return
+            }
+
+            const birthDate = new Date(value)
+            const today = new Date()
+            const age = today.getFullYear() - birthDate.getFullYear()
+            const monthDiff = today.getMonth() - birthDate.getMonth()
+
+            let realAge = age
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                realAge--
+            }
+
+            if (realAge < 16) {
+                callback(new Error('年龄不能小于16岁'))
+            } else if (realAge > 100) {
+                callback(new Error('年龄不能大于100岁'))
+            } else {
+                callback()
+            }
+        }
     }
 }
 </script>
