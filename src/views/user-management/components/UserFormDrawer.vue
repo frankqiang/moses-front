@@ -200,16 +200,6 @@
                         </el-col>
                     </el-row>
 
-                    <el-row :gutter="20">
-                        <el-col :span="24">
-                            <el-form-item label="自定义字段" prop="customFields">
-                                <el-input v-model="customFieldsStr" type="textarea"
-                                    placeholder="请输入JSON格式的自定义字段，例如：{&quot;specialty&quot;: &quot;Java开发&quot;, &quot;level&quot;: &quot;Senior&quot;}"
-                                    :rows="3" :disabled="formMode === 'view'" />
-                                <div class="field-hint">JSON格式，用于扩展用户信息</div>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
                 </div>
 
                 <!-- 四、角色权限 -->
@@ -380,32 +370,6 @@ export default {
                 { value: 'admin', label: '管理员' }
             ]
         },
-        // 自定义字段字符串（用于JSON编辑）
-        customFieldsStr: {
-            get() {
-                if (!this.formData || !this.formData.customFields) {
-                    return ''
-                }
-                return Object.keys(this.formData.customFields).length > 0
-                    ? JSON.stringify(this.formData.customFields, null, 2)
-                    : ''
-            },
-            set(value) {
-                if (!this.formData) {
-                    return
-                }
-                if (!value.trim()) {
-                    this.$set(this.formData, 'customFields', {})
-                    return
-                }
-                try {
-                    this.$set(this.formData, 'customFields', JSON.parse(value))
-                } catch (e) {
-                    // JSON格式错误时不更新
-                    console.warn('JSON格式错误:', e.message)
-                }
-            }
-        },
         // 表单验证规则
         formRules() {
             const rules = {
@@ -557,7 +521,6 @@ export default {
                 emergencyContact: '', // 紧急联系人姓名
                 emergencyPhone: '', // 紧急联系人电话
                 notes: '', // 备注信息
-                customFields: {}, // 自定义字段
                 // 其他字段
                 phone: '',
                 status: 'active'
