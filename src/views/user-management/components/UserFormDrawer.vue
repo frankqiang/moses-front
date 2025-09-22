@@ -405,17 +405,23 @@ export default {
         // 自定义字段字符串（用于JSON编辑）
         customFieldsStr: {
             get() {
-                return this.form.customFields && Object.keys(this.form.customFields).length > 0
-                    ? JSON.stringify(this.form.customFields, null, 2)
+                if (!this.formData || !this.formData.customFields) {
+                    return ''
+                }
+                return Object.keys(this.formData.customFields).length > 0
+                    ? JSON.stringify(this.formData.customFields, null, 2)
                     : ''
             },
             set(value) {
+                if (!this.formData) {
+                    return
+                }
                 if (!value.trim()) {
-                    this.form.customFields = {}
+                    this.$set(this.formData, 'customFields', {})
                     return
                 }
                 try {
-                    this.form.customFields = JSON.parse(value)
+                    this.$set(this.formData, 'customFields', JSON.parse(value))
                 } catch (e) {
                     // JSON格式错误时不更新
                     console.warn('JSON格式错误:', e.message)
