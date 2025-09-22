@@ -185,27 +185,6 @@ export function checkEmailAvailable(email) {
   })
 }
 
-/**
- * 获取部门列表
- * @returns {Promise} 返回部门列表
- */
-export function getDepartmentList() {
-  return request({
-    url: '/users/departments',
-    method: 'get'
-  })
-}
-
-/**
- * 获取角色列表
- * @returns {Promise} 返回角色列表
- */
-export function getRoleList() {
-  return request({
-    url: '/users/roles',
-    method: 'get'
-  })
-}
 
 /**
  * 导出用户列表

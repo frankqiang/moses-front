@@ -76,7 +76,20 @@
                                 </el-select>
                             </el-form-item>
                         </el-col>
-
+                        <el-col :span="12">
+                            <el-form-item label="用户角色" prop="role">
+                                <el-select v-model="form.role" placeholder="请选择用户角色" style="width: 100%"
+                                    :disabled="formMode === 'view'">
+                                    <el-option
+                                        v-for="option in basicRoleOptions"
+                                        :key="option.value"
+                                        :label="option.label"
+                                        :value="option.value"
+                                    />
+                                </el-select>
+                                <div class="field-hint">基础角色，用于系统权限控制</div>
+                            </el-form-item>
+                        </el-col>
                     </el-row>
 
                     <el-row :gutter="20">
@@ -114,14 +127,28 @@
                     <el-row :gutter="20">
                         <el-col :span="12">
                             <el-form-item label="所属部门" prop="departmentId">
-                                <el-select v-model="form.departmentId" placeholder="请选择部门" style="width: 100%"
-                                    :disabled="formMode === 'view'">
-                                    <el-option v-for="option in departmentOptions" :key="option.value"
-                                        :label="option.label" :value="option.value" />
+                                <el-select v-model="form.departmentId" placeholder="请选择所属部门" style="width: 100%"
+                                    :disabled="formMode === 'view'" filterable allow-create>
+                                    <el-option
+                                        v-for="dept in departmentOptions"
+                                        :key="dept.value"
+                                        :label="dept.label"
+                                        :value="dept.value"
+                                    />
                                 </el-select>
+                                <div class="field-hint">临时数据，后续对接部门管理接口</div>
                             </el-form-item>
                         </el-col>
                         <el-col :span="12">
+                            <el-form-item label="岗位" prop="positionId">
+                                <el-input v-model="form.positionId" placeholder="请输入岗位ID或名称" maxlength="50"
+                                    :disabled="formMode === 'view'" />
+                                <div class="field-hint">临时输入，后续对接岗位管理接口</div>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+                    <el-row :gutter="20">
+                        <el-col :span="24">
                             <el-form-item label="入职日期" prop="hireDate">
                                 <el-date-picker v-model="form.hireDate" type="date" placeholder="请选择入职日期"
                                     style="width: 100%" :disabled="formMode === 'view'" format="yyyy-MM-dd"
@@ -137,16 +164,19 @@
                     <el-row>
                         <el-col :span="24">
                             <el-form-item label="分配角色" prop="roleIds">
-                                <el-select v-model="form.roleIds" multiple placeholder="请选择用户角色" style="width: 100%"
-                                    :disabled="formMode === 'view'" collapse-tags>
-                                    <el-option v-for="option in roleOptions" :key="option.value" :label="option.label"
-                                        :value="option.value">
-                                        <span style="float: left">{{ option.label }}</span>
-                                        <span style="float: right; color: #8492a6; font-size: 13px">{{
-                                            option.description }}</span>
+                                <el-select v-model="form.roleIds" multiple placeholder="请选择分配角色" style="width: 100%"
+                                    :disabled="formMode === 'view'" filterable collapse-tags>
+                                    <el-option
+                                        v-for="role in roleOptions"
+                                        :key="role.value"
+                                        :label="role.label"
+                                        :value="role.value"
+                                    >
+                                        <span style="float: left">{{ role.label }}</span>
+                                        <span style="float: right; color: #8492a6; font-size: 13px">{{ role.description }}</span>
                                     </el-option>
                                 </el-select>
-                                <div class="field-hint">可选择多个角色，用户权限为所有角色权限的并集</div>
+                                <div class="field-hint">可选择多个角色，用户权限为所有角色权限的并集。临时数据，后续对接角色管理接口</div>
                             </el-form-item>
                         </el-col>
                     </el-row>
@@ -189,9 +219,7 @@ import {
     createUser, // eslint-disable-line no-unused-vars
     updateUser, // eslint-disable-line no-unused-vars
     checkUsernameAvailable,
-    checkEmailAvailable,
-    getDepartmentList,
-    getRoleList
+    checkEmailAvailable
 } from '../api'
 import {
     USER_STATUS_OPTIONS,
@@ -230,10 +258,28 @@ export default {
             formData: this.initFormData(),
             // 加载状态
             loading: false,
-            // 部门选项
-            departmentOptions: [],
-            // 角色选项
-            roleOptions: []
+            // 部门选项（临时数据）
+            departmentOptions: [
+                { value: 'dept-001', label: '技术部' },
+                { value: 'dept-002', label: '产品部' },
+                { value: 'dept-003', label: '运营部' },
+                { value: 'dept-004', label: '市场部' },
+                { value: 'dept-005', label: '人事部' },
+                { value: 'dept-006', label: '财务部' },
+                { value: 'dept-007', label: '行政部' }
+            ],
+            // 角色选项（临时数据）
+            roleOptions: [
+                { value: 'role-001', label: '超级管理员', description: '拥有系统所有权限' },
+                { value: 'role-002', label: '系统管理员', description: '拥有系统管理权限' },
+                { value: 'role-003', label: '项目经理', description: '负责项目管理' },
+                { value: 'role-004', label: '高级开发', description: '高级开发工程师' },
+                { value: 'role-005', label: '开发工程师', description: '开发工程师' },
+                { value: 'role-006', label: '测试工程师', description: '负责软件测试' },
+                { value: 'role-007', label: '运维工程师', description: '负责系统运维' },
+                { value: 'role-008', label: '产品经理', description: '负责产品规划' },
+                { value: 'role-009', label: '用户', description: '普通用户权限' }
+            ]
         }
     },
     computed: {
@@ -257,6 +303,13 @@ export default {
         // 用户状态选项
         userStatusOptions() {
             return USER_STATUS_OPTIONS
+        },
+        // 基础角色选项（对应接口的role字段）
+        basicRoleOptions() {
+            return [
+                { value: 'user', label: '普通用户' },
+                { value: 'admin', label: '管理员' }
+            ]
         },
         // 表单验证规则
         formRules() {
@@ -295,6 +348,9 @@ export default {
                 ],
                 status: [
                     { required: true, message: '请选择用户状态', trigger: 'change' }
+                ],
+                role: [
+                    { required: true, message: '请选择用户角色', trigger: 'change' }
                 ]
             }
 
@@ -347,10 +403,6 @@ export default {
         // 创建防抖的验证函数
         this.debouncedCheckUsername = debounce(this.checkUsernameUniqueness, 500)
         this.debouncedCheckEmail = debounce(this.checkEmailUniqueness, 500)
-
-        // 加载选项数据
-        this.loadDepartmentOptions()
-        this.loadRoleOptions()
     },
     methods: {
         // 初始化表单数据
@@ -364,12 +416,14 @@ export default {
                 password: '',
                 confirmPassword: '',
                 gender: '',
+                role: 'user', // 接口必填字段
                 status: 'active',
                 employeeId: '',
                 jobTitle: '',
-                departmentId: '',
+                departmentId: '', // 接口可选字段
+                positionId: '', // 接口可选字段
                 hireDate: '',
-                roleIds: [],
+                roleIds: [], // 接口可选字段
                 remark: ''
             }
         },
@@ -599,49 +653,6 @@ export default {
             }
         },
 
-        // 加载部门选项
-        async loadDepartmentOptions() {
-            try {
-                const response = await getDepartmentList()
-                if (response.success) {
-                    this.departmentOptions = response.data.map(item => ({
-                        value: item.id,
-                        label: item.name
-                    }))
-                }
-            } catch (error) {
-                console.warn('加载部门列表失败:', error)
-                // 使用默认选项
-                this.departmentOptions = [
-                    { value: 'tech', label: '技术部' },
-                    { value: 'product', label: '产品部' },
-                    { value: 'operation', label: '运营部' },
-                    { value: 'hr', label: '人事部' }
-                ]
-            }
-        },
-
-        // 加载角色选项
-        async loadRoleOptions() {
-            try {
-                const response = await getRoleList()
-                if (response.success) {
-                    this.roleOptions = response.data.map(item => ({
-                        value: item.id,
-                        label: item.name,
-                        description: item.description || '暂无描述'
-                    }))
-                }
-            } catch (error) {
-                console.warn('加载角色列表失败:', error)
-                // 使用默认选项
-                this.roleOptions = [
-                    { value: 'admin', label: '管理员', description: '系统管理员' },
-                    { value: 'user', label: '普通用户', description: '普通系统用户' },
-                    { value: 'guest', label: '访客', description: '只读权限用户' }
-                ]
-            }
-        }
     }
 }
 </script>
