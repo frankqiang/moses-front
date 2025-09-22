@@ -22,8 +22,7 @@
                         <el-col :span="12">
                             <el-form-item label="用户名" prop="username">
                                 <el-input v-model="form.username" placeholder="请输入用户名" maxlength="50" show-word-limit
-                                    :disabled="formMode === 'view' || formMode === 'update'"
-                                    @blur="handleUsernameBlur" />
+                                    :disabled="formMode === 'view' || formMode === 'update'" />
                                 <div class="field-hint">用户名只能包含字母、数字和下划线，创建后不可修改</div>
                             </el-form-item>
                         </el-col>
@@ -39,7 +38,7 @@
                         <el-col :span="12">
                             <el-form-item label="邮箱" prop="email">
                                 <el-input v-model="form.email" placeholder="请输入邮箱地址" maxlength="100"
-                                    :disabled="formMode === 'view'" @blur="handleEmailBlur" />
+                                    :disabled="formMode === 'view'" />
                             </el-form-item>
                         </el-col>
                         <el-col :span="12">
@@ -80,12 +79,8 @@
                             <el-form-item label="用户角色" prop="role">
                                 <el-select v-model="form.role" placeholder="请选择用户角色" style="width: 100%"
                                     :disabled="formMode === 'view'">
-                                    <el-option
-                                        v-for="option in basicRoleOptions"
-                                        :key="option.value"
-                                        :label="option.label"
-                                        :value="option.value"
-                                    />
+                                    <el-option v-for="option in basicRoleOptions" :key="option.value"
+                                        :label="option.label" :value="option.value" />
                                 </el-select>
                                 <div class="field-hint">基础角色，用于系统权限控制</div>
                             </el-form-item>
@@ -114,12 +109,8 @@
                             <el-form-item label="所属部门" prop="departmentId">
                                 <el-select v-model="form.departmentId" placeholder="请选择所属部门" style="width: 100%"
                                     :disabled="formMode === 'view'" filterable clearable>
-                                    <el-option
-                                        v-for="dept in departmentOptions"
-                                        :key="dept.value"
-                                        :label="dept.label"
-                                        :value="dept.value"
-                                    />
+                                    <el-option v-for="dept in departmentOptions" :key="dept.value" :label="dept.label"
+                                        :value="dept.value" />
                                 </el-select>
                                 <div class="field-hint">临时数据，后续对接部门管理接口</div>
                             </el-form-item>
@@ -128,12 +119,8 @@
                             <el-form-item label="岗位" prop="positionId">
                                 <el-select v-model="form.positionId" placeholder="请选择岗位" style="width: 100%"
                                     :disabled="formMode === 'view'" filterable clearable>
-                                    <el-option
-                                        v-for="pos in positionOptions"
-                                        :key="pos.value"
-                                        :label="pos.label"
-                                        :value="pos.value"
-                                    />
+                                    <el-option v-for="pos in positionOptions" :key="pos.value" :label="pos.label"
+                                        :value="pos.value" />
                                 </el-select>
                                 <div class="field-hint">临时数据，后续对接岗位管理接口</div>
                             </el-form-item>
@@ -165,12 +152,8 @@
                             <el-form-item label="直属上级" prop="managerId">
                                 <el-select v-model="form.managerId" placeholder="请选择直属上级" style="width: 100%"
                                     :disabled="formMode === 'view'" filterable clearable>
-                                    <el-option
-                                        v-for="manager in managerOptions"
-                                        :key="manager.value"
-                                        :label="manager.label"
-                                        :value="manager.value"
-                                    />
+                                    <el-option v-for="manager in managerOptions" :key="manager.value"
+                                        :label="manager.label" :value="manager.value" />
                                 </el-select>
                                 <div class="field-hint">临时数据，后续对接用户管理接口</div>
                             </el-form-item>
@@ -220,7 +203,8 @@
                     <el-row :gutter="20">
                         <el-col :span="24">
                             <el-form-item label="自定义字段" prop="customFields">
-                                <el-input v-model="customFieldsStr" type="textarea" placeholder="请输入JSON格式的自定义字段，例如：{&quot;specialty&quot;: &quot;Java开发&quot;, &quot;level&quot;: &quot;Senior&quot;}" 
+                                <el-input v-model="customFieldsStr" type="textarea"
+                                    placeholder="请输入JSON格式的自定义字段，例如：{&quot;specialty&quot;: &quot;Java开发&quot;, &quot;level&quot;: &quot;Senior&quot;}"
                                     :rows="3" :disabled="formMode === 'view'" />
                                 <div class="field-hint">JSON格式，用于扩展用户信息</div>
                             </el-form-item>
@@ -236,14 +220,11 @@
                             <el-form-item label="分配角色" prop="roleIds">
                                 <el-select v-model="form.roleIds" multiple placeholder="请选择分配角色" style="width: 100%"
                                     :disabled="formMode === 'view'" filterable collapse-tags>
-                                    <el-option
-                                        v-for="role in roleOptions"
-                                        :key="role.value"
-                                        :label="role.label"
-                                        :value="role.value"
-                                    >
+                                    <el-option v-for="role in roleOptions" :key="role.value" :label="role.label"
+                                        :value="role.value">
                                         <span style="float: left">{{ role.label }}</span>
-                                        <span style="float: right; color: #8492a6; font-size: 13px">{{ role.description }}</span>
+                                        <span style="float: right; color: #8492a6; font-size: 13px">{{ role.description
+                                        }}</span>
                                     </el-option>
                                 </el-select>
                                 <div class="field-hint">可选择多个角色，用户权限为所有角色权限的并集。临时数据，后续对接角色管理接口</div>
@@ -284,12 +265,9 @@
 <script>
 import BaseDrawer from '@/components/Drawer'
 import EnhancedForm from '@/components/EnhancedForm'
-import { debounce } from '@/utils'
 import {
     createUser, // eslint-disable-line no-unused-vars
-    updateUser, // eslint-disable-line no-unused-vars
-    checkUsernameAvailable,
-    checkEmailAvailable
+    updateUser // eslint-disable-line no-unused-vars
 } from '../api'
 import {
     USER_STATUS_OPTIONS,
@@ -440,7 +418,6 @@ export default {
                     },
                     { min: 3, max: 50, message: '长度在 3 到 50 个字符', trigger: 'blur' },
                     {
-                        validator: this.validateUsernameUniqueness,
                         trigger: 'blur'
                     }
                 ],
@@ -452,7 +429,6 @@ export default {
                     { required: true, message: '请输入邮箱地址', trigger: 'blur' },
                     { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' },
                     {
-                        validator: this.validateEmailUniqueness,
                         trigger: 'blur'
                     }
                 ],
@@ -552,9 +528,7 @@ export default {
         }
     },
     created() {
-        // 创建防抖的验证函数
-        this.debouncedCheckUsername = debounce(this.checkUsernameUniqueness, 500)
-        this.debouncedCheckEmail = debounce(this.checkEmailUniqueness, 500)
+        // 组件初始化
     },
     methods: {
         // 初始化表单数据
@@ -714,75 +688,7 @@ export default {
             this.formData = this.initFormData()
         },
 
-        // 用户名失焦处理
-        handleUsernameBlur() {
-            if (this.formData.username && this.mode === 'create') {
-                this.debouncedCheckUsername(this.formData.username)
-            }
-        },
 
-        // 邮箱失焦处理
-        handleEmailBlur() {
-            if (this.formData.email) {
-                this.debouncedCheckEmail(this.formData.email)
-            }
-        },
-
-        // 用户名唯一性验证
-        validateUsernameUniqueness(rule, value, callback) {
-            if (!value || this.mode === 'view') {
-                callback()
-                return
-            }
-
-            // 编辑模式下，如果用户名未变化，则不需要验证
-            if (this.mode === 'update' && this.userData && value === this.userData.username) {
-                callback()
-                return
-            }
-
-            // 进行唯一性检查
-            this.checkUsernameUniqueness(value)
-                .then(exists => {
-                    if (exists) {
-                        callback(new Error('用户名已存在，请更换'))
-                    } else {
-                        callback()
-                    }
-                })
-                .catch(() => {
-                    // 网络错误时不阻止提交，但给出提示
-                    callback()
-                })
-        },
-
-        // 邮箱唯一性验证
-        validateEmailUniqueness(rule, value, callback) {
-            if (!value || this.mode === 'view') {
-                callback()
-                return
-            }
-
-            // 编辑模式下，如果邮箱未变化，则不需要验证
-            if (this.mode === 'update' && this.userData && value === this.userData.email) {
-                callback()
-                return
-            }
-
-            // 进行唯一性检查
-            this.checkEmailUniqueness(value)
-                .then(exists => {
-                    if (exists) {
-                        callback(new Error('邮箱已存在，请更换'))
-                    } else {
-                        callback()
-                    }
-                })
-                .catch(() => {
-                    // 网络错误时不阻止提交，但给出提示
-                    callback()
-                })
-        },
 
         // 确认密码验证
         validatePasswordConfirm(rule, value, callback) {
@@ -793,27 +699,6 @@ export default {
             }
         },
 
-        // 检查用户名唯一性
-        async checkUsernameUniqueness(username) {
-            try {
-                const response = await checkUsernameAvailable(username)
-                return !response.data.available
-            } catch (error) {
-                console.warn('检查用户名唯一性失败:', error)
-                return false
-            }
-        },
-
-        // 检查邮箱唯一性
-        async checkEmailUniqueness(email) {
-            try {
-                const response = await checkEmailAvailable(email)
-                return !response.data.available
-            } catch (error) {
-                console.warn('检查邮箱唯一性失败:', error)
-                return false
-            }
-        },
 
         // 验证入职日期
         validateHireDate(rule, value, callback) {

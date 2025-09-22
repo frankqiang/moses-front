@@ -159,31 +159,6 @@ export function resetUserPassword(id, newPassword) {
   })
 }
 
-/**
- * 检查用户名是否可用
- * @param {string} username - 用户名
- * @returns {Promise} 返回可用性检查结果
- */
-export function checkUsernameAvailable(username) {
-  return request({
-    url: '/users/check-username',
-    method: 'get',
-    params: { username }
-  })
-}
-
-/**
- * 检查邮箱是否可用
- * @param {string} email - 邮箱
- * @returns {Promise} 返回可用性检查结果
- */
-export function checkEmailAvailable(email) {
-  return request({
-    url: '/users/check-email',
-    method: 'get',
-    params: { email }
-  })
-}
 
 
 /**
