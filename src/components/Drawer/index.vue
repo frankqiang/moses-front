@@ -1,25 +1,14 @@
 /**
- * 抽屉组件
- * 功能描述：纯粹的抽屉容器组件，专注于抽屉的显示和交互，不耦合表单逻辑
- * 创建日期：2024-11-21
- * 更新日期：2024-12-16 - 应用现代前端开发范式优化，增强用户体验和代码质量
- */
+* 抽屉组件
+* 功能描述：纯粹的抽屉容器组件，专注于抽屉的显示和交互，不耦合表单逻辑
+* 创建日期：2024-11-21
+* 更新日期：2024-12-16 - 应用现代前端开发范式优化，增强用户体验和代码质量
+*/
 <template>
-  <el-drawer
-    :title="title"
-    :visible.sync="drawerVisible"
-    :size="width"
-    :direction="direction"
-    :before-close="handleClose"
-    :custom-class="customClass"
-    :wrapper-closable="wrapperClosable"
-    :aria-label="`${title}抽屉`"
-    :aria-modal="true"
-    role="dialog"
-    append-to-body
-    @open="handleOpen"
-    @closed="handleClosed"
-  >
+  <el-drawer :title="title" :visible.sync="drawerVisible" :size="width" :direction="direction"
+    :before-close="handleClose" :custom-class="customClass" :wrapper-closable="wrapperClosable"
+    :aria-label="`${title}抽屉`" :aria-modal="true" role="dialog" append-to-body @open="handleOpen"
+    @closed="handleClosed">
     <!-- 自定义头部插槽 -->
     <template #title>
       <slot name="title">
@@ -27,38 +16,29 @@
       </slot>
     </template>
 
-    <!-- 内容区域 -->
+    <!-- 错误提示区域 - 固定在顶部 -->
     <div
-      ref="drawerContent"
-      class="drawer-content"
-      :aria-busy="loading"
-      role="main"
+      v-if="$slots.error"
+      class="drawer-error-bar"
+      role="alert"
+      aria-live="polite"
     >
+      <slot name="error" />
+    </div>
+
+    <!-- 内容区域 -->
+    <div ref="drawerContent" class="drawer-content" :aria-busy="loading" role="main">
       <slot :visible="drawerVisible" :loading="loading" />
     </div>
 
     <!-- 底部区域 -->
-    <div
-      v-if="$slots.footer || showFooter"
-      class="drawer-footer"
-      role="toolbar"
-      :aria-label="'抽屉操作按钮区域'"
-    >
+    <div v-if="$slots.footer || showFooter" class="drawer-footer" role="toolbar" :aria-label="'抽屉操作按钮区域'">
       <slot name="footer">
-        <el-button
-          :disabled="loading"
-          :aria-label="`${cancelButtonText}并关闭抽屉`"
-          @click="handleCancelClick"
-        >
+        <el-button :disabled="loading" :aria-label="`${cancelButtonText}并关闭抽屉`" @click="handleCancelClick">
           {{ cancelButtonText }}
         </el-button>
-        <el-button
-          type="primary"
-          :loading="loading"
-          :disabled="loading"
-          :aria-label="`${confirmButtonText}操作`"
-          @click="handleConfirmClick"
-        >
+        <el-button type="primary" :loading="loading" :disabled="loading" :aria-label="`${confirmButtonText}操作`"
+          @click="handleConfirmClick">
           {{ confirmButtonText }}
         </el-button>
       </slot>
@@ -420,7 +400,8 @@ export default {
 
 .drawer-content {
   padding: 20px;
-  padding-bottom: 100px; /* 增加底部空间，确保错误提示不被footer遮挡 */
+  padding-bottom: 100px;
+  /* 增加底部空间，确保错误提示不被footer遮挡 */
   position: relative;
   width: calc(100% - 40px);
   box-sizing: border-box;
@@ -493,12 +474,40 @@ export default {
   z-index: 999;
 }
 
+// 错误提示条样式
+.drawer-error-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0 -20px 16px -20px;
+  padding: 12px 20px;
+  background-color: #fef0f0;
+  border-bottom: 1px solid #fbc4c4;
+  color: #f56c6c;
+  font-size: 14px;
+  line-height: 1.4;
+  
+  // 确保在内容滚动时始终可见
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(245, 108, 108, 0.1);
+  
+  // 错误提示动画
+  animation: slideInDown 0.3s ease-out;
+}
+
 // 响应式设计
 @media (max-width: 768px) {
   .drawer-content {
     padding: 16px;
-    padding-bottom: 80px; /* 移动端也增加底部空间 */
+    padding-bottom: 80px;
+    /* 移动端也增加底部空间 */
     width: calc(100% - 32px);
+  }
+
+  .drawer-error-bar {
+    margin: 0 -16px 12px -16px;
+    padding: 10px 16px;
+    font-size: 13px;
   }
 
   .drawer-footer {

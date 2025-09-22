@@ -8,6 +8,17 @@
 <template>
     <base-drawer :visible.sync="drawerVisible" :title="drawerTitle" width="800px" :wrapper-closable="false"
         @open="handleDrawerOpen" @close="handleDrawerClose">
+        
+        <!-- 错误提示区域 -->
+        <template #error>
+            <div v-if="formErrorMessage" class="error-message">
+                <i class="el-icon-warning" />
+                <span>{{ formErrorMessage }}</span>
+                <el-button type="text" size="mini" @click="clearFormError">
+                    <i class="el-icon-close" />
+                </el-button>
+            </div>
+        </template>
         <!-- 表单内容 -->
         <enhanced-form ref="enhancedForm" :data="formData" :mode="innerMode" :rules="formRules" label-width="120px"
             :show-footer="false" :clear-validate-on-data-update="true" :disable-initial-validation="true"
@@ -296,6 +307,8 @@ export default {
             formData: this.initFormData(),
             // 加载状态
             loading: false,
+            // 表单错误消息
+            formErrorMessage: '',
             // 部门选项（临时数据）
             departmentOptions: [
                 { value: 'dept-001', label: '技术部' },
@@ -539,6 +552,8 @@ export default {
 
         // 抽屉关闭处理
         handleDrawerClose() {
+            // 清除错误消息
+            this.clearFormError()
             // 重置表单数据
             this.formData = this.initFormData()
             this.$emit('close')
@@ -582,6 +597,8 @@ export default {
         // 业务逻辑：实际的数据提交处理
         async handleFormSubmit(formData, continueEdit = false) {
             try {
+                // 清除之前的错误消息
+                this.clearFormError()
                 this.loading = true
                 let response
 
@@ -634,9 +651,15 @@ export default {
         // 验证错误处理
         handleValidateError(invalidFields) {
             console.log('表单验证失败:', invalidFields)
+            
+            // 提取第一个错误消息并显示在顶部
+            const firstErrorField = Object.keys(invalidFields)[0]
+            if (firstErrorField && invalidFields[firstErrorField] && invalidFields[firstErrorField][0]) {
+                this.formErrorMessage = invalidFields[firstErrorField][0].message
+            }
+            
             // 聚焦到第一个错误字段
             this.$nextTick(() => {
-                const firstErrorField = Object.keys(invalidFields)[0]
                 if (firstErrorField && this.$refs.enhancedForm && this.$refs.enhancedForm.$el) {
                     const fieldElement = this.$refs.enhancedForm.$el.querySelector(`[prop="${firstErrorField}"] input, [prop="${firstErrorField}"] textarea`)
                     if (fieldElement) {
@@ -644,6 +667,11 @@ export default {
                     }
                 }
             })
+        },
+
+        // 清除表单错误消息
+        clearFormError() {
+            this.formErrorMessage = ''
         },
 
         // 表单重置处理
@@ -745,5 +773,37 @@ export default {
 
 ::v-deep .el-select .el-select__tags {
     max-width: calc(100% - 30px);
+}
+
+// 错误消息样式
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .el-icon-warning {
+        color: #f56c6c;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    
+    span {
+        flex: 1;
+        font-weight: 500;
+    }
+    
+    .el-button {
+        color: #f56c6c;
+        padding: 0;
+        min-height: auto;
+        
+        &:hover {
+            color: #f78989;
+        }
+        
+        .el-icon-close {
+            font-size: 14px;
+        }
+    }
 }
 </style>
