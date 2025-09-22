@@ -6,7 +6,7 @@
 */
 <template>
   <el-drawer :title="title" :visible.sync="drawerVisible" :size="width" :direction="direction"
-    :before-close="handleClose" :custom-class="customClass" :wrapper-closable="wrapperClosable"
+    :before-close="handleClose" :custom-class="drawerClass" :wrapper-closable="wrapperClosable"
     :aria-label="`${title}抽屉`" :aria-modal="true" role="dialog" append-to-body @open="handleOpen"
     @closed="handleClosed">
     <!-- 自定义头部插槽 -->
@@ -159,6 +159,15 @@ export default {
     // 实际的加载状态
     actualLoading() {
       return this.loading || this.internalLoading
+    },
+    
+    // 抽屉CSS类名
+    drawerClass() {
+      const classes = [this.customClass]
+      if (this.$slots.error) {
+        classes.push('has-error')
+      }
+      return classes.join(' ')
     }
   },
 
@@ -390,6 +399,23 @@ export default {
     overflow-y: auto;
     padding: 0;
     width: 100%;
+    position: relative;
+  }
+  
+  // 确保错误提示条能够完全贴合抽屉顶部
+  .drawer-error-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin: 0;
+    width: 100%;
+  }
+  
+  // 当有错误提示时，内容区域需要向下偏移
+  &.has-error .drawer-content {
+    padding-top: 60px; // 为错误提示条留出空间
   }
 }
 
@@ -469,13 +495,9 @@ export default {
   z-index: 999;
 }
 
-// 错误提示条样式
+// 错误提示条样式（在.base-drawer内部已定义基本定位）
 .drawer-error-bar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  margin: -20px -20px 16px -20px; // 向上扩展到抽屉顶部
-  padding: 16px 20px 12px 20px; // 顶部增加内边距
+  padding: 16px 20px 12px 20px;
   background-color: #fef0f0;
   border-bottom: 1px solid #fbc4c4;
   color: #f56c6c;
@@ -489,7 +511,7 @@ export default {
   // 错误提示动画
   animation: slideInDown 0.3s ease-out;
   
-  // 圆角只保留底部，让顶部紧贴抽屉
+  // 圆角只保留底部，让顶部完全平齐
   border-radius: 0 0 4px 4px;
 }
 
@@ -503,9 +525,12 @@ export default {
   }
 
   .drawer-error-bar {
-    margin: -16px -16px 12px -16px; // 移动端也向上扩展
-    padding: 14px 16px 10px 16px; // 调整内边距
+    padding: 14px 16px 10px 16px;
     font-size: 13px;
+  }
+  
+  .base-drawer.has-error .drawer-content {
+    padding-top: 50px; // 移动端调整偏移量
   }
 
   .drawer-footer {
