@@ -420,7 +420,7 @@ export default {
 
 .drawer-content {
   padding: 20px;
-  padding-bottom: 60px; /* 如果有底部栏，留出空间 */
+  padding-bottom: 100px; /* 增加底部空间，确保错误提示不被footer遮挡 */
   position: relative;
   width: calc(100% - 40px);
   box-sizing: border-box;
@@ -497,6 +497,7 @@ export default {
 @media (max-width: 768px) {
   .drawer-content {
     padding: 16px;
+    padding-bottom: 80px; /* 移动端也增加底部空间 */
     width: calc(100% - 32px);
   }
 
