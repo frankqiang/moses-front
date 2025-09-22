@@ -17,12 +17,7 @@
     </template>
 
     <!-- 错误提示区域 - 固定在顶部 -->
-    <div
-      v-if="$slots.error"
-      class="drawer-error-bar"
-      role="alert"
-      aria-live="polite"
-    >
+    <div v-if="$slots.error" class="drawer-error-bar" role="alert" aria-live="polite">
       <slot name="error" />
     </div>
 
@@ -479,8 +474,8 @@ export default {
   position: sticky;
   top: 0;
   z-index: 10;
-  margin: 0 -20px 16px -20px;
-  padding: 12px 20px;
+  margin: -20px -20px 16px -20px; // 向上扩展到抽屉顶部
+  padding: 16px 20px 12px 20px; // 顶部增加内边距
   background-color: #fef0f0;
   border-bottom: 1px solid #fbc4c4;
   color: #f56c6c;
@@ -493,6 +488,9 @@ export default {
   
   // 错误提示动画
   animation: slideInDown 0.3s ease-out;
+  
+  // 圆角只保留底部，让顶部紧贴抽屉
+  border-radius: 0 0 4px 4px;
 }
 
 // 响应式设计
@@ -505,8 +503,8 @@ export default {
   }
 
   .drawer-error-bar {
-    margin: 0 -16px 12px -16px;
-    padding: 10px 16px;
+    margin: -16px -16px 12px -16px; // 移动端也向上扩展
+    padding: 14px 16px 10px 16px; // 调整内边距
     font-size: 13px;
   }
 

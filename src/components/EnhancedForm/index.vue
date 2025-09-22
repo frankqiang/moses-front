@@ -75,7 +75,7 @@
     </div>
 
     <!-- 错误提示区域 -->
-    <div v-if="errorMessage" class="form-error" role="alert" aria-live="polite">
+    <div v-if="showError && errorMessage" class="form-error" role="alert" aria-live="polite">
       <i class="el-icon-warning" aria-hidden="true" />
       <span class="error-text">{{ errorMessage }}</span>
       <el-button
@@ -239,6 +239,17 @@ export default {
     syncChanges: {
       type: Boolean,
       default: false
+    },
+
+    /**
+     * 是否显示内置错误提示
+     * 当设为false时，不显示组件内置的错误提示区域
+     * 适用于使用外部错误提示机制的场景
+     * @since 2024-12-19
+     */
+    showError: {
+      type: Boolean,
+      default: true
     }
   },
 

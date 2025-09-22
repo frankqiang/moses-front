@@ -8,7 +8,7 @@
 <template>
     <base-drawer :visible.sync="drawerVisible" :title="drawerTitle" width="800px" :wrapper-closable="false"
         @open="handleDrawerOpen" @close="handleDrawerClose">
-        
+
         <!-- 错误提示区域 -->
         <template #error>
             <div v-if="formErrorMessage" class="error-message">
@@ -21,7 +21,7 @@
         </template>
         <!-- 表单内容 -->
         <enhanced-form ref="enhancedForm" :data="formData" :mode="innerMode" :rules="formRules" label-width="120px"
-            :show-footer="false" :clear-validate-on-data-update="true" :disable-initial-validation="true"
+            :show-footer="false" :show-error="false" :clear-validate-on-data-update="true" :disable-initial-validation="true"
             :validate-on-data-change="false" @submit="handleFormSubmit" @validate="handleCustomValidate"
             @validate-error="handleValidateError" @reset="handleFormReset">
             <!-- 表单内容 -->
@@ -651,13 +651,13 @@ export default {
         // 验证错误处理
         handleValidateError(invalidFields) {
             console.log('表单验证失败:', invalidFields)
-            
+
             // 提取第一个错误消息并显示在顶部
             const firstErrorField = Object.keys(invalidFields)[0]
             if (firstErrorField && invalidFields[firstErrorField] && invalidFields[firstErrorField][0]) {
                 this.formErrorMessage = invalidFields[firstErrorField][0].message
             }
-            
+
             // 聚焦到第一个错误字段
             this.$nextTick(() => {
                 if (firstErrorField && this.$refs.enhancedForm && this.$refs.enhancedForm.$el) {
@@ -780,27 +780,27 @@ export default {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     .el-icon-warning {
         color: #f56c6c;
         font-size: 16px;
         flex-shrink: 0;
     }
-    
+
     span {
         flex: 1;
         font-weight: 500;
     }
-    
+
     .el-button {
         color: #f56c6c;
         padding: 0;
         min-height: auto;
-        
+
         &:hover {
             color: #f78989;
         }
-        
+
         .el-icon-close {
             font-size: 14px;
         }
