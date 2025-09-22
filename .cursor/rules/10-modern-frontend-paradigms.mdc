@@ -1,5 +1,5 @@
 ---
-description: 
+description:
 globs: **/*.vue,**/*.js
 alwaysApply: false
 ---
@@ -111,18 +111,7 @@ created() {
 }
 ```
 
-### 错误处理模式
-```javascript
-// 安全的API调用
-async handleOperation() {
-  try {
-    await this.apiCall()
-    this.$message.success('操作成功')
-  } catch (error) {
-    this.$message.error('操作失败: ' + error.message)
-  }
-}
-```
+
 
 ### 向后兼容性设计
 参考[ActionButtons组件](mdc:src/components/ActionButtons/index.vue)的兼容性设计：
@@ -134,7 +123,7 @@ props: {
 },
 computed: {
   effectiveButtons() {
-    return this.enableModernFeatures && this.preset 
+    return this.enableModernFeatures && this.preset
       ? this.getPresetButtons(this.preset)
       : this.buttons // 兼容传统用法
   }
