@@ -21,9 +21,9 @@
         </template>
         <!-- 表单内容 -->
         <enhanced-form ref="enhancedForm" :data="formData" :mode="innerMode" :rules="formRules" label-width="120px"
-            :show-footer="false" :show-error="false" :clear-validate-on-data-update="true" :disable-initial-validation="true"
-            :validate-on-data-change="false" @submit="handleFormSubmit" @validate="handleCustomValidate"
-            @validate-error="handleValidateError" @reset="handleFormReset">
+            :show-footer="false" :show-error="false" :clear-validate-on-data-update="true"
+            :disable-initial-validation="true" :validate-on-data-change="false" @submit="handleFormSubmit"
+            @validate="handleCustomValidate" @validate-error="handleValidateError" @reset="handleFormReset">
             <!-- 表单内容 -->
             <template v-slot="{ form, mode: formMode }">
                 <!-- 一、基础信息 -->
@@ -683,7 +683,26 @@ export default {
 
         // 确认密码验证
         validatePasswordConfirm(rule, value, callback) {
-            if (value !== this.formData.password) {
+            // 直接从DOM获取密码输入框的值，确保获取最新值
+            let currentPassword = ''
+            
+            // 尝试从EnhancedForm的formModel获取
+            if (this.$refs.enhancedForm && this.$refs.enhancedForm.formModel) {
+                currentPassword = this.$refs.enhancedForm.formModel.password || ''
+            }
+            
+            // 如果EnhancedForm还没有准备好，尝试从formData获取
+            if (!currentPassword && this.formData) {
+                currentPassword = this.formData.password || ''
+            }
+            
+            // 如果确认密码为空，不进行验证（由required规则处理）
+            if (!value) {
+                callback()
+                return
+            }
+            
+            if (value !== currentPassword) {
                 callback(new Error('两次输入的密码不一致'))
             } else {
                 callback()
