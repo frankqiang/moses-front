@@ -16,8 +16,9 @@
       :export-filename="'用户列表_' + new Date().toISOString().slice(0, 10)" @selection-change="handleSelectionChange"
       @pagination-change="handlePaginationChange" @view="handleView" @edit="handleEdit" @delete="handleDelete"
       @enable="handleEnable" @disable="handleDisable" @lock="handleLock" @reset-password="handleResetPassword"
-      @sort-change="handleSortChange" @refresh="handleRefresh" @batch-delete="handleBatchDelete"
-      @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable" @batch-lock="handleBatchLock">
+      @assign-roles="handleAssignRoles" @sort-change="handleSortChange" @refresh="handleRefresh"
+      @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable"
+      @batch-lock="handleBatchLock">
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="small" @click="handleCreate">
           新增用户
@@ -33,6 +34,10 @@
     <reset-password-dialog :visible.sync="resetPasswordDialogVisible" :user-data="currentResetUser"
       @success="handleResetPasswordSuccess" @close="handleResetPasswordClose" />
 
+    <!-- 角色分配对话框 -->
+    <role-assignment-dialog :visible.sync="roleAssignmentDialogVisible" :user-info="currentAssignUser"
+      @role-updated="handleRoleUpdated" />
+
   </div>
 </template>
 
@@ -45,6 +50,7 @@ import UserTable from './components/UserTable.vue'
 import UserFormDrawer from './components/UserFormDrawer.vue'
 import UserSearch from './components/UserSearch.vue'
 import ResetPasswordDialog from './components/ResetPasswordDialog.vue'
+import RoleAssignmentDialog from './components/RoleAssignmentDialog.vue'
 
 // 导入API函数
 import {
@@ -79,7 +85,8 @@ export default {
     UserFormDrawer,
     UserSearch,
     DialogForm,
-    ResetPasswordDialog
+    ResetPasswordDialog,
+    RoleAssignmentDialog
   },
   data() {
     return {
@@ -119,7 +126,11 @@ export default {
 
       // 密码重置对话框
       resetPasswordDialogVisible: false,
-      currentResetUser: {}
+      currentResetUser: {},
+
+      // 角色分配对话框
+      roleAssignmentDialogVisible: false,
+      currentAssignUser: {}
     }
   },
   computed: {
@@ -524,6 +535,14 @@ export default {
     },
 
     /**
+     * 角色分配
+     */
+    handleAssignRoles(row) {
+      this.currentAssignUser = { ...row }
+      this.roleAssignmentDialogVisible = true
+    },
+
+    /**
      * 批量删除
      */
     handleBatchDelete() {
@@ -739,6 +758,16 @@ export default {
      */
     handleResetPasswordClose() {
       this.currentResetUser = {}
+    },
+
+    /**
+     * 角色更新处理
+     */
+    handleRoleUpdated(data) {
+      console.log('用户角色更新:', data)
+      // 可以选择刷新列表或者更新本地数据
+      // this.fetchUserList()
+      this.$message.success(`用户 "${this.currentAssignUser.name}" 的角色已更新`)
     },
 
 

@@ -320,6 +320,15 @@ export default {
         })
       }
 
+      // 添加角色分配按钮
+      buttons.push({
+        text: '角色分配',
+        action: 'assign-roles',
+        icon: 'el-icon-user',
+        type: 'text',
+        tooltip: '管理用户角色'
+      })
+
       // 添加重置密码按钮
       buttons.push({
         text: '重置密码',
@@ -365,6 +374,9 @@ export default {
           break
         case 'lock':
           this.$emit('lock', button.row)
+          break
+        case 'assign-roles':
+          this.$emit('assign-roles', button.row)
           break
         case 'reset-password':
           this.$emit('reset-password', button.row)
