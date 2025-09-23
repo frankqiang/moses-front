@@ -17,7 +17,7 @@
       @pagination-change="handlePaginationChange" @view="handleView" @edit="handleEdit" @delete="handleDelete"
       @enable="handleEnable" @disable="handleDisable" @lock="handleLock" @reset-password="handleResetPassword"
       @sort-change="handleSortChange" @refresh="handleRefresh" @batch-delete="handleBatchDelete"
-      @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
+      @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable" @batch-lock="handleBatchLock">
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="small" @click="handleCreate">
           新增用户
@@ -573,6 +573,18 @@ export default {
       }
 
       this.confirmBatchStatusChange(this.selectedUsers, USER_STATUS.INACTIVE, '批量禁用', '禁用后这些用户将无法登录系统')
+    },
+
+    /**
+     * 批量锁定
+     */
+    handleBatchLock() {
+      if (this.selectedUsers.length === 0) {
+        this.$message.warning('请选择要锁定的用户')
+        return
+      }
+
+      this.confirmBatchStatusChange(this.selectedUsers, USER_STATUS.LOCKED, '批量锁定', '锁定后这些用户将无法登录系统，需要管理员解锁')
     },
 
     /**

@@ -13,8 +13,9 @@
       :selected-rows="selectedUsers" :enable-export="true" :export-api="exportApi" :export-params="exportParams"
       :export-filename="exportFilename" :enable-import="false" :status-confirm="false" :smart-status-buttons="true"
       :status-field="'status'" :enabled-value="userStatusActive" :disabled-value="userStatusInactive"
-      :refresh-feedback-mode="'all'" @refresh="handleRefresh" @column-change="handleColumnChange"
-      @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
+      :custom-actions="customBatchActions" :refresh-feedback-mode="'all'" @refresh="handleRefresh"
+      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable" @custom-action="handleCustomBatchAction">
       <template #toolbar-left>
         <slot name="toolbar-left" />
       </template>
@@ -190,6 +191,28 @@ export default {
      */
     defaultVisibleColumns() {
       return DEFAULT_VISIBLE_COLUMNS
+    },
+
+    /**
+     * 自定义批量操作配置
+     */
+    customBatchActions() {
+      return [
+        {
+          key: 'lock',
+          action: 'lock',
+          label: '批量锁定',
+          text: '批量锁定',
+          type: 'warning',
+          icon: 'el-icon-lock',
+          needConfirm: false, // 我们在父组件处理确认
+          showCount: true,
+          condition: (selectedRows) => {
+            // 只有当选中的用户中存在非锁定状态的用户时，才显示批量锁定按钮
+            return selectedRows.some(row => row.status !== this.userStatusLocked)
+          }
+        }
+      ]
     }
   },
   created() {
@@ -448,6 +471,19 @@ export default {
      */
     handleBatchDisable(selectedRows) {
       this.$emit('batch-disable', selectedRows)
+    },
+
+    /**
+     * 处理自定义批量操作
+     */
+    handleCustomBatchAction(action, selectedRows) {
+      switch (action.key || action.action) {
+        case 'lock':
+          this.$emit('batch-lock', selectedRows)
+          break
+        default:
+          console.log('未知的自定义批量操作:', action)
+      }
     }
   }
 }
