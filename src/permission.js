@@ -33,16 +33,63 @@ router.beforeEach(async(to, from, next) => {
         if (!sessionManager.isActive) {
           sessionManager.init()
         }
-        next()
+
+        // 检查是否已经生成动态路由，并且角色没有变化
+        const hasRoutes = store.getters.routesGenerated
+        const currentRoles = store.getters.roles
+        const lastRoles = store.getters.lastRoles
+        const rolesChanged = JSON.stringify(currentRoles) !== JSON.stringify(lastRoles)
+
+        if (hasRoutes && !rolesChanged) {
+          next()
+        } else {
+          try {
+            // 根据用户角色重新生成路由
+            const { roles } = store.getters
+            const accessRoutes = await store.dispatch('permission/generateRoutes', roles)
+            // 兼容Vue Router 3.x的addRoutes方法
+            if (router.addRoutes) {
+              router.addRoutes(accessRoutes)
+            } else {
+              // Vue Router 4.x使用addRoute方法
+              accessRoutes.forEach(route => {
+                router.addRoute(route)
+              })
+            }
+            next({ ...to, replace: true })
+          } catch (error) {
+            await store.dispatch('user/resetToken')
+            Message.error('路由生成失败，请重新登录')
+            next(`/login?redirect=${to.path}`)
+            NProgress.done()
+          }
+        }
       } else {
         try {
           // get user info
           await store.dispatch('user/getInfo')
 
+          // 根据用户角色生成可访问的路由
+          const { roles } = store.getters
+          const accessRoutes = await store.dispatch('permission/generateRoutes', roles)
+
+          // 动态添加可访问路由
+          // 兼容Vue Router 3.x的addRoutes方法
+          if (router.addRoutes) {
+            router.addRoutes(accessRoutes)
+          } else {
+            // Vue Router 4.x使用addRoute方法
+            accessRoutes.forEach(route => {
+              router.addRoute(route)
+            })
+          }
+
           // 获取用户信息成功后启动会话管理器
           sessionManager.init()
 
-          next()
+          // hack method to ensure that addRoutes is complete
+          // set the replace: true, so the navigation will not leave a history record
+          next({ ...to, replace: true })
         } catch (error) {
           // remove token and go to login page to re-login
           await store.dispatch('user/resetToken')

@@ -106,24 +106,24 @@ const actions = {
       getInfo(state.token).then(response => {
         // Moses API 响应格式处理
         const { data } = response
-        
+
         if (!data) {
           reject('验证失败，请重新登录。')
         }
-        
+
         const { id, username, name, email, avatar, roles, permissions } = data
-        
+
         // 角色必须是一个非空数组
         if (!roles || roles.length <= 0) {
           reject('getInfo: 角色必须是一个非空数组!')
         }
-        
+
         // 存储用户信息到store
         commit('SET_NAME', name || username)
         commit('SET_AVATAR', avatar || '') // 头像为空时设置为空字符串
         commit('SET_ROLES', roles)
         commit('SET_PERMISSIONS', permissions || [])
-        
+
         // 存储完整的用户信息
         commit('SET_USER_INFO', {
           id,
@@ -134,11 +134,11 @@ const actions = {
           roles,
           permissions: permissions || []
         })
-        
+
         resolve(data)
       }).catch(error => {
         console.error('获取用户信息失败:', error)
-        
+
         // 处理401错误，自动跳转到登录页
         if (error.response && error.response.status === 401) {
           // 触发认证错误事件
@@ -146,7 +146,7 @@ const actions = {
             code: 'AUTH_002',
             message: '登录已过期，请重新登录'
           })
-          
+
           commit('RESET_STATE')
           removeToken()
           // 这里不直接跳转，让调用方处理跳转逻辑
@@ -156,7 +156,7 @@ const actions = {
             message: error.message || '获取用户信息失败，请稍后重试'
           })
         }
-        
+
         reject(error)
       })
     })
@@ -177,6 +177,9 @@ const actions = {
           commit('RESET_STATE')
           removeToken()
           resetRouter()
+
+          // 清除权限路由状态
+          dispatch('permission/resetRoutes', null, { root: true })
 
           // 清除refreshToken
           authStorageManager.clearAllAuthState()
