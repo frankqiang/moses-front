@@ -9,7 +9,7 @@
 // 用户状态常量
 export const USER_STATUS = {
   ACTIVE: 'active', // 正常
-  DISABLED: 'disabled', // 禁用
+  INACTIVE: 'inactive', // 禁用
   LOCKED: 'locked', // 锁定
   PENDING: 'pending', // 待激活
   DELETED: 'deleted' // 已删除
@@ -18,7 +18,7 @@ export const USER_STATUS = {
 // 用户状态选项
 export const USER_STATUS_OPTIONS = [
   { label: '正常', value: USER_STATUS.ACTIVE },
-  { label: '禁用', value: USER_STATUS.DISABLED },
+  { label: '禁用', value: USER_STATUS.INACTIVE },
   { label: '锁定', value: USER_STATUS.LOCKED },
   { label: '待激活', value: USER_STATUS.PENDING },
   { label: '已删除', value: USER_STATUS.DELETED }
@@ -27,7 +27,7 @@ export const USER_STATUS_OPTIONS = [
 // 用户状态映射（用于显示）
 export const USER_STATUS_MAP = {
   [USER_STATUS.ACTIVE]: '正常',
-  [USER_STATUS.DISABLED]: '禁用',
+  [USER_STATUS.INACTIVE]: '禁用',
   [USER_STATUS.LOCKED]: '锁定',
   [USER_STATUS.PENDING]: '待激活',
   [USER_STATUS.DELETED]: '已删除'

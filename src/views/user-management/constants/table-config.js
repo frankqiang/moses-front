@@ -159,14 +159,14 @@ export const STATUS_CONFIG = {
   textMap: {
     [USER_STATUS.ACTIVE]: '激活',
     [USER_STATUS.LOCKED]: '锁定',
-    [USER_STATUS.DISABLED]: '禁用',
+    [USER_STATUS.INACTIVE]: '禁用',
     [USER_STATUS.PENDING]: '待激活',
     [USER_STATUS.DELETED]: '已删除'
   },
   typeMap: {
     [USER_STATUS.ACTIVE]: 'success',
     [USER_STATUS.LOCKED]: 'warning',
-    [USER_STATUS.DISABLED]: 'danger',
+    [USER_STATUS.INACTIVE]: 'danger',
     [USER_STATUS.PENDING]: 'info',
     [USER_STATUS.DELETED]: 'info'
   }
@@ -192,7 +192,7 @@ export const ROW_CLASS_CONFIG = {
   classMap: {
     [USER_STATUS.ACTIVE]: '',
     [USER_STATUS.LOCKED]: 'row-warning',
-    [USER_STATUS.DISABLED]: 'row-danger',
+    [USER_STATUS.INACTIVE]: 'row-danger',
     [USER_STATUS.PENDING]: 'row-info',
     [USER_STATUS.DELETED]: 'row-disabled'
   }
@@ -277,6 +277,6 @@ export const TOOLBAR_CONFIG = {
     smart: true,
     statusField: 'status',
     enabledValue: USER_STATUS.ACTIVE,
-    disabledValue: USER_STATUS.DISABLED
+    disabledValue: USER_STATUS.INACTIVE
   }
 }

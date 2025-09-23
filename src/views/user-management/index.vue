@@ -398,10 +398,22 @@ export default {
     /**
      * 编辑用户
      */
-    handleEdit(row) {
-      this.drawerMode = 'update'
-      this.currentUser = { ...row }
-      this.drawerVisible = true
+    async handleEdit(row) {
+      try {
+        this.drawerMode = 'update'
+
+        // 调用详情接口获取完整的用户数据
+        const response = await getUserDetail(row.id)
+        if (response.success) {
+          this.currentUser = response.data
+          this.drawerVisible = true
+        } else {
+          this.$message.error(response.message || '获取用户详情失败')
+        }
+      } catch (error) {
+        console.error('获取用户详情失败:', error)
+        this.$message.error('获取用户详情失败，请稍后重试')
+      }
     },
 
     /**

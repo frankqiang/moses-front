@@ -20,7 +20,7 @@ const baseURL = ''
  * @param {string} [params.username] - 按用户名模糊查询
  * @param {string} [params.email] - 按邮箱地址模糊查询
  * @param {string} [params.search] - 通用搜索，支持姓名、用户名、邮箱的模糊匹配
- * @param {string} [params.status] - 按用户状态筛选（active, locked, disabled, pending, deleted）
+ * @param {string} [params.status] - 按用户状态筛选（active, locked, inactive, pending, deleted）
  * @param {string} [params.role] - 按角色筛选
  * @param {string} [params.roleId] - 按角色ID精确筛选（UUID格式）
  * @param {string} [params.roleName] - 按角色名称模糊筛选
@@ -79,16 +79,36 @@ export function createUser(data) {
 }
 
 /**
- * 更新用户信息
- * @param {string|number} id - 用户ID (UUID格式)
+ * 更新用户信息 - 严格按照接口文档 PATCH /v1/users/{userId} 实现
+ * @param {string} id - 用户ID (UUID格式)
  * @param {Object} data - 更新的用户数据
+ *
+ * 用户基本信息:
  * @param {string} [data.name] - 用户姓名 (1-255字符)
- * @param {string} [data.email] - 邮箱地址 (有效邮箱格式)
+ * @param {string} [data.email] - 邮箱地址 (有效邮箱格式，全局唯一)
  * @param {string} [data.password] - 密码 (至少8位，必须包含字母和数字)
- * @param {string} [data.username] - 用户名 (3-50字符，只能包含字母、数字和下划线)
+ * @param {string} [data.username] - 用户名 (3-50字符，字母数字下划线，全局唯一)
+ * @param {string} [data.phone] - 手机号码 (最大20字符，国际电话格式)
+ * @param {string} [data.status] - 用户状态 (active/locked/inactive/pending/deleted)
+ *
+ * 组织架构信息:
  * @param {string} [data.departmentId] - 部门ID (UUID格式或null)
  * @param {string} [data.positionId] - 岗位ID (UUID格式或null)
  * @param {Array} [data.roleIds] - 角色ID列表 (UUID数组)
+ *
+ * 用户档案信息:
+ * @param {string} [data.employeeId] - 员工工号 (最大50字符，全局唯一)
+ * @param {string} [data.jobTitle] - 职位名称 (最大100字符)
+ * @param {string} [data.managerId] - 直属上级ID (UUID格式或null)
+ * @param {string} [data.hireDate] - 入职日期 (日期格式，不能是未来时间)
+ * @param {string} [data.birthDate] - 出生日期 (日期格式，年龄16-100岁)
+ * @param {string} [data.gender] - 性别 (male/female/other)
+ * @param {string} [data.address] - 家庭住址 (最大500字符)
+ * @param {string} [data.emergencyContact] - 紧急联系人 (最大100字符)
+ * @param {string} [data.emergencyPhone] - 紧急联系电话 (最大20字符，国际电话格式)
+ * @param {string} [data.notes] - 备注信息 (最大1000字符)
+ * @param {Object} [data.customFields] - 自定义字段 (JSON对象格式)
+ *
  * @returns {Promise} 返回更新结果
  */
 export function updateUser(id, data) {
@@ -127,7 +147,7 @@ export function batchDeleteUsers(ids) {
 /**
  * 更新用户状态 - 按照接口文档使用PATCH方法
  * @param {string|number} id - 用户ID
- * @param {string} status - 状态值（active, locked, disabled, pending, deleted）
+ * @param {string} status - 状态值（active, locked, inactive, pending, deleted）
  * @returns {Promise} 返回状态更新结果
  */
 export function updateUserStatus(id, status) {
@@ -141,7 +161,7 @@ export function updateUserStatus(id, status) {
 /**
  * 批量更新用户状态 - 按照接口文档使用PATCH方法
  * @param {Array} ids - 用户ID数组
- * @param {string} status - 状态值（active, locked, disabled, pending, deleted）
+ * @param {string} status - 状态值（active, locked, inactive, pending, deleted）
  * @returns {Promise} 返回批量状态更新结果
  */
 export function batchUpdateUserStatus(ids, status) {

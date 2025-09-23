@@ -436,16 +436,17 @@ export default {
                 ],
                 name: [
                     { required: true, message: '请输入姓名', trigger: 'blur' },
-                    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+                    { min: 1, max: 255, message: '长度在 1 到 255 个字符', trigger: 'blur' }
                 ],
                 email: [
                     { required: true, message: '请输入邮箱地址', trigger: 'blur' },
                     { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
                 ],
                 phone: [
+                    { max: 20, message: '手机号码最多20个字符', trigger: 'blur' },
                     {
-                        pattern: /^1[3-9]\d{9}$/,
-                        message: '请输入正确的手机号码',
+                        pattern: /^\+?[1-9]\d{1,14}$/,
+                        message: '请输入正确的国际电话格式',
                         trigger: 'blur'
                     }
                 ],
@@ -469,9 +470,10 @@ export default {
                     { max: 100, message: '紧急联系人姓名最多100个字符', trigger: 'blur' }
                 ],
                 emergencyPhone: [
+                    { max: 20, message: '紧急联系电话最多20个字符', trigger: 'blur' },
                     {
-                        pattern: /^1[3-9]\d{9}$/,
-                        message: '请输入正确的手机号码',
+                        pattern: /^\+?[1-9]\d{1,14}$/,
+                        message: '请输入正确的国际电话格式',
                         trigger: 'blur'
                     }
                 ],
@@ -496,9 +498,10 @@ export default {
             if (this.mode === 'create') {
                 rules.password = [
                     { required: true, message: '请输入密码', trigger: 'blur' },
+                    { min: 8, message: '密码至少8位', trigger: 'blur' },
                     {
-                        pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,50}$/,
-                        message: '密码必须包含大小写字母和数字，长度8-50位',
+                        pattern: /^(?=.*[a-zA-Z])(?=.*\d)/,
+                        message: '密码必须包含字母和数字',
                         trigger: 'blur'
                     }
                 ]
@@ -577,6 +580,182 @@ export default {
             }
         },
 
+        /**
+         * 将用户详情数据映射到表单数据
+         * @param {Object} userData - 从详情接口获取的用户数据
+         * @returns {Object} 映射后的表单数据
+         */
+        mapUserDataToFormData(userData) {
+            const formData = this.initFormData()
+
+            // 基础用户信息映射
+            if (userData.id) formData.id = userData.id
+            if (userData.username) formData.username = userData.username
+            if (userData.name) formData.name = userData.name
+            if (userData.email) formData.email = userData.email
+            if (userData.phone) formData.phone = userData.phone
+            if (userData.role) formData.role = userData.role
+            if (userData.status) formData.status = userData.status
+
+            // 档案信息映射（从profile对象中提取）
+            if (userData.profile) {
+                const profile = userData.profile
+                if (profile.employeeId) formData.employeeId = profile.employeeId
+                if (profile.jobTitle) formData.jobTitle = profile.jobTitle
+                if (profile.hireDate) formData.hireDate = profile.hireDate
+                if (profile.birthDate) formData.birthDate = profile.birthDate
+                if (profile.gender) formData.gender = profile.gender
+                if (profile.address) formData.address = profile.address
+                if (profile.emergencyContact) formData.emergencyContact = profile.emergencyContact
+                if (profile.emergencyPhone) formData.emergencyPhone = profile.emergencyPhone
+                if (profile.notes) formData.notes = profile.notes
+
+                // 部门ID映射
+                if (profile.department && profile.department.id) {
+                    formData.departmentId = profile.department.id
+                }
+
+                // 岗位ID映射
+                if (profile.position && profile.position.id) {
+                    formData.positionId = profile.position.id
+                }
+
+                // 直属上级ID映射
+                if (profile.manager && profile.manager.id) {
+                    formData.managerId = profile.manager.id
+                }
+            }
+
+            // 角色ID列表映射（从userRoles数组中提取）
+            if (userData.userRoles && Array.isArray(userData.userRoles)) {
+                formData.roleIds = userData.userRoles
+                    .filter(userRole => userRole.status === 'active' && userRole.role && userRole.role.id)
+                    .map(userRole => userRole.role.id)
+            }
+
+            return formData
+        },
+
+        /**
+         * 构建更新数据 - 根据接口文档严格构建更新请求数据
+         * @param {Object} updateData - 表单更新数据
+         * @returns {Object} 符合接口要求的更新数据
+         */
+        buildUpdateData(updateData) {
+            const submitData = {}
+            const originalData = this.userData || {}
+            const originalProfile = originalData.profile || {}
+
+            // 用户基本信息字段检查
+            if (updateData.name !== undefined && updateData.name !== originalData.name) {
+                submitData.name = updateData.name
+            }
+            if (updateData.email !== undefined && updateData.email !== originalData.email) {
+                submitData.email = updateData.email
+            }
+            if (updateData.username !== undefined && updateData.username !== originalData.username) {
+                submitData.username = updateData.username
+            }
+            if (updateData.phone !== undefined && updateData.phone !== originalData.phone) {
+                submitData.phone = updateData.phone
+            }
+            if (updateData.status !== undefined && updateData.status !== originalData.status) {
+                submitData.status = updateData.status
+            }
+
+            // 组织架构信息字段检查
+            if (updateData.departmentId !== undefined && updateData.departmentId !== originalProfile.department?.id) {
+                submitData.departmentId = updateData.departmentId || null
+            }
+            if (updateData.positionId !== undefined && updateData.positionId !== originalProfile.position?.id) {
+                submitData.positionId = updateData.positionId || null
+            }
+            if (updateData.roleIds !== undefined) {
+                const originalRoleIds = originalData.userRoles?.filter(ur => ur.status === 'active').map(ur => ur.role?.id) || []
+                const currentRoleIds = updateData.roleIds || []
+                if (JSON.stringify(currentRoleIds.sort()) !== JSON.stringify(originalRoleIds.sort())) {
+                    submitData.roleIds = currentRoleIds
+                }
+            }
+
+            // 用户档案信息字段检查
+            if (updateData.employeeId !== undefined && updateData.employeeId !== originalProfile.employeeId) {
+                submitData.employeeId = updateData.employeeId
+            }
+            if (updateData.jobTitle !== undefined && updateData.jobTitle !== originalProfile.jobTitle) {
+                submitData.jobTitle = updateData.jobTitle
+            }
+            if (updateData.managerId !== undefined && updateData.managerId !== originalProfile.manager?.id) {
+                submitData.managerId = updateData.managerId || null
+            }
+            if (updateData.hireDate !== undefined && updateData.hireDate !== originalProfile.hireDate) {
+                submitData.hireDate = updateData.hireDate
+            }
+            if (updateData.birthDate !== undefined && updateData.birthDate !== originalProfile.birthDate) {
+                submitData.birthDate = updateData.birthDate
+            }
+            if (updateData.gender !== undefined && updateData.gender !== originalProfile.gender) {
+                submitData.gender = updateData.gender
+            }
+            if (updateData.address !== undefined && updateData.address !== originalProfile.address) {
+                submitData.address = updateData.address
+            }
+            if (updateData.emergencyContact !== undefined && updateData.emergencyContact !== originalProfile.emergencyContact) {
+                submitData.emergencyContact = updateData.emergencyContact
+            }
+            if (updateData.emergencyPhone !== undefined && updateData.emergencyPhone !== originalProfile.emergencyPhone) {
+                submitData.emergencyPhone = updateData.emergencyPhone
+            }
+            if (updateData.notes !== undefined && updateData.notes !== originalProfile.notes) {
+                submitData.notes = updateData.notes
+            }
+
+            // 自定义字段检查（如果需要）
+            if (updateData.customFields !== undefined) {
+                const originalCustomFields = originalProfile.customFields || {}
+                if (JSON.stringify(updateData.customFields) !== JSON.stringify(originalCustomFields)) {
+                    submitData.customFields = updateData.customFields
+                }
+            }
+
+            return submitData
+        },
+
+        /**
+         * 提取错误消息 - 严格按照接口文档的错误响应格式处理
+         * @param {Error} error - 错误对象
+         * @param {string} defaultMessage - 默认错误消息
+         * @returns {string} 用户友好的错误消息
+         */
+        extractErrorMessage(error, defaultMessage = '操作失败，请稍后重试') {
+            // 网络错误或其他非HTTP错误
+            if (!error.response) {
+                return error.message || defaultMessage
+            }
+
+            const errorData = error.response.data
+            if (!errorData) {
+                return defaultMessage
+            }
+
+            // 按照接口文档的标准错误格式处理
+            if (errorData.error) {
+                // 对VAL_001验证错误进行特殊格式化
+                if (errorData.error.code === 'VAL_001' &&
+                    errorData.error.details &&
+                    Array.isArray(errorData.error.details)) {
+                    const messages = errorData.error.details.map(detail => `${detail.field}: ${detail.message}`)
+                    return `输入数据验证失败:\n${messages.join('\n')}`
+                }
+
+                // 其他错误直接返回后端消息
+                return errorData.error.message || errorData.message || defaultMessage
+            }
+
+            // 兼容其他可能的错误格式
+            return errorData.message || defaultMessage
+        },
+
         // 抽屉打开处理
         handleDrawerOpen() {
             // 权限检查
@@ -590,7 +769,7 @@ export default {
             if (this.mode === 'create') {
                 this.formData = this.initFormData()
             } else if (this.userData) {
-                this.formData = { ...this.initFormData(), ...this.userData }
+                this.formData = this.mapUserDataToFormData(this.userData)
             }
 
             // 重新加载直属上级数据，确保编辑模式下排除当前用户
@@ -665,27 +844,7 @@ export default {
                     const { password, confirmPassword, id, ...updateData } = formData // eslint-disable-line no-unused-vars
 
                     // 构建符合接口文档的更新数据
-                    const submitData = {}
-
-                    // 只包含实际需要更新的字段
-                    if (updateData.name !== undefined && updateData.name !== this.userData?.name) {
-                        submitData.name = updateData.name
-                    }
-                    if (updateData.email !== undefined && updateData.email !== this.userData?.email) {
-                        submitData.email = updateData.email
-                    }
-                    if (updateData.username !== undefined && updateData.username !== this.userData?.username) {
-                        submitData.username = updateData.username
-                    }
-                    if (updateData.departmentId !== undefined && updateData.departmentId !== this.userData?.departmentId) {
-                        submitData.departmentId = updateData.departmentId || null
-                    }
-                    if (updateData.positionId !== undefined && updateData.positionId !== this.userData?.positionId) {
-                        submitData.positionId = updateData.positionId || null
-                    }
-                    if (updateData.roleIds !== undefined && JSON.stringify(updateData.roleIds) !== JSON.stringify(this.userData?.roleIds)) {
-                        submitData.roleIds = updateData.roleIds || []
-                    }
+                    const submitData = this.buildUpdateData(updateData)
 
                     // 检查是否有数据需要更新
                     if (Object.keys(submitData).length === 0) {
@@ -713,41 +872,9 @@ export default {
                 }
             } catch (error) {
                 console.error('用户保存失败:', error)
-                let errorMessage = '操作失败，请稍后重试'
 
-                if (error && error.response && error.response.data) {
-                    const errorData = error.response.data
-                    if (errorData.error && errorData.error.code) {
-                        // 处理特定的业务错误码
-                        switch (errorData.error.code) {
-                            case 'BIZ_011':
-                                errorMessage = '邮箱已被使用'
-                                break
-                            case 'BIZ_010':
-                                errorMessage = '用户名已被使用'
-                                break
-                            case 'VAL_001':
-                                errorMessage = errorData.error.details?.message || '输入数据验证失败'
-                                break
-                            case 'AUTH_001':
-                                errorMessage = '请先登录'
-                                break
-                            case 'AUTH_006':
-                                errorMessage = '权限不足'
-                                break
-                            case 'BIZ_001':
-                                errorMessage = '用户不存在'
-                                break
-                            default:
-                                errorMessage = errorData.error.message || errorMessage
-                        }
-                    } else {
-                        errorMessage = errorData.message || errorMessage
-                    }
-                } else if (error && error.message) {
-                    errorMessage = error.message
-                }
-
+                // 直接使用后端返回的错误消息
+                const errorMessage = this.extractErrorMessage(error, '用户保存失败')
                 this.$message.error(errorMessage)
             } finally {
                 this.loading = false
@@ -818,27 +945,8 @@ export default {
             } catch (error) {
                 console.error('加载部门数据失败:', error)
 
-                // 根据错误类型显示不同的提示信息
-                let errorMessage = '加载部门数据失败'
-                if (error && error.response && error.response.data) {
-                    const errorData = error.response.data
-                    if (errorData.error && errorData.error.code) {
-                        switch (errorData.error.code) {
-                            case 'AUTH_001':
-                                errorMessage = '请先登录后再操作'
-                                break
-                            case 'AUTH_009':
-                                errorMessage = '权限不足，无法获取部门数据'
-                                break
-                            default:
-                                errorMessage = errorData.error.message || errorMessage
-                        }
-                    } else {
-                        errorMessage = errorData.message || errorMessage
-                    }
-                } else if (error && error.message) {
-                    errorMessage = error.message
-                }
+                // 使用统一的错误消息提取方法
+                const errorMessage = this.extractErrorMessage(error, '加载部门数据失败')
 
                 // 显示错误提示（使用较温和的警告而不是错误，因为这不会阻止用户使用其他功能）
                 this.$message.warning(`${errorMessage}，部门选择功能暂时不可用`)
@@ -879,27 +987,8 @@ export default {
             } catch (error) {
                 console.error('加载岗位数据失败:', error)
 
-                // 根据错误类型显示不同的提示信息
-                let errorMessage = '加载岗位数据失败'
-                if (error && error.response && error.response.data) {
-                    const errorData = error.response.data
-                    if (errorData.error && errorData.error.code) {
-                        switch (errorData.error.code) {
-                            case 'AUTH_001':
-                                errorMessage = '请先登录后再操作'
-                                break
-                            case 'AUTH_009':
-                                errorMessage = '权限不足，无法获取岗位数据'
-                                break
-                            default:
-                                errorMessage = errorData.error.message || errorMessage
-                        }
-                    } else {
-                        errorMessage = errorData.message || errorMessage
-                    }
-                } else if (error && error.message) {
-                    errorMessage = error.message
-                }
+                // 使用统一的错误消息提取方法
+                const errorMessage = this.extractErrorMessage(error, '加载岗位数据失败')
 
                 // 显示错误提示（使用较温和的警告而不是错误，因为这不会阻止用户使用其他功能）
                 this.$message.warning(`${errorMessage}，岗位选择功能暂时不可用`)
@@ -941,27 +1030,8 @@ export default {
             } catch (error) {
                 console.error('加载角色数据失败:', error)
 
-                // 根据错误类型显示不同的提示信息
-                let errorMessage = '加载角色数据失败'
-                if (error && error.response && error.response.data) {
-                    const errorData = error.response.data
-                    if (errorData.error && errorData.error.code) {
-                        switch (errorData.error.code) {
-                            case 'AUTH_001':
-                                errorMessage = '请先登录后再操作'
-                                break
-                            case 'AUTH_009':
-                                errorMessage = '权限不足，无法获取角色数据'
-                                break
-                            default:
-                                errorMessage = errorData.error.message || errorMessage
-                        }
-                    } else {
-                        errorMessage = errorData.message || errorMessage
-                    }
-                } else if (error && error.message) {
-                    errorMessage = error.message
-                }
+                // 使用统一的错误消息提取方法
+                const errorMessage = this.extractErrorMessage(error, '加载角色数据失败')
 
                 // 显示错误提示（使用较温和的警告而不是错误，因为这不会阻止用户使用其他功能）
                 this.$message.warning(`${errorMessage}，角色选择功能暂时不可用`)
@@ -1022,27 +1092,8 @@ export default {
             } catch (error) {
                 console.error('加载直属上级数据失败:', error)
 
-                // 根据错误类型显示不同的提示信息
-                let errorMessage = '加载直属上级数据失败'
-                if (error && error.response && error.response.data) {
-                    const errorData = error.response.data
-                    if (errorData.error && errorData.error.code) {
-                        switch (errorData.error.code) {
-                            case 'AUTH_001':
-                                errorMessage = '请先登录后再操作'
-                                break
-                            case 'AUTH_006':
-                                errorMessage = '权限不足，无法获取用户数据'
-                                break
-                            default:
-                                errorMessage = errorData.error.message || errorMessage
-                        }
-                    } else {
-                        errorMessage = errorData.message || errorMessage
-                    }
-                } else if (error && error.message) {
-                    errorMessage = error.message
-                }
+                // 使用统一的错误消息提取方法
+                const errorMessage = this.extractErrorMessage(error, '加载直属上级数据失败')
 
                 // 显示错误提示（使用较温和的警告而不是错误，因为这不会阻止用户使用其他功能）
                 this.$message.warning(`${errorMessage}，直属上级选择功能暂时不可用`)

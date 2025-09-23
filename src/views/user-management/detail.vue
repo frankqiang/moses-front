@@ -469,7 +469,7 @@ export default {
       const statusMap = {
         'active': 'success',
         'locked': 'warning',
-        'disabled': 'danger',
+        'inactive': 'danger',
         'pending': 'info',
         'deleted': 'info'
       }

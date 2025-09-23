@@ -243,7 +243,7 @@ export default {
           class: 'warning',
           tooltip: '禁用该用户'
         })
-      } else if (row.status === USER_STATUS.DISABLED) {
+      } else if (row.status === USER_STATUS.INACTIVE) {
         buttons.push({
           text: '启用',
           action: 'enable',
