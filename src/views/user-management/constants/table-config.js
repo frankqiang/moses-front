@@ -42,7 +42,7 @@ export const TABLE_COLUMNS = [
     showOverflowTooltip: true
   },
   {
-    prop: 'gender',
+    prop: 'profile.gender',
     label: '性别',
     sortable: true,
     minWidth: 80,
@@ -59,6 +59,28 @@ export const TABLE_COLUMNS = [
     showOverflowTooltip: true,
     formatter: (row) => {
       return row.profile?.department?.name || '-'
+    }
+  },
+  {
+    prop: 'profile.position.name',
+    label: '职位',
+    sortable: true,
+    minWidth: 120,
+    align: 'center',
+    showOverflowTooltip: true,
+    formatter: (row) => {
+      return row.profile?.position?.name || '-'
+    }
+  },
+  {
+    prop: 'profile.manager.name',
+    label: '直属上级',
+    sortable: true,
+    minWidth: 120,
+    align: 'center',
+    showOverflowTooltip: true,
+    formatter: (row) => {
+      return row.profile?.manager?.name || '-'
     }
   },
   {
@@ -124,8 +146,9 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   'name',
   'email',
   'phone',
-  'gender',
+  'profile.gender',
   'profile.department.name',
+  'profile.position.name',
   'status',
   'lastLoginAt',
   'actions'

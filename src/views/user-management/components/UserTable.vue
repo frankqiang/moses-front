@@ -34,9 +34,9 @@
 
       <!-- 性别列自定义渲染 -->
       <template #gender="{ row }">
-        <span v-if="row && row.gender">
-          <i :class="getGenderIcon(row.gender)" style="margin-right: 4px;"></i>
-          {{ getGenderText(row.gender) }}
+        <span v-if="row && row.profile && row.profile.gender">
+          <i :class="getGenderIcon(row.profile.gender)" style="margin-right: 4px;"></i>
+          {{ getGenderText(row.profile.gender) }}
         </span>
         <span v-else>-</span>
       </template>

@@ -121,7 +121,13 @@
             <span class="info-value">{{ userDetail.profile.employeeId || '未分配' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="职位">
-            <span class="info-value">{{ userDetail.profile.jobTitle || '未设置' }}</span>
+            <span class="info-value">
+              {{ (userDetail.profile.position && userDetail.profile.position.name) || userDetail.profile.jobTitle ||
+                '未设置' }}
+            </span>
+            <el-tag v-if="userDetail.profile.position" type="info" size="mini" class="status-tag">
+              {{ userDetail.profile.position.code }}
+            </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="所属部门">
             <span class="info-value">
@@ -158,9 +164,13 @@
             <span class="info-value">{{ userDetail.profile.address || '未填写' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="直属上级" :span="2">
-            <span class="info-value">
-              {{ userDetail.profile.managerId ? '待查询' : '无' }}
+            <span v-if="userDetail.profile.manager" class="info-value">
+              {{ userDetail.profile.manager.name }}
+              <el-tag type="info" size="mini" class="status-tag">
+                {{ userDetail.profile.manager.email }}
+              </el-tag>
             </span>
+            <span v-else class="info-value">无</span>
           </el-descriptions-item>
         </el-descriptions>
       </el-card>
@@ -182,6 +192,24 @@
           </el-descriptions-item>
           <el-descriptions-item label="个人备注" :span="2">
             <span class="info-value">{{ userDetail.profile.notes || '无备注' }}</span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-card>
+
+      <!-- 自定义字段信息 -->
+      <el-card
+        v-if="userDetail.profile && userDetail.profile.customFields && Object.keys(userDetail.profile.customFields).length > 0"
+        class="info-card custom-fields-info" shadow="hover">
+        <div slot="header" class="card-header">
+          <span class="card-title">
+            <i class="el-icon-setting" />
+            自定义字段
+          </span>
+        </div>
+        <el-descriptions :column="2" border>
+          <el-descriptions-item v-for="(value, key) in userDetail.profile.customFields" :key="key"
+            :label="getCustomFieldLabel(key)">
+            <span class="info-value">{{ value || '未填写' }}</span>
           </el-descriptions-item>
         </el-descriptions>
       </el-card>
@@ -488,6 +516,21 @@ export default {
     },
 
     /**
+         * 获取自定义字段标签
+         */
+    getCustomFieldLabel(key) {
+      const fieldLabelMap = {
+        'hobby': '兴趣爱好',
+        'skill': '技能专长',
+        'education': '教育背景',
+        'certification': '认证证书',
+        'language': '语言能力',
+        'project': '项目经验'
+      }
+      return fieldLabelMap[key] || key
+    },
+
+    /**
          * 格式化时间
          */
     formatTime(time) {
@@ -752,6 +795,13 @@ export default {
     .security-info {
       .info-value {
         font-weight: 500;
+      }
+    }
+
+    .custom-fields-info {
+      .info-value {
+        font-weight: 500;
+        color: #606266;
       }
     }
 
