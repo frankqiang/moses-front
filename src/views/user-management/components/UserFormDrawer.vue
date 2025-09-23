@@ -6,7 +6,7 @@
 * - 2024-01-15: 重构为现代化组件架构，参考OperationFormDrawer实现
 */
 <template>
-    <base-drawer :visible.sync="drawerVisible" :title="drawerTitle" width="800px" :wrapper-closable="false"
+    <base-drawer :visible.sync="drawerVisible" :title="drawerTitle" width="1000px" :wrapper-closable="false"
         @open="handleDrawerOpen" @close="handleDrawerClose">
 
         <!-- 错误提示区域 -->
@@ -119,21 +119,31 @@
                         <el-col :span="12">
                             <el-form-item label="所属部门" prop="departmentId">
                                 <el-select v-model="form.departmentId" placeholder="请选择所属部门" style="width: 100%"
-                                    :disabled="formMode === 'view'" filterable clearable>
+                                    :disabled="formMode === 'view'" :loading="departmentLoading" filterable clearable>
                                     <el-option v-for="dept in departmentOptions" :key="dept.value" :label="dept.label"
-                                        :value="dept.value" />
+                                        :value="dept.value">
+                                        <div class="option-content">
+                                            <span class="option-label">{{ dept.label }}</span>
+                                            <span v-if="dept.code" class="option-extra">{{ dept.code }}</span>
+                                        </div>
+                                    </el-option>
                                 </el-select>
-                                <div class="field-hint">临时数据，后续对接部门管理接口</div>
+                                <div class="field-hint">选择用户所属的部门</div>
                             </el-form-item>
                         </el-col>
                         <el-col :span="12">
                             <el-form-item label="岗位" prop="positionId">
                                 <el-select v-model="form.positionId" placeholder="请选择岗位" style="width: 100%"
-                                    :disabled="formMode === 'view'" filterable clearable>
+                                    :disabled="formMode === 'view'" :loading="positionLoading" filterable clearable>
                                     <el-option v-for="pos in positionOptions" :key="pos.value" :label="pos.label"
-                                        :value="pos.value" />
+                                        :value="pos.value">
+                                        <div class="option-content">
+                                            <span class="option-label">{{ pos.label }}</span>
+                                            <span v-if="pos.code" class="option-extra">{{ pos.code }}</span>
+                                        </div>
+                                    </el-option>
                                 </el-select>
-                                <div class="field-hint">临时数据，后续对接岗位管理接口</div>
+                                <div class="field-hint">选择用户的岗位信息</div>
                             </el-form-item>
                         </el-col>
                     </el-row>
@@ -162,11 +172,17 @@
                         <el-col :span="12">
                             <el-form-item label="直属上级" prop="managerId">
                                 <el-select v-model="form.managerId" placeholder="请选择直属上级" style="width: 100%"
-                                    :disabled="formMode === 'view'" filterable clearable>
+                                    :disabled="formMode === 'view'" :loading="managerLoading" filterable clearable>
                                     <el-option v-for="manager in managerOptions" :key="manager.value"
-                                        :label="manager.label" :value="manager.value" />
+                                        :label="manager.label" :value="manager.value">
+                                        <div class="option-content">
+                                            <span class="option-label">{{ manager.label }}</span>
+                                            <span v-if="manager.department" class="option-extra">{{
+                                                manager.department.name }}</span>
+                                        </div>
+                                    </el-option>
                                 </el-select>
-                                <div class="field-hint">临时数据，后续对接用户管理接口</div>
+                                <div class="field-hint">选择用户的直属上级，用于组织架构管理</div>
                             </el-form-item>
                         </el-col>
                         <el-col :span="12">
@@ -220,15 +236,18 @@
                         <el-col :span="24">
                             <el-form-item label="分配角色" prop="roleIds">
                                 <el-select v-model="form.roleIds" multiple placeholder="请选择分配角色" style="width: 100%"
-                                    :disabled="formMode === 'view'" filterable collapse-tags>
+                                    :disabled="formMode === 'view' || roleLoading" filterable collapse-tags
+                                    :loading="roleLoading">
                                     <el-option v-for="role in roleOptions" :key="role.value" :label="role.label"
                                         :value="role.value">
-                                        <span style="float: left">{{ role.label }}</span>
-                                        <span style="float: right; color: #8492a6; font-size: 13px">{{ role.description
-                                        }}</span>
+                                        <div class="option-content">
+                                            <span class="option-label">{{ role.label }}</span>
+                                            <span v-if="role.description" class="option-extra">{{ role.description
+                                                }}</span>
+                                        </div>
                                     </el-option>
                                 </el-select>
-                                <div class="field-hint">可选择多个角色，用户权限为所有角色权限的并集。临时数据，后续对接角色管理接口</div>
+                                <div class="field-hint">可选择多个角色，用户权限为所有角色权限的并集</div>
                             </el-form-item>
                         </el-col>
                     </el-row>
@@ -268,7 +287,11 @@ import BaseDrawer from '@/components/Drawer'
 import EnhancedForm from '@/components/EnhancedForm'
 import {
     createUser, // eslint-disable-line no-unused-vars
-    updateUser // eslint-disable-line no-unused-vars
+    updateUser, // eslint-disable-line no-unused-vars
+    getDepartmentOptions,
+    getPositionOptions,
+    getRoleOptions,
+    getManagerOptions
 } from '../api'
 import {
     USER_STATUS_OPTIONS,
@@ -309,49 +332,22 @@ export default {
             loading: false,
             // 表单错误消息
             formErrorMessage: '',
-            // 部门选项（临时数据）
-            departmentOptions: [
-                { value: 'dept-001', label: '技术部' },
-                { value: 'dept-002', label: '产品部' },
-                { value: 'dept-003', label: '运营部' },
-                { value: 'dept-004', label: '市场部' },
-                { value: 'dept-005', label: '人事部' },
-                { value: 'dept-006', label: '财务部' },
-                { value: 'dept-007', label: '行政部' }
-            ],
-            // 角色选项（临时数据）
-            roleOptions: [
-                { value: 'role-001', label: '超级管理员', description: '拥有系统所有权限' },
-                { value: 'role-002', label: '系统管理员', description: '拥有系统管理权限' },
-                { value: 'role-003', label: '项目经理', description: '负责项目管理' },
-                { value: 'role-004', label: '高级开发', description: '高级开发工程师' },
-                { value: 'role-005', label: '开发工程师', description: '开发工程师' },
-                { value: 'role-006', label: '测试工程师', description: '负责软件测试' },
-                { value: 'role-007', label: '运维工程师', description: '负责系统运维' },
-                { value: 'role-008', label: '产品经理', description: '负责产品规划' },
-                { value: 'role-009', label: '用户', description: '普通用户权限' }
-            ],
-            // 岗位选项（临时数据）
-            positionOptions: [
-                { value: 'pos-001', label: '高级软件工程师' },
-                { value: 'pos-002', label: '软件工程师' },
-                { value: 'pos-003', label: '初级软件工程师' },
-                { value: 'pos-004', label: '测试工程师' },
-                { value: 'pos-005', label: '高级测试工程师' },
-                { value: 'pos-006', label: '产品经理' },
-                { value: 'pos-007', label: '项目经理' },
-                { value: 'pos-008', label: '运维工程师' },
-                { value: 'pos-009', label: 'UI设计师' },
-                { value: 'pos-010', label: '技术总监' }
-            ],
-            // 上级选项（临时数据）
-            managerOptions: [
-                { value: 'user-001', label: '王经理 (wang@example.com)' },
-                { value: 'user-002', label: '李总监 (li@example.com)' },
-                { value: 'user-003', label: '张主管 (zhang@example.com)' },
-                { value: 'user-004', label: '陈部长 (chen@example.com)' },
-                { value: 'user-005', label: '刘经理 (liu@example.com)' }
-            ]
+            // 部门选项
+            departmentOptions: [],
+            // 部门数据加载状态
+            departmentLoading: false,
+            // 岗位选项
+            positionOptions: [],
+            // 岗位数据加载状态
+            positionLoading: false,
+            // 角色选项
+            roleOptions: [],
+            // 角色数据加载状态
+            roleLoading: false,
+            // 直属上级选项
+            managerOptions: [],
+            // 直属上级数据加载状态
+            managerLoading: false
         }
     },
     computed: {
@@ -367,6 +363,49 @@ export default {
                 view: '查看用户'
             }
             return titleMap[this.mode] || '用户管理'
+        },
+        // 权限检查：是否可以编辑用户
+        canEditUser() {
+            // 获取当前登录用户信息
+            const currentUser = this.$store.state.user.userInfo
+            if (!currentUser) return false
+
+            // 检查是否有manageUsers权限
+            const permissions = currentUser.permissions || []
+            const hasManageUsersPermission = permissions.includes('manageUsers')
+
+            // 管理员角色或拥有manageUsers权限的用户可以编辑
+            const roles = currentUser.roles || []
+            const isAdmin = roles.includes('admin') || roles.includes('administrator')
+
+            return isAdmin || hasManageUsersPermission
+        },
+        // 权限检查：是否可以编辑当前用户
+        canEditCurrentUser() {
+            if (!this.canEditUser) return false
+
+            // 在编辑模式下，检查是否可以编辑特定用户
+            if (this.mode === 'update' && this.userData) {
+                const currentUser = this.$store.state.user.userInfo
+
+                // 普通用户只能编辑自己的信息
+                if (!this.isAdminUser && this.userData.id !== currentUser.id) {
+                    return false
+                }
+
+                // 不能编辑比自己权限高的用户
+                if (this.userData.role === 'admin' && !this.isAdminUser) {
+                    return false
+                }
+            }
+
+            return true
+        },
+        // 是否为管理员用户
+        isAdminUser() {
+            const currentUser = this.$store.state.user.userInfo
+            const roles = currentUser?.roles || []
+            return roles.includes('admin') || roles.includes('administrator')
         },
         // 性别选项
         genderOptions() {
@@ -393,10 +432,7 @@ export default {
                         message: '用户名只能包含字母、数字和下划线',
                         trigger: 'blur'
                     },
-                    { min: 3, max: 50, message: '长度在 3 到 50 个字符', trigger: 'blur' },
-                    {
-                        trigger: 'blur'
-                    }
+                    { min: 3, max: 50, message: '长度在 3 到 50 个字符', trigger: 'blur' }
                 ],
                 name: [
                     { required: true, message: '请输入姓名', trigger: 'blur' },
@@ -404,10 +440,7 @@ export default {
                 ],
                 email: [
                     { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-                    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' },
-                    {
-                        trigger: 'blur'
-                    }
+                    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
                 ],
                 phone: [
                     {
@@ -506,6 +539,10 @@ export default {
     },
     created() {
         // 组件初始化
+        this.loadDepartmentOptions()
+        this.loadPositionOptions()
+        this.loadRoleOptions()
+        this.loadManagerOptions()
     },
     methods: {
         // 初始化表单数据
@@ -542,12 +579,22 @@ export default {
 
         // 抽屉打开处理
         handleDrawerOpen() {
+            // 权限检查
+            if ((this.mode === 'update' || this.mode === 'create') && !this.canEditCurrentUser) {
+                this.$message.error('权限不足，无法编辑此用户')
+                this.drawerVisible = false
+                return
+            }
+
             // 初始化表单数据
             if (this.mode === 'create') {
                 this.formData = this.initFormData()
             } else if (this.userData) {
                 this.formData = { ...this.initFormData(), ...this.userData }
             }
+
+            // 重新加载直属上级数据，确保编辑模式下排除当前用户
+            this.loadManagerOptions()
         },
 
         // 抽屉关闭处理
@@ -597,18 +644,56 @@ export default {
         // 业务逻辑：实际的数据提交处理
         async handleFormSubmit(formData, continueEdit = false) {
             try {
+                // 权限检查
+                if (!this.canEditCurrentUser) {
+                    this.$message.error('权限不足，无法执行此操作')
+                    this.loading = false
+                    return
+                }
+
                 // 清除之前的错误消息
                 this.clearFormError()
                 this.loading = true
                 let response
 
                 if (this.mode === 'create') {
-                    // 移除确认密码字段
+                    // 移除确认密码字段，准备符合接口规范的数据
                     const { confirmPassword, ...submitData } = formData // eslint-disable-line no-unused-vars
                     response = await createUser(submitData)
                 } else if (this.mode === 'update') {
-                    // 移除密码相关字段
-                    const { password, confirmPassword, ...submitData } = formData // eslint-disable-line no-unused-vars
+                    // 编辑模式：移除不需要的字段，只发送实际需要更新的字段
+                    const { password, confirmPassword, id, ...updateData } = formData // eslint-disable-line no-unused-vars
+
+                    // 构建符合接口文档的更新数据
+                    const submitData = {}
+
+                    // 只包含实际需要更新的字段
+                    if (updateData.name !== undefined && updateData.name !== this.userData?.name) {
+                        submitData.name = updateData.name
+                    }
+                    if (updateData.email !== undefined && updateData.email !== this.userData?.email) {
+                        submitData.email = updateData.email
+                    }
+                    if (updateData.username !== undefined && updateData.username !== this.userData?.username) {
+                        submitData.username = updateData.username
+                    }
+                    if (updateData.departmentId !== undefined && updateData.departmentId !== this.userData?.departmentId) {
+                        submitData.departmentId = updateData.departmentId || null
+                    }
+                    if (updateData.positionId !== undefined && updateData.positionId !== this.userData?.positionId) {
+                        submitData.positionId = updateData.positionId || null
+                    }
+                    if (updateData.roleIds !== undefined && JSON.stringify(updateData.roleIds) !== JSON.stringify(this.userData?.roleIds)) {
+                        submitData.roleIds = updateData.roleIds || []
+                    }
+
+                    // 检查是否有数据需要更新
+                    if (Object.keys(submitData).length === 0) {
+                        this.$message.info('没有检测到数据变化')
+                        this.loading = false
+                        return
+                    }
+
                     response = await updateUser(formData.id, submitData)
                 }
 
@@ -631,7 +716,34 @@ export default {
                 let errorMessage = '操作失败，请稍后重试'
 
                 if (error && error.response && error.response.data) {
-                    errorMessage = error.response.data.message || error.response.data.error?.message || errorMessage
+                    const errorData = error.response.data
+                    if (errorData.error && errorData.error.code) {
+                        // 处理特定的业务错误码
+                        switch (errorData.error.code) {
+                            case 'BIZ_011':
+                                errorMessage = '邮箱已被使用'
+                                break
+                            case 'BIZ_010':
+                                errorMessage = '用户名已被使用'
+                                break
+                            case 'VAL_001':
+                                errorMessage = errorData.error.details?.message || '输入数据验证失败'
+                                break
+                            case 'AUTH_001':
+                                errorMessage = '请先登录'
+                                break
+                            case 'AUTH_006':
+                                errorMessage = '权限不足'
+                                break
+                            case 'BIZ_001':
+                                errorMessage = '用户不存在'
+                                break
+                            default:
+                                errorMessage = errorData.error.message || errorMessage
+                        }
+                    } else {
+                        errorMessage = errorData.message || errorMessage
+                    }
                 } else if (error && error.message) {
                     errorMessage = error.message
                 }
@@ -679,29 +791,290 @@ export default {
             this.formData = this.initFormData()
         },
 
+        // 加载部门选项数据
+        async loadDepartmentOptions() {
+            try {
+                this.departmentLoading = true
 
+                const response = await getDepartmentOptions({
+                    status: 'active' // 只获取激活状态的部门
+                })
+
+                if (response && response.success && response.data && response.data.options) {
+                    this.departmentOptions = response.data.options
+                } else if (response && response.success && response.data && response.data.results) {
+                    // 如果API返回的是标准列表格式，手动转换为选项格式
+                    this.departmentOptions = response.data.results.map(dept => ({
+                        value: dept.id,
+                        label: dept.name,
+                        code: dept.code,
+                        level: dept.level,
+                        status: dept.status
+                    }))
+                } else {
+                    console.warn('部门数据格式异常:', response)
+                    this.departmentOptions = []
+                }
+            } catch (error) {
+                console.error('加载部门数据失败:', error)
+
+                // 根据错误类型显示不同的提示信息
+                let errorMessage = '加载部门数据失败'
+                if (error && error.response && error.response.data) {
+                    const errorData = error.response.data
+                    if (errorData.error && errorData.error.code) {
+                        switch (errorData.error.code) {
+                            case 'AUTH_001':
+                                errorMessage = '请先登录后再操作'
+                                break
+                            case 'AUTH_009':
+                                errorMessage = '权限不足，无法获取部门数据'
+                                break
+                            default:
+                                errorMessage = errorData.error.message || errorMessage
+                        }
+                    } else {
+                        errorMessage = errorData.message || errorMessage
+                    }
+                } else if (error && error.message) {
+                    errorMessage = error.message
+                }
+
+                // 显示错误提示（使用较温和的警告而不是错误，因为这不会阻止用户使用其他功能）
+                this.$message.warning(`${errorMessage}，部门选择功能暂时不可用`)
+
+                // 设置空的部门选项
+                this.departmentOptions = []
+            } finally {
+                this.departmentLoading = false
+            }
+        },
+
+        // 加载岗位选项数据
+        async loadPositionOptions() {
+            try {
+                this.positionLoading = true
+
+                const response = await getPositionOptions({
+                    status: 'active' // 只获取激活状态的岗位
+                })
+
+                if (response && response.success && response.data && response.data.options) {
+                    this.positionOptions = response.data.options
+                } else if (response && response.success && response.data && response.data.results) {
+                    // 如果API返回的是标准列表格式，手动转换为选项格式
+                    this.positionOptions = response.data.results.map(pos => ({
+                        value: pos.id,
+                        label: pos.name,
+                        code: pos.code,
+                        description: pos.description,
+                        departmentId: pos.departmentId,
+                        level: pos.level,
+                        status: pos.status
+                    }))
+                } else {
+                    console.warn('岗位数据格式异常:', response)
+                    this.positionOptions = []
+                }
+            } catch (error) {
+                console.error('加载岗位数据失败:', error)
+
+                // 根据错误类型显示不同的提示信息
+                let errorMessage = '加载岗位数据失败'
+                if (error && error.response && error.response.data) {
+                    const errorData = error.response.data
+                    if (errorData.error && errorData.error.code) {
+                        switch (errorData.error.code) {
+                            case 'AUTH_001':
+                                errorMessage = '请先登录后再操作'
+                                break
+                            case 'AUTH_009':
+                                errorMessage = '权限不足，无法获取岗位数据'
+                                break
+                            default:
+                                errorMessage = errorData.error.message || errorMessage
+                        }
+                    } else {
+                        errorMessage = errorData.message || errorMessage
+                    }
+                } else if (error && error.message) {
+                    errorMessage = error.message
+                }
+
+                // 显示错误提示（使用较温和的警告而不是错误，因为这不会阻止用户使用其他功能）
+                this.$message.warning(`${errorMessage}，岗位选择功能暂时不可用`)
+
+                // 设置空的岗位选项
+                this.positionOptions = []
+            } finally {
+                this.positionLoading = false
+            }
+        },
+
+        // 加载角色选项数据
+        async loadRoleOptions() {
+            try {
+                this.roleLoading = true
+
+                const response = await getRoleOptions({
+                    status: 'active' // 只获取激活状态的角色
+                })
+
+                if (response && response.success && response.data && response.data.options) {
+                    this.roleOptions = response.data.options
+                } else if (response && response.success && response.data && response.data.results) {
+                    // 如果API返回的是标准列表格式，手动转换为选项格式
+                    this.roleOptions = response.data.results.map(role => ({
+                        value: role.id,
+                        label: role.name,
+                        description: role.description,
+                        code: role.code,
+                        type: role.type,
+                        level: role.level,
+                        status: role.status,
+                        isDefault: role.isDefault
+                    }))
+                } else {
+                    console.warn('角色数据格式异常:', response)
+                    this.roleOptions = []
+                }
+            } catch (error) {
+                console.error('加载角色数据失败:', error)
+
+                // 根据错误类型显示不同的提示信息
+                let errorMessage = '加载角色数据失败'
+                if (error && error.response && error.response.data) {
+                    const errorData = error.response.data
+                    if (errorData.error && errorData.error.code) {
+                        switch (errorData.error.code) {
+                            case 'AUTH_001':
+                                errorMessage = '请先登录后再操作'
+                                break
+                            case 'AUTH_009':
+                                errorMessage = '权限不足，无法获取角色数据'
+                                break
+                            default:
+                                errorMessage = errorData.error.message || errorMessage
+                        }
+                    } else {
+                        errorMessage = errorData.message || errorMessage
+                    }
+                } else if (error && error.message) {
+                    errorMessage = error.message
+                }
+
+                // 显示错误提示（使用较温和的警告而不是错误，因为这不会阻止用户使用其他功能）
+                this.$message.warning(`${errorMessage}，角色选择功能暂时不可用`)
+
+                // 设置空的角色选项
+                this.roleOptions = []
+            } finally {
+                this.roleLoading = false
+            }
+        },
+
+        // 加载直属上级选项数据
+        async loadManagerOptions() {
+            try {
+                this.managerLoading = true
+
+                // 构建查询参数，排除当前编辑的用户（避免自己选择自己作为上级）
+                const params = {
+                    status: 'active' // 只获取激活状态的用户
+                }
+
+                // 编辑模式下，排除当前用户
+                if (this.mode === 'update' && this.formData && this.formData.id) {
+                    params.excludeUserId = this.formData.id
+                }
+
+                const response = await getManagerOptions(params)
+
+                if (response && response.success && response.data && response.data.options) {
+                    this.managerOptions = response.data.options
+                } else if (response && response.success && response.data && response.data.results) {
+                    // 如果API返回的是标准列表格式，手动转换为选项格式
+                    let users = response.data.results
+
+                    // 如果需要排除特定用户，在前端进行过滤
+                    if (params.excludeUserId) {
+                        users = users.filter(user => user.id !== params.excludeUserId)
+                    }
+
+                    this.managerOptions = users.map(user => ({
+                        value: user.id,
+                        label: `${user.name} (${user.username})`,
+                        email: user.email,
+                        username: user.username,
+                        name: user.name,
+                        department: user.profile?.department ? {
+                            id: user.profile.department.id,
+                            name: user.profile.department.name,
+                            code: user.profile.department.code
+                        } : null,
+                        jobTitle: user.profile?.jobTitle || '',
+                        status: user.status
+                    }))
+                } else {
+                    console.warn('直属上级数据格式异常:', response)
+                    this.managerOptions = []
+                }
+            } catch (error) {
+                console.error('加载直属上级数据失败:', error)
+
+                // 根据错误类型显示不同的提示信息
+                let errorMessage = '加载直属上级数据失败'
+                if (error && error.response && error.response.data) {
+                    const errorData = error.response.data
+                    if (errorData.error && errorData.error.code) {
+                        switch (errorData.error.code) {
+                            case 'AUTH_001':
+                                errorMessage = '请先登录后再操作'
+                                break
+                            case 'AUTH_006':
+                                errorMessage = '权限不足，无法获取用户数据'
+                                break
+                            default:
+                                errorMessage = errorData.error.message || errorMessage
+                        }
+                    } else {
+                        errorMessage = errorData.message || errorMessage
+                    }
+                } else if (error && error.message) {
+                    errorMessage = error.message
+                }
+
+                // 显示错误提示（使用较温和的警告而不是错误，因为这不会阻止用户使用其他功能）
+                this.$message.warning(`${errorMessage}，直属上级选择功能暂时不可用`)
+
+                // 设置空的直属上级选项
+                this.managerOptions = []
+            } finally {
+                this.managerLoading = false
+            }
+        },
 
         // 确认密码验证
         validatePasswordConfirm(rule, value, callback) {
             // 直接从DOM获取密码输入框的值，确保获取最新值
             let currentPassword = ''
-            
+
             // 尝试从EnhancedForm的formModel获取
             if (this.$refs.enhancedForm && this.$refs.enhancedForm.formModel) {
                 currentPassword = this.$refs.enhancedForm.formModel.password || ''
             }
-            
+
             // 如果EnhancedForm还没有准备好，尝试从formData获取
             if (!currentPassword && this.formData) {
                 currentPassword = this.formData.password || ''
             }
-            
+
             // 如果确认密码为空，不进行验证（由required规则处理）
             if (!value) {
                 callback()
                 return
             }
-            
+
             if (value !== currentPassword) {
                 callback(new Error('两次输入的密码不一致'))
             } else {
@@ -752,7 +1125,8 @@ export default {
             } else {
                 callback()
             }
-        }
+        },
+
     }
 }
 </script>
@@ -792,6 +1166,57 @@ export default {
 
 ::v-deep .el-select .el-select__tags {
     max-width: calc(100% - 30px);
+}
+
+// 下拉框选项内容样式
+.option-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    min-height: 20px;
+
+    .option-label {
+        flex: 1;
+        margin-right: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .option-extra {
+        flex-shrink: 0;
+        color: #8492a6;
+        font-size: 12px;
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: right;
+    }
+}
+
+// 针对Element UI的下拉选项进行样式优化
+::v-deep .el-select-dropdown__item {
+    padding: 8px 20px;
+    height: auto;
+    line-height: 1.4;
+
+    .option-content {
+        min-height: 24px;
+    }
+}
+
+// 确保多选标签不会过长
+::v-deep .el-tag {
+    max-width: 150px;
+
+    .el-tag__text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }
 
 // 错误消息样式

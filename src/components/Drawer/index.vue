@@ -160,7 +160,7 @@ export default {
     actualLoading() {
       return this.loading || this.internalLoading
     },
-    
+
     // 抽屉CSS类名
     drawerClass() {
       const classes = [this.customClass]
@@ -401,7 +401,7 @@ export default {
     width: 100%;
     position: relative;
   }
-  
+
   // 确保错误提示条能够完全贴合抽屉顶部
   .drawer-error-bar {
     position: absolute;
@@ -412,7 +412,7 @@ export default {
     margin: 0;
     width: 100%;
   }
-  
+
   // 当有错误提示时，内容区域需要向下偏移
   &.has-error .drawer-content {
     padding-top: 60px; // 为错误提示条留出空间
@@ -503,14 +503,14 @@ export default {
   color: #f56c6c;
   font-size: 14px;
   line-height: 1.4;
-  
+
   // 确保在内容滚动时始终可见
   backdrop-filter: blur(8px);
   box-shadow: 0 2px 8px rgba(245, 108, 108, 0.1);
-  
+
   // 错误提示动画
   animation: slideInDown 0.3s ease-out;
-  
+
   // 圆角只保留底部，让顶部完全平齐
   border-radius: 0 0 4px 4px;
 }
@@ -528,7 +528,7 @@ export default {
     padding: 14px 16px 10px 16px;
     font-size: 13px;
   }
-  
+
   .base-drawer.has-error .drawer-content {
     padding-top: 50px; // 移动端调整偏移量
   }
