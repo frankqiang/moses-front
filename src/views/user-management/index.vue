@@ -707,8 +707,16 @@ export default {
     /**
      * 刷新列表
      */
-    handleRefresh() {
-      this.fetchUserList()
+    async handleRefresh() {
+      try {
+        await this.fetchUserList()
+        // 刷新成功时调用子组件的反馈方法
+        this.$refs.userTable.refreshSucceed('用户列表刷新成功')
+      } catch (error) {
+        // 刷新失败时调用子组件的反馈方法
+        this.$refs.userTable.refreshFail('用户列表刷新失败，请重试')
+        console.error('刷新用户列表失败:', error)
+      }
     },
 
     /**

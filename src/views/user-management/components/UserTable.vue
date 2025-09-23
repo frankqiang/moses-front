@@ -8,13 +8,13 @@
 <template>
   <div class="user-table">
     <!-- 表格工具栏 -->
-    <table-toolbar :enable-column-settings="true" :column-options="columnOptions" :storage-key="columnSettingsKey"
-      :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true" :selected-rows="selectedUsers"
-      :enable-export="true" :export-api="exportApi" :export-params="exportParams" :export-filename="exportFilename"
-      :enable-import="false" :status-confirm="false" :smart-status-buttons="true" :status-field="'status'"
-      :enabled-value="userStatusActive" :disabled-value="userStatusInactive" @refresh="handleRefresh"
-      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable">
+    <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
+      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true"
+      :selected-rows="selectedUsers" :enable-export="true" :export-api="exportApi" :export-params="exportParams"
+      :export-filename="exportFilename" :enable-import="false" :status-confirm="false" :smart-status-buttons="true"
+      :status-field="'status'" :enabled-value="userStatusActive" :disabled-value="userStatusInactive"
+      :refresh-feedback-mode="'all'" @refresh="handleRefresh" @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
       <template #toolbar-left>
         <slot name="toolbar-left" />
       </template>
@@ -200,6 +200,24 @@ export default {
     this.loadColumnSettings()
   },
   methods: {
+    /**
+     * 公开方法，供父组件调用 - 刷新成功提示
+     */
+    refreshSucceed(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshSucceed(message)
+      }
+    },
+
+    /**
+     * 公开方法，供父组件调用 - 刷新失败提示
+     */
+    refreshFail(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshFail(message)
+      }
+    },
+
     /**
      * 格式化性别显示 - 使用统一配置
      */
