@@ -27,9 +27,8 @@
       @pagination-change="handlePaginationChange" @sort-change="handleSortChange">
       <!-- 状态列自定义渲染 -->
       <template #status="{ row }">
-        <status-tag v-if="row && row.status !== undefined" :status="row.status" :type="getStatusType(row.status)">
-          {{ getStatusText(row.status) }}
-        </status-tag>
+        <status-tag v-if="row && row.status !== undefined" :status="row.status" :type-map="statusTypeMap"
+          :text-map="statusTextMap" />
         <span v-else>-</span>
       </template>
 
@@ -116,6 +115,19 @@ export default {
     }
   },
   computed: {
+    /**
+     * 状态文本映射 - 直接使用常量
+     */
+    statusTextMap() {
+      return STATUS_CONFIG.textMap
+    },
+
+    /**
+     * 状态类型映射 - 直接使用常量
+     */
+    statusTypeMap() {
+      return STATUS_CONFIG.typeMap
+    },
 
     /**
      * 可见的表格列配置
@@ -192,21 +204,6 @@ export default {
       return GENDER_CONFIG.iconMap[gender] || 'el-icon-question'
     },
 
-    /**
-     * 获取状态类型 - 使用统一配置
-     */
-    getStatusType(status) {
-      if (!status) return 'info'
-      return STATUS_CONFIG.typeMap[status] || 'info'
-    },
-
-    /**
-     * 获取状态文本 - 使用统一配置
-     */
-    getStatusText(status) {
-      if (!status) return '未知'
-      return STATUS_CONFIG.textMap[status] || '未知'
-    },
 
     /**
      * 获取操作按钮配置 - 使用统一配置
