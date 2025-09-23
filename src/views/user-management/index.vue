@@ -15,7 +15,7 @@
       :export-api="exportUserList" :export-params="exportParams"
       :export-filename="'用户列表_' + new Date().toISOString().slice(0, 10)" @selection-change="handleSelectionChange"
       @pagination-change="handlePaginationChange" @view="handleView" @edit="handleEdit" @delete="handleDelete"
-      @enable="handleEnable" @disable="handleDisable" @reset-password="handleResetPassword"
+      @enable="handleEnable" @disable="handleDisable" @lock="handleLock" @reset-password="handleResetPassword"
       @sort-change="handleSortChange" @refresh="handleRefresh" @batch-delete="handleBatchDelete"
       @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
       <template #toolbar-left>
@@ -53,7 +53,8 @@ import {
   updateUser, // eslint-disable-line no-unused-vars
   deleteUser, // eslint-disable-line no-unused-vars
   batchDeleteUsers, // eslint-disable-line no-unused-vars
-  updateUserStatus, // eslint-disable-line no-unused-vars
+  updateUserStatus,
+  batchUpdateUserStatus,
   resetUserPassword, // eslint-disable-line no-unused-vars
   exportUserList
 } from './api'
@@ -461,30 +462,97 @@ export default {
     /**
      * 启用用户
      */
-    async handleEnable(row) {
-      try {
-        // TODO: 调用启用API
-        // await updateUserStatus(row.id, USER_STATUS.ACTIVE)
-        this.$message.success('启用成功')
-        this.fetchUserList()
-      } catch (error) {
-        console.error('启用用户失败:', error)
-        this.$message.error('启用失败')
-      }
+    handleEnable(row) {
+      this.confirmStatusChange(row, USER_STATUS.ACTIVE, '启用', '启用后该用户将可以正常登录和使用系统')
     },
 
     /**
      * 禁用用户
      */
-    async handleDisable(row) {
+    handleDisable(row) {
+      this.confirmStatusChange(row, USER_STATUS.INACTIVE, '禁用', '禁用后该用户将无法登录系统')
+    },
+
+    /**
+     * 锁定用户
+     */
+    handleLock(row) {
+      this.confirmStatusChange(row, USER_STATUS.LOCKED, '锁定', '锁定后该用户将无法登录系统，需要管理员解锁')
+    },
+
+    /**
+     * 确认状态变更 - 提供友好的确认对话框
+     */
+    confirmStatusChange(row, targetStatus, actionName, description) {
+      const statusText = {
+        [USER_STATUS.ACTIVE]: '激活',
+        [USER_STATUS.INACTIVE]: '禁用',
+        [USER_STATUS.LOCKED]: '锁定'
+      }
+
+      this.$confirm(
+        `确定要${actionName}用户 "${row.name || row.username}" 吗？\n\n${description}`,
+        `${actionName}用户`,
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          distinguishCancelAndClose: true,
+          showCancelButton: true
+        }
+      ).then(() => {
+        this.updateUserStatus(row, targetStatus, actionName)
+      }).catch((action) => {
+        if (action === 'cancel') {
+          this.$message.info(`已取消${actionName}操作`)
+        }
+      })
+    },
+
+    /**
+     * 更新用户状态 - 实现状态变更的核心逻辑
+     */
+    async updateUserStatus(row, status, actionName = '更新状态') {
+      const loadingInstance = this.$loading({
+        target: document.body,
+        text: `正在${actionName}中...`
+      })
+
       try {
-        // TODO: 调用禁用API
-        // await updateUserStatus(row.id, USER_STATUS.INACTIVE)
-        this.$message.success('禁用成功')
-        this.fetchUserList()
+        // 调用API更新用户状态
+        const response = await updateUserStatus(row.id, status)
+
+        if (response && response.success) {
+          this.$message.success(`${actionName}成功`)
+
+          // 更新本地数据，避免重新请求整个列表
+          const userIndex = this.userList.findIndex(user => user.id === row.id)
+          if (userIndex !== -1) {
+            this.$set(this.userList, userIndex, {
+              ...this.userList[userIndex],
+              status: status,
+              updatedAt: new Date().toISOString()
+            })
+          }
+        } else {
+          // 根据错误处理规范直接使用后端返回的错误消息
+          const errorMessage = response?.error?.message || `${actionName}失败`
+          this.$message.error(errorMessage)
+        }
       } catch (error) {
-        console.error('禁用用户失败:', error)
-        this.$message.error('禁用失败')
+        console.error(`${actionName}失败:`, error)
+
+        // 处理不同类型的错误
+        let errorMessage = `${actionName}失败`
+        if (error.response && error.response.data && error.response.data.error) {
+          errorMessage = error.response.data.error.message
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+
+        this.$message.error(errorMessage)
+      } finally {
+        loadingInstance.close()
       }
     },
 
@@ -531,44 +599,108 @@ export default {
     /**
      * 批量启用
      */
-    async handleBatchEnable() {
+    handleBatchEnable() {
       if (this.selectedUsers.length === 0) {
         this.$message.warning('请选择要启用的用户')
         return
       }
 
-      try {
-        // eslint-disable-next-line no-unused-vars
-        const userIds = this.selectedUsers.map(user => user.id)
-        // TODO: 调用批量启用API
-        // await batchUpdateUserStatus(userIds, USER_STATUS.ACTIVE)
-        this.$message.success('批量启用成功')
-        this.fetchUserList()
-      } catch (error) {
-        console.error('批量启用失败:', error)
-        this.$message.error('批量启用失败')
-      }
+      this.confirmBatchStatusChange(this.selectedUsers, USER_STATUS.ACTIVE, '批量启用', '启用后这些用户将可以正常登录和使用系统')
     },
 
     /**
      * 批量禁用
      */
-    async handleBatchDisable() {
+    handleBatchDisable() {
       if (this.selectedUsers.length === 0) {
         this.$message.warning('请选择要禁用的用户')
         return
       }
 
+      this.confirmBatchStatusChange(this.selectedUsers, USER_STATUS.INACTIVE, '批量禁用', '禁用后这些用户将无法登录系统')
+    },
+
+    /**
+     * 确认批量状态变更 - 保持简洁的文本样式
+     */
+    confirmBatchStatusChange(users, targetStatus, actionName, description) {
+      const userNames = users.slice(0, 3).map(user => user.name || user.username).join('、')
+      const displayText = users.length > 3 ? `${userNames} 等 ${users.length} 个用户` : userNames
+
+      this.$confirm(
+        `确定要${actionName} ${displayText} 吗？\n\n${description}`,
+        actionName,
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          distinguishCancelAndClose: true,
+          showCancelButton: true
+        }
+      ).then(() => {
+        this.batchUpdateUserStatus(users, targetStatus, actionName)
+      }).catch((action) => {
+        if (action === 'cancel') {
+          this.$message.info(`已取消${actionName}操作`)
+        }
+      })
+    },
+
+
+    /**
+     * 批量更新用户状态
+     */
+    async batchUpdateUserStatus(users, status, actionName = '批量更新状态') {
+      const loadingInstance = this.$loading({
+        target: document.body,
+        text: `正在${actionName}中...`
+      })
+
       try {
-        // eslint-disable-next-line no-unused-vars
-        const userIds = this.selectedUsers.map(user => user.id)
-        // TODO: 调用批量禁用API
-        // await batchUpdateUserStatus(userIds, USER_STATUS.INACTIVE)
-        this.$message.success('批量禁用成功')
-        this.fetchUserList()
+        const userIds = users.map(user => user.id)
+
+        // 调用批量状态更新API
+        const response = await batchUpdateUserStatus(userIds, status)
+
+        if (response && response.success) {
+          this.$message.success(`${actionName}成功，共更新 ${response.data.affectedCount} 个用户`)
+
+          // 批量更新本地数据
+          users.forEach(user => {
+            const userIndex = this.userList.findIndex(u => u.id === user.id)
+            if (userIndex !== -1) {
+              this.$set(this.userList, userIndex, {
+                ...this.userList[userIndex],
+                status: status,
+                updatedAt: new Date().toISOString()
+              })
+            }
+          })
+
+          // 清空选择
+          this.selectedUsers = []
+          if (this.$refs.userTable && this.$refs.userTable.$refs.userTable) {
+            this.$refs.userTable.$refs.userTable.clearSelection()
+          }
+        } else {
+          // 根据错误处理规范直接使用后端返回的错误消息
+          const errorMessage = response?.error?.message || `${actionName}失败`
+          this.$message.error(errorMessage)
+        }
       } catch (error) {
-        console.error('批量禁用失败:', error)
-        this.$message.error('批量禁用失败')
+        console.error(`${actionName}失败:`, error)
+
+        // 处理不同类型的错误
+        let errorMessage = `${actionName}失败`
+        if (error.response && error.response.data && error.response.data.error) {
+          errorMessage = error.response.data.error.message
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+
+        this.$message.error(errorMessage)
+      } finally {
+        loadingInstance.close()
       }
     },
 

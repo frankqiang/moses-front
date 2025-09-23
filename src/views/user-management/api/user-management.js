@@ -148,13 +148,17 @@ export function batchDeleteUsers(ids) {
  * 更新用户状态 - 按照接口文档使用PATCH方法
  * @param {string|number} id - 用户ID
  * @param {string} status - 状态值（active, locked, inactive, pending, deleted）
+ * @param {string} [reason] - 状态变更原因
  * @returns {Promise} 返回状态更新结果
  */
-export function updateUserStatus(id, status) {
+export function updateUserStatus(id, status, reason = '') {
   return request({
     url: `/users/${id}/status`,
     method: 'patch',
-    data: { status }
+    data: {
+      status,
+      ...(reason && { reason })
+    }
   })
 }
 
@@ -162,13 +166,18 @@ export function updateUserStatus(id, status) {
  * 批量更新用户状态 - 按照接口文档使用PATCH方法
  * @param {Array} ids - 用户ID数组
  * @param {string} status - 状态值（active, locked, inactive, pending, deleted）
+ * @param {string} [reason] - 状态变更原因
  * @returns {Promise} 返回批量状态更新结果
  */
-export function batchUpdateUserStatus(ids, status) {
+export function batchUpdateUserStatus(ids, status, reason = '') {
   return request({
-    url: '/users/batch/status',
+    url: '/users/batch-status',
     method: 'patch',
-    data: { userIds: ids, status }
+    data: {
+      userIds: ids,
+      status,
+      ...(reason && { reason })
+    }
   })
 }
 

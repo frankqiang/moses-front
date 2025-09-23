@@ -11,8 +11,10 @@
     <table-toolbar :enable-column-settings="true" :column-options="columnOptions" :storage-key="columnSettingsKey"
       :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true" :selected-rows="selectedUsers"
       :enable-export="true" :export-api="exportApi" :export-params="exportParams" :export-filename="exportFilename"
-      :enable-import="false" @refresh="handleRefresh" @column-change="handleColumnChange"
-      @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
+      :enable-import="false" :status-confirm="false" :smart-status-buttons="true" :status-field="'status'"
+      :enabled-value="userStatusActive" :disabled-value="userStatusInactive" @refresh="handleRefresh"
+      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable">
       <template #toolbar-left>
         <slot name="toolbar-left" />
       </template>
@@ -115,6 +117,21 @@ export default {
     }
   },
   computed: {
+    /**
+     * 用户状态常量 - 供模板使用
+     */
+    userStatusActive() {
+      return USER_STATUS.ACTIVE
+    },
+
+    userStatusInactive() {
+      return USER_STATUS.INACTIVE
+    },
+
+    userStatusLocked() {
+      return USER_STATUS.LOCKED
+    },
+
     /**
      * 状态文本映射 - 直接使用常量
      */
@@ -234,7 +251,7 @@ export default {
       })
 
       // 根据状态显示不同的操作按钮
-      if (row.status === USER_STATUS.ACTIVE) {
+      if (row.status === this.userStatusActive) {
         buttons.push({
           text: '禁用',
           action: 'disable',
@@ -243,7 +260,15 @@ export default {
           class: 'warning',
           tooltip: '禁用该用户'
         })
-      } else if (row.status === USER_STATUS.INACTIVE) {
+        buttons.push({
+          text: '锁定',
+          action: 'lock',
+          icon: 'el-icon-lock',
+          type: 'text',
+          class: 'warning',
+          tooltip: '锁定该用户账号'
+        })
+      } else if (row.status === this.userStatusInactive || row.status === this.userStatusLocked) {
         buttons.push({
           text: '启用',
           action: 'enable',
@@ -296,6 +321,9 @@ export default {
           break
         case 'disable':
           this.$emit('disable', button.row)
+          break
+        case 'lock':
+          this.$emit('lock', button.row)
           break
         case 'reset-password':
           this.$emit('reset-password', button.row)
