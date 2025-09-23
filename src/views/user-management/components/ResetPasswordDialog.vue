@@ -6,8 +6,8 @@
     - 2024-01-20: 初始创建，实现管理员重置密码功能
 -->
 <template>
-    <el-dialog :visible.sync="dialogVisible" title="重置用户密码" width="500px" :close-on-click-modal="false"
-        :close-on-press-escape="false" @close="handleClose">
+    <el-dialog :visible.sync="dialogVisible" title="重置用户密码" width="680px" :close-on-click-modal="false"
+        :close-on-press-escape="false" top="5vh" @close="handleClose">
         <!-- 用户信息展示 -->
         <div class="user-info">
             <el-alert :title="`正在为用户 ${userData.name || userData.username} 重置密码`" type="warning" :closable="false"
@@ -54,15 +54,13 @@
             </el-form-item>
         </el-form>
 
-        <!-- 安全提示 -->
+        <!-- 安全提示 - 紧凑版 -->
         <div class="security-tips">
             <el-alert title="安全提示" type="info" :closable="false" show-icon>
                 <template #default>
-                    <ul class="tips-list">
-                        <li>重置后的密码请妥善保管，并安全地传达给用户</li>
-                        <li>建议要求用户在首次登录后立即修改密码</li>
-                        <li>系统会记录此次密码重置操作</li>
-                    </ul>
+                    <div class="tips-compact">
+                        重置后的密码请妥善保管并安全传达给用户，建议要求用户首次登录后立即修改密码，系统会记录此次密码重置操作。
+                    </div>
                 </template>
             </el-alert>
         </div>
@@ -289,44 +287,101 @@ export default {
 
 <style lang="scss" scoped>
 .user-info {
-    margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .reset-form {
-    .setting-hint {
-        font-size: 12px;
-        color: #909399;
-        margin-top: 4px;
-        display: flex;
-        align-items: center;
-
-        i {
-            margin-right: 4px;
-        }
+  margin-bottom: 16px;
+  
+  .setting-hint {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    
+    i {
+      margin-right: 4px;
     }
+  }
 }
 
 .security-tips {
-    margin-top: 20px;
-
-    .tips-list {
-        margin: 0;
-        padding-left: 16px;
-
-        li {
-            font-size: 13px;
-            line-height: 1.5;
-            margin-bottom: 4px;
-
-            &:last-child {
-                margin-bottom: 0;
-            }
-        }
+  margin-bottom: 16px;
+  
+  .tips-compact {
+    font-size: 12px;
+    line-height: 1.4;
+    color: #606266;
+  }
+  
+  .tips-list {
+    margin: 0;
+    padding-left: 16px;
+    
+    li {
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 4px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
     }
+  }
 }
 
 .dialog-footer {
-    text-align: right;
+  text-align: right;
+  padding-top: 16px;
+}
+
+// 对话框内容优化 - 与ChangePasswordDialog保持一致
+::v-deep .el-dialog {
+  margin-bottom: 5vh !important;
+  
+  .el-dialog__body {
+    padding: 20px 20px 10px 20px;
+  }
+  
+  .el-dialog__footer {
+    padding: 10px 20px 20px 20px;
+  }
+}
+
+// 响应式优化
+@media (max-height: 800px) {
+  ::v-deep .el-dialog {
+    margin-top: 3vh !important;
+    margin-bottom: 3vh !important;
+  }
+}
+
+@media (max-height: 600px) {
+  ::v-deep .el-dialog {
+    margin-top: 2vh !important;
+    margin-bottom: 2vh !important;
+    
+    .el-dialog__body {
+      padding: 15px 20px 5px 20px;
+    }
+    
+    .el-dialog__footer {
+      padding: 5px 20px 15px 20px;
+    }
+  }
+  
+  .security-tips {
+    margin-bottom: 12px;
+  }
+  
+  .reset-form {
+    margin-bottom: 12px;
+  }
+  
+  .user-info {
+    margin-bottom: 12px;
+  }
 }
 </style>
 
