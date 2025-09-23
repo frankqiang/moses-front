@@ -55,6 +55,7 @@ import BaseTable from '@/components/BaseTable'
 import TableToolbar from '@/components/TableToolbar'
 import ActionButtons from '@/components/ActionButtons'
 import StatusTag from '@/components/StatusTag'
+import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import {
   TABLE_COLUMNS,
   STATUS_CONFIG,
@@ -74,6 +75,7 @@ export default {
     ActionButtons,
     StatusTag
   },
+  mixins: [columnSettingsMixin],
   props: {
     userList: {
       type: Array,
@@ -107,18 +109,25 @@ export default {
   },
   data() {
     return {
-      // 当前可见列
-      visibleColumns: [...DEFAULT_VISIBLE_COLUMNS],
+      // 重写列设置存储键前缀
+      columnSettingsKeyPrefix: 'user_management_columns',
       // 选中的用户
       selectedUsers: []
     }
   },
   computed: {
+
     /**
-     * 表格列配置 - 使用统一配置文件
+     * 可见的表格列配置
      */
-    tableColumns() {
-      return TABLE_COLUMNS.map(column => {
+    visibleTableColumns() {
+      // 先过滤出可见的列，然后应用格式化
+      const visibleColumns = TABLE_COLUMNS.filter(column =>
+        this.internalVisibleColumns.includes(column.prop) || column.prop === 'actions'
+      )
+
+      // 应用格式化逻辑
+      return visibleColumns.map(column => {
         // 为时间类型列添加格式化器
         if (column.type === 'datetime') {
           return {
@@ -141,38 +150,25 @@ export default {
     },
 
     /**
-     * 可见的表格列配置
-     */
-    visibleTableColumns() {
-      return this.tableColumns.filter(column =>
-        this.visibleColumns.includes(column.prop) || column.prop === 'actions'
-      )
-    },
-
-    /**
      * 列选项配置
      */
     columnOptions() {
-      return TABLE_COLUMNS.map(column => ({
-        prop: column.prop,
-        label: column.label,
-        visible: this.visibleColumns.includes(column.prop)
-      }))
+      return TABLE_COLUMNS
     },
 
     /**
-     * 默认可见列
+     * 覆盖mixin中的默认可见列
      */
     defaultVisibleColumns() {
       return DEFAULT_VISIBLE_COLUMNS
-    },
-
-    /**
-     * 列设置存储键
-     */
-    columnSettingsKey() {
-      return 'user_management_columns'
     }
+  },
+  created() {
+    // 初始化列配置 - 使用columnOptions初始化allColumns
+    this.allColumns = this.columnOptions
+
+    // 加载列设置（使用mixin的方法）
+    this.loadColumnSettings()
   },
   methods: {
     /**
@@ -382,13 +378,6 @@ export default {
       this.$emit('sort-change', sortBy)
     },
 
-    /**
-     * 列设置变化处理
-     */
-    handleColumnChange(visibleColumns) {
-      this.visibleColumns = visibleColumns
-      this.$emit('column-change', visibleColumns)
-    },
 
     /**
      * 刷新处理
