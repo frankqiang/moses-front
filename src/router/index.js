@@ -79,6 +79,19 @@ export const constantRoutes = [
     }]
   },
 
+  // 个人中心
+  {
+    path: '/profile',
+    component: Layout,
+    children: [{
+      path: '',
+      name: 'Profile',
+      component: () => import('@/views/profile/index'),
+      meta: { title: '个人中心', icon: 'el-icon-user' }
+    }],
+    hidden: true
+  },
+
   // 用户管理模块
   {
     path: '/user-management',

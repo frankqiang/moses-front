@@ -29,10 +29,10 @@
     <user-form-drawer ref="userFormDrawer" :visible.sync="drawerVisible" :mode="drawerMode" :user-data="currentUser"
       @success="handleFormSuccess" @close="handleDrawerClose" />
 
-    <!-- 密码重置对话框 -->
-    <dialog-form ref="passwordDialog" :visible.sync="passwordDialogVisible" title="重置密码" :form-items="passwordFormItems"
-      :form-data="passwordFormData" :form-rules="passwordFormRules" :loading="passwordLoading"
-      @submit="handlePasswordSubmit" @close="handlePasswordDialogClose" />
+    <!-- 管理员重置密码对话框 -->
+    <reset-password-dialog :visible.sync="resetPasswordDialogVisible" :user-data="currentResetUser"
+      @success="handleResetPasswordSuccess" @close="handleResetPasswordClose" />
+
   </div>
 </template>
 
@@ -44,6 +44,7 @@ import DialogForm from '@/components/DialogForm'
 import UserTable from './components/UserTable.vue'
 import UserFormDrawer from './components/UserFormDrawer.vue'
 import UserSearch from './components/UserSearch.vue'
+import ResetPasswordDialog from './components/ResetPasswordDialog.vue'
 
 // 导入API函数
 import {
@@ -77,7 +78,8 @@ export default {
     UserTable,
     UserFormDrawer,
     UserSearch,
-    DialogForm
+    DialogForm,
+    ResetPasswordDialog
   },
   data() {
     return {
@@ -116,13 +118,8 @@ export default {
       currentUser: {},
 
       // 密码重置对话框
-      passwordDialogVisible: false,
-      passwordFormData: {
-        userId: '',
-        newPassword: '',
-        confirmPassword: ''
-      },
-      passwordLoading: false
+      resetPasswordDialogVisible: false,
+      currentResetUser: {}
     }
   },
   computed: {
@@ -139,44 +136,6 @@ export default {
       return titleMap[this.drawerMode] || '用户信息'
     },
 
-    /**
-     * 密码表单配置项
-     */
-    passwordFormItems() {
-      return [
-        {
-          prop: 'newPassword',
-          label: '新密码',
-          type: 'password',
-          placeholder: '请输入新密码',
-          required: true
-        },
-        {
-          prop: 'confirmPassword',
-          label: '确认密码',
-          type: 'password',
-          placeholder: '请再次输入新密码',
-          required: true
-        }
-      ]
-    },
-
-    /**
-     * 密码表单验证规则
-     */
-    passwordFormRules() {
-      return {
-        newPassword: [
-          { required: true, message: '请输入新密码', trigger: 'blur' },
-          { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' },
-          { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$/, message: '密码必须包含大小写字母和数字', trigger: 'blur' }
-        ],
-        confirmPassword: [
-          { required: true, message: '请确认密码', trigger: 'blur' },
-          { validator: this.validateConfirmPassword, trigger: 'blur' }
-        ]
-      }
-    },
 
     /**
      * 导出参数 - 移除分页参数，保留筛选条件
@@ -560,12 +519,8 @@ export default {
      * 重置密码
      */
     handleResetPassword(row) {
-      this.passwordFormData = {
-        userId: row.id,
-        newPassword: '',
-        confirmPassword: ''
-      }
-      this.passwordDialogVisible = true
+      this.currentResetUser = { ...row }
+      this.resetPasswordDialogVisible = true
     },
 
     /**
@@ -759,45 +714,21 @@ export default {
     },
 
     /**
-     * 密码提交
+     * 重置密码成功处理
      */
-    async handlePasswordSubmit(formData) {
-      this.passwordLoading = true
-      try {
-        // TODO: 调用重置密码API
-        // await resetUserPassword(formData.userId, formData.newPassword)
-        this.$message.success('密码重置成功')
-        this.passwordDialogVisible = false
-      } catch (error) {
-        console.error('重置密码失败:', error)
-        this.$message.error('重置密码失败')
-      } finally {
-        this.passwordLoading = false
-      }
+    handleResetPasswordSuccess(data) {
+      this.$message.success('密码重置成功')
+      // 刷新用户列表以更新状态
+      this.fetchUserList()
     },
 
     /**
-     * 密码对话框关闭
+     * 重置密码对话框关闭处理
      */
-    handlePasswordDialogClose() {
-      this.passwordDialogVisible = false
-      this.passwordFormData = {
-        userId: '',
-        newPassword: '',
-        confirmPassword: ''
-      }
+    handleResetPasswordClose() {
+      this.currentResetUser = {}
     },
 
-    /**
-     * 确认密码验证
-     */
-    validateConfirmPassword(rule, value, callback) {
-      if (value !== this.passwordFormData.newPassword) {
-        callback(new Error('两次输入的密码不一致'))
-      } else {
-        callback()
-      }
-    },
 
     /**
      * 导出用户列表 - 将导入的API函数暴露给模板

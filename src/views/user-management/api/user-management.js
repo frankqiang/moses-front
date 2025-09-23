@@ -182,16 +182,36 @@ export function batchUpdateUserStatus(ids, status, reason = '') {
 }
 
 /**
- * 重置用户密码 - 按照接口文档规范
- * @param {string|number} id - 用户ID
- * @param {string} newPassword - 新密码
+ * 管理员重置用户密码 - 严格按照接口文档 POST /v1/users/{userId}/reset-password 规范
+ * @param {string} userId - 用户ID (UUID格式)
+ * @param {Object} data - 重置密码参数
+ * @param {string} [data.newPassword] - 新密码 (至少8位，必须包含字母和数字)，不提供则自动生成
+ * @param {boolean} [data.requirePasswordChange=true] - 是否要求用户下次登录时修改密码
  * @returns {Promise} 返回密码重置结果
  */
-export function resetUserPassword(id, newPassword) {
+export function resetUserPassword(userId, data = {}) {
   return request({
-    url: `/users/${id}/reset-password`,
+    url: `/users/${userId}/reset-password`,
     method: 'post',
-    data: { newPassword }
+    data: {
+      requirePasswordChange: true, // 默认要求修改密码
+      ...data
+    }
+  })
+}
+
+/**
+ * 用户修改密码 - 严格按照接口文档 POST /v1/users/change-password 规范
+ * @param {Object} data - 修改密码参数
+ * @param {string} data.currentPassword - 当前密码 (必填)
+ * @param {string} data.newPassword - 新密码 (必填，至少8位，必须包含字母和数字)
+ * @returns {Promise} 返回密码修改结果
+ */
+export function changeUserPassword(data) {
+  return request({
+    url: '/users/change-password',
+    method: 'post',
+    data
   })
 }
 
