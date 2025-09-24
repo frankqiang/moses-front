@@ -174,11 +174,11 @@ export default {
       type: Boolean,
       default: false
     },
-    // 操作模式：create-新增, update-编辑, view-查看
+    // 操作模式：create-新增, update/edit-编辑, view-查看
     mode: {
       type: String,
       default: 'create',
-      validator: (value) => ['create', 'update', 'view'].includes(value)
+      validator: (value) => ['create', 'update', 'view', 'edit'].includes(value)
     },
     // 部门数据（编辑和查看时使用）
     departmentData: {
