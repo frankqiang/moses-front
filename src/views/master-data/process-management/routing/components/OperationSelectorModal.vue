@@ -14,7 +14,7 @@
         class="search-input"
         @input="debouncedSearch"
       >
-        <i slot="prefix" class="el-input__icon el-icon-search"></i>
+        <i slot="prefix" class="el-input__icon el-icon-search" />
       </el-input>
 
       <base-table
@@ -52,7 +52,7 @@
 import BaseTable from '@/components/BaseTable'
 import { getOperationList } from '@/views/master-data/process-management/operations/api/operation'
 import { debounce } from '@/utils'
-import { OPERATION_TYPE_OPTIONS } from '@/views/master-data/process-management/operations/constants/operation'; // 导入工序类型常量
+import { OPERATION_TYPE_OPTIONS } from '@/views/master-data/process-management/operations/constants/operation' // 导入工序类型常量
 
 export default {
   name: 'OperationSelectorModal',
@@ -160,8 +160,8 @@ export default {
       this.fetchOperations()
     },
     getOperationTypeLabel(type) {
-      const option = OPERATION_TYPE_OPTIONS.find(opt => opt.value === type);
-      return option ? option.label : type;
+      const option = OPERATION_TYPE_OPTIONS.find(opt => opt.value === type)
+      return option ? option.label : type
     }
   }
 }
@@ -171,4 +171,4 @@ export default {
 .search-input {
   margin-bottom: 15px;
 }
-</style> 
+</style>

@@ -5,10 +5,21 @@
 * 更新日期：2024-12-16 - 应用现代前端开发范式优化，增强用户体验和代码质量
 */
 <template>
-  <el-drawer :title="title" :visible.sync="drawerVisible" :size="width" :direction="direction"
-    :before-close="handleClose" :custom-class="drawerClass" :wrapper-closable="wrapperClosable"
-    :aria-label="`${title}抽屉`" :aria-modal="true" role="dialog" append-to-body @open="handleOpen"
-    @closed="handleClosed">
+  <el-drawer
+    :title="title"
+    :visible.sync="drawerVisible"
+    :size="width"
+    :direction="direction"
+    :before-close="handleClose"
+    :custom-class="drawerClass"
+    :wrapper-closable="wrapperClosable"
+    :aria-label="`${title}抽屉`"
+    :aria-modal="true"
+    role="dialog"
+    append-to-body
+    @open="handleOpen"
+    @closed="handleClosed"
+  >
     <!-- 自定义头部插槽 -->
     <template #title>
       <slot name="title">
@@ -32,8 +43,13 @@
         <el-button :disabled="loading" :aria-label="`${cancelButtonText}并关闭抽屉`" @click="handleCancelClick">
           {{ cancelButtonText }}
         </el-button>
-        <el-button type="primary" :loading="loading" :disabled="loading" :aria-label="`${confirmButtonText}操作`"
-          @click="handleConfirmClick">
+        <el-button
+          type="primary"
+          :loading="loading"
+          :disabled="loading"
+          :aria-label="`${confirmButtonText}操作`"
+          @click="handleConfirmClick"
+        >
           {{ confirmButtonText }}
         </el-button>
       </slot>

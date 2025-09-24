@@ -342,7 +342,7 @@ export default {
     smartStatusButtons: {
       type: Boolean,
       default: false
-    },
+    }
 
   },
   data() {
@@ -410,7 +410,7 @@ export default {
         }
       }
       return this.selectedRows
-    },
+    }
 
   },
   watch: {
@@ -745,8 +745,6 @@ export default {
       }
     },
 
-
-
     // 清理资源
     cleanup() {
       // 清理事件监听器
@@ -865,8 +863,6 @@ export default {
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-
-
 
     .selection-text {
       .count {

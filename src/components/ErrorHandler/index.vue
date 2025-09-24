@@ -16,7 +16,7 @@
       center
     >
       <div class="error-content">
-        <i class="el-icon-warning error-icon"></i>
+        <i class="el-icon-warning error-icon" />
         <p class="error-message">{{ error401Message }}</p>
         <p class="error-tip">请重新登录以继续使用系统</p>
       </div>
@@ -33,7 +33,7 @@
       center
     >
       <div class="error-content">
-        <i class="el-icon-info error-icon warning"></i>
+        <i class="el-icon-info error-icon warning" />
         <p class="error-message">{{ userInfoErrorMessage }}</p>
         <p class="error-tip">系统将使用默认信息，您可以稍后重试</p>
       </div>
@@ -70,11 +70,11 @@ export default {
   },
   methods: {
     ...mapActions('user', ['getInfo', 'resetToken']),
-    
+
     // 处理认证错误
     handleAuthError(error) {
       const { code, message } = error
-      
+
       if (code === 'AUTH_001') {
         this.error401Message = '请先登录'
       } else if (code === 'AUTH_002') {
@@ -82,27 +82,27 @@ export default {
       } else {
         this.error401Message = message || '认证失败，请重新登录'
       }
-      
+
       this.show401Dialog = true
     },
-    
+
     // 处理用户信息获取错误
     handleUserInfoError(error) {
       this.userInfoErrorMessage = error.message || '获取用户信息失败'
       this.showUserInfoErrorDialog = true
     },
-    
+
     // 重新登录
     async handleRelogin() {
       this.show401Dialog = false
-      
+
       try {
         // 清除本地状态
         await this.resetToken()
-        
+
         // 跳转到登录页
         this.$router.push(`/login?redirect=${this.$route.fullPath}`)
-        
+
         this.$message({
           message: '请重新登录',
           type: 'info'
@@ -113,11 +113,11 @@ export default {
         window.location.href = '/login'
       }
     },
-    
+
     // 重试获取用户信息
     async handleRetryUserInfo() {
       this.showUserInfoErrorDialog = false
-      
+
       try {
         const loading = this.$loading({
           lock: true,
@@ -125,18 +125,18 @@ export default {
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
-        
+
         await this.getInfo()
-        
+
         loading.close()
-        
+
         this.$message({
           message: '用户信息获取成功',
           type: 'success'
         })
       } catch (error) {
         console.error('重试获取用户信息失败:', error)
-        
+
         this.$message({
           message: '获取用户信息失败，请稍后重试',
           type: 'error'
@@ -152,34 +152,34 @@ export default {
   .error-content {
     text-align: center;
     padding: 20px 0;
-    
+
     .error-icon {
       font-size: 48px;
       color: #f56c6c;
       margin-bottom: 16px;
-      
+
       &.warning {
         color: #e6a23c;
       }
     }
-    
+
     .error-message {
       font-size: 16px;
       color: #303133;
       margin-bottom: 8px;
       font-weight: 500;
     }
-    
+
     .error-tip {
       font-size: 14px;
       color: #909399;
       margin: 0;
     }
   }
-  
+
   .dialog-footer {
     text-align: center;
-    
+
     .el-button {
       margin: 0 8px;
     }

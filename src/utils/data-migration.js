@@ -20,7 +20,7 @@ class DataMigrationManager {
       'vue_admin_template_',
       'vue_admin_'
     ]
-    
+
     // 需要特殊处理的键名映射
     this.keyMappings = {
       // 认证相关
@@ -30,11 +30,11 @@ class DataMigrationManager {
       'vue_admin_token': 'moses_token',
       'vue_admin_remember_me': 'moses_remember_me',
       'vue_admin_remembered_user': 'moses_remembered_user',
-      
+
       // 表格配置相关
       'vue_admin_table_configs': 'moses_table_configs',
       'vue_admin_template_table_configs': 'moses_table_configs',
-      
+
       // 其他可能的键
       'refresh_token': 'moses_refresh_token',
       'login_failed_count': 'moses_login_failed_count',
@@ -48,7 +48,7 @@ class DataMigrationManager {
    */
   async performMigration() {
     console.log('开始执行数据迁移...')
-    
+
     const stats = {
       totalKeys: 0,
       migratedKeys: 0,
@@ -61,7 +61,7 @@ class DataMigrationManager {
       // 1. 获取所有localStorage键
       const allKeys = this.getAllLocalStorageKeys()
       stats.totalKeys = allKeys.length
-      
+
       console.log(`发现 ${allKeys.length} 个localStorage键`)
 
       // 2. 筛选需要迁移的键
@@ -103,7 +103,7 @@ class DataMigrationManager {
 
       console.log('数据迁移完成', stats)
       this.logMigrationResults(stats)
-      
+
       return stats
     } catch (error) {
       console.error('数据迁移过程中发生错误:', error)
@@ -135,13 +135,13 @@ class DataMigrationManager {
     return allKeys.filter(key => {
       // 检查是否以旧前缀开头
       const hasOldPrefix = this.oldPrefixes.some(prefix => key.startsWith(prefix))
-      
+
       // 检查是否在特殊映射中
       const hasSpecialMapping = this.keyMappings.hasOwnProperty(key)
-      
+
       // 检查是否已经是moses前缀（避免重复迁移）
       const isMosesKey = key.startsWith('moses_')
-      
+
       return (hasOldPrefix || hasSpecialMapping) && !isMosesKey
     })
   }
@@ -185,7 +185,7 @@ class DataMigrationManager {
       localStorage.removeItem(oldKey)
 
       console.log(`成功迁移: ${oldKey} -> ${newKey}`)
-      
+
       return {
         success: true,
         newKey
@@ -207,7 +207,7 @@ class DataMigrationManager {
         return oldKey.replace(oldPrefix, 'moses_')
       }
     }
-    
+
     // 如果没有匹配的前缀，直接添加moses前缀
     return `moses_${oldKey}`
   }
@@ -217,14 +217,14 @@ class DataMigrationManager {
    */
   async triggerModuleMigrations() {
     console.log('触发模块内部迁移...')
-    
+
     try {
       // 触发认证存储管理器的迁移
       if (authStorageManager && typeof authStorageManager.init === 'function') {
         await authStorageManager.init()
         console.log('认证存储迁移完成')
       }
-      
+
       // 触发表格配置存储的迁移
       if (tableConfigStore && typeof tableConfigStore.init === 'function') {
         await tableConfigStore.init()
@@ -245,7 +245,7 @@ class DataMigrationManager {
     console.log(`成功迁移: ${stats.migratedKeys}`)
     console.log(`跳过: ${stats.skippedKeys}`)
     console.log(`错误: ${stats.errorKeys}`)
-    
+
     if (stats.details.length > 0) {
       console.group('详细信息')
       stats.details.forEach(detail => {
@@ -259,7 +259,7 @@ class DataMigrationManager {
       })
       console.groupEnd()
     }
-    
+
     console.groupEnd()
   }
 
@@ -280,7 +280,7 @@ class DataMigrationManager {
   getMigrationPreview() {
     const allKeys = this.getAllLocalStorageKeys()
     const keysToMigrate = this.filterKeysToMigrate(allKeys)
-    
+
     return keysToMigrate.map(oldKey => {
       let newKey
       if (this.keyMappings[oldKey]) {
@@ -288,7 +288,7 @@ class DataMigrationManager {
       } else {
         newKey = this.replacePrefix(oldKey)
       }
-      
+
       return {
         oldKey,
         newKey,

@@ -588,7 +588,7 @@ export default {
 
     .title-actions {
       margin-right: 30px;
-      
+
       .el-button {
         padding: 6px 12px;
         font-size: 13px;

@@ -107,6 +107,13 @@ export default {
       return this.selectedRows.some(item => item.status === 'Active')
     }
   },
+
+  /**
+   * 组件创建时初始化数据
+   */
+  created() {
+    this.handleRefresh()
+  },
   methods: {
     /**
      * 获取列表数据
@@ -115,19 +122,19 @@ export default {
      */
     async fetchList() {
       this.listLoading = true
-      
+
       try {
         const params = {
           page: this.pagination.page,
           size: this.pagination.size,
           ...this.searchParams
         }
-        
+
         const response = await getInspectionItemList(params)
-        
+
         this.list = response.data.items || []
         this.total = response.data.total || 0
-        
+
         // 更新分页信息
         this.pagination = {
           ...this.pagination,
@@ -138,7 +145,7 @@ export default {
         this.$refs.inspectionItemTable.refreshSucceed()
       } catch (error) {
         console.error('获取检验项目列表失败:', error)
-        
+
         // 重置数据
         this.list = []
         this.total = 0
@@ -224,10 +231,10 @@ export default {
             type: 'warning'
           }
         )
-        
+
         const response = await deleteInspectionItem(row.id)
         this.$message.success(response.message || '删除成功')
-        
+
         // 刷新列表
         this.fetchList()
       } catch (error) {
@@ -247,7 +254,7 @@ export default {
         this.$message.warning('请先选择要删除的检验项目')
         return
       }
-      
+
       try {
         await this.$confirm(
           `确定要删除选中的 ${this.selectedRows.length} 个检验项目吗？删除后不可恢复。`,
@@ -258,12 +265,12 @@ export default {
             type: 'warning'
           }
         )
-        
+
         const ids = this.selectedRows.map(item => item.id)
         const response = await batchDeleteInspectionItems({ ids })
-        
+
         this.$message.success(response.message || '批量删除成功')
-        
+
         // 清空选中项并刷新列表
         this.selectedRows = []
         this.fetchList()
@@ -284,16 +291,16 @@ export default {
         this.$message.warning('请先选择要启用的检验项目')
         return
       }
-      
+
       try {
         const ids = this.selectedRows.map(item => item.id)
         const response = await batchUpdateInspectionItemStatus({
           ids,
           status: 'Active'
         })
-        
+
         this.$message.success(response.message || '批量启用成功')
-        
+
         // 清空选中项并刷新列表
         this.selectedRows = []
         this.fetchList()
@@ -312,16 +319,16 @@ export default {
         this.$message.warning('请先选择要禁用的检验项目')
         return
       }
-      
+
       try {
         const ids = this.selectedRows.map(item => item.id)
         const response = await batchUpdateInspectionItemStatus({
           ids,
           status: 'Inactive'
         })
-        
+
         this.$message.success(response.message || '批量禁用成功')
-        
+
         // 清空选中项并刷新列表
         this.selectedRows = []
         this.fetchList()
@@ -340,14 +347,14 @@ export default {
         const params = {
           ...this.searchParams
         }
-        
+
         // 如果有选中项，只导出选中的
         if (this.hasSelection) {
           params.ids = this.selectedRows.map(item => item.id)
         }
-        
+
         const response = await exportInspectionItems(params)
-        
+
         // 创建下载链接
         const blob = new Blob([response.data], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -360,7 +367,7 @@ export default {
         link.click()
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
-        
+
         this.$message.success('导出成功')
       } catch (error) {
         console.error('导出检验项目失败:', error)
@@ -423,14 +430,14 @@ export default {
       if (!file) {
         return
       }
-      
+
       try {
         const formData = new FormData()
         formData.append('file', file)
-        
+
         // 这里需要调用导入API
         // const response = await importInspectionItems(formData)
-        
+
         this.$message.success('导入成功')
         this.fetchList()
       } catch (error) {
@@ -446,7 +453,7 @@ export default {
     async handleDownloadTemplate() {
       try {
         const response = await downloadInspectionItemTemplate()
-        
+
         // 创建下载链接
         const blob = new Blob([response.data], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -459,7 +466,7 @@ export default {
         link.click()
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
-        
+
         this.$message.success('模板下载成功')
       } catch (error) {
         console.error('下载模板失败:', error)
@@ -475,10 +482,10 @@ export default {
     handleFormSuccess(data) {
       // 关闭表单抽屉
       this.drawerVisible = false
-      
+
       // 刷新列表
       this.fetchList()
-      
+
       // 添加成功消息提示
       if (this.drawerMode === 'create' && data) {
         this.$message.success('检验项目创建成功')
@@ -501,13 +508,6 @@ export default {
     handleRefresh() {
       this.fetchList()
     }
-  },
-
-  /**
-   * 组件创建时初始化数据
-   */
-  created() {
-    this.handleRefresh()
   }
 }
 </script>

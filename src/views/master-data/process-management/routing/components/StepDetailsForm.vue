@@ -2,7 +2,7 @@
   <div class="step-details-form">
     <div class="form-title">三、步骤属性配置</div>
     <div v-if="!selectedStep" class="no-step-selected">
-      <i class="el-icon-info"></i>
+      <i class="el-icon-info" />
       <p>请在左侧列表中选择一个工序步骤以配置其属性。</p>
     </div>
     <el-form
@@ -17,14 +17,14 @@
       <div class="step-identity">
         步骤 {{ formData.stepNumber }}: {{ formData.operationName }} ({{ formData.operationCode }})
       </div>
-      
+
       <div class="form-group">
         <div class="group-title">流程逻辑 (Flow Logic)</div>
         <!-- 下一步骤 (通用) -->
         <template v-if="formData.operationType && ['Production', 'Packing', 'Storage', 'Move'].includes(formData.operationType)">
           <el-form-item label="下一步骤" prop="flowLogic.onSuccessStep">
             <el-select v-model="formData.flowLogic.onSuccessStep" placeholder="请选择下一步骤" style="width: 100%;">
-              <el-option label="0 (顺序执行)" :value="0"></el-option>
+              <el-option label="0 (顺序执行)" :value="0" />
               <el-option
                 v-for="step in availableStepOptions"
                 :key="step.stepId"
@@ -40,7 +40,7 @@
         <template v-else-if="formData.operationType === 'Inspection'">
           <el-form-item label="成功后跳转至步骤号" prop="flowLogic.onSuccessStep">
             <el-select v-model="formData.flowLogic.onSuccessStep" placeholder="请选择步骤" style="width: 100%;">
-              <el-option label="0 (顺序执行)" :value="0"></el-option>
+              <el-option label="0 (顺序执行)" :value="0" />
               <el-option
                 v-for="step in availableStepOptions"
                 :key="step.stepId"
@@ -50,10 +50,10 @@
             </el-select>
             <div class="field-hint">0 或留空表示顺序执行到下一步</div>
           </el-form-item>
-          
+
           <el-form-item label="失败后跳转至步骤号" prop="flowLogic.onFailureStep">
             <el-select v-model="formData.flowLogic.onFailureStep" placeholder="请选择步骤" style="width: 100%;">
-              <el-option label="0 (工艺终止)" :value="0"></el-option>
+              <el-option label="0 (工艺终止)" :value="0" />
               <el-option
                 v-for="step in availableStepOptions"
                 :key="step.stepId"
@@ -72,8 +72,8 @@
           <div slot="label">
             标准准备时间 (分钟)
             <el-tooltip class="item" effect="dark" placement="top">
-              <div slot="content">指为加工本批次而进行的换模、清洗、预热等占用设备的活动时间。<br/>不包含因等待上一批次完成而产生的排队时间。</div>
-              <i class="el-icon-info field-info-icon"></i>
+              <div slot="content">指为加工本批次而进行的换模、清洗、预热等占用设备的活动时间。<br>不包含因等待上一批次完成而产生的排队时间。</div>
+              <i class="el-icon-info field-info-icon" />
             </el-tooltip>
           </div>
           <el-row type="flex" align="middle">
@@ -127,8 +127,8 @@
           <div slot="label">
             标准加工时间
             <el-tooltip class="item" effect="dark" placement="top">
-              <div slot="content">指加工一个标准业务单位（如1吨母卷、1个成品卷）本身所消耗的时间。<br/>系统将基于此进行生产计划的初步估算。</div>
-              <i class="el-icon-info field-info-icon"></i>
+              <div slot="content">指加工一个标准业务单位（如1吨母卷、1个成品卷）本身所消耗的时间。<br>系统将基于此进行生产计划的初步估算。</div>
+              <i class="el-icon-info field-info-icon" />
             </el-tooltip>
           </div>
           <el-row type="flex" align="middle">
@@ -224,9 +224,9 @@ export default {
           { type: 'number', message: '必须为数字', trigger: 'blur' },
           { validator: (rule, value, callback) => {
             if (value < 0) {
-              callback(new Error('不能为负数'));
+              callback(new Error('不能为负数'))
             } else {
-              callback();
+              callback()
             }
           }, trigger: 'blur' }
         ],
@@ -234,40 +234,40 @@ export default {
           { type: 'number', message: '必须为数字', trigger: 'blur' },
           { validator: (rule, value, callback) => {
             if (value < 0) {
-              callback(new Error('不能为负数'));
+              callback(new Error('不能为负数'))
             } else {
-              callback();
+              callback()
             }
           }, trigger: 'blur' }
         ],
         'timeStandards.setup.type': [{ required: true, message: '请选择计算规则', trigger: 'change' }],
         'timeStandards.processing.type': [{ required: true, message: '请选择计算规则', trigger: 'change' }],
-        'timeStandards.setup.matrixId': [{ 
+        'timeStandards.setup.matrixId': [{
           validator: (rule, value, callback) => {
             if (this.formData.timeStandards.setup.type === 'Matrix' && !value) {
-              callback(new Error('请选择关联矩阵'));
+              callback(new Error('请选择关联矩阵'))
             } else {
-              callback();
+              callback()
             }
-          }, trigger: 'change' 
+          }, trigger: 'change'
         }],
-        'timeStandards.processing.unit': [{ 
+        'timeStandards.processing.unit': [{
           validator: (rule, value, callback) => {
             if (this.formData.timeStandards.processing.type === 'Fixed' && !value) {
-              callback(new Error('请选择单位'));
+              callback(new Error('请选择单位'))
             } else {
-              callback();
+              callback()
             }
-          }, trigger: 'change' 
+          }, trigger: 'change'
         }],
-        'timeStandards.processing.formula': [{ 
+        'timeStandards.processing.formula': [{
           validator: (rule, value, callback) => {
             if (this.formData.timeStandards.processing.type === 'Formula' && !value) {
-              callback(new Error('请输入公式'));
+              callback(new Error('请输入公式'))
             } else {
-              callback();
+              callback()
             }
-          }, trigger: 'blur' 
+          }, trigger: 'blur'
         }]
       },
       // 准备时间计算规则选项
@@ -297,7 +297,7 @@ export default {
   computed: {
     availableStepOptions() {
       // 过滤掉当前步骤，防止自循环
-      return this.allSteps.filter(step => step.stepId !== this.selectedStep.stepId);
+      return this.allSteps.filter(step => step.stepId !== this.selectedStep.stepId)
     }
   },
   watch: {
@@ -305,7 +305,7 @@ export default {
       handler(newVal) {
         if (newVal) {
           // 深度克隆以避免直接修改props，并确保嵌套对象存在
-          const clonedStep = JSON.parse(JSON.stringify(newVal));
+          const clonedStep = JSON.parse(JSON.stringify(newVal))
           this.formData = {
             ...clonedStep,
             flowLogic: clonedStep.flowLogic || { nextStep: 0, onSuccessStep: 0, onFailureStep: 0 },
@@ -313,37 +313,37 @@ export default {
               setup: clonedStep.timeStandards?.setup || { type: 'Fixed', value: 0, unit: 'minute', matrixId: null },
               processing: clonedStep.timeStandards?.processing || { type: 'Fixed', value: 0, unit: '分钟/吨', formula: null }
             }
-          };
+          }
 
           // 从 allSteps 中找到对应的 operation.type
-          const correspondingStep = this.allSteps.find(step => step.stepId === this.formData.stepId);
+          const correspondingStep = this.allSteps.find(step => step.stepId === this.formData.stepId)
           if (correspondingStep) {
-            this.formData.operationType = correspondingStep.operationType; // 从路由步骤中获取工序类型
+            this.formData.operationType = correspondingStep.operationType // 从路由步骤中获取工序类型
           }
 
           // 如果加工时间单位未设置，则默认为 '分钟/吨'
           if (!this.formData.timeStandards.processing.unit) {
-            this.$set(this.formData.timeStandards.processing, 'unit', '分钟/吨');
+            this.$set(this.formData.timeStandards.processing, 'unit', '分钟/吨')
           }
         } else {
-          this.formData = null;
+          this.formData = null
         }
       },
       immediate: true,
       deep: true
     },
     formData: {
-        handler(newVal) {
-            if (newVal && this.selectedStep) {
-                // 确保只有在 formData 的内容真正改变时才发出 update-step 事件，避免不必要的更新循环
-                // 这里需要更精确的比较，因为对象嵌套了，简单的 keys 比较可能不够
-                const hasChanged = JSON.stringify(newVal) !== JSON.stringify(this.selectedStep);
-                if (hasChanged) {
-                  this.$emit('update-step', newVal);
-                }
-            }
-        },
-        deep: true
+      handler(newVal) {
+        if (newVal && this.selectedStep) {
+          // 确保只有在 formData 的内容真正改变时才发出 update-step 事件，避免不必要的更新循环
+          // 这里需要更精确的比较，因为对象嵌套了，简单的 keys 比较可能不够
+          const hasChanged = JSON.stringify(newVal) !== JSON.stringify(this.selectedStep)
+          if (hasChanged) {
+            this.$emit('update-step', newVal)
+          }
+        }
+      },
+      deep: true
     }
   }
 }
@@ -373,7 +373,7 @@ export default {
       margin-bottom: 10px;
     }
   }
-  
+
   .step-identity {
     font-size: 14px;
     font-weight: 600;
@@ -418,4 +418,4 @@ export default {
     padding-bottom: 2px;
     font-weight: 500;
 }
-</style> 
+</style>

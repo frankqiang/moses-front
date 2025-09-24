@@ -8,13 +8,13 @@
     <div class="register-content">
       <!-- 注册模块头部 -->>
       <register-header />
-      
+
       <!-- 注册功能导航 -->
-      <register-navigation 
+      <register-navigation
         :current-view="currentView"
         @view-change="handleViewChange"
       />
-      
+
       <!-- 注册申请页面 -->
       <register-apply
         v-if="currentView === 'apply'"
@@ -22,7 +22,7 @@
         @success="handleApplySuccess"
         @error="handleApplyError"
       />
-      
+
       <!-- 状态查询页面 -->
       <register-status
         v-if="currentView === 'status'"
@@ -31,7 +31,7 @@
         @query-success="handleQuerySuccess"
         @error="handleQueryError"
       />
-      
+
       <!-- 注册模块页脚 -->
       <register-footer />
     </div>
@@ -77,7 +77,7 @@ export default {
      */
     handleRouteChange(route) {
       const { name, params, query } = route
-      
+
       // 根据路由名称设置当前视图
       if (name === 'RegisterApply') {
         this.currentView = 'apply'
@@ -90,7 +90,7 @@ export default {
         this.currentView = 'apply'
       }
     },
-    
+
     /**
      * 处理视图切换
      * @param {string} view - 目标视图
@@ -102,17 +102,17 @@ export default {
         this.$router.push({ name: 'RegisterStatus' })
       }
     },
-    
+
     /**
      * 处理申请成功
      * @param {Object} result - 申请结果
      */
     handleApplySuccess(result) {
       const { applicationId } = result
-      
+
       // 保存申请ID
       this.applicationId = applicationId
-      
+
       // 跳转到状态查询页面
       this.$router.push({
         name: 'RegisterStatus',
@@ -120,7 +120,7 @@ export default {
         query: { from: 'apply' }
       })
     },
-    
+
     /**
      * 处理申请错误
      * @param {Object} error - 错误信息
@@ -129,7 +129,7 @@ export default {
       console.error('注册申请失败:', error)
       // 错误处理已在子组件中完成，这里可以添加额外的处理逻辑
     },
-    
+
     /**
      * 处理查询成功
      * @param {Object} result - 查询结果
@@ -138,7 +138,7 @@ export default {
       console.log('状态查询成功:', result)
       // 可以添加成功后的处理逻辑
     },
-    
+
     /**
      * 处理查询错误
      * @param {Object} error - 错误信息
@@ -183,7 +183,7 @@ $box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   .register-container {
     padding: 10px;
   }
-  
+
   .register-content {
     width: 100%;
     max-width: 100%;

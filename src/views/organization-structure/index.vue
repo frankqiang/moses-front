@@ -1,50 +1,114 @@
 <!--
  * 文件名称：organization-structure/index.vue
- * 文件描述：组织结构管理主页面，作为部门管理和岗位管理的路由容器
+ * 文件描述：组织结构管理主页面，提供部门管理和岗位管理的导航入口
  * 创建日期：2024-01-20
  * 修改记录：
- *   - 2024-01-20: 初始创建，实现二级路由容器和标签页切换功能
+ *   - 2024-01-20: 重构为导航页面，分离部门和岗位管理模块
 -->
 
 <template>
-  <div class="organization-structure-container">
-    <!-- 页面头部 -->
+  <div class="organization-structure">
+    <!-- 页面标题 -->
     <div class="page-header">
-      <div class="page-header-content">
-        <div class="page-title">
-          <h2>组织结构管理</h2>
-          <p class="page-description">
-            维护企业的部门层级结构和岗位信息，为数据权限配置和工作流分配提供组织架构支撑
+      <h1 class="page-title">
+        <i class="el-icon-office-building" />
+        组织结构管理
+      </h1>
+      <p class="page-description">
+        管理企业的组织架构，包括部门层级关系和岗位配置
+      </p>
+    </div>
+
+    <!-- 模块导航卡片 -->
+    <div class="module-cards">
+      <!-- 部门管理卡片 -->
+      <div v-if="hasPermission('getDepartments')" class="module-card department-card" @click="goToDepartments">
+        <div class="card-icon">
+          <i class="el-icon-office-building" />
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">部门管理</h3>
+          <p class="card-description">
+            管理企业部门结构，支持树形层级关系维护、部门负责人设置和状态管理
           </p>
+          <div class="card-features">
+            <span class="feature-tag">树形结构</span>
+            <span class="feature-tag">层级管理</span>
+            <span class="feature-tag">负责人设置</span>
+            <span class="feature-tag">批量操作</span>
+          </div>
+        </div>
+        <div class="card-arrow">
+          <i class="el-icon-arrow-right" />
+        </div>
+      </div>
+
+      <!-- 岗位管理卡片 -->
+      <div v-if="hasPermission('getPositions')" class="module-card position-card" @click="goToPositions">
+        <div class="card-icon">
+          <i class="el-icon-suitcase" />
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">岗位管理</h3>
+          <p class="card-description">
+            管理企业岗位信息，支持岗位分类、级别设置、部门关联和员工分配
+          </p>
+          <div class="card-features">
+            <span class="feature-tag">岗位分类</span>
+            <span class="feature-tag">级别管理</span>
+            <span class="feature-tag">部门关联</span>
+            <span class="feature-tag">状态控制</span>
+          </div>
+        </div>
+        <div class="card-arrow">
+          <i class="el-icon-arrow-right" />
         </div>
       </div>
     </div>
 
-    <!-- 标签页导航 -->
-    <div class="organization-tabs">
-      <el-tabs v-model="activeTab" type="card" class="organization-tabs-container" @tab-click="handleTabClick">
-        <el-tab-pane label="部门管理" name="departments">
-          <template slot="label">
-            <span class="tab-label">
-              <i class="el-icon-office-building" />
-              部门管理
-            </span>
-          </template>
-        </el-tab-pane>
-        <el-tab-pane label="岗位管理" name="positions">
-          <template slot="label">
-            <span class="tab-label">
-              <i class="el-icon-suitcase" />
-              岗位管理
-            </span>
-          </template>
-        </el-tab-pane>
-      </el-tabs>
+    <!-- 统计信息 -->
+    <div v-if="showStats" class="stats-section">
+      <h2 class="stats-title">组织概览</h2>
+      <div class="stats-cards">
+        <div class="stat-card">
+          <div class="stat-icon department-stat">
+            <i class="el-icon-office-building" />
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.departmentCount }}</div>
+            <div class="stat-label">部门总数</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon position-stat">
+            <i class="el-icon-suitcase" />
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.positionCount }}</div>
+            <div class="stat-label">岗位总数</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon active-stat">
+            <i class="el-icon-check" />
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.activeCount }}</div>
+            <div class="stat-label">启用状态</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- 子路由内容区域 -->
-    <div class="organization-content">
-      <router-view />
+    <!-- 无权限提示 -->
+    <div v-if="!hasAnyPermission" class="no-permission">
+      <el-empty description="您没有组织结构管理权限" image-size="120">
+        <el-button type="primary" @click="$router.push('/')">
+          返回首页
+        </el-button>
+      </el-empty>
     </div>
   </div>
 </template>
@@ -57,51 +121,62 @@ export default {
   mixins: [permissionMixin],
   data() {
     return {
-      activeTab: 'departments'
+      // 统计数据
+      stats: {
+        departmentCount: 0,
+        positionCount: 0,
+        activeCount: 0
+      },
+      // 是否显示统计信息
+      showStats: false
     }
   },
-  watch: {
-    // 监听路由变化，同步标签页状态
-    '$route.name': {
-      handler(newName) {
-        if (newName === 'DepartmentManagement') {
-          this.activeTab = 'departments'
-        } else if (newName === 'PositionManagement') {
-          this.activeTab = 'positions'
-        }
-      },
-      immediate: true
+  computed: {
+    /**
+     * 是否有任何权限
+     */
+    hasAnyPermission() {
+      return this.hasPermission('getDepartments') || this.hasPermission('getPositions')
     }
   },
   created() {
-    // 页面初始化时根据当前路由设置活跃标签
-    this.initActiveTab()
+    // 设置页面标题
+    document.title = '组织结构管理'
+
+    // 加载统计数据
+    this.loadStats()
   },
   methods: {
     /**
-             * 初始化活跃标签页
-             */
-    initActiveTab() {
-      const routeName = this.$route.name
-      if (routeName === 'PositionManagement') {
-        this.activeTab = 'positions'
-      } else {
-        this.activeTab = 'departments'
-      }
+     * 跳转到部门管理
+     */
+    goToDepartments() {
+      this.$router.push('/organization-structure/departments')
     },
 
     /**
-             * 处理标签页切换
-             * @param {Object} tab - 标签页对象
-             */
-    handleTabClick(tab) {
-      const tabName = tab.name
+     * 跳转到岗位管理
+     */
+    goToPositions() {
+      this.$router.push('/organization-structure/positions')
+    },
 
-      // 根据标签页名称跳转到对应路由
-      if (tabName === 'departments') {
-        this.$router.push({ name: 'DepartmentManagement' })
-      } else if (tabName === 'positions') {
-        this.$router.push({ name: 'PositionManagement' })
+    /**
+     * 加载统计数据
+     */
+    async loadStats() {
+      try {
+        // 这里可以调用统计API获取数据
+        // 暂时使用模拟数据
+        this.stats = {
+          departmentCount: 25,
+          positionCount: 68,
+          activeCount: 89
+        }
+        this.showStats = true
+      } catch (error) {
+        console.error('加载统计数据失败:', error)
+        // 统计数据加载失败不影响主要功能
       }
     }
   }
@@ -109,124 +184,252 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.organization-structure-container {
-    padding: 20px;
-    background-color: #f8f9fa;
-    min-height: calc(100vh - 50px);
+.organization-structure {
+  padding: 24px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 
-    .page-header {
-        margin-bottom: 24px;
+  .page-header {
+    text-align: center;
+    margin-bottom: 48px;
 
-        .page-header-content {
-            background: #fff;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    .page-title {
+      font-size: 32px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 12px;
 
-            .page-title {
-                h2 {
-                    margin: 0 0 8px 0;
-                    font-size: 24px;
-                    font-weight: 600;
-                    color: #303133;
-                }
+      i {
+        margin-right: 12px;
+        color: #409eff;
+      }
+    }
 
-                .page-description {
-                    margin: 0;
-                    font-size: 14px;
-                    color: #909399;
-                    line-height: 1.5;
-                }
-            }
+    .page-description {
+      font-size: 16px;
+      color: #7f8c8d;
+      margin: 0;
+    }
+  }
+
+  .module-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+
+    .module-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      min-height: 140px;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-icon {
+        font-size: 48px;
+        margin-right: 24px;
+        flex-shrink: 0;
+
+        i {
+          display: block;
+          width: 80px;
+          height: 80px;
+          line-height: 80px;
+          text-align: center;
+          border-radius: 50%;
+          color: white;
         }
-    }
+      }
 
-    .organization-tabs {
-        margin-bottom: 20px;
+      .card-content {
+        flex: 1;
 
-        .organization-tabs-container {
-            background: #fff;
-            border-radius: 8px;
-            padding: 16px 16px 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-            .tab-label {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-
-                i {
-                    font-size: 16px;
-                }
-            }
-        }
-    }
-
-    .organization-content {
-        background: #fff;
-        border-radius: 8px;
-        min-height: 500px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-}
-
-// 覆盖Element UI标签页样式
-::v-deep .el-tabs--card {
-    .el-tabs__header {
-        margin: 0;
-        border-bottom: none;
-
-        .el-tabs__nav {
-            border: none;
-            border-radius: 0;
+        .card-title {
+          font-size: 20px;
+          font-weight: 600;
+          color: #2c3e50;
+          margin-bottom: 8px;
         }
 
-        .el-tabs__item {
-            border: none;
-            border-radius: 6px 6px 0 0;
-            margin-right: 4px;
-            background: #f5f7fa;
-            color: #606266;
-            transition: all 0.3s ease;
-
-            &:hover {
-                background: #ecf5ff;
-                color: #409eff;
-            }
-
-            &.is-active {
-                background: #409eff;
-                color: #fff;
-                border-color: #409eff;
-
-                &::before {
-                    display: none;
-                }
-            }
+        .card-description {
+          font-size: 14px;
+          color: #7f8c8d;
+          line-height: 1.6;
+          margin-bottom: 16px;
         }
+
+        .card-features {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+
+          .feature-tag {
+            background: #ecf5ff;
+            color: #409eff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+          }
+        }
+      }
+
+      .card-arrow {
+        font-size: 24px;
+        color: #bdc3c7;
+        margin-left: 16px;
+        transition: color 0.3s ease;
+      }
+
+      &.department-card {
+        .card-icon i {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        &:hover .card-arrow {
+          color: #667eea;
+        }
+      }
+
+      &.position-card {
+        .card-icon i {
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        &:hover .card-arrow {
+          color: #f5576c;
+        }
+      }
+    }
+  }
+
+  .stats-section {
+    .stats-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 24px;
+      text-align: center;
     }
 
-    .el-tabs__content {
-        padding: 0;
+    .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+
+      .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+        .stat-icon {
+          font-size: 32px;
+          margin-bottom: 16px;
+
+          i {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            border-radius: 50%;
+            color: white;
+          }
+
+          &.department-stat i {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          }
+
+          &.position-stat i {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          }
+
+          &.active-stat i {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #2c3e50;
+          }
+        }
+
+        .stat-content {
+          .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 4px;
+          }
+
+          .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+          }
+        }
+      }
     }
+  }
+
+  .no-permission {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
 }
 
 // 响应式设计
 @media (max-width: 768px) {
-    .organization-structure-container {
-        padding: 16px;
+  .organization-structure {
+    padding: 16px;
 
-        .page-header .page-header-content {
-            padding: 20px;
+    .page-header {
+      margin-bottom: 32px;
 
-            .page-title h2 {
-                font-size: 20px;
-            }
-        }
+      .page-title {
+        font-size: 24px;
+      }
 
-        .organization-tabs .organization-tabs-container {
-            padding: 12px 12px 0;
-        }
+      .page-description {
+        font-size: 14px;
+      }
     }
+
+    .module-cards {
+      grid-template-columns: 1fr;
+      gap: 16px;
+
+      .module-card {
+        flex-direction: column;
+        text-align: center;
+        min-height: auto;
+
+        .card-icon {
+          margin-right: 0;
+          margin-bottom: 16px;
+        }
+
+        .card-arrow {
+          display: none;
+        }
+      }
+    }
+
+    .stats-section {
+      .stats-cards {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+    }
+  }
 }
 </style>

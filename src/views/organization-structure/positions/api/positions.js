@@ -3,7 +3,7 @@
  * 文件描述：岗位管理模块API接口，提供岗位CRUD操作、状态管理、部门关联等功能
  * 创建日期：2024-01-20
  * 修改记录：
- *   - 2024-01-20: 初始创建，实现岗位管理相关的6个API接口
+ *   - 2024-01-20: 初始创建，实现岗位管理相关的API接口
  */
 
 import request from '@/utils/request'
@@ -56,12 +56,15 @@ export function getPositionList(params = {}) {
 /**
  * 获取岗位详情
  * @param {string} id - 岗位ID (必填, UUID格式)
+ * @param {Object} params - 查询参数
+ * @param {string} [params.populate] - 关联查询字段，多个用逗号分隔 (department,creator,employees)
  * @returns {Promise} 返回岗位详细信息
  */
-export function getPositionDetail(id) {
+export function getPositionDetail(id, params = {}) {
   return request({
     url: `${baseURL}/${id}`,
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
@@ -81,7 +84,7 @@ export function getPositionDetail(id) {
 export function updatePosition(id, data) {
   return request({
     url: `${baseURL}/${id}`,
-    method: 'patch', // 按照接口文档使用PATCH方法
+    method: 'put',
     data
   })
 }
@@ -123,8 +126,8 @@ export function updatePositionStatus(id, data) {
  * @param {string} [params.departmentId] - 按所属部门ID精确筛选 (UUID格式)
  * @param {string} [params.status=active] - 按岗位状态筛选 (active/inactive)
  * @param {string} [params.sortBy=level:asc,sortOrder:asc] - 排序选项，多个用逗号分隔
- * @param {number} [params.limit=100] - 每页最大结果数 (1-100，默认10)
- * @param {number} [params.page=1] - 页码 (>=1，默认1)
+ * @param {number} [params.limit=100] - 每页最大结果数 (1-100)
+ * @param {number} [params.page=1] - 页码 (>=1)
  * @param {string} [params.populate] - 关联查询字段，多个用逗号分隔 (如 department,creator)
  * @returns {Promise} 返回格式化后的岗位选项数据，适合下拉框使用
  */
@@ -208,15 +211,17 @@ export function batchUpdatePositionStatus(ids, status, reason = '') {
 /**
  * 批量删除岗位
  * @param {Array} ids - 岗位ID数组 (必填, UUID格式数组)
+ * @param {string} [reason] - 删除原因 (可选)
  * @description 批量删除多个岗位，删除前会检查岗位是否有关联的员工
  * @returns {Promise} 返回批量删除结果
  */
-export function batchDeletePositions(ids) {
+export function batchDeletePositions(ids, reason = '') {
   return request({
     url: `${baseURL}/batch-delete`,
     method: 'delete',
     data: {
-      positionIds: ids
+      positionIds: ids,
+      ...(reason && { reason })
     }
   })
 }

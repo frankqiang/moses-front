@@ -1,23 +1,42 @@
 <template>
-  <ErrorBoundary @error="handlePageError" @retry="handleErrorRetry" @reload="handleErrorReload" @go-home="handleGoHome"
-    @report-error="handleReportError">
+  <ErrorBoundary
+    @error="handlePageError"
+    @retry="handleErrorRetry"
+    @reload="handleErrorReload"
+    @go-home="handleGoHome"
+    @report-error="handleReportError"
+  >
     <div class="register-apply-container">
       <div class="register-card">
         <div class="register-header">
           <login-header />
         </div>
 
-        <enhanced-form ref="enhancedForm" :data="formData" :rules="formRules" mode="create" label-width="120px"
-          :show-footer="true" :clear-validate-on-data-update="true" :disable-initial-validation="true"
-          :validate-on-data-change="false" @submit="handleFormSubmit" @reset="handleFormReset">
+        <enhanced-form
+          ref="enhancedForm"
+          :data="formData"
+          :rules="formRules"
+          mode="create"
+          label-width="120px"
+          :show-footer="true"
+          :clear-validate-on-data-update="true"
+          :disable-initial-validation="true"
+          :validate-on-data-change="false"
+          @submit="handleFormSubmit"
+          @reset="handleFormReset"
+        >
           <!-- 基本信息 -->
           <div class="form-section">
             <h3 class="section-title">基本信息</h3>
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="申请人姓名" prop="applicantName">
-                  <el-input v-model="formData.applicantName" placeholder="请输入申请人姓名" :maxlength="255"
-                    :show-word-limit="true" />
+                  <el-input
+                    v-model="formData.applicantName"
+                    placeholder="请输入申请人姓名"
+                    :maxlength="255"
+                    :show-word-limit="true"
+                  />
                   <div class="help-text">请输入真实姓名，用于身份验证</div>
                 </el-form-item>
               </el-col>
@@ -31,17 +50,25 @@
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="用户名" prop="username">
-                  <el-input v-model="formData.username" placeholder="3-50字符，支持字母、数字、下划线，不能以数字开头" :maxlength="50"
-                    :show-word-limit="true" />
+                  <el-input
+                    v-model="formData.username"
+                    placeholder="3-50字符，支持字母、数字、下划线，不能以数字开头"
+                    :maxlength="50"
+                    :show-word-limit="true"
+                  />
                   <div class="help-text">用户名一旦创建不可修改，请谨慎填写</div>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
                 <el-form-item label="密码" prop="password">
-                  <el-input v-model="formData.password" :type="passwordVisible ? 'text' : 'password'"
-                    placeholder="至少8位，必须包含字母和数字" :maxlength="50"
+                  <el-input
+                    v-model="formData.password"
+                    :type="passwordVisible ? 'text' : 'password'"
+                    placeholder="至少8位，必须包含字母和数字"
+                    :maxlength="50"
                     :suffix-icon="passwordVisible ? 'el-icon-view' : 'el-icon-view-off'"
-                    @click="togglePasswordVisibility" />
+                    @click="togglePasswordVisibility"
+                  />
                   <div class="help-text">密码强度越高，账户越安全</div>
                 </el-form-item>
               </el-col>
@@ -49,8 +76,12 @@
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="确认密码" prop="confirmPassword">
-                  <el-input v-model="formData.confirmPassword" :type="passwordVisible ? 'text' : 'password'"
-                    placeholder="请再次输入密码" :maxlength="50" />
+                  <el-input
+                    v-model="formData.confirmPassword"
+                    :type="passwordVisible ? 'text' : 'password'"
+                    placeholder="请再次输入密码"
+                    :maxlength="50"
+                  />
                   <div class="help-text">请确保两次输入的密码一致</div>
                 </el-form-item>
               </el-col>
@@ -64,8 +95,12 @@
               <el-col :span="12">
                 <el-form-item label="部门" prop="department">
                   <el-select v-model="formData.department" placeholder="请选择部门" filterable style="width: 100%">
-                    <el-option v-for="option in departmentOptions" :key="option.value" :label="option.label"
-                      :value="option.value" />
+                    <el-option
+                      v-for="option in departmentOptions"
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    />
                   </el-select>
                   <div class="help-text">选择您所属的部门，便于管理员审核</div>
                 </el-form-item>
@@ -73,8 +108,12 @@
 
               <el-col :span="12">
                 <el-form-item label="职位名称" prop="position">
-                  <el-input v-model="formData.position" placeholder="请输入职位名称" :maxlength="100"
-                    :show-word-limit="true" />
+                  <el-input
+                    v-model="formData.position"
+                    placeholder="请输入职位名称"
+                    :maxlength="100"
+                    :show-word-limit="true"
+                  />
                   <div class="help-text">填写您的职位信息，便于权限分配</div>
                 </el-form-item>
               </el-col>
@@ -88,8 +127,12 @@
               </el-col>
               <el-col :span="12">
                 <el-form-item label="员工ID" prop="employeeId">
-                  <el-input v-model="formData.employeeId" placeholder="请输入员工ID" :maxlength="50"
-                    :show-word-limit="true" />
+                  <el-input
+                    v-model="formData.employeeId"
+                    placeholder="请输入员工ID"
+                    :maxlength="50"
+                    :show-word-limit="true"
+                  />
                   <div class="help-text">如果您已是公司员工，请填写员工ID</div>
                 </el-form-item>
               </el-col>
@@ -97,8 +140,14 @@
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="申请原因" prop="reason">
-                  <el-input v-model="formData.reason" type="textarea" placeholder="请输入申请原因" :maxlength="500"
-                    :show-word-limit="true" :rows="3" />
+                  <el-input
+                    v-model="formData.reason"
+                    type="textarea"
+                    placeholder="请输入申请原因"
+                    :maxlength="500"
+                    :show-word-limit="true"
+                    :rows="3"
+                  />
                   <div class="help-text">详细说明申请原因有助于加快审核进度</div>
                 </el-form-item>
               </el-col>
@@ -126,14 +175,17 @@
         </enhanced-form>
       </div>
 
-
-
       <!-- 成功提示组件 -->
-      <SuccessNotification :visible.sync="successDialog.visible" :title="successDialog.title"
-        :success-title="successDialog.successTitle" :success-message="successDialog.successMessage"
-        :details="successDialog.details" :tips="successDialog.tips" :actions="successDialog.actions"
-        @action="handleSuccessAction" />
-
+      <SuccessNotification
+        :visible.sync="successDialog.visible"
+        :title="successDialog.title"
+        :success-title="successDialog.successTitle"
+        :success-message="successDialog.successMessage"
+        :details="successDialog.details"
+        :tips="successDialog.tips"
+        :actions="successDialog.actions"
+        @action="handleSuccessAction"
+      />
 
     </div>
   </ErrorBoundary>
@@ -307,8 +359,6 @@ export default {
       }
     },
 
-
-
     /**
       * 跳转到状态查询页面
       */
@@ -401,8 +451,6 @@ export default {
   padding: 20px;
 }
 
-
-
 .register-card {
   background: white;
   border-radius: 12px;
@@ -441,11 +489,8 @@ export default {
 
 .register-form {
 
-
-
   .form-section {
     margin-bottom: 32px;
-
 
     .section-title {
       font-size: 18px;
@@ -456,8 +501,6 @@ export default {
       border-bottom: 2px solid #ecf0f1;
     }
   }
-
-
 
   .password-toggle {
     cursor: pointer;
@@ -560,7 +603,6 @@ export default {
       text-decoration: underline;
     }
   }
-
 
 }
 

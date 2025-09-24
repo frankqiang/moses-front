@@ -176,4 +176,4 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   'associatedResourceType',
   'description',
   'actions'
-] 
+]

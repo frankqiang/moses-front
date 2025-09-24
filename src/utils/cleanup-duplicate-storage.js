@@ -51,23 +51,23 @@ export function cleanupDuplicateColumnConfigs() {
 
   // 2. 清理集中存储中的重复数据
   const allKeys = tableConfigStore.getAllKeys()
-  
+
   // 定义已知的重复映射关系
   const duplicateMappings = {
     // 工序管理相关
     'table_columns_Operations': 'operation_columns_OperationTable',
     'table_columns_OperationManagement': 'operation_columns_OperationTable',
-    
+
     // 工艺路线管理相关
     'table_columns_RoutingManagement': 'routing_columns_RoutingTable',
     'table_columns_Routing': 'routing_columns_RoutingTable',
-    
+
     // 其他可能的重复项
     'table_columns_Equipment': 'equipment_columns_EquipmentTable',
     'table_columns_Material': 'material_columns_MaterialTable',
     'table_columns_Product': 'product_columns_ProductTable'
   }
-  
+
   // 清理集中存储中的重复键
   Object.entries(duplicateMappings).forEach(([duplicateKey, primaryKey]) => {
     if (allKeys.includes(duplicateKey)) {
@@ -167,7 +167,7 @@ export function checkStorageStatus() {
     if (allKeys.includes(duplicateKey)) {
       const duplicateData = tableConfigStore.getColumnConfig(duplicateKey, [])
       const primaryData = tableConfigStore.getColumnConfig(primaryKey, [])
-      
+
       storageInfo.centralStoreDuplicates.push({
         duplicateKey,
         primaryKey,
@@ -195,11 +195,11 @@ export function cleanupNow() {
   if (needsCleanup) {
     const result = cleanupDuplicateColumnConfigs()
     console.log('清理结果:', result)
-    
+
     // 清理后再次检查状态
     const afterStatus = checkStorageStatus()
     console.log('清理后状态:', afterStatus)
-    
+
     return {
       ...result,
       beforeStatus: status,
@@ -217,14 +217,14 @@ export function cleanupNow() {
 export function validateStorageUniqueness() {
   const allKeys = tableConfigStore.getAllKeys()
   const duplicates = []
-  
+
   // 检查是否存在重复的配置数据
   const configData = {}
-  
+
   allKeys.forEach(key => {
     const data = tableConfigStore.getColumnConfig(key, [])
     const dataHash = JSON.stringify(data.sort())
-    
+
     if (configData[dataHash]) {
       duplicates.push({
         keys: [configData[dataHash], key],
@@ -234,7 +234,7 @@ export function validateStorageUniqueness() {
       configData[dataHash] = key
     }
   })
-  
+
   return {
     hasDuplicates: duplicates.length > 0,
     duplicates,

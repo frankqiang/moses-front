@@ -67,21 +67,21 @@ export default {
   .register-header {
     padding: 20px 20px;
   }
-  
+
   .logo-section {
     flex-direction: column;
     margin-bottom: 10px;
   }
-  
+
   .header-icon {
     margin-right: 0;
     margin-bottom: 8px;
   }
-  
+
   .header-title {
     font-size: 24px;
   }
-  
+
   .header-description {
     font-size: 14px;
   }

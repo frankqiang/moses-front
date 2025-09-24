@@ -7,11 +7,21 @@
       </div>
 
       <!-- 查询表单 -->
-      <el-form ref="queryForm" :model="queryForm" :rules="queryRules" class="query-form"
-        @submit.native.prevent="handleQuery">
+      <el-form
+        ref="queryForm"
+        :model="queryForm"
+        :rules="queryRules"
+        class="query-form"
+        @submit.native.prevent="handleQuery"
+      >
         <el-form-item prop="applicationId">
-          <el-input v-model="queryForm.applicationId" placeholder="请输入申请ID" size="large" clearable
-            @keyup.enter.native="handleQuery">
+          <el-input
+            v-model="queryForm.applicationId"
+            placeholder="请输入申请ID"
+            size="large"
+            clearable
+            @keyup.enter.native="handleQuery"
+          >
             <el-button slot="append" type="primary" :loading="queryLoading" @click="handleQuery">
               {{ queryLoading ? '查询中...' : '查询' }}
             </el-button>
@@ -25,13 +35,22 @@
       <!-- 查询结果 -->
       <div v-if="applicationData" class="status-result">
 
-
         <div class="result-content">
           <!-- 使用ApplicationCard组件展示申请信息 -->
-          <ApplicationCard :application-data="applicationData" :show-actions="false" :show-status="true"
-            :show-basic-info="true" :show-optional-info="true" :show-approval-info="true" :show-timeline="true"
-            title="申请详细信息" subtitle="以下是您的注册申请详细信息" class="application-detail-card"
-            @timeline-loaded="handleTimelineLoaded" @timeline-error="handleTimelineError" />
+          <ApplicationCard
+            :application-data="applicationData"
+            :show-actions="false"
+            :show-status="true"
+            :show-basic-info="true"
+            :show-optional-info="true"
+            :show-approval-info="true"
+            :show-timeline="true"
+            title="申请详细信息"
+            subtitle="以下是您的注册申请详细信息"
+            class="application-detail-card"
+            @timeline-loaded="handleTimelineLoaded"
+            @timeline-error="handleTimelineError"
+          />
 
           <!-- 状态说明 -->
           <div class="status-description">
@@ -199,7 +218,7 @@ export default {
         return dateTime
       }
     },
-    
+
     /**
      * 处理时间线加载完成事件
      * @param {Array} timelineData - 时间线数据
@@ -208,7 +227,7 @@ export default {
       console.log('申请历史时间线加载完成:', timelineData)
       this.$emit('timeline-loaded', timelineData)
     },
-    
+
     /**
      * 处理时间线加载错误事件
      * @param {Error} error - 错误信息

@@ -10,9 +10,9 @@
  * 密码强度等级定义
  */
 export const PASSWORD_STRENGTH = {
-  WEAK: 1,      // 弱密码
-  MEDIUM: 2,    // 中等密码
-  STRONG: 3,    // 强密码
+  WEAK: 1, // 弱密码
+  MEDIUM: 2, // 中等密码
+  STRONG: 3, // 强密码
   VERY_STRONG: 4 // 非常强的密码
 }
 

@@ -110,10 +110,10 @@
       <span>账户已被锁定，请在 {{ formatCountdown(lockoutCountdown) }} 后重试</span>
     </div>
 
-    <el-button 
-      type="primary" 
-      class="login-button" 
-      :loading="loading" 
+    <el-button
+      type="primary"
+      class="login-button"
+      :loading="loading"
       :disabled="isLocked"
       @click.native.prevent="handleLogin"
     >
@@ -167,7 +167,7 @@ export default {
   created() {
     this.redirect = this.$route.query && this.$route.query.redirect
     this.loadRememberedUser()
-    
+
     // 检查是否已被锁定
     if (authStorageManager.isAccountLocked()) {
       this.startLockoutCountdown()
@@ -319,16 +319,16 @@ export default {
     handleLoginFailure(error) {
       const errorCode = error?.code
       const maxAttempts = 5
-      
+
       // 如果是密码错误，增加失败次数
       if (errorCode === 'AUTH_011') {
         const failedCount = authStorageManager.incrementLoginFailedCount()
         const remainingAttempts = maxAttempts - failedCount
-        
+
         if (remainingAttempts > 0) {
           this.$message.error(`密码错误，还可尝试 ${remainingAttempts} 次`)
         }
-        
+
         // 如果达到最大尝试次数，锁定账户
         if (failedCount >= maxAttempts) {
           authStorageManager.setAccountLocked(15 * 60 * 1000) // 15分钟
@@ -336,14 +336,14 @@ export default {
         }
         return true // 表示已处理该错误
       }
-      
+
       // 如果是账户锁定错误，启动倒计时
       if (errorCode === 'AUTH_014') {
         this.startLockoutCountdown()
         this.$message.error('账户已被锁定，请稍后再试')
         return true // 表示已处理该错误
       }
-      
+
       // 返回false表示未处理该错误，由父组件显示通用错误信息
       return false
     },
@@ -357,13 +357,13 @@ export default {
       this.isLocked = false
       this.lockoutEndTime = null
       this.lockoutCountdown = 0
-      
+
       // 清除倒计时定时器
       if (this.countdownTimer) {
         clearInterval(this.countdownTimer)
         this.countdownTimer = null
       }
-      
+
       // 清除存储的失败次数和锁定状态
       authStorageManager.clearLoginFailedCount()
 
@@ -377,19 +377,19 @@ export default {
     startLockoutCountdown() {
       this.isLocked = true
       const remainingTime = authStorageManager.getAccountLockRemainingTime()
-      
+
       if (remainingTime > 0) {
         this.lockoutCountdown = Math.ceil(remainingTime / 1000)
-        
+
         // 清除之前的定时器
         if (this.countdownTimer) {
           clearInterval(this.countdownTimer)
         }
-        
+
         // 启动倒计时
         this.countdownTimer = setInterval(() => {
           this.lockoutCountdown--
-          
+
           if (this.lockoutCountdown <= 0) {
             this.clearLockout()
           }
@@ -403,12 +403,12 @@ export default {
     clearLockout() {
       this.isLocked = false
       this.lockoutCountdown = 0
-      
+
       if (this.countdownTimer) {
         clearInterval(this.countdownTimer)
         this.countdownTimer = null
       }
-      
+
       authStorageManager.clearLoginFailedCount()
     },
 
@@ -632,18 +632,18 @@ export default {
   text-align: center;
   margin-bottom: 20px;
   font-size: 14px;
-  
+
   .register-text {
     color: #909399;
     margin-right: 8px;
   }
-  
+
   .register-link {
     color: #409eff;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.3s;
-    
+
     &:hover {
       color: #66b1ff;
       text-decoration: underline;

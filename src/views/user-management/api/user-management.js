@@ -215,8 +215,6 @@ export function changeUserPassword(data) {
   })
 }
 
-
-
 /**
  * 导出用户列表
  * @param {Object} params - 导出参数（与获取用户列表相同的筛选条件，但不包含分页）
@@ -250,7 +248,6 @@ export function uploadUserAvatar(id, formData) {
     }
   })
 }
-
 
 /**
  * 获取部门选项列表（用于下拉框）

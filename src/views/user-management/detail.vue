@@ -199,7 +199,9 @@
       <!-- 自定义字段信息 -->
       <el-card
         v-if="userDetail.profile && userDetail.profile.customFields && Object.keys(userDetail.profile.customFields).length > 0"
-        class="info-card custom-fields-info" shadow="hover">
+        class="info-card custom-fields-info"
+        shadow="hover"
+      >
         <div slot="header" class="card-header">
           <span class="card-title">
             <i class="el-icon-setting" />
@@ -207,8 +209,11 @@
           </span>
         </div>
         <el-descriptions :column="2" border>
-          <el-descriptions-item v-for="(value, key) in userDetail.profile.customFields" :key="key"
-            :label="getCustomFieldLabel(key)">
+          <el-descriptions-item
+            v-for="(value, key) in userDetail.profile.customFields"
+            :key="key"
+            :label="getCustomFieldLabel(key)"
+          >
             <span class="info-value">{{ value || '未填写' }}</span>
           </el-descriptions-item>
         </el-descriptions>
@@ -265,8 +270,11 @@
       </el-card>
 
       <!-- 角色权限信息 -->
-      <el-card v-if="userDetail.userRoles && userDetail.userRoles.length > 0" class="info-card role-info"
-        shadow="hover">
+      <el-card
+        v-if="userDetail.userRoles && userDetail.userRoles.length > 0"
+        class="info-card role-info"
+        shadow="hover"
+      >
         <div slot="header" class="card-header">
           <span class="card-title">
             <i class="el-icon-key" />
@@ -363,8 +371,14 @@
 
     <!-- 头像上传对话框 -->
     <el-dialog title="上传头像" :visible.sync="avatarDialogVisible" width="400px" @close="handleAvatarDialogClose">
-      <el-upload class="avatar-uploader" action="" :http-request="handleAvatarUploadRequest" :show-file-list="false"
-        :before-upload="beforeAvatarUpload" accept="image/*">
+      <el-upload
+        class="avatar-uploader"
+        action=""
+        :http-request="handleAvatarUploadRequest"
+        :show-file-list="false"
+        :before-upload="beforeAvatarUpload"
+        accept="image/*"
+      >
         <img v-if="tempAvatarUrl" :src="tempAvatarUrl" class="avatar-preview">
         <i v-else class="el-icon-plus avatar-uploader-icon" />
       </el-upload>

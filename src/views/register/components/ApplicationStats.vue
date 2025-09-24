@@ -84,8 +84,13 @@
     </div>
 
     <!-- 加载状态 -->
-    <div v-if="loading" v-loading="loading" element-loading-text="正在加载统计数据..."
-      element-loading-background="rgba(255, 255, 255, 0.8)" class="stats-loading" />
+    <div
+      v-if="loading"
+      v-loading="loading"
+      element-loading-text="正在加载统计数据..."
+      element-loading-background="rgba(255, 255, 255, 0.8)"
+      class="stats-loading"
+    />
 
     <!-- 错误状态 -->
     <div v-if="error && !loading" class="stats-error">
@@ -96,7 +101,6 @@
       </div>
     </div>
 
-
   </div>
 </template>
 
@@ -106,7 +110,6 @@ import { getApplicationStats } from '../api/register'
 export default {
   name: 'ApplicationStats',
   props: {
-
 
     /**
      * 指定审批人ID
@@ -487,7 +490,6 @@ export default {
       }
     }
   }
-
 
 }
 

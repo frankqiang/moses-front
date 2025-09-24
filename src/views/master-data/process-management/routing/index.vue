@@ -37,7 +37,7 @@
       @success="handleFormSuccess"
       @close="handleFormClose"
     />
-    
+
     <!-- 历史记录查看对话框 -->
     <routing-history-dialog
       :visible.sync="historyDialogVisible"
@@ -49,9 +49,9 @@
 </template>
 
 <script>
-import { 
-  getRoutingList, 
-  deleteRouting, 
+import {
+  getRoutingList,
+  deleteRouting,
   createNewVersion,
   submitRoutingApproval,
   approveRouting,
@@ -91,7 +91,7 @@ export default {
       formMode: 'create',
       currentRouting: null,
 
-       // 历史记录对话框相关
+      // 历史记录对话框相关
       historyDialogVisible: false,
       currentHistoryRouting: null,
       // 操作状态标志
@@ -175,10 +175,10 @@ export default {
         )
         return
       }
-      
+
       this.$confirm(
-        `您确定要永久删除工艺路线 "${row.code} - ${row.name}" 吗？此操作不可恢复。`, 
-        '删除确认', 
+        `您确定要永久删除工艺路线 "${row.code} - ${row.name}" 吗？此操作不可恢复。`,
+        '删除确认',
         {
           confirmButtonText: '确定删除',
           cancelButtonText: '取消',
@@ -210,11 +210,11 @@ export default {
           this.$message.warning('只有草稿状态的工艺路线才能提交审批')
           return
         }
-        
+
         // 用户确认
         await this.$confirm(
-          `确定要提交审批工艺路线 "${row.name}" 吗？\n提交后将无法继续编辑，需要等待审批结果。`, 
-          '提交审批确认', 
+          `确定要提交审批工艺路线 "${row.name}" 吗？\n提交后将无法继续编辑，需要等待审批结果。`,
+          '提交审批确认',
           {
             confirmButtonText: '确定提交',
             cancelButtonText: '取消',
@@ -222,7 +222,7 @@ export default {
             dangerouslyUseHTMLString: true
           }
         )
-        
+
         // 执行提交审批操作
         const response = await submitRoutingApproval(row.id, {
           code: row.code, // 添加路线代码
@@ -231,10 +231,9 @@ export default {
           submittedAt: new Date().toISOString(),
           remarks: '提交审批' // 可以后续扩展为用户输入
         })
-        
+
         this.$message.success(response.message || '提交审批成功')
         this.getList() // 刷新列表
-        
       } catch (error) {
         if (error === 'cancel') {
           this.$message.info('已取消提交')
@@ -245,7 +244,7 @@ export default {
         }
       }
     },
-    
+
     /**
      * 处理批准操作
      * @param {Object} row - 工艺路线数据行
@@ -258,11 +257,11 @@ export default {
           this.$message.warning('只有待审批状态的工艺路线才能批准')
           return
         }
-        
+
         // 用户确认
         await this.$confirm(
-          `确定要批准工艺路线 "${row.name}" 吗？\n批准后该工艺路线将立即生效。`, 
-          '批准确认', 
+          `确定要批准工艺路线 "${row.name}" 吗？\n批准后该工艺路线将立即生效。`,
+          '批准确认',
           {
             confirmButtonText: '确定批准',
             cancelButtonText: '取消',
@@ -270,17 +269,16 @@ export default {
             dangerouslyUseHTMLString: true
           }
         )
-        
+
         // 执行批准操作
         const response = await approveRouting(row.id, {
           approvedBy: 'current_user', // 实际应用中应从用户状态获取
           approvedAt: new Date().toISOString(),
           approvalComments: '批准通过' // 可以后续扩展为用户输入
         })
-        
+
         this.$message.success(response.message || '批准成功')
         this.getList() // 刷新列表
-        
       } catch (error) {
         if (error === 'cancel') {
           this.$message.info('已取消批准')
@@ -291,7 +289,7 @@ export default {
         }
       }
     },
-    
+
     /**
      * 处理驳回操作
      * @param {Object} row - 工艺路线数据行
@@ -304,11 +302,11 @@ export default {
           this.$message.warning('只有待审批状态的工艺路线才能驳回')
           return
         }
-        
+
         // 获取驳回原因（可以后续扩展为更复杂的表单）
         const { value: rejectReason } = await this.$prompt(
-          '请输入驳回原因：', 
-          '驳回工艺路线', 
+          '请输入驳回原因：',
+          '驳回工艺路线',
           {
             confirmButtonText: '确定驳回',
             cancelButtonText: '取消',
@@ -325,17 +323,16 @@ export default {
             }
           }
         )
-        
+
         // 执行驳回操作
         const response = await rejectRouting(row.id, {
           rejectedBy: 'current_user', // 实际应用中应从用户状态获取
           rejectedAt: new Date().toISOString(),
           rejectReason: rejectReason.trim()
         })
-        
+
         this.$message.success(response.message || '驳回成功')
         this.getList() // 刷新列表
-        
       } catch (error) {
         if (error === 'cancel') {
           this.$message.info('已取消驳回')
@@ -346,7 +343,7 @@ export default {
         }
       }
     },
-    
+
     /**
      * 处理归档操作
      * @param {Object} row - 工艺路线数据行
@@ -359,11 +356,11 @@ export default {
           this.$message.warning('只有生效状态的工艺路线才能归档')
           return
         }
-        
+
         // 用户确认
         await this.$confirm(
-          `确定要归档工艺路线 "${row.name}" 吗？\n归档后该工艺路线将不再可用，但可以查看历史记录。`, 
-          '归档确认', 
+          `确定要归档工艺路线 "${row.name}" 吗？\n归档后该工艺路线将不再可用，但可以查看历史记录。`,
+          '归档确认',
           {
             confirmButtonText: '确定归档',
             cancelButtonText: '取消',
@@ -371,17 +368,16 @@ export default {
             dangerouslyUseHTMLString: true
           }
         )
-        
+
         // 执行归档操作
         const response = await archiveRouting(row.id, {
           archivedBy: 'current_user', // 实际应用中应从用户状态获取
           archivedAt: new Date().toISOString(),
           archiveReason: '手动归档' // 可以后续扩展为用户输入
         })
-        
+
         this.$message.success(response.message || '归档成功')
         this.getList() // 刷新列表
-        
       } catch (error) {
         if (error === 'cancel') {
           this.$message.info('已取消归档')
@@ -402,7 +398,7 @@ export default {
         this.$message.warning('正在处理中，请勿重复操作')
         return
       }
-      
+
       try {
         // 前置条件校验
         const validationResult = this.validateNewVersionConditions(row)
@@ -410,17 +406,16 @@ export default {
           this.$message.warning(validationResult.message)
           return
         }
-        
+
         // 用户意图确认 - 符合文档要求的确认对话框
         const confirmResult = await this.confirmNewVersionCreation(row)
         if (!confirmResult) {
           // 用户取消操作
           return
         }
-        
+
         // 执行创建新版本操作 - 包含页面遮罩和防重复操作
         await this.executeNewVersionCreation(row)
-        
       } catch (error) {
         // 错误处理
         console.error('创建新版本失败:', error)
@@ -430,7 +425,7 @@ export default {
         this.isCreatingNewVersion = false
       }
     },
-    
+
     /**
      * 验证创建新版本的前置条件
      * @param {Object} row - 工艺路线数据行
@@ -445,7 +440,7 @@ export default {
           message: '工艺路线不存在或数据无效'
         }
       }
-      
+
       // 状态一致性校验 - 检查工艺路线状态
       if (row.status !== 'Enabled') {
         return {
@@ -453,23 +448,23 @@ export default {
           message: '只有生效状态的工艺路线才能创建新版本'
         }
       }
-      
+
       // 草稿唯一性校验 - 检查是否已存在草稿版本
       // 注意：由于数据结构中没有baseId字段，这里使用code字段来判断同一工艺路线的不同版本
       // 同一工艺路线的不同版本应该具有相同的code值
-      const hasDraft = this.list.some(item => 
-        item.code === row.code && 
-        item.status === 'Draft' && 
+      const hasDraft = this.list.some(item =>
+        item.code === row.code &&
+        item.status === 'Draft' &&
         item.id !== row.id
       )
-      
+
       if (hasDraft) {
         return {
           valid: false,
           message: '已存在该工艺路线的草稿版本，请先处理现有草稿'
         }
       }
-      
+
       // 检查必要的数据完整性
       if (!row.steps || row.steps.length === 0) {
         return {
@@ -477,7 +472,7 @@ export default {
           message: '工艺路线必须包含至少一个工序步骤才能创建新版本'
         }
       }
-      
+
       // 检查是否有必要的基础信息
       if (!row.code || !row.name || !row.type) {
         return {
@@ -485,10 +480,10 @@ export default {
           message: '工艺路线的基础信息不完整，无法创建新版本'
         }
       }
-      
+
       return { valid: true, message: '' }
     },
-    
+
     /**
      * 用户创建新版本意图确认
      * @param {Object} row - 工艺路线数据行
@@ -499,7 +494,7 @@ export default {
       // 根据文档要求，显示简洁明了的确认信息
       // 动态内容：显示"您确定要基于当前[路线名称] v[当前版本号]创建一个新的可编辑草稿版本吗？"
       const confirmMessage = `您确定要基于当前<strong>${row.name} v${row.version}</strong>创建一个新的可编辑草稿版本吗？`
-      
+
       try {
         // 使用Element UI的确认对话框
         await this.$confirm(confirmMessage, '确认创建新版本', {
@@ -518,7 +513,7 @@ export default {
         return false
       }
     },
-    
+
     /**
      * 执行创建新版本操作
      * @param {Object} row - 工艺路线数据行
@@ -530,9 +525,9 @@ export default {
         this.$message.warning('正在处理中，请勿重复操作')
         return
       }
-      
+
       this.isCreatingNewVersion = true
-      
+
       // 显示全屏加载状态，实现页面遮罩
       const loading = this.$loading({
         lock: true,
@@ -540,23 +535,23 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      
+
       try {
         // 调用创建新版本的API
         const response = await createNewVersion(row.id)
-        
+
         // 获取新版本数据
         const newVersionData = response.data
-        
+
         // 成功反馈 - 显示"已创建成功！"成功提示
         this.$message.success({
           message: `新版本 v${newVersionData?.version || '新版本'} 已创建成功！`,
           duration: 3000
         })
-        
+
         // 刷新列表以显示新创建的版本
         await this.getList()
-        
+
         // 自动导航到新创建的版本编辑页面
         if (newVersionData && newVersionData.id) {
           // 找到新创建的版本数据
@@ -568,7 +563,6 @@ export default {
             this.formDrawerVisible = true
           }
         }
-        
       } catch (error) {
         // 错误处理
         console.error('创建新版本失败:', error)
@@ -580,7 +574,7 @@ export default {
         this.isCreatingNewVersion = false
       }
     },
-    
+
     /**
      * 查看历史记录
      * @param {Object} routing - 工艺路线数据

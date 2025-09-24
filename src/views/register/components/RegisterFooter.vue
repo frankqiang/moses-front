@@ -43,7 +43,7 @@ export default {
       // 可以打开帮助文档或显示帮助对话框
       this.$message.info('帮助文档功能开发中...')
     },
-    
+
     /**
      * 处理联系客服点击
      */
@@ -82,7 +82,7 @@ export default {
   text-decoration: none;
   font-size: 14px;
   transition: color 0.3s ease;
-  
+
   &:hover {
     color: #667eea;
   }
@@ -112,17 +112,17 @@ export default {
   .register-footer {
     padding: 20px 20px;
   }
-  
+
   .footer-links {
     flex-direction: column;
     gap: 15px;
     align-items: center;
   }
-  
+
   .footer-link {
     font-size: 13px;
   }
-  
+
   .link-icon {
     font-size: 14px;
   }

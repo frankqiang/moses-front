@@ -51,7 +51,7 @@
           :type-map="statusTypeMap"
         />
       </template>
-      
+
       <template #type="{ row }">
         <span>{{ getTypeLabel(row.type) }}</span>
       </template>
@@ -161,7 +161,7 @@ export default {
     },
     customBatchActions() {
       const actions = []
-      
+
       // 批量归档操作 - 仅当选中的都是生效状态时显示
       const enabledRows = this.selectedRows.filter(row => row.status === 'Enabled')
       if (enabledRows.length > 0 && enabledRows.length === this.selectedRows.length) {
@@ -174,7 +174,7 @@ export default {
           successMessage: false // 禁用自动成功提示，由业务逻辑处理
         })
       }
-      
+
       return actions
     },
     columnOptions() { return TABLE_COLUMNS },
@@ -310,107 +310,105 @@ export default {
       if (!row || !row.status) {
         return []
       }
-      
+
       // 获取当前状态下可用的操作
       const availableActions = getAvailableActions(row.status)
-      
+
       // 操作按钮配置映射
-       const actionConfigMap = {
-         view: {
-           action: 'view',
-           text: '查看',
-           icon: 'el-icon-view',
-           tooltip: '查看详情'
-         },
-         edit: {
-           action: 'edit',
-           text: '编辑',
-           icon: 'el-icon-edit',
-           tooltip: '编辑工艺路线'
-         },
-         delete: {
-           action: 'delete',
-           text: '删除',
-           icon: 'el-icon-delete',
-           class: 'danger',
-           tooltip: row.status === 'Draft' ? '删除此草稿' : '永久删除此记录'
-         },
-         newVersion: {
-           action: 'newVersion',
-           text: '创建新版本',
-           icon: 'el-icon-plus',
-           tooltip: '基于此版本创建新版本',
-           // 创建新版本的特殊可见性条件
-           visible: this.checkNewVersionVisibility(row)
-         },
-         submitApproval: {
-           action: 'submit',
-           text: '提交审批',
-           icon: 'el-icon-s-promotion',
-           class: 'success',
-           tooltip: '提交以供审批'
-         },
-         approve: {
-           action: 'approve',
-           text: '批准',
-           icon: 'el-icon-check',
-           class: 'success',
-           tooltip: '批准此工艺路线'
-         },
-         reject: {
-           action: 'reject',
-           text: '驳回',
-           icon: 'el-icon-close',
-           class: 'danger',
-           tooltip: '驳回此工艺路线'
-         },
-         archive: {
-           action: 'archive',
-           text: '归档',
-           icon: 'el-icon-folder',
-           tooltip: '归档此工艺路线'
-         },
-         history: {
-           action: 'history',
-           text: '历史记录',
-           icon: 'el-icon-time',
-           tooltip: '查看变更和审批历史'
-         }
-       }
+      const actionConfigMap = {
+        view: {
+          action: 'view',
+          text: '查看',
+          icon: 'el-icon-view',
+          tooltip: '查看详情'
+        },
+        edit: {
+          action: 'edit',
+          text: '编辑',
+          icon: 'el-icon-edit',
+          tooltip: '编辑工艺路线'
+        },
+        delete: {
+          action: 'delete',
+          text: '删除',
+          icon: 'el-icon-delete',
+          class: 'danger',
+          tooltip: row.status === 'Draft' ? '删除此草稿' : '永久删除此记录'
+        },
+        newVersion: {
+          action: 'newVersion',
+          text: '创建新版本',
+          icon: 'el-icon-plus',
+          tooltip: '基于此版本创建新版本',
+          // 创建新版本的特殊可见性条件
+          visible: this.checkNewVersionVisibility(row)
+        },
+        submitApproval: {
+          action: 'submit',
+          text: '提交审批',
+          icon: 'el-icon-s-promotion',
+          class: 'success',
+          tooltip: '提交以供审批'
+        },
+        approve: {
+          action: 'approve',
+          text: '批准',
+          icon: 'el-icon-check',
+          class: 'success',
+          tooltip: '批准此工艺路线'
+        },
+        reject: {
+          action: 'reject',
+          text: '驳回',
+          icon: 'el-icon-close',
+          class: 'danger',
+          tooltip: '驳回此工艺路线'
+        },
+        archive: {
+          action: 'archive',
+          text: '归档',
+          icon: 'el-icon-folder',
+          tooltip: '归档此工艺路线'
+        },
+        history: {
+          action: 'history',
+          text: '历史记录',
+          icon: 'el-icon-time',
+          tooltip: '查看变更和审批历史'
+        }
+      }
 
-       // 根据可用操作生成按钮配置
-       const actions = availableActions
-         .map(actionKey => actionConfigMap[actionKey])
-         .filter(config => {
-           if (!config) return false
+      // 根据可用操作生成按钮配置
+      const actions = availableActions
+        .map(actionKey => actionConfigMap[actionKey])
+        .filter(config => {
+          if (!config) return false
 
-           // 检查自定义可见性条件
-           if (config.hasOwnProperty('visible') && !config.visible) {
-             return false
-           }
+          // 检查自定义可见性条件
+          if (config.hasOwnProperty('visible') && !config.visible) {
+            return false
+          }
 
-           return true
-         })
+          return true
+        })
 
-       return actions
-     },
+      return actions
+    },
 
-
-
-     /**
+    /**
       * 检查创建新版本按钮的可见性
       * @param {Object} row - 工艺路线数据行
       * @returns {boolean} 是否可见
       */
-     checkNewVersionVisibility(row) {
-       // 根据文档要求，仅当工艺路线状态为"生效 (Enabled)"时显示该按钮
-       // 对于"草稿 (Draft)"、"待审批 (InApproval)"、"历史/归档 (Archived)"状态必须隐藏按钮
-       if (!row || !row.status) {
-         return false
-       }
-       
-       return row.status === 'Enabled'
-     }
+    checkNewVersionVisibility(row) {
+      // 根据文档要求，仅当工艺路线状态为"生效 (Enabled)"时显示该按钮
+      // 对于"草稿 (Draft)"、"待审批 (InApproval)"、"历史/归档 (Archived)"状态必须隐藏按钮
+      if (!row || !row.status) {
+        return false
+      }
+
+      return row.status === 'Enabled'
+    }
   }
 }
 </script>

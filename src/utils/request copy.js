@@ -1,12 +1,12 @@
-import axios from 'axios';
-import { MessageBox, Message } from 'element-ui';
-import store from '@/store';
-import router from '@/router';
-import { getToken } from '@/utils/auth';
+import axios from 'axios'
+import { MessageBox, Message } from 'element-ui'
+import store from '@/store'
+import router from '@/router'
+import { getToken } from '@/utils/auth'
 
 // 防重复错误消息机制
-const errorMessageCache = new Set();
-const ERROR_MESSAGE_DURATION = 3000; // 3秒内相同错误消息不重复显示
+const errorMessageCache = new Set()
+const ERROR_MESSAGE_DURATION = 3000 // 3秒内相同错误消息不重复显示
 
 /**
  * 显示错误消息（防重复）
@@ -17,20 +17,20 @@ const ERROR_MESSAGE_DURATION = 3000; // 3秒内相同错误消息不重复显示
 function showErrorMessage(message, type = 'error', duration = 5000) {
   // 检查是否已经显示过相同的错误消息
   if (errorMessageCache.has(message)) {
-    return;
+    return
   }
 
-  errorMessageCache.add(message);
+  errorMessageCache.add(message)
   Message({
     message,
     type,
-    duration,
-  });
+    duration
+  })
 
   // 清除缓存
   setTimeout(() => {
-    errorMessageCache.delete(message);
-  }, ERROR_MESSAGE_DURATION);
+    errorMessageCache.delete(message)
+  }, ERROR_MESSAGE_DURATION)
 }
 
 /**
@@ -39,11 +39,11 @@ function showErrorMessage(message, type = 'error', duration = 5000) {
  */
 export class ApiError extends Error {
   constructor(code, message, status = 500, details = null) {
-    super(message);
-    this.code = code;
-    this.status = status;
-    this.details = details;
-    this.name = 'ApiError';
+    super(message)
+    this.code = code
+    this.status = status
+    this.details = details
+    this.name = 'ApiError'
   }
 }
 /**
@@ -53,8 +53,8 @@ export class ApiError extends Error {
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
   // withCredentials: true, // send cookies when cross-domain requests
-  timeout: 5000, // request timeout
-});
+  timeout: 5000 // request timeout
+})
 
 /**
  * 📤 请求拦截器 - 增强版
@@ -65,15 +65,15 @@ service.interceptors.request.use(
     // 🔐 添加认证token
     if (store.getters.token) {
       // 使用标准Authorization头（真实后端API）
-      config.headers.Authorization = `Bearer ${getToken()}`;
+      config.headers.Authorization = `Bearer ${getToken()}`
 
       // 保持向后兼容：继续使用X-Token头（用于可能的mock接口）
-      config.headers['X-Token'] = getToken();
+      config.headers['X-Token'] = getToken()
     }
 
     // 🛡️ 添加现代安全头
-    config.headers['X-Requested-With'] = 'XMLHttpRequest';
-    config.headers['Content-Type'] = config.headers['Content-Type'] || 'application/json';
+    config.headers['X-Requested-With'] = 'XMLHttpRequest'
+    config.headers['Content-Type'] = config.headers['Content-Type'] || 'application/json'
 
     // 🐛 开发环境调试日志
     if (process.env.NODE_ENV === 'development') {
@@ -81,17 +81,17 @@ service.interceptors.request.use(
         url: config.url,
         method: config.method,
         params: config.params,
-        data: config.data,
-      });
+        data: config.data
+      })
     }
 
-    return config;
+    return config
   },
   (error) => {
-    console.log('❌ Request Error:', error);
-    return Promise.reject(error);
+    console.log('❌ Request Error:', error)
+    return Promise.reject(error)
   }
-);
+)
 
 /**
  * 📥 响应拦截器 - 现代化版本
@@ -103,44 +103,44 @@ service.interceptors.response.use(
       console.log('📥 API Response:', {
         url: response.config.url,
         status: response.status,
-        data: response.data,
-      });
+        data: response.data
+      })
     }
-    const res = response.data;
-    return handleModernFormat(res, response.status);
+    const res = response.data
+    return handleModernFormat(res, response.status)
   },
   (error) => {
-    console.error('❌ Response Interceptor Error:', error.response || error);
+    console.error('❌ Response Interceptor Error:', error.response || error)
 
     if (error.response && error.response.data) {
-      const res = error.response.data;
+      const res = error.response.data
       if (res.success !== undefined && !res.success) {
-        return handleModernFormat(res, error.response.status);
+        return handleModernFormat(res, error.response.status)
       }
     }
 
     // 🌐 网络错误统一包装为ApiError实例
-    let errorCode = 'NETWORK_ERROR';
-    let errorMessage = '网络请求失败，请稍后重试';
-    let errorDetails = {
+    let errorCode = 'NETWORK_ERROR'
+    let errorMessage = '网络请求失败，请稍后重试'
+    const errorDetails = {
       originalError: error.code,
       url: error.config?.url,
-      method: error.config?.method,
-    };
+      method: error.config?.method
+    }
 
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      errorCode = 'NETWORK_TIMEOUT';
-      errorMessage = '请求超时，请检查网络连接';
+      errorCode = 'NETWORK_TIMEOUT'
+      errorMessage = '请求超时，请检查网络连接'
     } else if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
-      errorCode = 'NETWORK_CONNECTION_FAILED';
-      errorMessage = '网络连接失败，请检查网络设置';
+      errorCode = 'NETWORK_CONNECTION_FAILED'
+      errorMessage = '网络连接失败，请检查网络设置'
     } else if (error.message.includes('ERR_INTERNET_DISCONNECTED')) {
-      errorCode = 'NETWORK_DISCONNECTED';
-      errorMessage = '网络连接已断开，请检查网络连接';
+      errorCode = 'NETWORK_DISCONNECTED'
+      errorMessage = '网络连接已断开，请检查网络连接'
     }
 
     // 显示用户友好的错误消息
-    showErrorMessage(errorMessage);
+    showErrorMessage(errorMessage)
 
     // 统一返回 ApiError 实例
     return Promise.reject(new ApiError(
@@ -148,9 +148,9 @@ service.interceptors.response.use(
       errorMessage,
       error.response?.status || 0,
       errorDetails
-    ));
+    ))
   }
-);
+)
 
 /**
  * 🚀 现代格式响应处理函数
@@ -164,17 +164,17 @@ function handleModernFormat(res, status) {
   if (!res.success) {
     // 🔐 统一处理所有认证错误
     if (isAuthError(res.error?.code)) {
-      handleAuthError(res.error?.message || 'Authentication Error');
+      handleAuthError(res.error?.message || 'Authentication Error')
     }
 
     // 📋 转换为标准ApiError对象，提供丰富的错误信息
     return Promise.reject(
       new ApiError(res.error?.code || 'UNKNOWN_ERROR', res.error?.message || '未知错误', status, res.error?.details)
-    );
+    )
   }
 
   // ✅ 成功响应，返回新格式数据
-  return res;
+  return res
 }
 
 /**
@@ -186,7 +186,7 @@ function handleModernFormat(res, status) {
  * @returns {boolean} 是否为认证失效错误
  */
 function isAuthError(errorCode) {
-  if (!errorCode) return false;
+  if (!errorCode) return false
 
   // 1. 明确的认证失效错误码（需要重新登录）
   const authFailureCodes = [
@@ -199,13 +199,13 @@ function isAuthError(errorCode) {
     'AUTH_012', // REFRESH_TOKEN_NOT_FOUND - 刷新令牌不存在
     'AUTH_013', // REFRESH_TOKEN_INVALID - 刷新令牌无效
     'AUTH_015', // RESET_PASSWORD_TOKEN_INVALID - 重置密码令牌无效
-    'AUTH_017', // VERIFY_EMAIL_TOKEN_INVALID - 邮箱验证令牌无效
-  ];
+    'AUTH_017' // VERIFY_EMAIL_TOKEN_INVALID - 邮箱验证令牌无效
+  ]
 
   // 2. 处理通用认证失效错误码
-  const commonAuthFailureCodes = ['UNAUTHORIZED', 'TOKEN_EXPIRED', 'INVALID_TOKEN', 'FORBIDDEN'];
+  const commonAuthFailureCodes = ['UNAUTHORIZED', 'TOKEN_EXPIRED', 'INVALID_TOKEN', 'FORBIDDEN']
 
-  return authFailureCodes.includes(errorCode) || commonAuthFailureCodes.includes(errorCode);
+  return authFailureCodes.includes(errorCode) || commonAuthFailureCodes.includes(errorCode)
 }
 
 /**
@@ -219,36 +219,36 @@ function handleAuthError(message) {
   Message({
     message,
     type: 'error',
-    duration: 5 * 1000,
-  });
+    duration: 5 * 1000
+  })
 
   // 弹出确认对话框，询问是否重新登录
   MessageBox.confirm('您的登录已过期，请重新登录以继续使用', '登录过期提示', {
     confirmButtonText: '立即登录',
     cancelButtonText: '稍后再说',
-    type: 'warning',
+    type: 'warning'
   })
     .then(() => {
       // 用户确认重新登录 - 使用路由跳转而非页面刷新
       store.dispatch('user/resetToken').then(() => {
         // 记住当前页面，登录成功后可以跳转回来
-        const currentPath = router.currentRoute.fullPath;
+        const currentPath = router.currentRoute.fullPath
         router.push({
           path: '/login',
           query: currentPath !== '/login' ? { redirect: currentPath } : {}
-        });
-      });
+        })
+      })
     })
     .catch(() => {
       // 用户取消，继续停留在当前页面
-      console.log('用户取消重新登录');
-    });
+      console.log('用户取消重新登录')
+    })
 }
 
 /**
  * 📊 导出axios实例和工具类
  */
-export default service;
+export default service
 
 /**
  * 📖 使用说明和最佳实践
@@ -286,14 +286,14 @@ export default service;
  *     case 'AUTH_011': // 密码错误
  *       this.$message.error('密码不正确')
  *       break
- *     
+ *
  *     // 认证失效错误（会自动弹出重新登录弹窗，通常无需额外处理）
  *     case 'AUTH_001': // 令牌过期
  *     case 'AUTH_002': // 令牌无效
  *     case 'AUTH_003': // 缺少令牌
  *       // 这些错误会自动触发重新登录弹窗，组件中通常不需要特殊处理
  *       break
- *     
+ *
  *     // 网络错误码（已自动显示消息）
  *     case 'NETWORK_TIMEOUT':
  *       // 可以做额外处理，如重试逻辑
@@ -303,7 +303,7 @@ export default service;
  *       // 可以引导用户检查网络
  *       this.showNetworkTroubleshooting()
  *       break
- *     
+ *
  *     default:
  *       // 网络错误已显示消息，业务错误显示通用消息
  *       if (!error.code.startsWith('NETWORK_')) {

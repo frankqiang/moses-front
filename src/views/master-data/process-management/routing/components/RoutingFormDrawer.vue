@@ -10,7 +10,7 @@
     <el-row :gutter="20" class="routing-form-container">
       <!-- Left Panel -->
       <el-col :span="18">
-        <!-- 
+        <!--
           启用sync-changes确保基础表单数据与步骤编辑操作保持同步
           解决在添加、移动、删除工序步骤时基础信息被意外清空的问题
           @since 2024-12-19 - 修复数据一致性bug
@@ -41,7 +41,7 @@
                       :disabled="formMode !== 'create'"
                       @blur="debouncedHandleCodeBlur"
                     />
-                    <i v-if="checkingCode" class="el-icon-loading input-suffix"></i>
+                    <i v-if="checkingCode" class="el-icon-loading input-suffix" />
                     <div class="field-hint">路线代码必须唯一，建议使用大写字母、数字和下划线</div>
                   </el-form-item>
                 </el-col>
@@ -63,8 +63,7 @@
                 </el-col>
               </el-row>
               <el-row :gutter="20">
-                
-                
+
                 <el-col :span="8">
                   <el-form-item label="路线类型" prop="type">
                     <el-select
@@ -85,35 +84,35 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                   <el-form-item label="适用产品" prop="applicableProducts">
-                     <el-select
-                       v-model="form.applicableProducts"
-                       multiple
-                       filterable
-                       remote
-                       reserve-keyword
-                       collapse-tags
-                       placeholder="请输入产品代码或名称进行搜索"
-                       style="width: 100%;"
-                       :disabled="formMode === 'view'"
-                       :remote-method="debouncedRemoteSearchProducts"
-                       :loading="productLoading"
-                       no-data-text="请输入关键词搜索产品"
-                       loading-text="搜索中..."
-                     >
-                       <el-option
-                         v-for="item in productOptions"
-                         :key="item.id"
-                         :label="item.code + (item.name ? ' ' + item.name : '') + (item.lifecycleStatus === 'discontinued' ? ' (已停产)' : '')"
-                         :value="item.code"
-                         :disabled="item.lifecycleStatus === 'discontinued'"
-                         :class="{ 'discontinued-product': item.lifecycleStatus === 'discontinued' }"
-                       />
-                     </el-select>
-                     <div class="field-hint">输入产品代码或名称进行搜索，支持模糊匹配</div>
-                   </el-form-item>
-                 </el-col>
-                 <el-col :span="8">
+                  <el-form-item label="适用产品" prop="applicableProducts">
+                    <el-select
+                      v-model="form.applicableProducts"
+                      multiple
+                      filterable
+                      remote
+                      reserve-keyword
+                      collapse-tags
+                      placeholder="请输入产品代码或名称进行搜索"
+                      style="width: 100%;"
+                      :disabled="formMode === 'view'"
+                      :remote-method="debouncedRemoteSearchProducts"
+                      :loading="productLoading"
+                      no-data-text="请输入关键词搜索产品"
+                      loading-text="搜索中..."
+                    >
+                      <el-option
+                        v-for="item in productOptions"
+                        :key="item.id"
+                        :label="item.code + (item.name ? ' ' + item.name : '') + (item.lifecycleStatus === 'discontinued' ? ' (已停产)' : '')"
+                        :value="item.code"
+                        :disabled="item.lifecycleStatus === 'discontinued'"
+                        :class="{ 'discontinued-product': item.lifecycleStatus === 'discontinued' }"
+                      />
+                    </el-select>
+                    <div class="field-hint">输入产品代码或名称进行搜索，支持模糊匹配</div>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
                   <el-form-item label="状态" prop="status">
                     <StatusTag
                       v-if="form.status"
@@ -125,7 +124,7 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-           
+
             </div>
           </template>
         </enhanced-form>
@@ -147,16 +146,16 @@
       <!-- Right Panel -->
       <el-col :span="6">
         <div class="form-section step-details-panel">
-           <step-details-form
-             :selected-step="selectedStep"
-             :is-view-mode="mode === 'view'"
-             :all-steps="formData.steps" 
-             @update-step="handleUpdateStepDetails"
-           />
+          <step-details-form
+            :selected-step="selectedStep"
+            :is-view-mode="mode === 'view'"
+            :all-steps="formData.steps"
+            @update-step="handleUpdateStepDetails"
+          />
         </div>
       </el-col>
     </el-row>
-    
+
     <template #footer>
       <el-button @click="handleCancel">{{ mode === 'view' ? '关闭' : '取消' }}</el-button>
       <el-button v-if="mode !== 'view'" @click="handleReset">重置</el-button>
@@ -276,10 +275,6 @@ export default {
       return ROUTING_STATUS_CONFIG.typeMap
     }
   },
-  created() {
-    this.debouncedHandleCodeBlur = debounce(this.handleCodeBlur, 500); // 500ms 防抖
-    this.debouncedRemoteSearchProducts = debounce(this.remoteSearchProducts, 300); // 300ms 防抖搜索
-  },
   watch: {
     'formData.type': {
       handler(newType, oldType) {
@@ -290,6 +285,10 @@ export default {
       immediate: false
     }
   },
+  created() {
+    this.debouncedHandleCodeBlur = debounce(this.handleCodeBlur, 500) // 500ms 防抖
+    this.debouncedRemoteSearchProducts = debounce(this.remoteSearchProducts, 300) // 300ms 防抖搜索
+  },
   methods: {
     async handleDrawerOpen() {
       // 每次打开弹窗都重置表单数据，自动清除校验提示（最佳实践）
@@ -299,7 +298,7 @@ export default {
       // 重置产品选项，使用远程搜索模式
       this.productOptions = []
       this.productLoading = false
-      
+
       // 如果是编辑模式且已有选中的产品，需要加载这些产品的详细信息
       if (this.mode !== 'create' && this.formData.applicableProducts && this.formData.applicableProducts.length > 0) {
         await this.loadSelectedProducts()
@@ -324,7 +323,7 @@ export default {
         }
       }
       // 确保现有数据也包含默认的 flowLogic 和 timeStandards
-      const clonedData = data ? cloneDeep(data) : {};
+      const clonedData = data ? cloneDeep(data) : {}
       clonedData.steps = (clonedData.steps || []).map(step => ({
         ...step,
         flowLogic: step.flowLogic || { nextStep: 0, onSuccessStep: 0, onFailureStep: 0 },
@@ -332,34 +331,34 @@ export default {
           setup: step.timeStandards?.setup || { type: 'Fixed', value: 0, unit: 'minute', matrixId: null },
           processing: step.timeStandards?.processing || { type: 'Fixed', value: 0, unit: '分钟/吨', formula: null }
         }
-      }));
-      return clonedData;
+      }))
+      return clonedData
     },
-    
+
     // --- Steps Management ---
     handleOpenOperationSelector() {
       this.operationSelectorVisible = true
     },
-    
+
     handleAddOperations(selectedOperations) {
       if (!selectedOperations || selectedOperations.length === 0) {
-        return;
+        return
       }
 
-      let maxStepNumber = this.formData.steps.reduce((max, step) => Math.max(max, step.stepNumber), 0);
-      const addedOperationsCount = selectedOperations.length;
-      let actualAddedCount = 0;
-      const duplicateOperations = []; // 步骤1: 初始化空数组用于收集重复工序
+      let maxStepNumber = this.formData.steps.reduce((max, step) => Math.max(max, step.stepNumber), 0)
+      const addedOperationsCount = selectedOperations.length
+      let actualAddedCount = 0
+      const duplicateOperations = [] // 步骤1: 初始化空数组用于收集重复工序
 
       selectedOperations.forEach(operation => {
         // 检查是否已存在相同的基础工序
-        const isDuplicate = this.formData.steps.some(step => step.operationId === operation.id);
+        const isDuplicate = this.formData.steps.some(step => step.operationId === operation.id)
 
         if (isDuplicate) {
           // 步骤2: 不立即弹出警告，而是添加到重复工序数组
-          duplicateOperations.push(operation);
+          duplicateOperations.push(operation)
         } else {
-          maxStepNumber += 10; // 步骤号递增10
+          maxStepNumber += 10 // 步骤号递增10
           const newStep = {
             stepId: uuidv4(), // 生成唯一UUID
             stepNumber: maxStepNumber,
@@ -376,11 +375,11 @@ export default {
               setup: { type: 'Fixed', value: 0, unit: 'minute', matrixId: null },
               processing: { type: 'Fixed', value: 0, unit: '分钟/吨', formula: null }
             }
-          };
-          this.formData.steps.push(newStep);
-          actualAddedCount++;
+          }
+          this.formData.steps.push(newStep)
+          actualAddedCount++
         }
-      });
+      })
 
       // 步骤1: 删除所有原有的 this.$message.warning(), this.$message.success() 和 this.$message.info() 调用。
       // 原有警告消息处理代码已在上次修改中替换为收集duplicateOperations数组
@@ -394,42 +393,42 @@ export default {
       // 步骤2: 新增一个统一的消息生成和显示逻辑
       if (actualAddedCount > 0 && duplicateOperations.length > 0) {
         // 既有成功添加的，也有重复的
-        const duplicateNames = duplicateOperations.map(op => `${op.name} (${op.code})`).join('、');
-        const message = `成功添加 ${actualAddedCount} 个工序步骤，但以下工序已存在，无法重复添加：${duplicateNames}。`;
-        this.$message.warning(message);
+        const duplicateNames = duplicateOperations.map(op => `${op.name} (${op.code})`).join('、')
+        const message = `成功添加 ${actualAddedCount} 个工序步骤，但以下工序已存在，无法重复添加：${duplicateNames}。`
+        this.$message.warning(message)
       } else if (actualAddedCount > 0 && duplicateOperations.length === 0) {
         // 只有成功添加的
-        this.$message.success(`成功添加 ${actualAddedCount} 个工序步骤。`);
+        this.$message.success(`成功添加 ${actualAddedCount} 个工序步骤。`)
       } else if (actualAddedCount === 0 && duplicateOperations.length > 0) {
         // 没有成功添加，但有重复的 (所有选择的都是重复的)
-        let warningMessage = '';
+        let warningMessage = ''
         if (duplicateOperations.length <= 3) {
-          const duplicateNames = duplicateOperations.map(op => `${op.name} (${op.code})`).join('、');
-          warningMessage = `以下工序已存在于当前工艺路线中，无法重复添加：${duplicateNames}。`;
+          const duplicateNames = duplicateOperations.map(op => `${op.name} (${op.code})`).join('、')
+          warningMessage = `以下工序已存在于当前工艺路线中，无法重复添加：${duplicateNames}。`
         } else {
-          warningMessage = `所有选择的工序（共 ${duplicateOperations.length} 项）均已存在于当前工艺路线中，无法重复添加。`;
+          warningMessage = `所有选择的工序（共 ${duplicateOperations.length} 项）均已存在于当前工艺路线中，无法重复添加。`
         }
-        this.$message.warning(warningMessage);
+        this.$message.warning(warningMessage)
       } else if (actualAddedCount === 0 && duplicateOperations.length === 0 && addedOperationsCount > 0) {
         // 理论上不会出现，但作为兜底
-         this.$message.info(`没有新的工序步骤被添加。`);
+        this.$message.info(`没有新的工序步骤被添加。`)
       }
 
       // 步骤3: 保持 selectedStep 更新和 setCurrentRow 的逻辑不变
       if (this.formData.steps.length > 0) {
         this.$nextTick(() => {
-          this.selectedStep = this.formData.steps[0];
+          this.selectedStep = this.formData.steps[0]
           if (this.$refs.stepsEditor) {
-            this.$refs.stepsEditor.setCurrentRow(this.selectedStep);
+            this.$refs.stepsEditor.setCurrentRow(this.selectedStep)
           }
-        });
+        })
       }
     },
-    
+
     handleSelectStep(step) {
       this.selectedStep = step
     },
-    
+
     handleMoveStepUp(index) {
       if (index === 0) return
       this.confirmFlowLogicReset('移动工序步骤', () => {
@@ -440,7 +439,7 @@ export default {
         this.resetFlowLogic() // 重置流程逻辑但不显示提示
       })
     },
-    
+
     handleMoveStepDown(index) {
       if (index === this.formData.steps.length - 1) return
       this.confirmFlowLogicReset('移动工序步骤', () => {
@@ -451,7 +450,7 @@ export default {
         this.resetFlowLogic() // 重置流程逻辑但不显示提示
       })
     },
-    
+
     handleDeleteStep(index) {
       this.confirmFlowLogicReset('删除工序步骤', () => {
         const deletedStep = this.formData.steps[index]
@@ -467,7 +466,7 @@ export default {
         })
       })
     },
-    
+
     recalculateStepNumbers() {
       this.formData.steps.forEach((step, index) => {
         step.stepNumber = (index + 1) * 10
@@ -484,7 +483,7 @@ export default {
     async handleSubmit(andContinue = false) {
       try {
         await this.$refs.routingForm.validate()
-        
+
         if (!this.formData.steps || this.formData.steps.length === 0) {
           this.$message.warning('请至少添加一个工序步骤')
           return
@@ -492,7 +491,7 @@ export default {
         if (!this.formData.applicableProducts || this.formData.applicableProducts.length === 0) {
           return
         }
-    
+
         // 验证路线类型特定规则
         try {
           this.validateTypeSpecificRules()
@@ -500,7 +499,7 @@ export default {
           this.$message.warning(validationError.message)
           return
         }
-    
+
         // 校验所选产品的有效性
         if (this.formData.applicableProducts && this.formData.applicableProducts.length > 0) {
           const validationResult = await this.validateSelectedProducts()
@@ -509,15 +508,15 @@ export default {
             return
           }
         }
-    
+
         this.loading = true
         const apiCall = this.mode === 'create' ? createRouting : updateRouting
         const response = await apiCall(this.formData)
-        
+
         this.$message.success(response.message || '操作成功')
-        
+
         this.$emit('success', { mode: this.mode, data: this.formData, continueEdit: andContinue })
-        
+
         if (andContinue) {
           // 保存并继续 - 重置表单但不关闭抽屉
           this.handleReset()
@@ -526,11 +525,11 @@ export default {
           this.drawerVisible = false
         }
       } catch (error) {
-        const errorMessage = error.response?.data?.message || error.message || '操作失败，请稍后重试';
-        this.$message.error(errorMessage);
-        return; // 确保API失败时不继续执行
+        const errorMessage = error.response?.data?.message || error.message || '操作失败，请稍后重试'
+        this.$message.error(errorMessage)
+        return // 确保API失败时不继续执行
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
     handleCancel() {
@@ -584,7 +583,7 @@ export default {
         type: 'warning'
       })
     },
-    
+
     /**
      * 远程搜索产品
      * @param {string} query - 搜索关键词
@@ -609,7 +608,7 @@ export default {
         this.productOptions = []
       }
     },
-    
+
     /**
      * 加载已选中的产品详细信息（用于编辑模式）
      * 检查产品状态，识别无效产品并给出提示
@@ -618,22 +617,22 @@ export default {
       if (!this.formData.applicableProducts || this.formData.applicableProducts.length === 0) {
         return
       }
-      
+
       this.productLoading = true
       try {
         // 加载所有已选产品（包括无效的），用于状态检查
         const searchQuery = this.formData.applicableProducts.join(',')
-        const res = await getAllProductList({ 
-          search: searchQuery, 
+        const res = await getAllProductList({
+          search: searchQuery,
           limit: 100,
           includeInactive: true // 包含无效产品以便检查状态
         })
-        
+
         const allProducts = res.data?.items || []
         const validProducts = []
         const invalidProducts = []
         const missingProducts = []
-        
+
         // 分类产品状态
         this.formData.applicableProducts.forEach(code => {
           const product = allProducts.find(p => p.code === code)
@@ -647,21 +646,20 @@ export default {
             missingProducts.push(code)
           }
         })
-        
+
         // 设置产品选项（包含所有产品用于显示）
         this.productOptions = allProducts
-        
+
         // 提示用户无效或缺失的产品
         if (invalidProducts.length > 0) {
           const invalidNames = invalidProducts.map(p => `${p.code}(${p.name})`).join('、')
           this.$message.warning(`以下产品已停产，建议移除：${invalidNames}`)
         }
-        
+
         if (missingProducts.length > 0) {
           const missingNames = missingProducts.join('、')
           this.$message.error(`以下产品代码不存在：${missingNames}`)
         }
-        
       } catch (error) {
         console.error('加载已选产品失败:', error)
         this.productOptions = []
@@ -677,16 +675,16 @@ export default {
     async validateSelectedProducts() {
       try {
         const searchQuery = this.formData.applicableProducts.join(',')
-        const res = await getAllProductList({ 
-          search: searchQuery, 
+        const res = await getAllProductList({
+          search: searchQuery,
           limit: 100,
           includeInactive: true
         })
-        
+
         const allProducts = res.data?.items || []
         const invalidProducts = []
         const missingProducts = []
-        
+
         this.formData.applicableProducts.forEach(code => {
           const product = allProducts.find(p => p.code === code)
           if (product) {
@@ -697,14 +695,14 @@ export default {
             missingProducts.push(code)
           }
         })
-        
+
         if (missingProducts.length > 0) {
           return {
             isValid: false,
             message: `以下产品代码不存在：${missingProducts.join('、')}`
           }
         }
-        
+
         if (invalidProducts.length > 0) {
           const invalidNames = invalidProducts.map(p => `${p.code}(${p.name})`).join('、')
           return {
@@ -712,9 +710,8 @@ export default {
             message: `以下产品已停产，无法保存：${invalidNames}`
           }
         }
-        
+
         return { isValid: true, message: '' }
-        
       } catch (error) {
         console.error('校验产品有效性失败:', error)
         return {
@@ -725,37 +722,37 @@ export default {
     },
     async handleCodeBlur() {
       if (this.mode === 'create') { // 仅在创建模式下进行唯一性校验
-        this.$refs.routingForm.$refs.form.validateField('code'); // 触发表单项的校验
+        this.$refs.routingForm.$refs.form.validateField('code') // 触发表单项的校验
       }
     },
 
     async validateRoutingCodeUnique(rule, value, callback) {
       if (!value) {
-        this.checkingCode = false; // 如果值为空，也需要重置加载状态
-        return callback(); // 如果为空，由required规则处理
+        this.checkingCode = false // 如果值为空，也需要重置加载状态
+        return callback() // 如果为空，由required规则处理
       }
       if (this.mode !== 'create') {
-        this.checkingCode = false; // 非创建模式，重置加载状态
-        return callback(); // 非创建模式不进行唯一性校验
+        this.checkingCode = false // 非创建模式，重置加载状态
+        return callback() // 非创建模式不进行唯一性校验
       }
 
-      this.checkingCode = true; // 开始校验，显示加载状态
+      this.checkingCode = true // 开始校验，显示加载状态
       try {
-        const res = await checkRoutingCodeUnique(value);
+        const res = await checkRoutingCodeUnique(value)
         if (!res.data.unique) {
           // 从 API 响应中获取错误信息，如果没有则使用默认信息
-          const errorMessage = res.message || res.data?.message || '该路线代码已被使用';
-          callback(new Error(errorMessage));
+          const errorMessage = res.message || res.data?.message || '该路线代码已被使用'
+          callback(new Error(errorMessage))
         } else {
-          callback();
+          callback()
         }
       } catch (error) {
         // API 校验失败（例如网络错误），从 API 响应中获取错误信息
-        console.error('路线代码唯一性校验失败:', error);
-        const errorMessage = error.response?.data?.message || error.message || '路线代码校验失败，请稍后重试';
-        callback(new Error(errorMessage));
+        console.error('路线代码唯一性校验失败:', error)
+        const errorMessage = error.response?.data?.message || error.message || '路线代码校验失败，请稍后重试'
+        callback(new Error(errorMessage))
       } finally {
-        this.checkingCode = false; // 校验结束，隐藏加载状态
+        this.checkingCode = false // 校验结束，隐藏加载状态
       }
     },
 
@@ -809,7 +806,7 @@ export default {
       }
       this.previousType = newType
       this.selectedStep = null
-      
+
       // 清除表单验证
       this.$nextTick(() => {
         if (this.$refs.routingForm && this.$refs.routingForm.$refs.form) {
@@ -829,17 +826,17 @@ export default {
     validateTypeSpecificRules() {
       const typeRule = getRoutingTypeRule(this.formData.type)
       const steps = this.formData.steps || []
-      
+
       // 检查最小步骤数
       if (steps.length < typeRule.stepConstraints.minSteps) {
         throw new Error(`${typeRule.name}至少需要${typeRule.stepConstraints.minSteps}个工序步骤`)
       }
-      
+
       // 检查最大步骤数
       if (typeRule.stepConstraints.maxSteps && steps.length > typeRule.stepConstraints.maxSteps) {
         throw new Error(`${typeRule.name}最多允许${typeRule.stepConstraints.maxSteps}个工序步骤`)
       }
-      
+
       // 检查必需的工序类型
       if (typeRule.stepConstraints.requiredOperationTypes.length > 0) {
         const stepOperationTypes = steps.map(step => step.operationType)
@@ -850,7 +847,7 @@ export default {
           throw new Error(`${typeRule.name}必须包含以下工序类型：${missingTypes.join('、')}`)
         }
       }
-      
+
       // 检查返工路线的特殊规则
       if (this.formData.type === 'Rework' && typeRule.validationRules.firstStepMustBeInspection) {
         if (steps.length > 0 && steps[0].operationType !== 'Inspection') {

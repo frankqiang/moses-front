@@ -11,14 +11,31 @@
     <user-search :loading="listLoading" @search="handleSearch" @reset="handleReset" />
 
     <!-- 用户列表表格 -->
-    <user-table ref="userTable" :user-list="userList" :loading="listLoading" :pagination="pagination"
-      :export-api="exportUserList" :export-params="exportParams"
-      :export-filename="'用户列表_' + new Date().toISOString().slice(0, 10)" @selection-change="handleSelectionChange"
-      @pagination-change="handlePaginationChange" @view="handleView" @edit="handleEdit" @delete="handleDelete"
-      @enable="handleEnable" @disable="handleDisable" @lock="handleLock" @reset-password="handleResetPassword"
-      @assign-roles="handleAssignRoles" @sort-change="handleSortChange" @refresh="handleRefresh"
-      @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable"
-      @batch-lock="handleBatchLock">
+    <user-table
+      ref="userTable"
+      :user-list="userList"
+      :loading="listLoading"
+      :pagination="pagination"
+      :export-api="exportUserList"
+      :export-params="exportParams"
+      :export-filename="'用户列表_' + new Date().toISOString().slice(0, 10)"
+      @selection-change="handleSelectionChange"
+      @pagination-change="handlePaginationChange"
+      @view="handleView"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @enable="handleEnable"
+      @disable="handleDisable"
+      @lock="handleLock"
+      @reset-password="handleResetPassword"
+      @assign-roles="handleAssignRoles"
+      @sort-change="handleSortChange"
+      @refresh="handleRefresh"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @batch-lock="handleBatchLock"
+    >
       <template #toolbar-left>
         <el-button type="primary" icon="el-icon-plus" size="small" @click="handleCreate">
           新增用户
@@ -27,16 +44,29 @@
     </user-table>
 
     <!-- 用户表单抽屉 -->
-    <user-form-drawer ref="userFormDrawer" :visible.sync="drawerVisible" :mode="drawerMode" :user-data="currentUser"
-      @success="handleFormSuccess" @close="handleDrawerClose" />
+    <user-form-drawer
+      ref="userFormDrawer"
+      :visible.sync="drawerVisible"
+      :mode="drawerMode"
+      :user-data="currentUser"
+      @success="handleFormSuccess"
+      @close="handleDrawerClose"
+    />
 
     <!-- 管理员重置密码对话框 -->
-    <reset-password-dialog :visible.sync="resetPasswordDialogVisible" :user-data="currentResetUser"
-      @success="handleResetPasswordSuccess" @close="handleResetPasswordClose" />
+    <reset-password-dialog
+      :visible.sync="resetPasswordDialogVisible"
+      :user-data="currentResetUser"
+      @success="handleResetPasswordSuccess"
+      @close="handleResetPasswordClose"
+    />
 
     <!-- 角色分配对话框 -->
-    <role-assignment-dialog :visible.sync="roleAssignmentDialogVisible" :user-info="currentAssignUser"
-      @role-updated="handleRoleUpdated" />
+    <role-assignment-dialog
+      :visible.sync="roleAssignmentDialogVisible"
+      :user-info="currentAssignUser"
+      @role-updated="handleRoleUpdated"
+    />
 
   </div>
 </template>
@@ -146,7 +176,6 @@ export default {
       }
       return titleMap[this.drawerMode] || '用户信息'
     },
-
 
     /**
      * 导出参数 - 移除分页参数，保留筛选条件
@@ -416,7 +445,7 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(async () => {
+      }).then(async() => {
         try {
           // TODO: 调用删除API
           // await deleteUser(row.id)
@@ -555,7 +584,7 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(async () => {
+      }).then(async() => {
         try {
           // eslint-disable-next-line no-unused-vars
           const userIds = this.selectedUsers.map(user => user.id)
@@ -631,7 +660,6 @@ export default {
         }
       })
     },
-
 
     /**
      * 批量更新用户状态
@@ -769,7 +797,6 @@ export default {
       // this.fetchUserList()
       this.$message.success(`用户 "${this.currentAssignUser.name}" 的角色已更新`)
     },
-
 
     /**
      * 导出用户列表 - 将导入的API函数暴露给模板

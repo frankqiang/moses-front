@@ -33,11 +33,11 @@ export default {
   color: #666;
   font-size: 14px;
   line-height: 1.5;
-  
+
   p {
     margin: 0;
     padding: 0;
-    
+
     &:first-child {
       margin-bottom: 5px;
     }

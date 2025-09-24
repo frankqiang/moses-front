@@ -27,25 +27,25 @@
           </div>
           <el-dropdown-item divided>
             <router-link to="/" class="dropdown-link">
-              <i class="el-icon-s-home"></i>
+              <i class="el-icon-s-home" />
               首页
             </router-link>
           </el-dropdown-item>
           <el-dropdown-item>
             <router-link to="/profile" class="dropdown-link">
-              <i class="el-icon-user"></i>
+              <i class="el-icon-user" />
               个人中心
             </router-link>
           </el-dropdown-item>
           <el-dropdown-item>
             <router-link to="/settings" class="dropdown-link">
-              <i class="el-icon-setting"></i>
+              <i class="el-icon-setting" />
               系统设置
             </router-link>
           </el-dropdown-item>
           <el-dropdown-item divided @click.native="logout">
             <span class="dropdown-link logout-link">
-              <i class="el-icon-switch-button"></i>
+              <i class="el-icon-switch-button" />
               退出登录
             </span>
           </el-dropdown-item>

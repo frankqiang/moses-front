@@ -103,15 +103,15 @@ class TableConfigStore {
       'vue_admin_table_columns_',
       'table_columns_'
     ]
-    
+
     // 同时检查旧的集中存储键
     const oldStorageKeys = [
       'vue_admin_table_configs',
       'vue_admin_template_table_configs'
     ]
-    
+
     let migrated = false
-    
+
     // 迁移旧的集中存储
     oldStorageKeys.forEach(oldKey => {
       try {
@@ -128,7 +128,7 @@ class TableConfigStore {
         localStorage.removeItem(oldKey)
       }
     })
-    
+
     // 迁移旧的独立键
     oldKeys.forEach(prefix => {
       for (let i = 0; i < localStorage.length; i++) {
@@ -139,14 +139,14 @@ class TableConfigStore {
             if (value) {
               const tableId = key.replace(prefix, '')
               const config = JSON.parse(value)
-              
+
               // 将旧配置迁移到新存储中
               this.store.configs[tableId] = {
                 columns: config,
                 updatedAt: Date.now(),
                 accessedAt: Date.now()
               }
-              
+
               // 删除旧键
               localStorage.removeItem(key)
               migrated = true
@@ -159,7 +159,7 @@ class TableConfigStore {
         }
       }
     })
-    
+
     if (migrated) {
       console.log('表格配置迁移完成')
     }

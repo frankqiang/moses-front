@@ -30,13 +30,13 @@
       :status-field="'status'"
       :enabled-value="'Enabled'"
       :disabled-value="'Disabled'"
+      :refresh-feedback-mode="'all'"
       @refresh="handleRefresh"
       @column-change="handleColumnChange"
       @batch-delete="handleBatchDelete"
       @batch-enable="handleBatchEnable"
       @batch-disable="handleBatchDisable"
       @export-success="handleExportSuccess"
-      :refresh-feedback-mode="'all'"
     >
       <template #toolbar-left>
         <ActionButtons
@@ -561,4 +561,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

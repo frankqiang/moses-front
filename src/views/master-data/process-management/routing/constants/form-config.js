@@ -21,7 +21,7 @@ export const SEARCH_FORM_CONFIG = [
     multiple: true,
     options: ROUTING_STATUS_OPTIONS
   },
-    {
+  {
     type: 'select',
     prop: 'type',
     label: '路线类型',
@@ -30,4 +30,4 @@ export const SEARCH_FORM_CONFIG = [
     multiple: true,
     options: ROUTING_TYPE_OPTIONS
   }
-] 
+]

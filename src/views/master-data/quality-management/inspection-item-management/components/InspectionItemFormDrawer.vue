@@ -20,7 +20,7 @@
       <!-- 基本信息 -->
       <div class="form-section">
         <div class="section-title">基本信息</div>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="检验项目编码" prop="code">
@@ -144,8 +144,8 @@
       <!-- 检验标准 -->
       <div class="form-section">
         <div class="section-title">检验标准</div>
-        
-        <el-row :gutter="20" v-if="showStandardFields">
+
+        <el-row v-if="showStandardFields" :gutter="20">
           <el-col :span="12">
             <el-form-item label="标准值" prop="standardValue">
               <el-input
@@ -165,7 +165,7 @@
           </el-col>
         </el-row>
 
-        <el-row :gutter="20" v-if="showRangeFields">
+        <el-row v-if="showRangeFields" :gutter="20">
           <el-col :span="12">
             <el-form-item label="最小值" prop="minValue">
               <el-input
@@ -203,7 +203,7 @@
       <!-- 其他信息 -->
       <div class="form-section">
         <div class="section-title">其他信息</div>
-        
+
         <el-row>
           <el-col :span="24">
             <el-form-item label="描述" prop="description">
@@ -403,7 +403,7 @@ export default {
           ...this.inspectionItemData
         }
       }
-      
+
       // 清除表单验证
       this.$nextTick(() => {
         if (this.$refs.inspectionItemForm) {
@@ -480,7 +480,7 @@ export default {
 
         // 准备提交数据
         const submitData = { ...this.formData }
-        
+
         // 根据数据类型处理特殊字段
         if (this.formData.dataType === 'Enum' && this.formData.enumOptions) {
           // 将枚举选项转换为数组
@@ -523,7 +523,7 @@ export default {
 <style lang="scss" scoped>
 .form-section {
   margin-bottom: 30px;
-  
+
   .section-title {
     font-size: 16px;
     font-weight: 600;

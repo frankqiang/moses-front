@@ -75,7 +75,7 @@ export default {
           params[key] = formData[key]
         }
       })
-      
+
       this.$emit('search', params)
     },
 
@@ -86,7 +86,7 @@ export default {
     handleReset() {
       // 重置表单数据到初始状态
       this.formModel = { ...INITIAL_FORM_DATA }
-      
+
       // 触发父组件的重置事件
       this.$emit('reset')
     },

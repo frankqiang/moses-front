@@ -6,7 +6,7 @@
 <template>
   <div class="register-navigation">
     <div class="nav-tabs">
-      <div 
+      <div
         class="nav-tab"
         :class="{ active: currentView === 'apply' }"
         @click="handleTabClick('apply')"
@@ -14,7 +14,7 @@
         <svg-icon icon-class="edit" class="tab-icon" />
         <span class="tab-text">注册申请</span>
       </div>
-      <div 
+      <div
         class="nav-tab"
         :class="{ active: currentView === 'status' }"
         @click="handleTabClick('status')"
@@ -73,17 +73,17 @@ export default {
   transition: all 0.3s ease;
   border-bottom: 3px solid transparent;
   color: #6c757d;
-  
+
   &:hover {
     background: #e9ecef;
     color: #495057;
   }
-  
+
   &.active {
     color: #667eea;
     border-bottom-color: #667eea;
     background: white;
-    
+
     .tab-icon {
       color: #667eea;
     }
@@ -105,18 +105,18 @@ export default {
   .register-navigation {
     padding: 0 20px;
   }
-  
+
   .nav-tab {
     padding: 15px 20px;
     flex-direction: column;
   }
-  
+
   .tab-icon {
     margin-right: 0;
     margin-bottom: 4px;
     font-size: 16px;
   }
-  
+
   .tab-text {
     font-size: 14px;
   }

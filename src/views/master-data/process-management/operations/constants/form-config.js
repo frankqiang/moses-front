@@ -30,4 +30,4 @@ export const SEARCH_FORM_CONFIG = [
     multiple: true,
     options: OPERATION_STATUS_OPTIONS
   }
-] 
+]

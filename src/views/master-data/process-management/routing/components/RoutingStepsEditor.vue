@@ -61,7 +61,7 @@
 <script>
 import BaseTable from '@/components/BaseTable'
 import ActionButtons from '@/components/ActionButtons'
-import { OPERATION_TYPE_OPTIONS } from '@/views/master-data/process-management/operations/constants/operation'; // 导入工序类型常量
+import { OPERATION_TYPE_OPTIONS } from '@/views/master-data/process-management/operations/constants/operation' // 导入工序类型常量
 
 export default {
   name: 'RoutingStepsEditor',
@@ -89,19 +89,26 @@ export default {
         { prop: 'operationName', label: '工序名称', minWidth: 150 },
         { prop: 'operationType', label: '工序类型', width: 120, slotName: 'type' }, // 新增工序类型列
         { prop: 'actions', label: '操作', width: 200, align: 'center', slotName: 'actions', fixed: 'right' }
-      ],
+      ]
       // 移除 operationTypeMap
     }
   },
   computed: {
     pagedSteps() {
-      console.log('pagedSteps computed triggered. CurrentPage:', this.currentPage, 'PageSize:', this.pageSize, 'Total steps:', this.steps.length);
-      const start = (this.currentPage - 1) * this.pageSize;
-      const end = start + this.pageSize;
-      console.log('Slice range: start =', start, 'end =', end);
-      const result = this.steps.slice(start, end);
-      console.log('pagedSteps result length:', result.length, 'Result:', result);
-      return result;
+      console.log('pagedSteps computed triggered. CurrentPage:', this.currentPage, 'PageSize:', this.pageSize, 'Total steps:', this.steps.length)
+      const start = (this.currentPage - 1) * this.pageSize
+      const end = start + this.pageSize
+      console.log('Slice range: start =', start, 'end =', end)
+      const result = this.steps.slice(start, end)
+      console.log('pagedSteps result length:', result.length, 'Result:', result)
+      return result
+    }
+  },
+  watch: {
+    steps(newVal, oldVal) {
+      console.log('Steps changed. Old length:', oldVal.length, 'New length:', newVal.length)
+      this.currentPage = 1
+      console.log('CurrentPage reset to:', this.currentPage)
     }
   },
   methods: {
@@ -127,25 +134,18 @@ export default {
       this.$emit('select-step', newRow)
     },
     handlePaginationChange({ page, limit }) {
-      console.log('handlePaginationChange triggered:', { page, limit });
-      this.currentPage = page;
-      this.pageSize = limit;
-      console.log('After update: currentPage =', this.currentPage, 'pageSize =', this.pageSize);
-      console.log('Steps length:', this.steps.length, 'Paged steps length (before computed):', this.pagedSteps.length);
+      console.log('handlePaginationChange triggered:', { page, limit })
+      this.currentPage = page
+      this.pageSize = limit
+      console.log('After update: currentPage =', this.currentPage, 'pageSize =', this.pageSize)
+      console.log('Steps length:', this.steps.length, 'Paged steps length (before computed):', this.pagedSteps.length)
     },
     setCurrentRow(row) {
       this.$refs.stepsTable.setCurrentRow(row)
     },
     getOperationTypeLabel(type) {
-      const option = OPERATION_TYPE_OPTIONS.find(opt => opt.value === type);
-      return option ? option.label : type;
-    }
-  },
-  watch: {
-    steps(newVal, oldVal) {
-      console.log('Steps changed. Old length:', oldVal.length, 'New length:', newVal.length);
-      this.currentPage = 1;
-      console.log('CurrentPage reset to:', this.currentPage);
+      const option = OPERATION_TYPE_OPTIONS.find(opt => opt.value === type)
+      return option ? option.label : type
     }
   }
 }
@@ -179,4 +179,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

@@ -10,7 +10,7 @@
     <!-- 时间线标题 -->
     <div class="timeline-header">
       <h4 class="timeline-title">
-        <i class="el-icon-time timeline-icon"></i>
+        <i class="el-icon-time timeline-icon" />
         申请历史
       </h4>
       <p class="timeline-subtitle">查看申请的完整审批流程和状态变化</p>
@@ -33,8 +33,8 @@
       <el-button
         type="primary"
         size="small"
-        @click="loadTimeline"
         class="retry-button"
+        @click="loadTimeline"
       >
         重新加载
       </el-button>
@@ -71,7 +71,7 @@
 
             <div class="timeline-item-content">
               <p class="description">{{ item.description }}</p>
-              
+
               <!-- 审批人信息 -->
               <div v-if="item.approver" class="approver-info">
                 <div class="approver-label">审批人：</div>
@@ -131,7 +131,7 @@ import { getApplicationHistory } from '../api/register'
 
 export default {
   name: 'ApplicationTimeline',
-  
+
   props: {
     // 申请ID
     applicationId: {
@@ -179,7 +179,7 @@ export default {
         this.error = null
 
         const response = await getApplicationHistory(this.applicationId)
-        
+
         if (response.success && response.data && response.data.timeline) {
           this.timelineData = response.data.timeline
           this.$emit('timeline-loaded', this.timelineData)
@@ -293,18 +293,18 @@ export default {
      */
     formatDate(date, format = 'YYYY-MM-DD HH:mm:ss') {
       if (!date) return ''
-      
+
       try {
         const d = new Date(date)
         if (isNaN(d.getTime())) return ''
-        
+
         const year = d.getFullYear()
         const month = String(d.getMonth() + 1).padStart(2, '0')
         const day = String(d.getDate()).padStart(2, '0')
         const hours = String(d.getHours()).padStart(2, '0')
         const minutes = String(d.getMinutes()).padStart(2, '0')
         const seconds = String(d.getSeconds()).padStart(2, '0')
-        
+
         return format
           .replace('YYYY', year)
           .replace('MM', month)
@@ -348,7 +348,7 @@ export default {
 .application-timeline {
   .timeline-header {
     margin-bottom: 20px;
-    
+
     .timeline-title {
       font-size: 16px;
       font-weight: 600;
@@ -356,13 +356,13 @@ export default {
       margin: 0 0 8px 0;
       display: flex;
       align-items: center;
-      
+
       .timeline-icon {
         margin-right: 8px;
         color: #409EFF;
       }
     }
-    
+
     .timeline-subtitle {
       font-size: 14px;
       color: #606266;
@@ -383,29 +383,29 @@ export default {
   .timeline-content {
     .timeline-card {
       margin-bottom: 0;
-      
+
       .timeline-item-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         margin-bottom: 12px;
-        
+
         .action-info {
           display: flex;
           align-items: center;
           gap: 8px;
-          
+
           .action-title {
             font-weight: 600;
             color: #303133;
             font-size: 15px;
           }
-          
+
           .status-tag {
             font-size: 12px;
           }
         }
-        
+
         .timestamp-info {
           .timestamp {
             font-size: 13px;
@@ -413,14 +413,14 @@ export default {
           }
         }
       }
-      
+
       .timeline-item-content {
         .description {
           color: #606266;
           margin: 0 0 12px 0;
           line-height: 1.5;
         }
-        
+
         .approver-info,
         .created-user-info,
         .rejection-reason,
@@ -430,7 +430,7 @@ export default {
           background-color: #f8f9fa;
           border-radius: 4px;
           font-size: 13px;
-          
+
           .approver-label,
           .created-user-label,
           .reason-label,
@@ -439,38 +439,38 @@ export default {
             color: #303133;
             margin-bottom: 4px;
           }
-          
+
           .approver-details,
           .created-user-details {
             display: flex;
             align-items: center;
             gap: 8px;
-            
+
             .approver-name,
             .user-name {
               color: #303133;
               font-weight: 500;
             }
-            
+
             .approver-email,
             .user-email {
               color: #909399;
               font-size: 12px;
             }
           }
-          
+
           .reason-content,
           .notes-content {
             color: #606266;
             line-height: 1.4;
           }
         }
-        
+
         .rejection-reason {
           background-color: #fef0f0;
           border-left: 3px solid #F56C6C;
         }
-        
+
         .created-user-info {
           background-color: #f0f9ff;
           border-left: 3px solid #67C23A;
@@ -488,28 +488,28 @@ export default {
 // Element UI 时间线样式覆盖
 :deep(.el-timeline) {
   padding-left: 0;
-  
+
   .el-timeline-item {
     padding-bottom: 20px;
-    
+
     &:last-child {
       padding-bottom: 0;
     }
-    
+
     .el-timeline-item__timestamp {
       font-size: 12px;
       color: #909399;
     }
-    
+
     .el-timeline-item__node {
       width: 14px;
       height: 14px;
-      
+
       &.el-timeline-item__node--normal {
         left: -7px;
       }
     }
-    
+
     .el-timeline-item__wrapper {
       padding-left: 24px;
       top: -4px;

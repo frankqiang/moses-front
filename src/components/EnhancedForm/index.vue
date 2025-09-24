@@ -297,7 +297,7 @@ export default {
           rules[field] = rules[field].map(rule => {
             // 对于包含自定义验证器的规则，不覆盖message
             if (rule.validator) {
-              return rule;
+              return rule
             }
             return {
               ...rule,
@@ -335,7 +335,7 @@ export default {
         // 使用JSON比较避免不必要的更新，使用cloneDeep确保数据独立性
         // 解决复杂交互场景下（如工艺路线编辑器）的数据一致性问题
         if (this.syncChanges && JSON.stringify(newVal) !== JSON.stringify(this.data)) {
-          this.$emit('update:data', cloneDeep(newVal));
+          this.$emit('update:data', cloneDeep(newVal))
         }
       },
       deep: true

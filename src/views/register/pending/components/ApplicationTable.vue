@@ -11,26 +11,56 @@
 <template>
   <div class="application-table">
     <!-- 使用全局表格工具栏组件 -->
-    <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
-      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true"
-      :selected-rows="selectedRows" :enable-export="true" :export-api="exportApiFunction" :export-params="exportParams"
-      :hide-status-buttons="true" :custom-actions="customBatchActions" @refresh="handleRefresh"
-      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @custom-action="handleCustomBatchAction"
-      @export-success="handleExportSuccess">
-
-    </table-toolbar>
+    <table-toolbar
+      ref="toolbar"
+      :enable-column-settings="true"
+      :column-options="columnOptions"
+      :storage-key="columnSettingsKey"
+      :default-visible-columns="defaultVisibleColumns"
+      :enable-batch-actions="true"
+      :selected-rows="selectedRows"
+      :enable-export="true"
+      :export-api="exportApiFunction"
+      :export-params="exportParams"
+      :hide-status-buttons="true"
+      :custom-actions="customBatchActions"
+      @refresh="handleRefresh"
+      @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete"
+      @custom-action="handleCustomBatchAction"
+      @export-success="handleExportSuccess"
+    />
 
     <!-- 使用全局BaseTable组件 -->
-    <BaseTable ref="baseTable" :data="data" :loading="loading" :load-error="loadError" :columns="baseTableColumns"
-      :pagination="paginationConfig" :show-selection="true" :show-index="true" :index-label="'序号'"
-      :empty-text="emptyText" :enable-virtual-scroll="enableVirtualScroll" :row-class-name="getRowClassName"
-      :default-sort="{ prop: 'createdAt', order: 'descending' }" @pagination-change="handlePaginationChange"
-      @sort-change="handleSortChange" @selection-change="handleSelectionChange" @row-click="handleRowClick"
-      @data-error="handleDataError" @format-error="handleFormatError">
+    <BaseTable
+      ref="baseTable"
+      :data="data"
+      :loading="loading"
+      :load-error="loadError"
+      :columns="baseTableColumns"
+      :pagination="paginationConfig"
+      :show-selection="true"
+      :show-index="true"
+      :index-label="'序号'"
+      :empty-text="emptyText"
+      :enable-virtual-scroll="enableVirtualScroll"
+      :row-class-name="getRowClassName"
+      :default-sort="{ prop: 'createdAt', order: 'descending' }"
+      @pagination-change="handlePaginationChange"
+      @sort-change="handleSortChange"
+      @selection-change="handleSelectionChange"
+      @row-click="handleRowClick"
+      @data-error="handleDataError"
+      @format-error="handleFormatError"
+    >
       <!-- 状态列 -->
       <template #status="{ row }">
-        <StatusTag :status="row.status || 'unknown'" :text-map="statusTextMap" :type-map="statusTypeMap"
-          :default-text="'数据错误'" />
+        <StatusTag
+          :status="row.status || 'unknown'"
+          :text-map="statusTextMap"
+          :type-map="statusTypeMap"
+          :default-text="'数据错误'"
+        />
       </template>
 
       <!-- 操作列 -->
@@ -587,16 +617,12 @@ export default {
       }
     },
 
-
-
     // 错误处理增强
     handleError(error, context = '操作') {
       console.error(`${context}失败:`, error)
       const message = error.response?.data?.message || error.message || `${context}失败，请重试`
       this.$message.error(message)
     },
-
-
 
     // 获取用户头像
     getUserAvatar(user) {
@@ -700,8 +726,6 @@ export default {
       background-color: #f5f5f5 !important;
     }
   }
-
-
 
   .applicant-info {
     .name {

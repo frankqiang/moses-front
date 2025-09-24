@@ -2,8 +2,8 @@
   <div class="validation-message">
     <!-- 字段级验证消息 -->
     <transition name="slide-fade">
-      <div 
-        v-if="visible && message" 
+      <div
+        v-if="visible && message"
         class="validation-item"
         :class="[
           `validation-item--${type}`,
@@ -12,27 +12,27 @@
       >
         <div class="validation-content">
           <!-- 图标 -->
-          <i 
+          <i
             class="validation-icon"
             :class="iconClass"
-          ></i>
-          
+          />
+
           <!-- 消息内容 -->
           <span class="validation-text">{{ message }}</span>
-          
+
           <!-- 关闭按钮 -->
-          <i 
+          <i
             v-if="closable"
             class="el-icon-close validation-close"
             @click="handleClose"
-          ></i>
+          />
         </div>
       </div>
     </transition>
-    
+
     <!-- 多条验证消息列表 -->
     <transition-group name="list-fade" tag="div" class="validation-list">
-      <div 
+      <div
         v-for="(item, index) in messageList"
         :key="item.id || index"
         class="validation-item"
@@ -43,52 +43,52 @@
       >
         <div class="validation-content">
           <!-- 图标 -->
-          <i 
+          <i
             class="validation-icon"
             :class="getIconClass(item.type || 'error')"
-          ></i>
-          
+          />
+
           <!-- 消息内容 -->
           <span class="validation-text">{{ item.message }}</span>
-          
+
           <!-- 字段名称 -->
-          <span 
+          <span
             v-if="item.field"
             class="validation-field"
           >
             ({{ item.field }})
           </span>
-          
+
           <!-- 关闭按钮 -->
-          <i 
+          <i
             v-if="closable"
             class="el-icon-close validation-close"
             @click="handleItemClose(index)"
-          ></i>
+          />
         </div>
       </div>
     </transition-group>
-    
+
     <!-- 表单级验证摘要 -->
-    <div 
+    <div
       v-if="showSummary && validationSummary.total > 0"
       class="validation-summary"
       :class="`validation-summary--${summaryType}`"
     >
       <div class="summary-header">
-        <i :class="getSummaryIconClass()"></i>
+        <i :class="getSummaryIconClass()" />
         <span class="summary-title">{{ summaryTitle }}</span>
         <span class="summary-count">({{ validationSummary.total }})</span>
       </div>
-      
+
       <div v-if="showSummaryDetails" class="summary-details">
-        <div 
+        <div
           v-for="(count, type) in validationSummary.byType"
-          :key="type"
           v-if="count > 0"
+          :key="type"
           class="summary-item"
         >
-          <i :class="getIconClass(type)"></i>
+          <i :class="getIconClass(type)" />
           <span class="summary-type">{{ getTypeText(type) }}</span>
           <span class="summary-type-count">{{ count }}</span>
         </div>
@@ -100,7 +100,7 @@
 <script>
 export default {
   name: 'ValidationMessage',
-  
+
   props: {
     /**
      * 是否显示验证消息
@@ -109,7 +109,7 @@ export default {
       type: Boolean,
       default: true
     },
-    
+
     /**
      * 单条验证消息
      */
@@ -117,7 +117,7 @@ export default {
       type: String,
       default: ''
     },
-    
+
     /**
      * 验证消息类型
      */
@@ -126,7 +126,7 @@ export default {
       default: 'error',
       validator: (value) => ['error', 'warning', 'info', 'success'].includes(value)
     },
-    
+
     /**
      * 多条验证消息列表
      */
@@ -134,7 +134,7 @@ export default {
       type: Array,
       default: () => []
     },
-    
+
     /**
      * 是否内联显示
      */
@@ -142,7 +142,7 @@ export default {
       type: Boolean,
       default: false
     },
-    
+
     /**
      * 是否可关闭
      */
@@ -150,7 +150,7 @@ export default {
       type: Boolean,
       default: false
     },
-    
+
     /**
      * 是否显示验证摘要
      */
@@ -158,7 +158,7 @@ export default {
       type: Boolean,
       default: false
     },
-    
+
     /**
      * 是否显示摘要详情
      */
@@ -166,7 +166,7 @@ export default {
       type: Boolean,
       default: true
     },
-    
+
     /**
      * 摘要标题
      */
@@ -174,7 +174,7 @@ export default {
       type: String,
       default: '表单验证失败'
     },
-    
+
     /**
      * 自动隐藏时间（毫秒）
      */
@@ -183,13 +183,13 @@ export default {
       default: 0
     }
   },
-  
+
   data() {
     return {
       autoHideTimer: null
     }
   },
-  
+
   computed: {
     /**
      * 图标类名
@@ -197,7 +197,7 @@ export default {
     iconClass() {
       return this.getIconClass(this.type)
     },
-    
+
     /**
      * 验证摘要统计
      */
@@ -211,16 +211,16 @@ export default {
           success: 0
         }
       }
-      
+
       this.messageList.forEach(item => {
         const type = item.type || 'error'
         summary.byType[type]++
         summary.total++
       })
-      
+
       return summary
     },
-    
+
     /**
      * 摘要类型
      */
@@ -231,7 +231,7 @@ export default {
       return 'success'
     }
   },
-  
+
   watch: {
     visible(newVal) {
       if (newVal && this.autoHide > 0) {
@@ -240,7 +240,7 @@ export default {
         this.clearAutoHide()
       }
     },
-    
+
     messageList: {
       handler() {
         if (this.messageList.length > 0 && this.autoHide > 0) {
@@ -250,7 +250,11 @@ export default {
       deep: true
     }
   },
-  
+
+  beforeDestroy() {
+    this.clearAutoHide()
+  },
+
   methods: {
     /**
      * 获取图标类名
@@ -264,14 +268,14 @@ export default {
       }
       return iconMap[type] || iconMap.error
     },
-    
+
     /**
      * 获取摘要图标类名
      */
     getSummaryIconClass() {
       return this.getIconClass(this.summaryType)
     },
-    
+
     /**
      * 获取类型文本
      */
@@ -284,21 +288,21 @@ export default {
       }
       return textMap[type] || textMap.error
     },
-    
+
     /**
      * 处理关闭事件
      */
     handleClose() {
       this.$emit('close')
     },
-    
+
     /**
      * 处理单项关闭事件
      */
     handleItemClose(index) {
       this.$emit('item-close', index)
     },
-    
+
     /**
      * 开始自动隐藏
      */
@@ -308,7 +312,7 @@ export default {
         this.$emit('auto-hide')
       }, this.autoHide)
     },
-    
+
     /**
      * 清除自动隐藏
      */
@@ -318,10 +322,6 @@ export default {
         this.autoHideTimer = null
       }
     }
-  },
-  
-  beforeDestroy() {
-    this.clearAutoHide()
   }
 }
 </script>
@@ -330,17 +330,17 @@ export default {
 .validation-message {
   .validation-item {
     margin-bottom: 8px;
-    
+
     &:last-child {
       margin-bottom: 0;
     }
-    
+
     &--inline {
       display: inline-block;
       margin-right: 12px;
       margin-bottom: 4px;
     }
-    
+
     .validation-content {
       display: flex;
       align-items: center;
@@ -349,148 +349,148 @@ export default {
       font-size: 13px;
       line-height: 1.4;
     }
-    
+
     &--error {
       .validation-content {
         background-color: #fef0f0;
         border: 1px solid #fbc4c4;
         color: #f56c6c;
       }
-      
+
       .validation-icon {
         color: #f56c6c;
       }
     }
-    
+
     &--warning {
       .validation-content {
         background-color: #fdf6ec;
         border: 1px solid #f5dab1;
         color: #e6a23c;
       }
-      
+
       .validation-icon {
         color: #e6a23c;
       }
     }
-    
+
     &--info {
       .validation-content {
         background-color: #f4f4f5;
         border: 1px solid #d3d4d6;
         color: #909399;
       }
-      
+
       .validation-icon {
         color: #909399;
       }
     }
-    
+
     &--success {
       .validation-content {
         background-color: #f0f9ff;
         border: 1px solid #b3d8ff;
         color: #67c23a;
       }
-      
+
       .validation-icon {
         color: #67c23a;
       }
     }
-    
+
     .validation-icon {
       margin-right: 6px;
       font-size: 14px;
       flex-shrink: 0;
     }
-    
+
     .validation-text {
       flex: 1;
       word-break: break-word;
     }
-    
+
     .validation-field {
       margin-left: 6px;
       font-size: 12px;
       opacity: 0.8;
       flex-shrink: 0;
     }
-    
+
     .validation-close {
       margin-left: 8px;
       cursor: pointer;
       font-size: 12px;
       opacity: 0.6;
       flex-shrink: 0;
-      
+
       &:hover {
         opacity: 1;
       }
     }
   }
-  
+
   .validation-summary {
     margin-top: 16px;
     padding: 12px;
     border-radius: 6px;
-    
+
     &--error {
       background-color: #fef0f0;
       border: 1px solid #fbc4c4;
     }
-    
+
     &--warning {
       background-color: #fdf6ec;
       border: 1px solid #f5dab1;
     }
-    
+
     &--info {
       background-color: #f4f4f5;
       border: 1px solid #d3d4d6;
     }
-    
+
     &--success {
       background-color: #f0f9ff;
       border: 1px solid #b3d8ff;
     }
-    
+
     .summary-header {
       display: flex;
       align-items: center;
       margin-bottom: 8px;
       font-weight: 500;
-      
+
       i {
         margin-right: 6px;
         font-size: 16px;
       }
-      
+
       .summary-title {
         flex: 1;
       }
-      
+
       .summary-count {
         font-size: 12px;
         opacity: 0.8;
       }
     }
-    
+
     .summary-details {
       .summary-item {
         display: flex;
         align-items: center;
         padding: 4px 0;
         font-size: 12px;
-        
+
         i {
           margin-right: 6px;
           font-size: 12px;
         }
-        
+
         .summary-type {
           flex: 1;
         }
-        
+
         .summary-type-count {
           font-weight: 500;
         }
@@ -535,26 +535,26 @@ export default {
         margin-right: 0;
         margin-bottom: 8px;
       }
-      
+
       .validation-content {
         padding: 6px 10px;
         font-size: 12px;
       }
-      
+
       .validation-field {
         display: block;
         margin-left: 0;
         margin-top: 2px;
       }
     }
-    
+
     .validation-summary {
       padding: 10px;
-      
+
       .summary-header {
         font-size: 13px;
       }
-      
+
       .summary-details {
         .summary-item {
           font-size: 11px;

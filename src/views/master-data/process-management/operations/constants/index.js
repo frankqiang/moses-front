@@ -3,4 +3,4 @@
  */
 export * from './operation'
 export * from './table-config'
-export * from './form-config' 
+export * from './form-config'

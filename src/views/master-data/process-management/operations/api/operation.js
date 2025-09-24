@@ -179,4 +179,4 @@ export default {
   importOperations,
   downloadOperationTemplate,
   checkOperationCode
-} 
+}

@@ -230,6 +230,24 @@ export function batchUpdateDepartmentStatus(ids, status, reason = '') {
 }
 
 /**
+ * 批量删除部门
+ * @param {Array} ids - 部门ID数组 (必填, UUID格式数组)
+ * @param {string} [reason] - 删除原因 (可选)
+ * @description 批量删除多个部门，删除前会检查每个部门是否有子部门、关联的员工和岗位
+ * @returns {Promise} 返回批量删除结果
+ */
+export function batchDeleteDepartments(ids, reason = '') {
+  return request({
+    url: `${baseURL}/batch-delete`,
+    method: 'delete',
+    data: {
+      departmentIds: ids,
+      ...(reason && { reason })
+    }
+  })
+}
+
+/**
  * 导出部门列表
  * @param {Object} params - 导出参数（与获取部门列表相同的筛选条件，但不包含分页）
  * @returns {Promise} 返回导出文件的blob数据

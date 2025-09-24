@@ -8,14 +8,33 @@
 <template>
   <div class="user-table">
     <!-- 表格工具栏 -->
-    <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
-      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true"
-      :selected-rows="selectedUsers" :enable-export="true" :export-api="exportApi" :export-params="exportParams"
-      :export-filename="exportFilename" :enable-import="false" :status-confirm="false" :smart-status-buttons="true"
-      :status-field="'status'" :enabled-value="userStatusActive" :disabled-value="userStatusInactive"
-      :custom-actions="customBatchActions" :refresh-feedback-mode="'all'" @refresh="handleRefresh"
-      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable" @custom-action="handleCustomBatchAction">
+    <table-toolbar
+      ref="toolbar"
+      :enable-column-settings="true"
+      :column-options="columnOptions"
+      :storage-key="columnSettingsKey"
+      :default-visible-columns="defaultVisibleColumns"
+      :enable-batch-actions="true"
+      :selected-rows="selectedUsers"
+      :enable-export="true"
+      :export-api="exportApi"
+      :export-params="exportParams"
+      :export-filename="exportFilename"
+      :enable-import="false"
+      :status-confirm="false"
+      :smart-status-buttons="true"
+      :status-field="'status'"
+      :enabled-value="userStatusActive"
+      :disabled-value="userStatusInactive"
+      :custom-actions="customBatchActions"
+      :refresh-feedback-mode="'all'"
+      @refresh="handleRefresh"
+      @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @custom-action="handleCustomBatchAction"
+    >
       <template #toolbar-left>
         <slot name="toolbar-left" />
       </template>
@@ -25,20 +44,33 @@
     </table-toolbar>
 
     <!-- 数据表格 -->
-    <base-table ref="userTable" :data="userList" :columns="visibleTableColumns" :loading="loading"
-      :pagination="pagination" :show-selection="true" :show-index="true" @selection-change="handleSelectionChange"
-      @pagination-change="handlePaginationChange" @sort-change="handleSortChange">
+    <base-table
+      ref="userTable"
+      :data="userList"
+      :columns="visibleTableColumns"
+      :loading="loading"
+      :pagination="pagination"
+      :show-selection="true"
+      :show-index="true"
+      @selection-change="handleSelectionChange"
+      @pagination-change="handlePaginationChange"
+      @sort-change="handleSortChange"
+    >
       <!-- 状态列自定义渲染 -->
       <template #status="{ row }">
-        <status-tag v-if="row && row.status !== undefined" :status="row.status" :type-map="statusTypeMap"
-          :text-map="statusTextMap" />
+        <status-tag
+          v-if="row && row.status !== undefined"
+          :status="row.status"
+          :type-map="statusTypeMap"
+          :text-map="statusTextMap"
+        />
         <span v-else>-</span>
       </template>
 
       <!-- 性别列自定义渲染 -->
       <template #gender="{ row }">
         <span v-if="row && row.profile && row.profile.gender">
-          <i :class="getGenderIcon(row.profile.gender)" style="margin-right: 4px;"></i>
+          <i :class="getGenderIcon(row.profile.gender)" style="margin-right: 4px;" />
           {{ getGenderText(row.profile.gender) }}
         </span>
         <span v-else>-</span>
@@ -262,7 +294,6 @@ export default {
       return GENDER_CONFIG.iconMap[gender] || 'el-icon-question'
     },
 
-
     /**
      * 获取操作按钮配置 - 使用统一配置
      */
@@ -455,7 +486,6 @@ export default {
       }
       this.$emit('sort-change', sortBy)
     },
-
 
     /**
      * 刷新处理

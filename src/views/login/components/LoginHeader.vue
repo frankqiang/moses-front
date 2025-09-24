@@ -6,7 +6,7 @@
 <template>
   <div class="login-header">
     <div class="logo-container">
-      <img :src="logoSrc" class="logo" alt="公司Logo" />
+      <img :src="logoSrc" class="logo" alt="公司Logo">
     </div>
     <h1 class="system-title">MOSES管理系统</h1>
   </div>
@@ -29,16 +29,16 @@ export default {
 .login-header {
   text-align: center;
   margin-bottom: 40px;
-  
+
   .logo-container {
     margin-bottom: 16px;
-    
+
     .logo {
       width: 80px;
       height: 80px;
     }
   }
-  
+
   .system-title {
     font-size: 28px;
     font-weight: 600;

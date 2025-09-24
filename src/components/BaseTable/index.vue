@@ -580,9 +580,9 @@ export default {
     },
 
     handleRowClick(row, column, event) {
-      this.$emit('row-click', row, column, event);
+      this.$emit('row-click', row, column, event)
       // Emit current-change event to mimic el-table's behavior when highlight-current-row is used
-      this.$emit('current-change', row);
+      this.$emit('current-change', row)
     },
 
     handleRowDblClick(row, column, event) {

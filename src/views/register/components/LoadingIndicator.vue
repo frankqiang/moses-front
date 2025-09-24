@@ -1,24 +1,24 @@
 <template>
   <div class="loading-indicator">
     <!-- 全屏加载遮罩 -->
-    <div 
-      v-if="fullscreen && visible" 
+    <div
+      v-if="fullscreen && visible"
       class="loading-overlay"
       :class="{ 'loading-overlay--transparent': transparent }"
     >
       <div class="loading-content">
-        <i class="el-icon-loading loading-spinner" :style="{ fontSize: computedSpinnerSize + 'px' }"></i>
+        <i class="el-icon-loading loading-spinner" :style="{ fontSize: computedSpinnerSize + 'px' }" />
         <p v-if="text" class="loading-text">{{ text }}</p>
       </div>
     </div>
-    
+
     <!-- 内联加载指示器 -->
-    <div 
-      v-else-if="visible" 
+    <div
+      v-else-if="visible"
       class="loading-inline"
       :class="`loading-inline--${size}`"
     >
-      <i class="el-icon-loading loading-spinner" :style="{ fontSize: computedSpinnerSize + 'px' }"></i>
+      <i class="el-icon-loading loading-spinner" :style="{ fontSize: computedSpinnerSize + 'px' }" />
       <span v-if="text" class="loading-text">{{ text }}</span>
     </div>
   </div>
@@ -27,7 +27,7 @@
 <script>
 export default {
   name: 'LoadingIndicator',
-  
+
   props: {
     /**
      * 是否显示加载指示器
@@ -36,7 +36,7 @@ export default {
       type: Boolean,
       default: false
     },
-    
+
     /**
      * 加载提示文本
      */
@@ -44,7 +44,7 @@ export default {
       type: String,
       default: ''
     },
-    
+
     /**
      * 是否全屏显示
      */
@@ -52,7 +52,7 @@ export default {
       type: Boolean,
       default: false
     },
-    
+
     /**
      * 遮罩是否透明
      */
@@ -60,7 +60,7 @@ export default {
       type: Boolean,
       default: false
     },
-    
+
     /**
      * 加载指示器大小
      */
@@ -69,7 +69,7 @@ export default {
       default: 'medium',
       validator: (value) => ['small', 'medium', 'large'].includes(value)
     },
-    
+
     /**
      * 自定义旋转图标大小
      */
@@ -78,7 +78,7 @@ export default {
       default: null
     }
   },
-  
+
   computed: {
     /**
      * 计算旋转图标大小
@@ -87,17 +87,17 @@ export default {
       if (this.spinnerSize) {
         return this.spinnerSize
       }
-      
+
       const sizeMap = {
         small: 16,
         medium: 20,
         large: 24
       }
-      
+
       return this.fullscreen ? 32 : sizeMap[this.size]
     }
   },
-  
+
   watch: {
     visible(newVal) {
       if (this.fullscreen) {
@@ -110,7 +110,7 @@ export default {
       }
     }
   },
-  
+
   beforeDestroy() {
     // 组件销毁时恢复body滚动
     if (this.fullscreen) {
@@ -134,21 +134,21 @@ export default {
     justify-content: center;
     z-index: 9999;
     backdrop-filter: blur(2px);
-    
+
     &--transparent {
       background-color: rgba(255, 255, 255, 0.5);
     }
-    
+
     .loading-content {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
-      
+
       .loading-spinner {
         color: #409eff;
       }
-      
+
       .loading-text {
         margin: 0;
         font-size: 14px;
@@ -157,48 +157,46 @@ export default {
       }
     }
   }
-  
+
   .loading-inline {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    
+
     .loading-spinner {
       color: #409eff;
     }
-    
+
     .loading-text {
       font-size: 14px;
       color: #606266;
     }
-    
+
     &--small {
       gap: 6px;
-      
+
       .loading-text {
         font-size: 12px;
       }
     }
-    
+
     &--medium {
       gap: 8px;
-      
+
       .loading-text {
         font-size: 14px;
       }
     }
-    
+
     &--large {
       gap: 10px;
-      
+
       .loading-text {
         font-size: 16px;
       }
     }
   }
 }
-
-
 
 /* 响应式设计 */
 @media (max-width: 768px) {
@@ -210,16 +208,16 @@ export default {
         }
       }
     }
-    
+
     .loading-inline {
       .loading-text {
         font-size: 13px;
       }
-      
+
       &--small .loading-text {
         font-size: 11px;
       }
-      
+
       &--large .loading-text {
         font-size: 15px;
       }

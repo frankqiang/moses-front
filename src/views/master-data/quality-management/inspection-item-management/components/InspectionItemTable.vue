@@ -342,7 +342,7 @@ export default {
      * 初始化表格列
      */
     initTableColumns() {
-      this.tableColumns = this.allColumns.filter(col => 
+      this.tableColumns = this.allColumns.filter(col =>
         this.defaultVisibleColumns.includes(col.prop)
       )
     },
@@ -559,7 +559,7 @@ export default {
      * 处理列变化
      */
     handleColumnChange(visibleColumns) {
-      this.tableColumns = this.allColumns.filter(col => 
+      this.tableColumns = this.allColumns.filter(col =>
         visibleColumns.includes(col.prop)
       )
     },
@@ -629,8 +629,7 @@ export default {
      */
     handleExportSuccess(result) {
       this.$emit('export-success', result)
-    },
-
+    }
 
   }
 }
