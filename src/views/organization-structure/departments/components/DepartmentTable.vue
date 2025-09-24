@@ -9,14 +9,34 @@
 <template>
   <div class="department-table">
     <!-- 使用全局表格工具栏组件 -->
-    <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
-      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true"
-      :selected-rows="selectedRows" :enable-export="true" :export-api="exportApiFunction" :export-params="exportParams"
-      :hide-status-buttons="false" status-buttons-mode="dropdown" :status-confirm="false" :delete-confirm="false"
-      :table-data="data" :smart-status-buttons="true" status-field="status" enabled-value="active"
-      disabled-value="inactive" refresh-feedback-mode="all" @refresh="handleRefresh" @column-change="handleColumnChange"
-      @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable"
-      @export-success="handleExportSuccess">
+    <table-toolbar
+      ref="toolbar"
+      :enable-column-settings="true"
+      :column-options="columnOptions"
+      :storage-key="columnSettingsKey"
+      :default-visible-columns="defaultVisibleColumns"
+      :enable-batch-actions="true"
+      :selected-rows="selectedRows"
+      :enable-export="true"
+      :export-api="exportApiFunction"
+      :export-params="exportParams"
+      :hide-status-buttons="false"
+      status-buttons-mode="dropdown"
+      :status-confirm="false"
+      :delete-confirm="false"
+      :table-data="data"
+      :smart-status-buttons="true"
+      status-field="status"
+      enabled-value="active"
+      disabled-value="inactive"
+      refresh-feedback-mode="all"
+      @refresh="handleRefresh"
+      @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @export-success="handleExportSuccess"
+    >
       <template #toolbar-left>
         <ActionButtons :buttons="toolbarButtons" mode="normal" @click="handleToolbarAction" />
         <slot name="toolbar-left" />
@@ -28,18 +48,39 @@
     </table-toolbar>
 
     <!-- 使用BaseTable组件展示树形结构 -->
-    <BaseTable :data="flattenedData" :columns="baseTableColumns" :loading="loading" :pagination="paginationConfig"
-      :show-selection="true" :show-index="false" :virtual-scroll="enableVirtualScroll"
-      :virtual-threshold="virtualScrollThreshold" :virtual-height="virtualScrollHeight" :item-height="itemHeight"
-      :allow-retry="true" :load-error="loadError" border stripe highlight-current-row
-      @selection-change="handleSelectionChange" @retry="handleRetry" @row-click="handleRowClick"
-      @row-dblclick="handleRowDblClick" @data-error="handleDataError" @format-error="handleFormatError"
-      @pagination-change="handlePaginationChange">
+    <BaseTable
+      :data="flattenedData"
+      :columns="baseTableColumns"
+      :loading="loading"
+      :pagination="paginationConfig"
+      :show-selection="true"
+      :show-index="false"
+      :virtual-scroll="enableVirtualScroll"
+      :virtual-threshold="virtualScrollThreshold"
+      :virtual-height="virtualScrollHeight"
+      :item-height="itemHeight"
+      :allow-retry="true"
+      :load-error="loadError"
+      border
+      stripe
+      highlight-current-row
+      @selection-change="handleSelectionChange"
+      @retry="handleRetry"
+      @row-click="handleRowClick"
+      @row-dblclick="handleRowDblClick"
+      @data-error="handleDataError"
+      @format-error="handleFormatError"
+      @pagination-change="handlePaginationChange"
+    >
       <!-- 部门名称列（树形结构显示） -->
       <template #name="{ row }">
         <div v-if="row" class="tree-node-content" :style="{ paddingLeft: `${(row._level || 0) * 20}px` }">
-          <span v-if="row.children && row.children.length > 0" class="tree-expand-icon"
-            :class="{ 'is-expanded': row._expanded }" @click="toggleExpand(row)">
+          <span
+            v-if="row.children && row.children.length > 0"
+            class="tree-expand-icon"
+            :class="{ 'is-expanded': row._expanded }"
+            @click="toggleExpand(row)"
+          >
             <i class="el-icon-caret-right" />
           </span>
           <span v-else class="tree-expand-placeholder" />
@@ -57,8 +98,12 @@
 
       <!-- 状态列 -->
       <template #status="{ row }">
-        <StatusTag v-if="row && row.status !== undefined" :status="row.status" :text-map="statusTextMap"
-          :type-map="statusTypeMap" />
+        <StatusTag
+          v-if="row && row.status !== undefined"
+          :status="row.status"
+          :text-map="statusTextMap"
+          :type-map="statusTypeMap"
+        />
         <span v-else class="text-muted">-</span>
       </template>
 
@@ -269,9 +314,6 @@ export default {
       return () => this.exportApi
     }
   },
-  created() {
-    this.initColumns(this.columnOptions)
-  },
   watch: {
     /**
          * 监听数据变化，重新扁平化
@@ -289,6 +331,9 @@ export default {
       immediate: true,
       deep: true
     }
+  },
+  created() {
+    this.initColumns(this.columnOptions)
   },
   methods: {
     /**

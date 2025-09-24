@@ -80,7 +80,9 @@ export default {
       parentOptions: [],
       managerOptions: [],
       // 当前数据是否来自列表接口
-      useListMode: false
+      useListMode: false,
+      // 部门经理详情映射，用于补充树形数据的经理信息
+      departmentManagerMap: new Map()
     }
   },
   created() {
@@ -166,6 +168,7 @@ export default {
     async loadTreeData() {
       const response = await getDepartmentTree()
       const treeData = Array.isArray(response.data) ? response.data : []
+      await this.attachManagersToTree(treeData)
       this.applyTreeData(treeData)
     },
 
@@ -380,6 +383,69 @@ export default {
 
       sortNodes(rootNodes)
       return rootNodes
+    },
+
+    async attachManagersToTree(treeData) {
+      if (!Array.isArray(treeData) || treeData.length === 0) {
+        return
+      }
+
+      try {
+        const managerMap = await this.fetchDepartmentManagerMap()
+        this.departmentManagerMap = managerMap
+        this.applyManagerInfoToTree(treeData, managerMap)
+      } catch (error) {
+        console.error('附加部门经理信息失败:', error)
+      }
+    },
+
+    async fetchDepartmentManagerMap() {
+      const managerMap = new Map()
+      const limit = 100
+      let page = 1
+      let totalPages = 1
+
+      try {
+        do {
+          const params = {
+            page,
+            limit,
+            sortBy: 'level:asc,sortOrder:asc',
+            populate: 'manager'
+          }
+
+          const response = await getDepartmentList(params)
+          const meta = response.data || {}
+          const list = Array.isArray(meta.results) ? meta.results : []
+
+          list.forEach(department => {
+            managerMap.set(department.id, department.manager || null)
+          })
+
+          totalPages = meta.totalPages || Math.ceil((meta.totalResults || 0) / limit) || 1
+          page += 1
+        } while (page <= totalPages)
+      } catch (error) {
+        console.error('获取部门列表以补充经理信息失败:', error)
+        throw error
+      }
+
+      return managerMap
+    },
+
+    applyManagerInfoToTree(nodes, managerMap) {
+      if (!Array.isArray(nodes)) {
+        return
+      }
+
+      nodes.forEach(node => {
+        const manager = managerMap.get(node.id) || null
+        this.$set(node, 'manager', manager)
+
+        if (Array.isArray(node.children) && node.children.length > 0) {
+          this.applyManagerInfoToTree(node.children, managerMap)
+        }
+      })
     },
 
     /**
