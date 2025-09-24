@@ -181,7 +181,7 @@ export default {
      * 可见的表格列配置
      */
     visibleTableColumns() {
-      // 先过滤出可见的列，然后应用格式化
+      // 先过滤可见的列，然后应用格式化
       const visibleColumns = TABLE_COLUMNS.filter(column =>
         this.internalVisibleColumns.includes(column.prop) || column.prop === 'actions'
       )
@@ -227,21 +227,20 @@ export default {
      * 自定义批量操作配置
      */
     customBatchActions() {
-      return [
-        {
-          key: 'lock',
-          action: 'lock',
-          label: '批量锁定',
-          text: '批量锁定',
-          type: 'warning',
-          icon: 'el-icon-lock',
-          needConfirm: false, // 我们在父组件处理确认
-          showCount: true,
-          condition: (selectedRows) => {
-            // 只有当选中的用户中存在非锁定状态的用户时，才显示批量锁定按钮
-            return selectedRows.some(row => row.status !== this.userStatusLocked)
-          }
+      return [{
+        key: 'lock',
+        action: 'lock',
+        label: '批量锁定',
+        text: '批量锁定',
+        type: 'warning',
+        icon: 'el-icon-lock',
+        needConfirm: false, // 我们在父组件处理确认
+        showCount: true,
+        condition: (selectedRows) => {
+          // 只有当选中的用户中存在非锁定状态的用户时，才显示批量锁定按钮
+          return selectedRows.some(row => row.status !== this.userStatusLocked)
         }
+      }
       ]
     }
   },
