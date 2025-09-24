@@ -26,7 +26,7 @@
     </table-toolbar>
 
     <!-- 角色列表表格 -->
-    <base-table ref="baseTable" :data="roleList" :columns="baseTableColumns" :loading="loading"
+    <base-table ref="baseTable" :data="roleList" :columns="visibleTableColumns" :loading="loading"
       :pagination="paginationConfig" :selection="true" :index="true" :border="true" stripe
       @selection-change="handleSelectionChange" @sort-change="handleSortChange"
       @pagination-change="handlePaginationChange">
@@ -143,19 +143,43 @@ export default {
     }
   },
   computed: {
-    // 所有可用列（columnSettingsMixin需要）
+    /**
+     * 可见的表格列配置（参考UserTable.vue实现）
+     */
+    visibleTableColumns() {
+      // 先过滤出可见的列，然后应用格式化
+      const visibleColumns = TABLE_COLUMNS.filter(column =>
+        this.internalVisibleColumns.includes(column.prop) || column.prop === 'actions'
+      )
+
+      // 应用格式化逻辑
+      return visibleColumns.map(column => {
+        // 为时间类型列添加格式化器
+        if (column.type === 'datetime') {
+          return {
+            ...column,
+            formatter: (row) => {
+              const value = row[column.prop]
+              return value ? parseTime(value, column.format || '{y}-{m}-{d} {h}:{i}') : '-'
+            }
+          }
+        }
+        return column
+      })
+    },
+
+    /**
+     * 列选项配置
+     */
     columnOptions() {
       return TABLE_COLUMNS
     },
-    // 覆盖mixin中的默认可见列
+
+    /**
+     * 覆盖mixin中的默认可见列
+     */
     defaultVisibleColumns() {
       return DEFAULT_VISIBLE_COLUMNS
-    },
-    // BaseTable列配置 - 直接使用常量，无需转换（参考OperationTable实现）
-    baseTableColumns() {
-      return TABLE_COLUMNS.filter(col =>
-        this.internalVisibleColumns.includes(col.prop)
-      )
     },
 
 
