@@ -225,8 +225,8 @@ export default {
           }
         )
 
-        await deleteRole(role.id)
-        this.$message.success('删除成功')
+        const response = await deleteRole(role.id)
+        this.$message.success(response.message || '删除角色成功')
         this.fetchRoleList()
       } catch (error) {
         if (error !== 'cancel') {
@@ -268,8 +268,8 @@ export default {
       }
 
       try {
-        await updateRoleStatus(role.id, { status: newStatus })
-        this.$message.success(`角色已${newStatus === 'active' ? '启用' : '禁用'}`)
+        const response = await updateRoleStatus(role.id, { status: newStatus })
+        this.$message.success(response.message || `角色已${newStatus === 'active' ? '启用' : '禁用'}`)
         this.fetchRoleList()
       } catch (error) {
         console.error('状态切换失败:', error)
@@ -329,8 +329,8 @@ export default {
           }
         )
 
-        await batchDeleteRoles(deletableRoles.map(role => role.id))
-        this.$message.success('批量删除成功')
+        const response = await batchDeleteRoles(deletableRoles.map(role => role.id))
+        this.$message.success(response.message || '批量删除成功')
         this.fetchRoleList()
       } catch (error) {
         if (error !== 'cancel') {
@@ -350,8 +350,8 @@ export default {
      */
     async handleBatchEnable(roles) {
       try {
-        await batchUpdateRoleStatus(roles.map(role => role.id), { status: 'active' })
-        this.$message.success('批量启用成功')
+        const response = await batchUpdateRoleStatus(roles.map(role => role.id), { status: 'active' })
+        this.$message.success(response.message || '批量启用成功')
         this.fetchRoleList()
       } catch (error) {
         console.error('批量启用失败:', error)
@@ -380,8 +380,8 @@ export default {
       }
 
       try {
-        await batchUpdateRoleStatus(targetRoles.map(role => role.id), { status: 'inactive' })
-        this.$message.success('批量禁用成功')
+        const response = await batchUpdateRoleStatus(targetRoles.map(role => role.id), { status: 'inactive' })
+        this.$message.success(response.message || '批量禁用成功')
         this.fetchRoleList()
       } catch (error) {
         console.error('批量禁用失败:', error)
