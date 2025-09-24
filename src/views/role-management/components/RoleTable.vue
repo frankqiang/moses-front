@@ -26,7 +26,7 @@
     </table-toolbar>
 
     <!-- 角色列表表格 -->
-    <base-table ref="baseTable" :data="roleList" :columns="effectiveColumns" :loading="loading"
+    <base-table ref="baseTable" :data="roleList" :columns="baseTableColumns" :loading="loading"
       :pagination="paginationConfig" :selection="true" :index="true" :border="true" stripe
       @selection-change="handleSelectionChange" @sort-change="handleSortChange"
       @pagination-change="handlePaginationChange">
@@ -81,6 +81,7 @@ import BaseTable from '@/components/BaseTable'
 import TableToolbar from '@/components/TableToolbar'
 import ActionButtons from '@/components/ActionButtons'
 import StatusTag from '@/components/StatusTag'
+import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import { parseTime } from '@/utils'
 import {
   TABLE_COLUMNS,
@@ -98,6 +99,7 @@ export default {
     ActionButtons,
     StatusTag
   },
+  mixins: [columnSettingsMixin],
   props: {
     // 角色列表数据
     roleList: {
@@ -123,8 +125,8 @@ export default {
     return {
       // 选中的行
       selectedRows: [],
-      // 列设置存储键
-      columnSettingsKey: 'role_management_columns',
+      // 重写列设置存储键前缀（columnSettingsMixin需要）
+      columnSettingsKeyPrefix: 'role_management_columns',
       // 工具栏按钮配置
       toolbarButtons: [
         {
@@ -134,10 +136,6 @@ export default {
           action: 'create'
         }
       ],
-      // 表格列配置
-      columnOptions: TABLE_COLUMNS,
-      // 默认显示的列
-      defaultVisibleColumns: DEFAULT_VISIBLE_COLUMNS,
       // 角色类型状态配置
       typeStatusConfig: TYPE_CONFIG,
       // 角色状态配置
@@ -145,22 +143,21 @@ export default {
     }
   },
   computed: {
-    /**
-             * 有效的表格列配置
-             */
-    effectiveColumns() {
-      return this.columnOptions.filter(col =>
-        this.visibleColumns.includes(col.prop)
+    // 所有可用列（columnSettingsMixin需要）
+    columnOptions() {
+      return TABLE_COLUMNS
+    },
+    // 覆盖mixin中的默认可见列
+    defaultVisibleColumns() {
+      return DEFAULT_VISIBLE_COLUMNS
+    },
+    // BaseTable列配置 - 直接使用常量，无需转换（参考OperationTable实现）
+    baseTableColumns() {
+      return TABLE_COLUMNS.filter(col =>
+        this.internalVisibleColumns.includes(col.prop)
       )
     },
 
-    /**
-             * 显示的列
-             */
-    visibleColumns() {
-      // 这里应该从TableToolbar组件获取，暂时使用默认配置
-      return this.defaultVisibleColumns
-    },
 
     /**
              * 分页配置
@@ -172,6 +169,13 @@ export default {
         layout: 'total, sizes, prev, pager, next, jumper'
       }
     }
+  },
+  created() {
+    // 初始化列配置 - 使用columnOptions初始化allColumns（参考OperationTable实现）
+    this.allColumns = this.columnOptions
+
+    // 加载列设置（使用mixin的方法）
+    this.loadColumnSettings()
   },
   methods: {
     /**
@@ -266,11 +270,10 @@ export default {
     },
 
     /**
-             * 处理列变化
+             * 处理列变化（参考OperationTable实现）
              */
     handleColumnChange(visibleColumns) {
-      // 更新可见列配置
-      // 这里可以实现列设置的保存逻辑
+      // 列设置变化由mixin自动处理，无需额外操作
     },
 
     /**
