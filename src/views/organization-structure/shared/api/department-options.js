@@ -1,9 +1,9 @@
 /**
- * 文件名称：departments.js
- * 文件描述：岗位管理模块中的部门相关API，用于获取部门选项数据
- * 创建日期：2024-01-20
+ * 文件名称：department-options.js
+ * 文件描述：组织结构模块共享的部门选项API封装，供部门与岗位等子模块复用
+ * 创建日期：2025-09-24
  * 修改记录：
- *   - 2024-01-20: 从岗位API中分离出部门相关功能
+ *   - 2025-09-24: 抽离部门选项接口，统一供多模块使用
  */
 
 import request from '@/utils/request'
@@ -18,15 +18,14 @@ import request from '@/utils/request'
  * @param {number} [params.limit=100] - 每页最大结果数 (1-100)
  * @param {number} [params.page=1] - 页码 (>=1)
  * @param {string} [params.sortBy=level:asc,sortOrder:asc] - 排序选项
- * @returns {Promise} 返回格式化后的部门选项数据，适合下拉框使用
+ * @returns {Promise} 返回包含格式化选项的接口响应
  */
 export function getDepartmentOptions(params = {}) {
-  // 设置默认参数，适合选择器使用
   const apiParams = {
-    status: 'active', // 只获取激活状态的部门
-    limit: 100, // 获取较多数据用于选择
+    status: 'active',
+    limit: 100,
     page: 1,
-    sortBy: 'level:asc,sortOrder:asc', // 按层级和排序顺序排列
+    sortBy: 'level:asc,sortOrder:asc',
     ...params
   }
 
@@ -35,11 +34,9 @@ export function getDepartmentOptions(params = {}) {
     method: 'get',
     params: apiParams
   }).then(response => {
-    // 将API响应转换为适合下拉框使用的格式
     if (response && response.success && response.data && response.data.results) {
       const departments = response.data.results
 
-      // 转换为下拉框选项格式
       const options = departments.map(dept => ({
         value: dept.id,
         label: dept.name,
@@ -48,9 +45,7 @@ export function getDepartmentOptions(params = {}) {
         level: dept.level,
         parentId: dept.parentId,
         status: dept.status,
-        // 用于显示层级结构的标签
         labelWithLevel: `${'  '.repeat((dept.level || 1) - 1)}${dept.name}`,
-        // 完整的显示文本（包含编码）
         fullLabel: `${dept.name} (${dept.code})`
       }))
 
@@ -58,7 +53,7 @@ export function getDepartmentOptions(params = {}) {
         ...response,
         data: {
           ...response.data,
-          options // 添加格式化后的选项数据
+          options
         }
       }
     }
@@ -66,3 +61,5 @@ export function getDepartmentOptions(params = {}) {
     return response
   })
 }
+
+

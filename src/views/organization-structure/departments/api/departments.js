@@ -162,52 +162,7 @@ export function updateDepartmentManager(id, data) {
  * @param {string} [params.sortBy=level:asc,sortOrder:asc] - 排序选项
  * @returns {Promise} 返回格式化后的部门选项数据，适合下拉框使用
  */
-export function getDepartmentOptions(params = {}) {
-  // 设置默认参数，适合选择器使用
-  const apiParams = {
-    status: 'active', // 只获取激活状态的部门
-    limit: 100, // 获取较多数据用于选择
-    page: 1,
-    sortBy: 'level:asc,sortOrder:asc', // 按层级和排序顺序排列
-    ...params
-  }
-
-  return request({
-    url: baseURL,
-    method: 'get',
-    params: apiParams
-  }).then(response => {
-    // 将API响应转换为适合下拉框使用的格式
-    if (response && response.success && response.data && response.data.results) {
-      const departments = response.data.results
-
-      // 转换为下拉框选项格式
-      const options = departments.map(dept => ({
-        value: dept.id,
-        label: dept.name,
-        code: dept.code,
-        description: dept.description,
-        level: dept.level,
-        parentId: dept.parentId,
-        status: dept.status,
-        // 用于显示层级结构的标签
-        labelWithLevel: `${'  '.repeat((dept.level || 1) - 1)}${dept.name}`,
-        // 完整的显示文本（包含编码）
-        fullLabel: `${dept.name} (${dept.code})`
-      }))
-
-      return {
-        ...response,
-        data: {
-          ...response.data,
-          options // 添加格式化后的选项数据
-        }
-      }
-    }
-
-    return response
-  })
-}
+// 注意：getDepartmentOptions 已迁移至 shared/api/department-options.js 统一维护
 
 /**
  * 批量更新部门状态

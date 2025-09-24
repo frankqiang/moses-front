@@ -7,3 +7,4 @@
  */
 
 export * from './departments'
+export * from '../../shared/api/department-options'
