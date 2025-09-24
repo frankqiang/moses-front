@@ -14,10 +14,11 @@
 
       <!-- 角色列表表格区域 -->
       <role-table ref="roleTable" :role-list="roleList" :loading="listLoading" :pagination="pagination"
-        @selection-change="handleSelectionChange" @pagination-change="handlePaginationChange" @create="handleCreate"
-        @view="handleView" @edit="handleEdit" @delete="handleDelete" @copy="handleCopy"
-        @status-change="handleStatusChange" @sort-change="handleSortChange" @refresh="handleRefresh"
-        @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable" />
+        :search-params="searchParams" @selection-change="handleSelectionChange"
+        @pagination-change="handlePaginationChange" @create="handleCreate" @view="handleView" @edit="handleEdit"
+        @delete="handleDelete" @copy="handleCopy" @status-change="handleStatusChange" @sort-change="handleSortChange"
+        @refresh="handleRefresh" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
+        @batch-disable="handleBatchDisable" @clear-search="handleClearSearch" />
 
       <!-- 角色表单抽屉 -->
       <role-form-drawer ref="roleFormDrawer" :visible.sync="drawerVisible" :mode="drawerMode" :role-data="currentRole"
@@ -36,7 +37,8 @@ import {
   deleteRole,
   updateRoleStatus,
   batchDeleteRoles,
-  batchUpdateRoleStatus
+  batchUpdateRoleStatus,
+  getRoleById
 } from './api'
 
 export default {
@@ -108,20 +110,21 @@ export default {
     },
 
     /**
-     * 处理搜索
+     * 处理搜索 - 支持完整的搜索和筛选功能
      */
     handleSearch(searchParams) {
       this.searchParams = { ...searchParams }
-      this.pagination.page = 1
+      this.pagination.page = 1 // 搜索时重置到第一页
       this.debouncedSearch()
     },
 
     /**
-     * 处理重置搜索
+     * 处理重置搜索 - 清除所有搜索条件
      */
     handleReset() {
       this.searchParams = {}
       this.pagination.page = 1
+      // 重置后立即刷新数据
       this.fetchRoleList()
     },
 
@@ -185,10 +188,46 @@ export default {
     /**
      * 处理复制角色
      */
-    handleCopy(role) {
-      this.drawerMode = 'copy'
-      this.currentRole = role
-      this.drawerVisible = true
+    async handleCopy(role) {
+      if (!role) {
+        return
+      }
+
+      const confirmationMessage = `确定要复制角色"${role.name}"吗？\n复制后将创建一个新的角色，并可选择是否同步原角色的权限配置。`
+
+      try {
+        await this.$confirm(confirmationMessage, '复制角色确认', {
+          confirmButtonText: '开始复制',
+          cancelButtonText: '取消',
+          type: 'info',
+          distinguishCancelAndClose: true
+        })
+      } catch (confirmError) {
+        // 用户取消或关闭对话框
+        if (confirmError !== 'cancel') {
+          this.$message.info('已取消复制操作')
+        }
+        return
+      }
+
+      try {
+        this.listLoading = true
+        const response = await getRoleById(role.id)
+        const latestRoleData = response.data
+
+        this.drawerMode = 'copy'
+        this.currentRole = {
+          ...latestRoleData,
+          userCount: role.userCount
+        }
+        this.drawerVisible = true
+      } catch (error) {
+        console.error('获取角色详情失败:', error)
+        const errorMessage = error?.message || '获取角色详细信息失败，请稍后重试'
+        this.$message.error(errorMessage)
+      } finally {
+        this.listLoading = false
+      }
     },
 
     /**
@@ -408,6 +447,16 @@ export default {
     handleDrawerClose() {
       this.drawerVisible = false
       this.currentRole = null
+    },
+
+    /**
+     * 处理清除搜索条件
+     */
+    handleClearSearch() {
+      // 通知搜索表单重置
+      this.$refs.searchForm?.handleReset()
+      // 清除搜索参数并刷新
+      this.handleReset()
     }
   }
 }

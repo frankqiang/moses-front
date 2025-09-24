@@ -149,6 +149,7 @@
 <script>
 import BaseDrawer from '@/components/Drawer'
 import EnhancedForm from '@/components/EnhancedForm'
+import { ApiError } from '@/utils/request'
 import { createRole, updateRole, copyRole, getRoleById } from '../api'
 import { ROLE_LEVEL_OPTIONS, ROLE_TYPE_OPTIONS, FORM_RULES, ROLE_TYPES } from '../constants'
 
@@ -470,12 +471,31 @@ export default {
         console.error('角色保存失败:', error)
         let errorMessage = '操作失败，请稍后重试'
 
-        if (error && error.response && error.response.data) {
+        // 解析请求层返回的标准化ApiError
+        if (error instanceof ApiError) {
+          switch (error.code) {
+            case 'ROLE_CODE_ALREADY_EXISTS':
+              errorMessage = '角色编码已存在，请使用其他编码'
+              break
+            case 'ROLE_NAME_ALREADY_EXISTS':
+              errorMessage = '角色名称已存在，请使用其他名称'
+              break
+            case 'ROLE_COPY_SOURCE_NOT_FOUND':
+              errorMessage = '源角色不存在或已被删除，无法完成复制'
+              break
+            default:
+              // ApiError.message 已由request层根据后端message填充
+              errorMessage = error.message || errorMessage
+              break
+          }
+        } else if (error && error.response && error.response.data) {
           const apiError = error.response.data.error || error.response.data
           if (apiError.code === 'ROLE_CODE_ALREADY_EXISTS') {
             errorMessage = '角色编码已存在，请使用其他编码'
           } else if (apiError.code === 'ROLE_NAME_ALREADY_EXISTS') {
             errorMessage = '角色名称已存在，请使用其他名称'
+          } else if (apiError.code === 'ROLE_COPY_SOURCE_NOT_FOUND') {
+            errorMessage = '源角色不存在或已被删除，无法完成复制'
           } else if (apiError.message) {
             errorMessage = apiError.message
           }

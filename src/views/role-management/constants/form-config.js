@@ -8,16 +8,37 @@ import {
   DEFAULT_ROLE_OPTIONS
 } from './role'
 
-// 搜索表单配置
+// 搜索表单配置 - 严格按照接口文档参数优化
 export const SEARCH_FORM_CONFIG = [
   {
     type: 'input',
     prop: 'search',
     label: '关键词搜索',
-    placeholder: '请输入角色名称或编码（最大100字符）',
+    placeholder: '在名称、编码、描述中搜索（最大100字符）',
     clearable: true,
     maxlength: 100,
-    span: 6
+    span: 8,
+    tip: '支持在角色名称、编码、描述中进行模糊搜索'
+  },
+  {
+    type: 'input',
+    prop: 'name',
+    label: '角色名称',
+    placeholder: '请输入角色名称进行模糊查询',
+    clearable: true,
+    maxlength: 100,
+    span: 6,
+    tip: '按角色名称精确筛选'
+  },
+  {
+    type: 'input',
+    prop: 'code',
+    label: '角色编码',
+    placeholder: '请输入角色编码进行模糊查询',
+    clearable: true,
+    maxlength: 50,
+    span: 6,
+    tip: '按角色编码精确筛选'
   },
   {
     type: 'select',
@@ -25,8 +46,10 @@ export const SEARCH_FORM_CONFIG = [
     label: '角色类型',
     placeholder: '请选择角色类型',
     clearable: true,
+    multiple: true,
     options: ROLE_TYPE_OPTIONS,
-    span: 4
+    span: 6,
+    tip: '支持多选角色类型'
   },
   {
     type: 'select',
@@ -34,8 +57,10 @@ export const SEARCH_FORM_CONFIG = [
     label: '角色状态',
     placeholder: '请选择角色状态',
     clearable: true,
+    multiple: true,
     options: ROLE_STATUS_OPTIONS,
-    span: 4
+    span: 6,
+    tip: '支持多选角色状态'
   },
   {
     type: 'select',
@@ -43,8 +68,10 @@ export const SEARCH_FORM_CONFIG = [
     label: '角色级别',
     placeholder: '请选择角色级别',
     clearable: true,
+    multiple: true,
     options: ROLE_LEVEL_OPTIONS,
-    span: 4
+    span: 6,
+    tip: '支持多选角色级别'
   },
   {
     type: 'select',
@@ -53,7 +80,21 @@ export const SEARCH_FORM_CONFIG = [
     placeholder: '是否默认角色',
     clearable: true,
     options: DEFAULT_ROLE_OPTIONS,
-    span: 4
+    span: 6,
+    tip: '筛选默认角色'
+  },
+  {
+    type: 'select',
+    prop: 'hasUsers',
+    label: '用户关联',
+    placeholder: '是否有关联用户',
+    clearable: true,
+    options: [
+      { value: true, label: '有关联用户' },
+      { value: false, label: '无关联用户' }
+    ],
+    span: 6,
+    tip: '筛选是否有用户使用此角色'
   },
   {
     type: 'date',
@@ -62,10 +103,11 @@ export const SEARCH_FORM_CONFIG = [
     'start-placeholder': '开始日期',
     'end-placeholder': '结束日期',
     clearable: true,
-    span: 6,
+    span: 12,
     dateType: 'datetimerange',
     format: 'yyyy-MM-dd HH:mm:ss',
-    'value-format': 'yyyy-MM-dd HH:mm:ss'
+    'value-format': 'yyyy-MM-dd HH:mm:ss',
+    tip: '按创建时间范围筛选'
   }
 ]
 

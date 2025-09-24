@@ -1,85 +1,47 @@
 /**
- * 高级搜索表单组件 V2
- * 功能描述：提供统一的搜索表单布局和功能，支持表单项配置、折叠展开、重置等功能
- * 优化了数据流向，避免死循环问题，减少了模板重复代码，增加了防抖功能
- * 创建日期：2024-12-16
- */
+* 高级搜索表单组件 V2
+* 功能描述：提供统一的搜索表单布局和功能，支持表单项配置、折叠展开、重置等功能
+* 优化了数据流向，避免死循环问题，减少了模板重复代码，增加了防抖功能
+* 创建日期：2024-12-16
+*/
 <template>
   <div class="search-form-container">
-    <el-form
-      ref="form"
-      :model="localFormModel"
-      :inline="inline"
-      size="small"
-      :label-width="labelWidth"
-      @keyup.enter.native="handleSubmitWithDebounce"
-    >
+    <el-form ref="form" :model="localFormModel" :inline="inline" size="small" :label-width="labelWidth"
+      @keyup.enter.native="handleSubmitWithDebounce">
       <!-- 表单项渲染（包括可见项和展开项） -->
       <template v-for="(item, index) in computedFormItems">
-        <el-form-item
-          v-show="showMore || index < visibleItemCount"
-          :key="item.prop"
-          :label="item.label"
-          :prop="item.prop"
-          :class="[item.class, {'hidden-item': !showMore && index >= visibleItemCount}]"
-        >
+        <el-form-item v-show="showMore || index < visibleItemCount" :key="item.prop" :label="item.label"
+          :prop="item.prop" :class="[item.class, { 'hidden-item': !showMore && index >= visibleItemCount }]">
           <!-- 表单控件组件 - 使用动态组件渲染不同类型表单项 -->
-          <component
-            :is="getComponentName(item.type)"
-            v-if="!isCustomComponent(item.type)"
-            v-model="localFormModel[item.prop]"
-            v-bind="getComponentProps(item)"
-            @change="handleItemChange(item)"
-            @clear="handleItemClear(item.prop)"
-          >
+          <component :is="getComponentName(item.type)" v-if="!isCustomComponent(item.type)"
+            v-model="localFormModel[item.prop]" v-bind="getComponentProps(item)" @change="handleItemChange(item)"
+            @clear="handleItemClear(item.prop)">
             <!-- 渲染options内容（针对select/radio/checkbox等） -->
             <template v-if="hasOptions(item.type)">
-              <component
-                :is="getOptionComponentName(item.type)"
-                v-for="opt in item.options"
-                :key="opt.value"
-                :label="opt.value"
-                :value="opt.value"
-                :disabled="opt.disabled"
-              >
+              <component :is="getOptionComponentName(item.type)" v-for="opt in item.options" :key="opt.value"
+                :label="getOptionLabel(item.type, opt)" :value="opt.value" :disabled="opt.disabled">
                 {{ opt.label }}
               </component>
             </template>
           </component>
 
           <!-- 自定义插槽 -->
-          <slot
-            v-else-if="item.type === 'slot'"
-            :name="item.slotName || item.prop"
-            :model="localFormModel"
-          />
+          <slot v-else-if="item.type === 'slot'" :name="item.slotName || item.prop" :model="localFormModel" />
         </el-form-item>
       </template>
 
       <!-- 表单操作按钮 -->
       <el-form-item class="search-buttons">
-        <el-button
-          type="primary"
-          :loading="loading"
-          class="form-button"
-          @click="handleSubmitWithDebounce"
-        >
+        <el-button type="primary" :loading="loading" class="form-button" @click="handleSubmitWithDebounce">
           查询
         </el-button>
-        <el-button
-          class="form-button"
-          @click="handleReset"
-        >
+        <el-button class="form-button" @click="handleReset">
           重置
         </el-button>
 
         <!-- 展开/收起按钮 -->
-        <el-button
-          v-if="expandable && computedFormItems.length > visibleItemCount"
-          type="text"
-          class="expand-button"
-          @click="showMore = !showMore"
-        >
+        <el-button v-if="expandable && computedFormItems.length > visibleItemCount" type="text" class="expand-button"
+          @click="showMore = !showMore">
           {{ showMore ? '收起' : '展开' }}
           <i :class="showMore ? 'el-icon-arrow-up' : 'el-icon-arrow-down'" />
         </el-button>
@@ -244,6 +206,25 @@ export default {
     // 获取选项组件名称
     getOptionComponentName(type) {
       return OPTION_COMPONENT_MAP[type] || 'el-option'
+    },
+
+    // 获取选项的label属性，避免类型不匹配
+    getOptionLabel(type, option) {
+      if (type === 'select') {
+        const { label, value } = option
+
+        if (label !== undefined && label !== null) {
+          if (typeof label === 'string' || typeof label === 'number') {
+            return label
+          }
+
+          return String(label)
+        }
+
+        return typeof value === 'boolean' ? String(value) : value
+      }
+
+      return option.value
     },
 
     // 判断是否为自定义组件类型

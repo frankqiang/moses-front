@@ -61,35 +61,66 @@ this.$message.success('删除成功')
 #### 错误消息处理原则
 1. **错误码优先**：根据 `error.code` 进行错误类型判断和消息展示
 2. **后端消息优先**：优先显示 `error.message` 中的用户友好错误描述
-3. **分类处理**：按照错误码前缀进行分类处理（AUTH_、VAL_、ROLE_、SYS_等）
-
-**正确示例**：
-```javascript
-// ✅ 正确：使用后端错误码和消息
-catch (error) {
-  if (error.code === 'ROLE_SYSTEM_CANNOT_DELETE') {
-    this.$message.error(error.message || '系统角色不能删除')
-  } else {
-    this.$message.error(error.message || '操作失败，请稍后重试')
-  }
-}
-```
 
 #### 统一响应格式标准
 参考各模块接口文档开头的"统一响应格式"章节：
 
-**成功响应格式**：
-- `success: true`
-- `data: {}` - 业务数据
-- `message: "操作成功的描述信息"` - **必须使用此字段**
-- `meta: {}` - 元数据信息
+## 统一响应格式
 
-**错误响应格式**：
-- `success: false`
-- `error.code` - 标准化错误码
-- `error.message` - 用户友好错误描述 - **必须使用此字段**
-- `error.details` - 错误详细信息
-- `meta: {}` - 元数据信息
+### 成功响应格式
+
+所有成功的 API 调用都会返回以下统一格式：
+
+```json
+{
+  "success": true,
+  "data": {
+    // 具体的业务数据，根据接口而不同
+  },
+  "message": "操作成功的描述信息",
+  "meta": {
+    "timestamp": "2024-01-20T10:30:00.000Z",
+    "requestId": "req-1234567890-abcdef",
+    "version": "v1"
+  }
+}
+```
+
+### 错误响应格式
+
+所有错误的 API 调用都会返回以下统一格式：
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "用户友好的错误描述",
+    "details": {
+      "field": "发生错误的字段名（可选）",
+      "value": "错误的字段值（可选）",
+      "retryAfter": 300,
+      "traceId": "req-1234567890-abcdef"
+    }
+  },
+  "meta": {
+    "timestamp": "2024-01-20T10:30:00.000Z",
+    "requestId": "req-1234567890-abcdef",
+    "version": "v1"
+  }
+}
+```
+
+**响应字段说明**：
+
+- `success`: 布尔值，表示请求是否成功
+- `data`: 成功时包含业务数据，失败时为 null
+- `error`: 失败时包含错误信息，成功时为 null
+- `message`: 成功时的操作描述
+- `error.code`: 标准化的错误码，用于程序化处理
+- `error.message`: 用户友好的错误描述，可直接展示给用户
+- `error.details`: 可选的错误详细信息
+- `meta`: 元数据信息，包含时间戳、请求 ID 和版本号
 
 ## 🛠️ 开发环境配置检查清单
 

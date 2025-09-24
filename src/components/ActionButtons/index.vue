@@ -11,30 +11,60 @@
     <template v-if="mode === 'text'">
       <template v-for="(button, index) in visibleButtons">
         <!-- 下拉菜单按钮 -->
-        <el-dropdown v-if="button.children && button.children.length" :key="`dropdown-${index}`" trigger="click"
-          :aria-label="`${button.text}菜单`" @command="handleChildCommand">
+        <el-dropdown
+          v-if="button.children && button.children.length"
+          :key="`dropdown-${index}`"
+          trigger="click"
+          :aria-label="`${button.text}菜单`"
+          @command="handleChildCommand"
+        >
           <error-boundary @error="handleButtonError">
-            <el-tooltip v-if="button.tooltip && showTooltip" :content="button.tooltip"
-              :disabled="!button.tooltip || button.disabled" placement="top">
-              <el-button :type="button.type || 'text'" :size="button.size || size" :icon="button.icon"
-                :class="getButtonClass(button)" :disabled="button.disabled" :loading="getButtonLoading(button)"
-                :aria-label="button.ariaLabel || button.text" @click="debouncedClick(button)">
+            <el-tooltip
+              v-if="button.tooltip && showTooltip"
+              :content="button.tooltip"
+              :disabled="!button.tooltip || button.disabled"
+              placement="top"
+            >
+              <el-button
+                :type="button.type || 'text'"
+                :size="button.size || size"
+                :icon="button.icon"
+                :class="getButtonClass(button)"
+                :disabled="button.disabled"
+                :loading="getButtonLoading(button)"
+                :aria-label="button.ariaLabel || button.text"
+                @click="debouncedClick(button)"
+              >
                 {{ button.showText !== false ? button.text : '' }}
                 <i v-if="button.showText !== false" class="el-icon-arrow-down el-icon--right" />
               </el-button>
             </el-tooltip>
-            <el-button v-else :type="button.type || 'text'" :size="button.size || size" :icon="button.icon"
-              :class="getButtonClass(button)" :disabled="button.disabled" :loading="getButtonLoading(button)"
-              :aria-label="button.ariaLabel || button.text" @click="debouncedClick(button)">
+            <el-button
+              v-else
+              :type="button.type || 'text'"
+              :size="button.size || size"
+              :icon="button.icon"
+              :class="getButtonClass(button)"
+              :disabled="button.disabled"
+              :loading="getButtonLoading(button)"
+              :aria-label="button.ariaLabel || button.text"
+              @click="debouncedClick(button)"
+            >
               {{ button.showText !== false ? button.text : '' }}
               <i v-if="button.showText !== false" class="el-icon-arrow-down el-icon--right" />
             </el-button>
           </error-boundary>
 
           <el-dropdown-menu slot="dropdown" role="menu">
-            <el-dropdown-item v-for="(child, childIndex) in button.children" :key="`child-${childIndex}`"
-              :command="{ action: child.action, row: row, parentAction: button.action }" :disabled="child.disabled"
-              :divided="child.divided" role="menuitem" :aria-label="child.ariaLabel || child.text">
+            <el-dropdown-item
+              v-for="(child, childIndex) in button.children"
+              :key="`child-${childIndex}`"
+              :command="{ action: child.action, row: row, parentAction: button.action }"
+              :disabled="child.disabled"
+              :divided="child.divided"
+              role="menuitem"
+              :aria-label="child.ariaLabel || child.text"
+            >
               <i v-if="child.icon" :class="child.icon" aria-hidden="true" />
               {{ child.text }}
             </el-dropdown-item>
@@ -43,19 +73,38 @@
 
         <!-- 普通按钮带tooltip -->
         <error-boundary v-else :key="`button-${index}`" @error="handleButtonError">
-          <el-tooltip v-if="button.tooltip && showTooltip" :content="button.tooltip"
-            :disabled="!button.tooltip || button.disabled" placement="top">
-            <el-button :type="button.type || 'text'" :size="button.size || size" :icon="button.icon"
-              :class="getButtonClass(button)" :disabled="button.disabled" :loading="getButtonLoading(button)"
-              :aria-label="button.ariaLabel || button.text" @click="debouncedClick(button)">
+          <el-tooltip
+            v-if="button.tooltip && showTooltip"
+            :content="button.tooltip"
+            :disabled="!button.tooltip || button.disabled"
+            placement="top"
+          >
+            <el-button
+              :type="button.type || 'text'"
+              :size="button.size || size"
+              :icon="button.icon"
+              :class="getButtonClass(button)"
+              :disabled="button.disabled"
+              :loading="getButtonLoading(button)"
+              :aria-label="button.ariaLabel || button.text"
+              @click="debouncedClick(button)"
+            >
               {{ button.showText !== false ? button.text : '' }}
             </el-button>
           </el-tooltip>
 
           <!-- 普通按钮不带tooltip -->
-          <el-button v-else :type="button.type || 'text'" :size="button.size || size" :icon="button.icon"
-            :class="getButtonClass(button)" :disabled="button.disabled" :loading="getButtonLoading(button)"
-            :aria-label="button.ariaLabel || button.text" @click="debouncedClick(button)">
+          <el-button
+            v-else
+            :type="button.type || 'text'"
+            :size="button.size || size"
+            :icon="button.icon"
+            :class="getButtonClass(button)"
+            :disabled="button.disabled"
+            :loading="getButtonLoading(button)"
+            :aria-label="button.ariaLabel || button.text"
+            @click="debouncedClick(button)"
+          >
             {{ button.showText !== false ? button.text : '' }}
           </el-button>
         </error-boundary>
@@ -67,9 +116,15 @@
           更多<i class="el-icon-arrow-down el-icon--right" />
         </el-button>
         <el-dropdown-menu slot="dropdown" role="menu">
-          <el-dropdown-item v-for="(button, index) in moreButtons" :key="`more-${index}`" :command="button"
-            :disabled="button.disabled" :divided="button.divided" role="menuitem"
-            :aria-label="button.ariaLabel || button.text">
+          <el-dropdown-item
+            v-for="(button, index) in moreButtons"
+            :key="`more-${index}`"
+            :command="button"
+            :disabled="button.disabled"
+            :divided="button.divided"
+            role="menuitem"
+            :aria-label="button.ariaLabel || button.text"
+          >
             <i v-if="button.icon" :class="button.icon" aria-hidden="true" />
             {{ button.text }}
           </el-dropdown-item>
@@ -80,20 +135,36 @@
     <!-- 普通按钮模式 -->
     <template v-else>
       <!-- 普通按钮模式下的下拉菜单 -->
-      <el-dropdown v-for="(button, index) in visibleDropdownButtons" :key="`normal-dropdown-${index}`"
-        :aria-label="`${button.text}菜单`" @command="handleChildCommand">
+      <el-dropdown
+        v-for="(button, index) in visibleDropdownButtons"
+        :key="`normal-dropdown-${index}`"
+        :aria-label="`${button.text}菜单`"
+        @command="handleChildCommand"
+      >
         <error-boundary @error="handleButtonError">
-          <el-button :type="button.type || 'primary'" :size="button.size || size" :icon="button.icon"
-            :class="getButtonClass(button)" :disabled="button.disabled" :loading="getButtonLoading(button)"
-            :aria-label="button.ariaLabel || button.text">
+          <el-button
+            :type="button.type || 'primary'"
+            :size="button.size || size"
+            :icon="button.icon"
+            :class="getButtonClass(button)"
+            :disabled="button.disabled"
+            :loading="getButtonLoading(button)"
+            :aria-label="button.ariaLabel || button.text"
+          >
             {{ button.text }}<i class="el-icon-arrow-down el-icon--right" />
           </el-button>
         </error-boundary>
 
         <el-dropdown-menu slot="dropdown" role="menu">
-          <el-dropdown-item v-for="(child, childIndex) in button.children" :key="`normal-child-${childIndex}`"
-            :command="{ action: child.action, row: row, parentAction: button.action }" :disabled="child.disabled"
-            :divided="child.divided" role="menuitem" :aria-label="child.ariaLabel || child.text">
+          <el-dropdown-item
+            v-for="(child, childIndex) in button.children"
+            :key="`normal-child-${childIndex}`"
+            :command="{ action: child.action, row: row, parentAction: button.action }"
+            :disabled="child.disabled"
+            :divided="child.divided"
+            role="menuitem"
+            :aria-label="child.ariaLabel || child.text"
+          >
             <i v-if="child.icon" :class="child.icon" aria-hidden="true" />
             {{ child.text }}
           </el-dropdown-item>
@@ -101,11 +172,21 @@
       </el-dropdown>
 
       <!-- 普通按钮 -->
-      <error-boundary v-for="(button, index) in visibleNormalButtons" :key="`normal-${index}`"
-        @error="handleButtonError">
-        <el-button :type="button.type || 'primary'" :size="button.size || size" :icon="button.icon"
-          :class="getButtonClass(button)" :disabled="button.disabled" :loading="getButtonLoading(button)"
-          :aria-label="button.ariaLabel || button.text" @click="debouncedClick(button)">
+      <error-boundary
+        v-for="(button, index) in visibleNormalButtons"
+        :key="`normal-${index}`"
+        @error="handleButtonError"
+      >
+        <el-button
+          :type="button.type || 'primary'"
+          :size="button.size || size"
+          :icon="button.icon"
+          :class="getButtonClass(button)"
+          :disabled="button.disabled"
+          :loading="getButtonLoading(button)"
+          :aria-label="button.ariaLabel || button.text"
+          @click="debouncedClick(button)"
+        >
           {{ button.text }}
         </el-button>
       </error-boundary>
@@ -116,9 +197,15 @@
           更多操作<i class="el-icon-arrow-down el-icon--right" />
         </el-button>
         <el-dropdown-menu slot="dropdown" role="menu">
-          <el-dropdown-item v-for="(button, index) in moreButtons" :key="`normal-more-${index}`" :command="button"
-            :disabled="button.disabled" :divided="button.divided" role="menuitem"
-            :aria-label="button.ariaLabel || button.text">
+          <el-dropdown-item
+            v-for="(button, index) in moreButtons"
+            :key="`normal-more-${index}`"
+            :command="button"
+            :disabled="button.disabled"
+            :divided="button.divided"
+            role="menuitem"
+            :aria-label="button.ariaLabel || button.text"
+          >
             <i v-if="button.icon" :class="button.icon" aria-hidden="true" />
             {{ button.text }}
           </el-dropdown-item>

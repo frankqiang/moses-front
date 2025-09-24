@@ -30,6 +30,21 @@
       :pagination="paginationConfig" :selection="true" :index="true" :border="true" stripe
       @selection-change="handleSelectionChange" @sort-change="handleSortChange"
       @pagination-change="handlePaginationChange">
+      <!-- 自定义空状态 - 搜索无结果时的友好提示 -->
+      <template #empty>
+        <div class="empty-block">
+          <i class="el-icon-search" style="font-size: 48px; color: #C0C4CC; margin-bottom: 16px;" />
+          <p style="color: #909399; font-size: 14px; margin: 0;">
+            {{ hasSearchParams ? '未找到符合条件的角色' : '暂无角色数据' }}
+          </p>
+          <p v-if="hasSearchParams" style="color: #C0C4CC; font-size: 12px; margin: 8px 0 0 0;">
+            请尝试调整搜索条件或
+            <el-button type="text" size="small" style="padding: 0; margin-left: 4px;" @click="handleClearSearch">
+              清除筛选条件
+            </el-button>
+          </p>
+        </div>
+      </template>
       <!-- 角色名称列 -->
       <template #name="{ row }">
         <div class="role-name-cell">
@@ -119,6 +134,11 @@ export default {
         limit: 10,
         total: 0
       })
+    },
+    // 当前搜索参数 - 用于判断是否有搜索条件
+    searchParams: {
+      type: Object,
+      default: () => ({})
     }
   },
   data() {
@@ -183,14 +203,25 @@ export default {
     },
 
     /**
-             * 分页配置
-             */
+     * 分页配置
+     */
     paginationConfig() {
       return {
         ...this.pagination,
         pageSizes: [10, 20, 50, 100],
         layout: 'total, sizes, prev, pager, next, jumper'
       }
+    },
+
+    /**
+     * 判断是否有搜索参数 - 用于空状态提示
+     */
+    hasSearchParams() {
+      return this.searchParams && Object.keys(this.searchParams).some(key => {
+        const value = this.searchParams[key]
+        return value !== undefined && value !== null && value !== '' &&
+          (Array.isArray(value) ? value.length > 0 : true)
+      })
     }
   },
   created() {
@@ -332,10 +363,11 @@ export default {
         case 'copy':
           this.$emit('copy', rowData)
           break
-        case 'toggle-status':
+        case 'toggle-status': {
           const newStatus = rowData.status === 'active' ? 'inactive' : 'active'
           this.$emit('status-change', rowData, newStatus)
           break
+        }
         case 'delete':
           this.$emit('delete', rowData)
           break
@@ -371,10 +403,17 @@ export default {
     },
 
     /**
-             * 刷新失败回调
-             */
+     * 刷新失败回调
+     */
     refreshFail(message) {
       this.$refs.toolbar?.refreshFail(message)
+    },
+
+    /**
+     * 处理清除搜索条件
+     */
+    handleClearSearch() {
+      this.$emit('clear-search')
     }
   }
 }
