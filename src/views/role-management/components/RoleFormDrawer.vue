@@ -321,7 +321,7 @@ export default {
         } else if (this.roleData) {
           // 对于编辑、查看、复制模式，先使用传入的数据进行快速回填
           this.formData = this.prepareFormData(this.roleData)
-          
+
           // 编辑和查看模式：重新获取最新数据
           if (this.mode === 'update' || this.mode === 'view') {
             this.loading = true
@@ -398,27 +398,50 @@ export default {
         this.loading = true
         let response
 
-        // 准备提交数据，移除不需要的字段
-        const submitData = { ...formData }
+        // 准备提交数据，严格按照接口文档要求过滤参数
+        let submitData = {}
 
-        // 系统角色编辑限制验证
-        if (this.mode === 'update' && this.isSystemRole) {
-          // 移除系统角色不允许修改的字段
-          delete submitData.code
-          delete submitData.type
-          delete submitData.level
+        if (this.mode === 'create') {
+          // 创建角色：传递所有必需和可选的创建参数
+          submitData = {
+            name: formData.name,
+            code: formData.code,
+            description: formData.description,
+            type: formData.type,
+            level: formData.level,
+            status: formData.status,
+            isDefault: formData.isDefault,
+            permissions: formData.permissions || {}
+          }
+        } else if (this.mode === 'copy') {
+          // 复制角色：包含复制特定参数
+          submitData = {
+            name: formData.name,
+            code: formData.code,
+            description: formData.description,
+            copyPermissions: formData.copyPermissions
+          }
+        } else if (this.mode === 'update') {
+          // 更新角色：严格按照PUT /v1/roles/{id}接口文档要求
+          const allowedUpdateFields = ['name', 'code', 'description', 'type', 'level', 'status', 'isDefault', 'permissions']
+          
+          // 只传递接口文档中定义的参数
+          allowedUpdateFields.forEach(field => {
+            if (formData[field] !== undefined) {
+              submitData[field] = formData[field]
+            }
+          })
 
-          // 提示用户系统角色的限制
-          this.$message.info('系统角色的编码、类型和级别不可修改')
-        }
-
-        // 根据模式处理特殊字段
-        if (this.mode === 'copy') {
-          // 复制模式保留 copyPermissions 字段
-          submitData.copyPermissions = formData.copyPermissions
-        } else {
-          // 其他模式移除 copyPermissions 字段
-          delete submitData.copyPermissions
+          // 系统角色编辑限制验证
+          if (this.isSystemRole) {
+            // 移除系统角色不允许修改的字段
+            delete submitData.code
+            delete submitData.type
+            delete submitData.level
+            
+            // 提示用户系统角色的限制
+            this.$message.info('系统角色的编码、类型和级别不可修改')
+          }
         }
 
         if (this.mode === 'create') {
