@@ -80,37 +80,24 @@ export const asyncRoutes = [
         }
       },
       {
-        path: 'organization',
-        name: 'OrganizationStructure',
-        component: () => import('@/views/organization-structure/index'),
-        redirect: '/user-management/organization/departments',
+        path: 'departments',
+        name: 'DepartmentManagement',
+        component: () => import('@/views/organization-structure/departments/index'),
         meta: {
-          title: '组织结构',
+          title: '部门管理',
           icon: 'el-icon-office-building',
           roles: ['admin', 'organization_manager']
-        },
-        children: [
-          {
-            path: 'departments',
-            name: 'DepartmentManagement',
-            component: () => import('@/views/organization-structure/departments/index'),
-            meta: {
-              title: '部门管理',
-              icon: 'el-icon-office-building',
-              roles: ['admin', 'organization_manager']
-            }
-          },
-          {
-            path: 'positions',
-            name: 'PositionManagement',
-            component: () => import('@/views/organization-structure/positions/index'),
-            meta: {
-              title: '岗位管理',
-              icon: 'el-icon-suitcase',
-              roles: ['admin', 'organization_manager']
-            }
-          }
-        ]
+        }
+      },
+      {
+        path: 'positions',
+        name: 'PositionManagement',
+        component: () => import('@/views/organization-structure/positions/index'),
+        meta: {
+          title: '岗位管理',
+          icon: 'el-icon-suitcase',
+          roles: ['admin', 'organization_manager']
+        }
       },
       {
         path: 'pending-applications',
