@@ -424,7 +424,7 @@ export default {
         } else if (this.mode === 'update') {
           // 更新角色：严格按照PUT /v1/roles/{id}接口文档要求
           const allowedUpdateFields = ['name', 'code', 'description', 'type', 'level', 'status', 'isDefault', 'permissions']
-          
+
           // 只传递接口文档中定义的参数
           allowedUpdateFields.forEach(field => {
             if (formData[field] !== undefined) {
@@ -438,7 +438,7 @@ export default {
             delete submitData.code
             delete submitData.type
             delete submitData.level
-            
+
             // 提示用户系统角色的限制
             this.$message.info('系统角色的编码、类型和级别不可修改')
           }
