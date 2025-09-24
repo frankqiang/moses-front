@@ -40,8 +40,8 @@ export default {
         parentField.options = [
           { label: '全部', value: '' },
           ...this.parentOptions.map(option => ({
-            label: option.name,
-            value: option.id
+            label: option.label,
+            value: option.value
           }))
         ]
       }

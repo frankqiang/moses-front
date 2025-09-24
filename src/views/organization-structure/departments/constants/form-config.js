@@ -8,10 +8,10 @@ export const SEARCH_FORM_CONFIG = [
   {
     type: 'input',
     prop: 'keyword',
-    label: '关键词',
-    placeholder: '请输入部门名称或编码',
+    label: '部门名称/编码',
+    placeholder: '支持输入名称或编码模糊搜索',
     clearable: true,
-    style: { width: '200px' }
+    style: { width: '220px' }
   },
   {
     type: 'select',

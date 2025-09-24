@@ -34,8 +34,7 @@ export const TOOLBAR_BUTTONS = [
     text: '新增部门',
     icon: 'el-icon-plus',
     type: 'primary',
-    action: 'create',
-    permission: 'manageOrganization'
+    action: 'create'
   }
 ]
 
@@ -44,39 +43,33 @@ export const ACTION_BUTTONS = {
   view: {
     text: '查看',
     icon: 'el-icon-view',
-    type: 'text',
-    permission: 'getDepartments'
+    type: 'text'
   },
   edit: {
     text: '编辑',
     icon: 'el-icon-edit',
-    type: 'text',
-    permission: 'manageOrganization'
+    type: 'text'
   },
   createChild: {
     text: '新增子部门',
     icon: 'el-icon-plus',
-    type: 'text',
-    permission: 'manageOrganization'
+    type: 'text'
   },
   toggleStatus: {
     text: '切换状态',
     icon: 'el-icon-switch-button',
-    type: 'text',
-    permission: 'manageOrganization'
+    type: 'text'
   },
   setManager: {
     text: '设置经理',
     icon: 'el-icon-user',
-    type: 'text',
-    permission: 'manageOrganization'
+    type: 'text'
   },
   delete: {
     text: '删除',
     icon: 'el-icon-delete',
     type: 'text',
-    style: { color: '#f56c6c' },
-    permission: 'manageOrganization'
+    style: { color: '#f56c6c' }
   }
 }
 

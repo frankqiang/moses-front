@@ -12,11 +12,11 @@
     <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
       :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true"
       :selected-rows="selectedRows" :enable-export="true" :export-api="exportApiFunction" :export-params="exportParams"
-      :hide-status-buttons="false" :status-buttons-mode="'dropdown'" :status-confirm="false" :delete-confirm="false"
-      :table-data="data" :smart-status-buttons="true" :status-field="'status'" :enabled-value="'active'"
-      :disabled-value="'inactive'" :refresh-feedback-mode="'all'" @refresh="handleRefresh"
-      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable" @export-success="handleExportSuccess">
+      :hide-status-buttons="false" status-buttons-mode="dropdown" :status-confirm="false" :delete-confirm="false"
+      :table-data="data" :smart-status-buttons="true" status-field="status" enabled-value="active"
+      disabled-value="inactive" refresh-feedback-mode="all" @refresh="handleRefresh" @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable"
+      @export-success="handleExportSuccess">
       <template #toolbar-left>
         <ActionButtons :buttons="toolbarButtons" mode="normal" @click="handleToolbarAction" />
         <slot name="toolbar-left" />
@@ -29,13 +29,15 @@
 
     <!-- 使用BaseTable组件展示树形结构 -->
     <BaseTable :data="flattenedData" :columns="baseTableColumns" :loading="loading" :pagination="paginationConfig"
-      :show-selection="true" :show-index="false" :virtual-scroll="enableVirtualScroll" :virtual-threshold="1000"
-      :virtual-height="600" :item-height="48" :allow-retry="true" :load-error="loadError" border stripe
-      highlight-current-row @selection-change="handleSelectionChange" @retry="handleRetry" @row-click="handleRowClick"
-      @data-error="handleDataError" @format-error="handleFormatError" @pagination-change="handlePaginationChange">
+      :show-selection="true" :show-index="false" :virtual-scroll="enableVirtualScroll"
+      :virtual-threshold="virtualScrollThreshold" :virtual-height="virtualScrollHeight" :item-height="itemHeight"
+      :allow-retry="true" :load-error="loadError" border stripe highlight-current-row
+      @selection-change="handleSelectionChange" @retry="handleRetry" @row-click="handleRowClick"
+      @row-dblclick="handleRowDblClick" @data-error="handleDataError" @format-error="handleFormatError"
+      @pagination-change="handlePaginationChange">
       <!-- 部门名称列（树形结构显示） -->
       <template #name="{ row }">
-        <div class="tree-node-content" :style="{ paddingLeft: (row._level || 0) * 20 + 'px' }">
+        <div v-if="row" class="tree-node-content" :style="{ paddingLeft: `${(row._level || 0) * 20}px` }">
           <span v-if="row.children && row.children.length > 0" class="tree-expand-icon"
             :class="{ 'is-expanded': row._expanded }" @click="toggleExpand(row)">
             <i class="el-icon-caret-right" />
@@ -44,22 +46,26 @@
           <i class="el-icon-office-building tree-node-icon" />
           <span class="tree-node-label">{{ row.name }}</span>
         </div>
+        <span v-else class="text-muted">-</span>
       </template>
 
       <!-- 部门经理列 -->
       <template #manager="{ row }">
-        <span v-if="row.manager">{{ row.manager.name }}</span>
+        <span v-if="row && row.manager">{{ row.manager.name }}</span>
         <span v-else class="text-muted">-</span>
       </template>
 
       <!-- 状态列 -->
       <template #status="{ row }">
-        <StatusTag :status="row.status" :text-map="statusTextMap" :type-map="statusTypeMap" />
+        <StatusTag v-if="row && row.status !== undefined" :status="row.status" :text-map="statusTextMap"
+          :type-map="statusTypeMap" />
+        <span v-else class="text-muted">-</span>
       </template>
 
       <!-- 操作列 -->
       <template #actions="{ row }">
-        <ActionButtons :buttons="getActionButtons(row)" mode="text" :row="row" @click="handleActionClick" />
+        <ActionButtons v-if="row" :buttons="getActionButtons(row)" mode="text" :row="row" @click="handleActionClick" />
+        <span v-else class="text-muted">-</span>
       </template>
 
       <!-- 空状态 -->
@@ -80,7 +86,6 @@ import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import TableToolbar from '@/components/TableToolbar'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
-import { debounce } from '@/utils'
 import {
   TABLE_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
@@ -88,6 +93,14 @@ import {
   TOOLBAR_BUTTONS,
   ACTION_BUTTONS
 } from '../constants'
+
+const DEFAULT_NODE = {
+  id: '',
+  name: '-',
+  status: '',
+  manager: null,
+  children: []
+}
 
 export default {
   name: 'DepartmentTable',
@@ -119,6 +132,11 @@ export default {
       type: [Boolean, String, Error],
       default: false
     },
+    // 导出参数
+    exportParams: {
+      type: Object,
+      default: () => ({})
+    },
     // 当前页码
     page: {
       type: Number,
@@ -133,6 +151,20 @@ export default {
     exportApi: {
       type: String,
       default: '/v1/departments/export'
+    },
+    // 虚拟滚动配置
+    virtualConfig: {
+      type: Object,
+      default: () => ({
+        threshold: 1000,
+        height: 600,
+        itemHeight: 48
+      })
+    },
+    // 默认展开层级
+    defaultExpandLevel: {
+      type: Number,
+      default: 2
     }
   },
   data() {
@@ -171,7 +203,7 @@ export default {
          * BaseTable列配置
          */
     baseTableColumns() {
-      return this.visibleColumns
+      return this.tableColumns
     },
 
     /**
@@ -215,81 +247,128 @@ export default {
          * 是否启用虚拟滚动
          */
     enableVirtualScroll() {
-      return this.flattenedData.length > 1000
+      return this.flattenedData.length > this.virtualScrollThreshold
+    },
+
+    virtualScrollThreshold() {
+      return Number(this.virtualConfig?.threshold) || 1000
+    },
+
+    virtualScrollHeight() {
+      return Number(this.virtualConfig?.height) || 600
+    },
+
+    itemHeight() {
+      return Number(this.virtualConfig?.itemHeight) || 48
     },
 
     /**
          * 导出API函数
          */
     exportApiFunction() {
-      // 返回一个函数，该函数返回导出API路径
       return () => this.exportApi
-    },
-
-    /**
-         * 导出参数
-         */
-    exportParams() {
-      return {
-        // 导出参数可以根据搜索条件动态生成
-      }
     }
+  },
+  created() {
+    this.initColumns(this.columnOptions)
   },
   watch: {
     /**
          * 监听数据变化，重新扁平化
          */
     data: {
-      handler() {
+      handler(newVal) {
+        if (!Array.isArray(newVal)) {
+          this.flattenedData = []
+          return
+        }
+        this.initColumns(this.columnOptions)
+        this.cleanupExpandedMap(newVal)
         this.flattenData()
       },
       immediate: true,
       deep: true
     }
   },
-  created() {
-    // 创建防抖函数
-    this.debouncedRefresh = debounce(this.handleRefresh, 300)
-  },
   methods: {
     /**
          * 扁平化树形数据
          */
     flattenData() {
-      console.log('开始扁平化数据，输入数据:', this.data)
       const result = []
 
       if (!this.data || !Array.isArray(this.data)) {
-        console.warn('扁平化数据输入无效:', this.data)
         this.flattenedData = []
         return
       }
 
-      const traverse = (nodes, level = 0, parent = null) => {
+      const traverse = (nodes, level = 0, parentId = null) => {
         nodes.forEach(node => {
-          // 添加树形结构相关属性
-          const flatNode = {
+          if (!node) {
+            return
+          }
+
+          const nodeId = node.id || `${parentId || 'root'}_${level}_${result.length}`
+          const normalized = {
+            ...DEFAULT_NODE,
             ...node,
+            id: nodeId,
+            name: node.name || '-',
+            status: node.status || '',
+            manager: node.manager || null,
+            children: Array.isArray(node.children) ? node.children : []
+          }
+
+          const hasExplicitState = this.expandedMap.has(nodeId)
+          const resolvedExpanded = hasExplicitState
+            ? this.expandedMap.get(node.id)
+            : level < this.defaultExpandLevel
+
+          if (!hasExplicitState) {
+            this.expandedMap.set(nodeId, resolvedExpanded)
+          }
+
+          const flatNode = {
+            ...normalized,
             _level: level,
-            _parent: parent,
-            _expanded: this.expandedMap.get(node.id) || false
+            _parent: parentId,
+            _expanded: resolvedExpanded
           }
 
           result.push(flatNode)
 
-          // 如果节点展开且有子节点，递归处理子节点
-          // 默认展开前两层节点以便显示数据
-          const shouldExpand = flatNode._expanded || level < 2
-          if (shouldExpand && node.children && node.children.length > 0) {
-            traverse(node.children, level + 1, node)
+          if (resolvedExpanded && normalized.children.length > 0) {
+            traverse(normalized.children, level + 1, nodeId)
           }
         })
       }
 
       traverse(this.data)
-      console.log('扁平化完成，结果数据:', result)
-      console.log('扁平化数据数量:', result.length)
       this.flattenedData = result
+    },
+
+    cleanupExpandedMap(nodes) {
+      const validIds = new Set()
+
+      const traverse = (items) => {
+        items.forEach(item => {
+          if (!item) {
+            return
+          }
+          validIds.add(item.id)
+          if (Array.isArray(item.children) && item.children.length > 0) {
+            traverse(item.children)
+          }
+        })
+      }
+
+      traverse(nodes)
+
+      Array.from(this.expandedMap.keys()).forEach(key => {
+        if (!validIds.has(key)) {
+          this.expandedMap.delete(key)
+        }
+      })
     },
 
     /**
@@ -347,14 +426,14 @@ export default {
       this.$emit('retry')
     },
 
-    /**
-         * 处理行点击
-         */
     handleRowClick(row) {
-      // 点击行时切换展开状态
-      if (row.children && row.children.length > 0) {
+      if (row && row.children && row.children.length > 0) {
         this.toggleExpand(row)
       }
+    },
+
+    handleRowDblClick(row) {
+      this.$emit('edit', row)
     },
 
     /**
@@ -384,6 +463,9 @@ export default {
          * 处理工具栏操作
          */
     handleToolbarAction(button) {
+      if (!button || !button.action) {
+        return
+      }
       this.$emit(button.action, button.data)
     },
 
@@ -391,6 +473,9 @@ export default {
          * 处理操作按钮点击
          */
     handleActionClick(button) {
+      if (!button || !button.action) {
+        return
+      }
       this.$emit(button.action, button.data)
     },
 
@@ -405,21 +490,21 @@ export default {
          * 处理批量删除
          */
     handleBatchDelete(rows) {
-      this.$emit('batch-delete', rows)
+      this.$emit('batch-delete', this.mapSelection(rows))
     },
 
     /**
          * 处理批量启用
          */
     handleBatchEnable(rows) {
-      this.$emit('batch-enable', rows)
+      this.$emit('batch-enable', this.mapSelection(rows))
     },
 
     /**
          * 处理批量禁用
          */
     handleBatchDisable(rows) {
-      this.$emit('batch-disable', rows)
+      this.$emit('batch-disable', this.mapSelection(rows))
     },
 
     /**
@@ -445,6 +530,14 @@ export default {
       if (this.$refs.toolbar) {
         this.$refs.toolbar.refreshFail(message)
       }
+    },
+
+    mapSelection(rows) {
+      if (!Array.isArray(rows)) {
+        return []
+      }
+
+      return rows.map(row => row.id).filter(Boolean)
     }
   }
 }

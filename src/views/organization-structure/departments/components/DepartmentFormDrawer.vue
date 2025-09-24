@@ -6,30 +6,13 @@
 * - 2024-01-20: 重构，符合process-management/operations模块的开发范式
 */
 <template>
-  <base-drawer
-    :visible.sync="drawerVisible"
-    :title="drawerTitle"
-    width="700px"
-    :wrapper-closable="false"
-    @open="handleDrawerOpen"
-    @close="handleDrawerClose"
-  >
+  <base-drawer :visible.sync="drawerVisible" :title="drawerTitle" width="700px" :wrapper-closable="false"
+    @open="handleDrawerOpen" @close="handleDrawerClose">
     <!-- 表单内容 -->
-    <enhanced-form
-      ref="enhancedForm"
-      :data="formData"
-      :mode="innerMode"
-      :rules="formRules"
-      label-width="120px"
-      :show-footer="false"
-      :clear-validate-on-data-update="true"
-      :disable-initial-validation="true"
-      :validate-on-data-change="false"
-      @submit="handleFormSubmit"
-      @validate="handleCustomValidate"
-      @validate-error="handleValidateError"
-      @reset="handleFormReset"
-    >
+    <enhanced-form ref="enhancedForm" :data="formData" :mode="innerMode" :rules="formRules" label-width="120px"
+      :show-footer="false" :clear-validate-on-data-update="true" :disable-initial-validation="true"
+      :validate-on-data-change="false" @submit="handleFormSubmit" @validate="handleCustomValidate"
+      @validate-error="handleValidateError" @reset="handleFormReset">
       <!-- 表单内容 -->
       <template v-slot="{ form, mode: formMode }">
         <!-- 一、基本信息 -->
@@ -38,27 +21,16 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="部门名称" prop="name">
-                <el-input
-                  v-model="form.name"
-                  placeholder="请输入部门名称"
-                  maxlength="100"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                />
+                <el-input v-model="form.name" placeholder="请输入部门名称" maxlength="100" show-word-limit
+                  :disabled="formMode === 'view'" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="部门编码" prop="code">
-                <el-input
-                  v-model="form.code"
-                  placeholder="请输入部门编码，将自动转为大写"
-                  maxlength="50"
-                  show-word-limit
-                  :disabled="formMode === 'view' || formMode === 'update'"
-                  @input="handleCodeInput"
-                />
+                <el-input v-model="form.code" placeholder="请输入部门编码，将自动转为大写" maxlength="50" show-word-limit
+                  :disabled="formMode === 'view' || formMode === 'update'" @input="handleCodeInput" />
                 <div class="field-hint">
                   部门编码用于系统内部识别，建议使用英文缩写，如：TECH、HR等
                 </div>
@@ -68,15 +40,8 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="部门描述" prop="description">
-                <el-input
-                  v-model="form.description"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="请输入部门描述（可选）"
-                  maxlength="1000"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                />
+                <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入部门描述（可选）"
+                  maxlength="1000" show-word-limit :disabled="formMode === 'view'" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -88,22 +53,10 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="上级部门" prop="parentId">
-                <el-select
-                  v-model="form.parentId"
-                  placeholder="请选择上级部门（可选）"
-                  clearable
-                  filterable
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  @change="handleParentChange"
-                >
-                  <el-option
-                    v-for="option in availableParentOptions"
-                    :key="option.id"
-                    :label="option.name"
-                    :value="option.id"
-                    :disabled="option.disabled"
-                  />
+                <el-select v-model="form.parentId" placeholder="请选择上级部门（可选）" clearable filterable style="width: 100%"
+                  :disabled="formMode === 'view'" @change="handleParentChange">
+                  <el-option v-for="option in availableParentOptions" :key="option.value" :label="option.label"
+                    :value="option.value" :disabled="option.disabled" />
                 </el-select>
                 <div v-if="form.parentId" class="field-hint">
                   当前部门层级：{{ currentLevel }}
@@ -114,14 +67,8 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="排序顺序" prop="sortOrder">
-                <el-input-number
-                  v-model="form.sortOrder"
-                  :min="0"
-                  :max="9999"
-                  placeholder="排序顺序"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                />
+                <el-input-number v-model="form.sortOrder" :min="0" :max="9999" placeholder="排序顺序" style="width: 100%"
+                  :disabled="formMode === 'view'" />
                 <div class="field-hint">
                   数值越小排序越靠前，用于同级部门的显示顺序
                 </div>
@@ -136,23 +83,10 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="部门经理" prop="managerId">
-                <el-select
-                  v-model="form.managerId"
-                  placeholder="请选择部门经理（可选）"
-                  clearable
-                  filterable
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  remote
-                  :remote-method="searchManagers"
-                  :loading="managerLoading"
-                >
-                  <el-option
-                    v-for="manager in managerOptions"
-                    :key="manager.id"
-                    :label="`${manager.name} (${manager.email})`"
-                    :value="manager.id"
-                  />
+                <el-select v-model="form.managerId" placeholder="请选择部门经理（可选）" clearable filterable style="width: 100%"
+                  :disabled="formMode === 'view'" remote :remote-method="searchManagers" :loading="managerLoading">
+                  <el-option v-for="manager in managerOptions" :key="manager.id"
+                    :label="`${manager.name} (${manager.email})`" :value="manager.id" />
                 </el-select>
                 <div class="field-hint">
                   每个用户只能管理一个部门，选择后该用户将成为此部门的负责人
@@ -193,13 +127,8 @@
           <el-row v-if="departmentData.children && departmentData.children.length > 0">
             <el-col :span="24">
               <el-form-item label="子部门">
-                <el-tag
-                  v-for="child in departmentData.children"
-                  :key="child.id"
-                  type="info"
-                  size="small"
-                  style="margin-right: 8px; margin-bottom: 4px;"
-                >
+                <el-tag v-for="child in departmentData.children" :key="child.id" type="info" size="small"
+                  style="margin-right: 8px; margin-bottom: 4px;">
                   {{ child.name }}
                 </el-tag>
               </el-form-item>
@@ -226,7 +155,6 @@
 <script>
 import BaseDrawer from '@/components/Drawer'
 import EnhancedForm from '@/components/EnhancedForm'
-import { debounce } from '@/utils'
 import { createDepartment, updateDepartment } from '../api'
 import { formatDateTime } from '@/utils'
 import { FORM_RULES } from '../constants'
@@ -300,14 +228,20 @@ export default {
     },
     // 可用的父部门选项
     availableParentOptions() {
-      if (this.innerMode === 'update' && this.departmentData) {
-        // 编辑模式下，排除自己和自己的子部门
-        return this.parentOptions.filter(option => {
-          return option.id !== this.departmentData.id &&
-            !this.isDescendant(option.id, this.departmentData.id)
-        })
+      if (!Array.isArray(this.parentOptions)) {
+        return []
       }
-      return this.parentOptions
+
+      if (!this.departmentData || this.innerMode === 'view') {
+        return this.parentOptions
+      }
+
+      const invalidIds = new Set([this.departmentData.id, ...this.findDescendantIds(this.departmentData)])
+
+      return this.parentOptions.map(option => ({
+        ...option,
+        disabled: invalidIds.has(option.value)
+      }))
     }
   },
   watch: {
@@ -332,10 +266,6 @@ export default {
         }
       }
     }
-  },
-  created() {
-    // 创建防抖的搜索函数
-    this.debouncedSearchManagers = debounce(this.searchManagers, 300)
   },
   methods: {
     // 初始化表单数据
@@ -411,39 +341,24 @@ export default {
     async handleFormSubmit(formData, continueEdit = false) {
       try {
         this.loading = true
-        let response
+        const payload = this.buildSubmitPayload(formData)
 
-        if (this.innerMode === 'create') {
-          response = await createDepartment(formData)
-        } else if (this.innerMode === 'update') {
-          response = await updateDepartment(formData.id, formData)
-        }
+        const response = this.innerMode === 'create'
+          ? await createDepartment(payload)
+          : await updateDepartment(payload.id, payload)
 
-        // 从API响应中获取消息，提供备选默认消息
-        const successMessage = response?.message ||
-          (this.innerMode === 'create' ? '部门创建成功' : '部门更新成功')
+        const successMessage = response?.message || (this.innerMode === 'create' ? '部门创建成功' : '部门更新成功')
         this.$message.success(successMessage)
-
-        this.$emit('success', { mode: this.innerMode, data: formData, continueEdit })
+        this.$emit('success', { mode: this.innerMode, data: response?.data || payload, continueEdit })
 
         if (continueEdit) {
-          // 保存并继续 - 重置表单
           this.formData = this.initFormData()
         } else {
-          // 普通保存 - 关闭抽屉
           this.drawerVisible = false
         }
       } catch (error) {
-        console.error('部门保存失败:', error)
-        let errorMessage = '操作失败，请稍后重试'
-
-        if (error && error.response && error.response.data) {
-          errorMessage = error.response.data.message || error.response.data.error?.message || errorMessage
-        } else if (error && error.message) {
-          errorMessage = error.message
-        }
-
-        this.$message.error(errorMessage)
+        const message = error?.response?.data?.error?.message || error?.message || '操作失败，请稍后重试'
+        this.$message.error(message)
       } finally {
         this.loading = false
       }
@@ -495,7 +410,7 @@ export default {
       }
 
       // 根据父部门计算层级
-      const parent = this.parentOptions.find(option => option.id === this.formData.parentId)
+      const parent = this.parentOptions.find(option => option.value === this.formData.parentId)
       if (parent) {
         this.currentLevel = (parent.level || 0) + 1
       } else {
@@ -503,32 +418,42 @@ export default {
       }
     },
 
-    // 搜索部门经理
-    async searchManagers(query) {
-      if (!query) return
-
-      this.managerLoading = true
-      try {
-        // 这里应该调用搜索用户的API
-        // const response = await userApi.searchUsers({ query })
-        // 暂时使用传入的选项
-        console.log('搜索经理:', query)
-      } catch (error) {
-        console.error('搜索部门经理失败:', error)
-      } finally {
-        this.managerLoading = false
-      }
-    },
-
-    // 检查是否为子孙部门
-    isDescendant(checkId, ancestorId) {
-      // TODO: 实现递归检查整个树结构
-      return false
-    },
-
     // 格式化日期时间
     formatDateTime(dateTime) {
       return formatDateTime(dateTime)
+    },
+
+    buildSubmitPayload(formData) {
+      const payload = {
+        ...formData,
+        code: formData.code?.toUpperCase() || '',
+        parentId: formData.parentId || null,
+        managerId: formData.managerId || null
+      }
+
+      if (this.innerMode === 'update') {
+        payload.id = formData.id || this.departmentData?.id
+      }
+
+      return payload
+    },
+
+    findDescendantIds(department) {
+      const result = []
+
+      const traverse = (node) => {
+        if (!node || !Array.isArray(node.children)) {
+          return
+        }
+
+        node.children.forEach(child => {
+          result.push(child.id)
+          traverse(child)
+        })
+      }
+
+      traverse(department)
+      return result
     }
   }
 }

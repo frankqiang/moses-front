@@ -62,6 +62,14 @@ export function cleanupDuplicateColumnConfigs() {
     'table_columns_RoutingManagement': 'routing_columns_RoutingTable',
     'table_columns_Routing': 'routing_columns_RoutingTable',
 
+    // 用户管理相关
+    'user_management_columns': 'user_management_columns_UserTable',
+    'table_columns_UserManagement': 'user_management_columns_UserTable',
+
+    // 角色管理相关
+    'role_management_columns': 'role_management_columns_RoleTable',
+    'table_columns_RoleManagement': 'role_management_columns_RoleTable',
+
     // 其他可能的重复项
     'table_columns_Equipment': 'equipment_columns_EquipmentTable',
     'table_columns_Material': 'material_columns_MaterialTable',
@@ -157,10 +165,21 @@ export function checkStorageStatus() {
   // 检查集中存储中的重复数据
   const allKeys = tableConfigStore.getAllKeys()
   const duplicateMappings = {
+    // 工序管理相关
     'table_columns_Operations': 'operation_columns_OperationTable',
     'table_columns_OperationManagement': 'operation_columns_OperationTable',
+
+    // 工艺路线管理相关
     'table_columns_RoutingManagement': 'routing_columns_RoutingTable',
-    'table_columns_Routing': 'routing_columns_RoutingTable'
+    'table_columns_Routing': 'routing_columns_RoutingTable',
+
+    // 用户管理相关
+    'user_management_columns': 'user_management_columns_UserTable',
+    'table_columns_UserManagement': 'user_management_columns_UserTable',
+
+    // 角色管理相关
+    'role_management_columns': 'role_management_columns_RoleTable',
+    'table_columns_RoleManagement': 'role_management_columns_RoleTable'
   }
 
   Object.entries(duplicateMappings).forEach(([duplicateKey, primaryKey]) => {
