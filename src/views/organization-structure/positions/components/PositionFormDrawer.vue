@@ -48,7 +48,8 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="岗位类型" prop="type">
+          <!-- 注意：type字段在接口文档中未定义，暂时注释掉 -->
+          <!-- <el-form-item label="岗位类型" prop="type">
             <el-select v-model="formData.type" placeholder="请选择岗位类型" style="width: 100%">
               <el-option
                 v-for="option in positionTypeOptions"
@@ -57,7 +58,7 @@
                 :value="option.value"
               />
             </el-select>
-          </el-form-item>
+          </el-form-item> -->
 
           <el-form-item label="岗位职责" prop="description">
             <el-input
@@ -80,36 +81,19 @@
 
           <el-form-item label="所属部门" prop="departmentId">
             <el-select v-model="formData.departmentId" placeholder="请选择所属部门" filterable style="width: 100%">
-              <el-option
-                v-for="option in departmentOptions"
-                :key="option.id"
-                :label="option.name"
-                :value="option.id"
-              />
+              <el-option v-for="option in departmentOptions" :key="option.id" :label="option.name" :value="option.id" />
             </el-select>
           </el-form-item>
 
           <el-form-item label="岗位级别" prop="level">
-            <el-input-number
-              v-model="formData.level"
-              :min="1"
-              :max="20"
-              placeholder="岗位级别"
-              style="width: 100%"
-            />
+            <el-input-number v-model="formData.level" :min="1" :max="20" placeholder="岗位级别" style="width: 100%" />
             <div class="form-tip">
               数值越小级别越高，用于岗位层级管理
             </div>
           </el-form-item>
 
           <el-form-item label="排序顺序" prop="sortOrder">
-            <el-input-number
-              v-model="formData.sortOrder"
-              :min="0"
-              :max="9999"
-              placeholder="排序顺序"
-              style="width: 100%"
-            />
+            <el-input-number v-model="formData.sortOrder" :min="0" :max="9999" placeholder="排序顺序" style="width: 100%" />
             <div class="form-tip">
               数值越小排序越靠前，用于同部门岗位的显示顺序
             </div>
@@ -186,8 +170,8 @@
 
 <script>
 import { createPosition, updatePosition } from '../api'
-import { formatDateTime } from '@/utils'
-import { FORM_RULES, POSITION_TYPE_OPTIONS } from '../constants/position'
+import { parseTime } from '@/utils'
+import { FORM_RULES } from '../constants'
 
 export default {
   name: 'PositionFormDrawer',
@@ -220,7 +204,6 @@ export default {
       formData: {
         name: '',
         code: '',
-        type: '',
         description: '',
         departmentId: '',
         level: 1,
@@ -283,14 +266,15 @@ export default {
          */
     formRules() {
       return FORM_RULES
-    },
-
-    /**
-         * 岗位类型选项
-         */
-    positionTypeOptions() {
-      return POSITION_TYPE_OPTIONS
     }
+
+    // 注意：type字段在接口文档中未定义，暂时注释掉
+    // /**
+    //      * 岗位类型选项
+    //      */
+    // positionTypeOptions() {
+    //   return POSITION_TYPE_OPTIONS
+    // }
   },
   watch: {
     /**
@@ -326,7 +310,6 @@ export default {
         this.formData = {
           name: '',
           code: '',
-          type: '',
           description: '',
           departmentId: '',
           level: 1,
@@ -338,7 +321,6 @@ export default {
         this.formData = {
           name: this.positionData.name || '',
           code: this.positionData.code || '',
-          type: this.positionData.type || '',
           description: this.positionData.description || '',
           departmentId: this.positionData.departmentId || '',
           level: this.positionData.level || 1,
@@ -371,7 +353,7 @@ export default {
          * 格式化日期时间
          */
     formatDateTime(dateTime) {
-      return formatDateTime(dateTime)
+      return parseTime(dateTime, '{y}-{m}-{d} {h}:{i}')
     },
 
     /**
@@ -405,8 +387,7 @@ export default {
         }
 
         if (response.success) {
-          const action = this.isCreateMode ? '创建' : '更新'
-          this.$message.success(`${action}成功`)
+          this.$message.success(response.message || (this.isCreateMode ? '创建成功' : '更新成功'))
           this.$emit('success', response.data)
         } else {
           this.$message.error(response.error?.message || '操作失败')
@@ -442,88 +423,88 @@ export default {
 
 <style lang="scss" scoped>
 .position-form-drawer {
-    :deep(.el-drawer__body) {
-        padding: 0;
+  :deep(.el-drawer__body) {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawer-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+
+    .form-section {
+      margin-bottom: 32px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .section-title {
         display: flex;
-        flex-direction: column;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 500;
+        color: #303133;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e4e7ed;
+
+        i {
+          margin-right: 8px;
+          color: #409eff;
+        }
+      }
     }
 
-    .drawer-content {
-        flex: 1;
-        padding: 24px;
-        overflow-y: auto;
-
-        .form-section {
-            margin-bottom: 32px;
-
-            &:last-child {
-                margin-bottom: 0;
-            }
-
-            .section-title {
-                display: flex;
-                align-items: center;
-                font-size: 16px;
-                font-weight: 500;
-                color: #303133;
-                margin-bottom: 16px;
-                padding-bottom: 8px;
-                border-bottom: 1px solid #e4e7ed;
-
-                i {
-                    margin-right: 8px;
-                    color: #409eff;
-                }
-            }
-        }
-
-        .form-tip {
-            font-size: 12px;
-            color: #909399;
-            margin-top: 4px;
-            line-height: 1.4;
-        }
-
-        :deep(.el-form-item) {
-            margin-bottom: 20px;
-        }
-
-        :deep(.el-textarea) {
-            .el-textarea__inner {
-                resize: vertical;
-            }
-        }
+    .form-tip {
+      font-size: 12px;
+      color: #909399;
+      margin-top: 4px;
+      line-height: 1.4;
     }
 
-    .drawer-footer {
-        padding: 16px 24px;
-        border-top: 1px solid #e4e7ed;
-        background: #fafafa;
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
+    :deep(.el-form-item) {
+      margin-bottom: 20px;
     }
+
+    :deep(.el-textarea) {
+      .el-textarea__inner {
+        resize: vertical;
+      }
+    }
+  }
+
+  .drawer-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e4e7ed;
+    background: #fafafa;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
 }
 
 // 响应式设计
 @media (max-width: 768px) {
-    .position-form-drawer {
-        :deep(.el-drawer) {
-            width: 100% !important;
-        }
-
-        .drawer-content {
-            padding: 16px;
-        }
-
-        .drawer-footer {
-            padding: 12px 16px;
-            flex-direction: column-reverse;
-
-            .el-button {
-                width: 100%;
-            }
-        }
+  .position-form-drawer {
+    :deep(.el-drawer) {
+      width: 100% !important;
     }
+
+    .drawer-content {
+      padding: 16px;
+    }
+
+    .drawer-footer {
+      padding: 12px 16px;
+      flex-direction: column-reverse;
+
+      .el-button {
+        width: 100%;
+      }
+    }
+  }
 }
 </style>

@@ -28,6 +28,49 @@ export const STATUS_CONFIG = {
   }
 }
 
+// API配置
+export const DEPARTMENT_API_CONFIG = {
+  BASE: '/departments',
+  TREE: '/departments/tree',
+  DETAIL: (id) => `/departments/${id}`,
+  STATUS: (id) => `/departments/${id}/status`,
+  MANAGER: (id) => `/departments/${id}/manager`,
+  BATCH_STATUS: '/departments/batch-status',
+  BATCH_DELETE: '/departments/batch-delete',
+  EXPORT: '/departments/export'
+}
+
+// 默认查询参数
+export const DEPARTMENT_DEFAULT_QUERY = Object.freeze({
+  limit: 10,
+  page: 1,
+  sortBy: 'level:asc,sortOrder:asc',
+  populate: 'manager,parent'
+})
+
+// 成功消息配置
+export const DEPARTMENT_SUCCESS_MESSAGES = Object.freeze({
+  create: '创建部门成功',
+  update: '更新部门信息成功',
+  delete: '删除部门成功',
+  batchDelete: '批量删除部门成功',
+  activate: '部门启用成功',
+  deactivate: '部门禁用成功',
+  batchActivate: '批量启用部门成功',
+  batchDeactivate: '批量禁用部门成功',
+  setManager: '设置部门负责人成功'
+})
+
+// 错误消息配置
+export const DEPARTMENT_ERROR_MESSAGES = Object.freeze({
+  DUPLICATE_RESOURCE: '部门编码已存在，请更换后重试',
+  DEPARTMENT_NOT_FOUND: '指定的父部门不存在或已被删除',
+  RESOURCE_NOT_FOUND: '部门不存在或已被删除',
+  OPERATION_NOT_ALLOWED: '当前操作不被允许，请检查关联数据或层级关系',
+  USER_NOT_FOUND: '指定的部门负责人不存在或已被禁用',
+  DEFAULT: '操作失败，请稍后重试'
+})
+
 // 工具栏按钮配置
 export const TOOLBAR_BUTTONS = [
   {
@@ -75,7 +118,7 @@ export const ACTION_BUTTONS = {
 
 // 导出API配置
 export const EXPORT_CONFIG = {
-  api: '/v1/departments/export',
+  api: DEPARTMENT_API_CONFIG.EXPORT,
   filename: '部门列表',
   headers: [
     { key: 'name', label: '部门名称' },

@@ -11,10 +11,14 @@
 </template>
 
 <script>
-import { SEARCH_FORM_CONFIG } from '../constants'
+import SearchForm from '@/components/SearchForm'
+import { SEARCH_FORM_CONFIG, SEARCH_FORM_FIELDS } from '../constants'
 
 export default {
   name: 'DepartmentSearchForm',
+  components: {
+    SearchForm
+  },
   props: {
     // 加载状态
     loading: {
@@ -32,10 +36,10 @@ export default {
          * 搜索表单配置
          */
     searchFormConfig() {
-      const config = [...SEARCH_FORM_CONFIG]
+      const config = SEARCH_FORM_CONFIG.map(item => ({ ...item }))
 
       // 动态设置父部门选项
-      const parentField = config.find(item => item.prop === 'parentId')
+      const parentField = config.find(item => item.prop === SEARCH_FORM_FIELDS.PARENT_ID)
       if (parentField) {
         parentField.options = [
           { label: '全部', value: '' },

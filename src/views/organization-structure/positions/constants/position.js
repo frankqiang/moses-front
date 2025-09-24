@@ -16,7 +16,10 @@ export const POSITION_STATUS_OPTIONS = [
   { value: POSITION_STATUS.INACTIVE, label: '禁用' }
 ]
 
-// 岗位类型
+// 注意：根据接口文档，岗位模型中没有type字段，这里暂时保留以备扩展
+// 如果后端接口支持岗位类型，可以启用以下配置
+
+// 岗位类型（暂未使用）
 export const POSITION_TYPE = {
   MANAGEMENT: 'management',
   TECHNICAL: 'technical',
@@ -24,7 +27,7 @@ export const POSITION_TYPE = {
   SUPPORT: 'support'
 }
 
-// 岗位类型选项
+// 岗位类型选项（暂未使用）
 export const POSITION_TYPE_OPTIONS = [
   { value: POSITION_TYPE.MANAGEMENT, label: '管理类' },
   { value: POSITION_TYPE.TECHNICAL, label: '技术类' },
@@ -44,11 +47,60 @@ export const STATUS_CONFIG = {
   }
 }
 
+export const POSITION_API_CONFIG = {
+  BASE: '/positions',
+  DETAIL: (id) => `/positions/${id}`,
+  STATUS: (id) => `/positions/${id}/status`,
+  BATCH_STATUS: '/positions/batch-status',
+  BATCH_DELETE: '/positions/batch-delete',
+  EXPORT: '/positions/export'
+}
+
+export const POSITION_DEFAULT_QUERY = Object.freeze({
+  limit: 10,
+  page: 1,
+  sortBy: 'sortOrder:asc,createdAt:desc',
+  populate: 'department'
+})
+
+export const POSITION_SUCCESS_MESSAGES = Object.freeze({
+  create: '创建岗位成功',
+  update: '更新岗位信息成功',
+  delete: '删除岗位成功',
+  batchDelete: '批量删除岗位成功',
+  activate: '岗位启用成功',
+  deactivate: '岗位禁用成功',
+  batchActivate: '批量启用岗位成功',
+  batchDeactivate: '批量禁用岗位成功'
+})
+
+export const POSITION_ERROR_MESSAGES = Object.freeze({
+  DUPLICATE_RESOURCE: '岗位编码已存在，请更换后重试',
+  DEPARTMENT_NOT_FOUND: '所属部门不存在或已被禁用',
+  RESOURCE_NOT_FOUND: '岗位不存在或已被删除',
+  OPERATION_NOT_ALLOWED: '当前操作不被允许，请检查关联员工或业务规则',
+  DEFAULT: '操作失败，请稍后重试'
+})
+
+// 搜索表单字段定义（需要在SEARCH_FORM_CONFIG之前定义）
+export const SEARCH_FORM_FIELDS = Object.freeze({
+  KEYWORD: 'keyword',
+  STATUS: 'status',
+  DEPARTMENT_ID: 'departmentId'
+})
+
+// 默认搜索参数
+export const DEFAULT_SEARCH_PARAMS = Object.freeze({
+  [SEARCH_FORM_FIELDS.KEYWORD]: '',
+  [SEARCH_FORM_FIELDS.STATUS]: '',
+  [SEARCH_FORM_FIELDS.DEPARTMENT_ID]: ''
+})
+
 // 搜索表单配置
 export const SEARCH_FORM_CONFIG = [
   {
     type: 'input',
-    prop: 'keyword',
+    prop: SEARCH_FORM_FIELDS.KEYWORD,
     label: '关键词',
     placeholder: '请输入岗位名称或编码',
     clearable: true,
@@ -56,7 +108,7 @@ export const SEARCH_FORM_CONFIG = [
   },
   {
     type: 'select',
-    prop: 'status',
+    prop: SEARCH_FORM_FIELDS.STATUS,
     label: '状态',
     placeholder: '请选择状态',
     clearable: true,
@@ -66,21 +118,22 @@ export const SEARCH_FORM_CONFIG = [
     ],
     style: { width: '120px' }
   },
+  // 注意：type字段在接口文档中未定义，暂时注释掉
+  // {
+  //   type: 'select',
+  //   prop: 'type',
+  //   label: '岗位类型',
+  //   placeholder: '请选择类型',
+  //   clearable: true,
+  //   options: [
+  //     { label: '全部', value: '' },
+  //     ...POSITION_TYPE_OPTIONS
+  //   ],
+  //   style: { width: '120px' }
+  // },
   {
     type: 'select',
-    prop: 'type',
-    label: '岗位类型',
-    placeholder: '请选择类型',
-    clearable: true,
-    options: [
-      { label: '全部', value: '' },
-      ...POSITION_TYPE_OPTIONS
-    ],
-    style: { width: '120px' }
-  },
-  {
-    type: 'select',
-    prop: 'departmentId',
+    prop: SEARCH_FORM_FIELDS.DEPARTMENT_ID,
     label: '所属部门',
     placeholder: '请选择部门',
     clearable: true,
@@ -108,15 +161,16 @@ export const TABLE_COLUMNS = [
     align: 'center',
     showOverflowTooltip: true
   },
-  {
-    prop: 'type',
-    label: '岗位类型',
-    sortable: true,
-    minWidth: 100,
-    align: 'center',
-    slotName: 'type',
-    showOverflowTooltip: true
-  },
+  // 注意：type字段在接口文档中未定义，暂时注释掉
+  // {
+  //   prop: 'type',
+  //   label: '岗位类型',
+  //   sortable: true,
+  //   minWidth: 100,
+  //   align: 'center',
+  //   slotName: 'type',
+  //   showOverflowTooltip: true
+  // },
   {
     prop: 'department',
     label: '所属部门',
@@ -183,7 +237,6 @@ export const TABLE_COLUMNS = [
 export const DEFAULT_VISIBLE_COLUMNS = [
   'name',
   'code',
-  'type',
   'department',
   'level',
   'status',
@@ -191,6 +244,18 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   'description',
   'actions'
 ]
+
+export const TABLE_COLUMN_KEYS = Object.freeze({
+  NAME: 'name',
+  CODE: 'code',
+  DEPARTMENT: 'department',
+  LEVEL: 'level',
+  STATUS: 'status',
+  SORT_ORDER: 'sortOrder',
+  DESCRIPTION: 'description',
+  CREATED_AT: 'createdAt',
+  ACTIONS: 'actions'
+})
 
 // 工具栏按钮配置
 export const TOOLBAR_BUTTONS = [
@@ -243,14 +308,15 @@ export const FORM_RULES = {
     { min: 1, max: 50, message: '岗位编码长度在 1 到 50 个字符', trigger: 'blur' },
     { pattern: /^[A-Z0-9_-]+$/, message: '岗位编码只能包含大写字母、数字、下划线和连字符', trigger: 'blur' }
   ],
-  type: [
-    { required: true, message: '请选择岗位类型', trigger: 'change' }
-  ],
+  // 注意：type字段在接口文档中未定义，暂时注释掉
+  // type: [
+  //   { required: true, message: '请选择岗位类型', trigger: 'change' }
+  // ],
   departmentId: [
     { required: true, message: '请选择所属部门', trigger: 'change' }
   ],
   level: [
-    { type: 'number', min: 1, max: 20, message: '岗位级别必须在 1 到 20 之间', trigger: 'blur' }
+    { type: 'number', min: 1, max: 10, message: '岗位级别必须在 1 到 10 之间', trigger: 'blur' }
   ],
   description: [
     { max: 1000, message: '岗位职责不能超过 1000 个字符', trigger: 'blur' }
@@ -285,14 +351,15 @@ export const FORM_SECTIONS = [
         required: true,
         transform: 'uppercase'
       },
-      {
-        prop: 'type',
-        label: '岗位类型',
-        type: 'select',
-        placeholder: '请选择岗位类型',
-        options: POSITION_TYPE_OPTIONS,
-        required: true
-      },
+      // 注意：type字段在接口文档中未定义，暂时注释掉
+      // {
+      //   prop: 'type',
+      //   label: '岗位类型',
+      //   type: 'select',
+      //   placeholder: '请选择岗位类型',
+      //   options: POSITION_TYPE_OPTIONS,
+      //   required: true
+      // },
       {
         prop: 'description',
         label: '岗位职责',
@@ -324,7 +391,7 @@ export const FORM_SECTIONS = [
         type: 'number',
         placeholder: '岗位级别',
         min: 1,
-        max: 20,
+        max: 10,
         tip: '数值越小级别越高，用于岗位层级管理'
       },
       {
@@ -355,12 +422,13 @@ export const FORM_SECTIONS = [
 
 // 导出API配置
 export const EXPORT_CONFIG = {
-  api: '/v1/positions/export',
+  api: POSITION_API_CONFIG.EXPORT,
   filename: '岗位列表',
   headers: [
     { key: 'name', label: '岗位名称' },
     { key: 'code', label: '岗位编码' },
-    { key: 'type', label: '岗位类型' },
+    // 注意：type字段在接口文档中未定义，暂时注释掉
+    // { key: 'type', label: '岗位类型' },
     { key: 'department.name', label: '所属部门' },
     { key: 'level', label: '岗位级别' },
     { key: 'status', label: '状态' },

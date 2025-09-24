@@ -3,11 +3,24 @@
  */
 import { DEPARTMENT_STATUS_OPTIONS } from './department'
 
+// 搜索表单常量键
+export const SEARCH_FORM_FIELDS = Object.freeze({
+  KEYWORD: 'keyword',
+  STATUS: 'status',
+  PARENT_ID: 'parentId'
+})
+
+export const DEFAULT_SEARCH_PARAMS = Object.freeze({
+  [SEARCH_FORM_FIELDS.KEYWORD]: '',
+  [SEARCH_FORM_FIELDS.STATUS]: '',
+  [SEARCH_FORM_FIELDS.PARENT_ID]: ''
+})
+
 // 搜索表单配置
 export const SEARCH_FORM_CONFIG = [
   {
     type: 'input',
-    prop: 'keyword',
+    prop: SEARCH_FORM_FIELDS.KEYWORD,
     label: '部门名称/编码',
     placeholder: '支持输入名称或编码模糊搜索',
     clearable: true,
@@ -15,7 +28,7 @@ export const SEARCH_FORM_CONFIG = [
   },
   {
     type: 'select',
-    prop: 'status',
+    prop: SEARCH_FORM_FIELDS.STATUS,
     label: '状态',
     placeholder: '请选择状态',
     clearable: true,
@@ -27,7 +40,7 @@ export const SEARCH_FORM_CONFIG = [
   },
   {
     type: 'select',
-    prop: 'parentId',
+    prop: SEARCH_FORM_FIELDS.PARENT_ID,
     label: '上级部门',
     placeholder: '请选择上级部门',
     clearable: true,

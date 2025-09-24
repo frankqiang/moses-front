@@ -61,5 +61,3 @@ export function getDepartmentOptions(params = {}) {
     return response
   })
 }
-
-

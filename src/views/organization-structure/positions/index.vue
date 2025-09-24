@@ -50,11 +50,14 @@
 </template>
 
 <script>
-import { permissionMixin } from '@/utils/permission'
 import { debounce } from '@/utils'
 import SearchForm from './components/SearchForm.vue'
 import PositionTable from './components/PositionTable.vue'
 import PositionFormDrawer from './components/PositionFormDrawer.vue'
+import {
+  DEFAULT_SEARCH_PARAMS,
+  POSITION_DEFAULT_QUERY
+} from './constants'
 import {
   getPositionList,
   updatePositionStatus,
@@ -71,16 +74,10 @@ export default {
     PositionTable,
     PositionFormDrawer
   },
-  mixins: [permissionMixin],
   data() {
     return {
       // 搜索参数
-      searchParams: {
-        keyword: '',
-        status: '',
-        type: '',
-        departmentId: ''
-      },
+      searchParams: { ...DEFAULT_SEARCH_PARAMS },
       // 表格数据
       tableData: [],
       // 总记录数
@@ -106,11 +103,6 @@ export default {
     // 设置页面标题
     document.title = '岗位管理 - 组织结构管理'
 
-    // 权限检查
-    if (!this.checkPagePermission()) {
-      return
-    }
-
     // 创建防抖搜索函数
     this.debouncedSearch = debounce(this.fetchList, 300)
 
@@ -119,47 +111,79 @@ export default {
     this.loadDepartmentOptions()
   },
   methods: {
-    /**
-     * 检查页面访问权限
-     */
-    checkPagePermission() {
-      if (!this.hasPermission('getPositions')) {
-        this.$message.error('您没有岗位管理权限，即将跳转到首页')
-        setTimeout(() => {
-          this.$router.push('/')
-        }, 2000)
-        return false
-      }
-      return true
-    },
-
     // 获取列表数据
     async fetchList() {
       try {
         this.loading = true
         const params = {
+          ...POSITION_DEFAULT_QUERY,
           page: this.pagination.page,
           limit: this.pagination.limit,
           ...this.searchParams
         }
 
-        const response = await getPositionList(params)
-        this.tableData = response.data.results || []
-        this.total = response.data.totalResults || 0
-        this.$refs.positionTable.refreshSucceed()
+        const requestParams = this.buildRequestParams(params)
+
+        const response = await getPositionList(requestParams)
+        if (response.success) {
+          this.tableData = response.data.results || []
+          this.total = response.data.totalResults || 0
+          if (this.$refs.positionTable) {
+            this.$refs.positionTable.refreshSucceed()
+          }
+        } else {
+          if (this.$refs.positionTable) {
+            this.$refs.positionTable.refreshFail(response.error?.message || '获取数据失败，请稍后重试')
+          }
+          this.$message.error(response.error?.message || '获取数据失败，请稍后重试')
+        }
       } catch (error) {
         console.error('获取岗位列表失败:', error)
-        this.$refs.positionTable.refreshFail('获取数据失败，请稍后重试')
+        if (this.$refs.positionTable) {
+          this.$refs.positionTable.refreshFail('获取数据失败，请稍后重试')
+        }
+        this.$message.error('获取数据失败，请稍后重试')
       } finally {
         this.loading = false
       }
+    },
+
+    /**
+     * 构建请求参数：移除空字符串、null、undefined
+     * @param {Object} params - 原始参数
+     * @returns {Object} 过滤后的参数
+     */
+    buildRequestParams(params) {
+      const sanitizedParams = {}
+
+      Object.keys(params).forEach(key => {
+        const value = params[key]
+
+        if (value === undefined || value === null) {
+          return
+        }
+
+        if (typeof value === 'string') {
+          const trimmedValue = value.trim()
+          if (trimmedValue !== '') {
+            sanitizedParams[key] = trimmedValue
+          }
+          return
+        }
+
+        sanitizedParams[key] = value
+      })
+
+      return sanitizedParams
     },
 
     // 加载部门选项
     async loadDepartmentOptions() {
       try {
         const response = await getDepartmentOptions({ status: 'active' })
-        this.departmentOptions = response.data.options || []
+        if (response.success) {
+          this.departmentOptions = response.data.options || []
+        }
       } catch (error) {
         console.error('获取部门选项失败:', error)
       }
@@ -168,19 +192,17 @@ export default {
     // 搜索处理
     handleSearch(formData) {
       this.pagination.page = 1
-      this.searchParams = formData
+      this.searchParams = {
+        ...DEFAULT_SEARCH_PARAMS,
+        ...formData
+      }
       this.debouncedSearch()
     },
 
     // 重置搜索
     handleReset() {
       this.pagination.page = 1
-      this.searchParams = {
-        keyword: '',
-        status: '',
-        type: '',
-        departmentId: ''
-      }
+      this.searchParams = { ...DEFAULT_SEARCH_PARAMS }
       this.fetchList()
     },
 
@@ -233,7 +255,7 @@ export default {
         })
 
         if (response.success) {
-          this.$message.success(`${actionText}成功`)
+          this.$message.success(response.message || `${actionText}成功`)
           this.fetchList()
         } else {
           this.$message.error(response.error?.message || `${actionText}失败`)
@@ -263,7 +285,7 @@ export default {
         const response = await deletePosition(position.id)
 
         if (response.success) {
-          this.$message.success('删除成功')
+          this.$message.success(response.message || '删除成功')
           this.fetchList()
         } else {
           this.$message.error(response.error?.message || '删除失败')
@@ -298,7 +320,7 @@ export default {
         const response = await batchDeletePositions(ids)
 
         if (response.success) {
-          this.$message.success(`成功删除 ${response.data.count || ids.length} 个岗位`)
+          this.$message.success(response.message || `成功删除 ${response.data.count || ids.length} 个岗位`)
           this.fetchList()
         } else {
           this.$message.error(response.error?.message || '批量删除失败')
@@ -323,7 +345,7 @@ export default {
         const response = await batchUpdatePositionStatus(ids, { status: 'active' })
 
         if (response.success) {
-          this.$message.success(`成功启用 ${response.data.count || ids.length} 个岗位`)
+          this.$message.success(response.message || `成功启用 ${response.data.count || ids.length} 个岗位`)
           this.fetchList()
         } else {
           this.$message.error(response.error?.message || '批量启用失败')
@@ -346,7 +368,7 @@ export default {
         const response = await batchUpdatePositionStatus(ids, { status: 'inactive' })
 
         if (response.success) {
-          this.$message.success(`成功禁用 ${response.data.count || ids.length} 个岗位`)
+          this.$message.success(response.message || `成功禁用 ${response.data.count || ids.length} 个岗位`)
           this.fetchList()
         } else {
           this.$message.error(response.error?.message || '批量禁用失败')

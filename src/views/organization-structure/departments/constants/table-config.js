@@ -95,3 +95,15 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   'description',
   'actions'
 ]
+
+export const TABLE_COLUMN_KEYS = Object.freeze({
+  NAME: 'name',
+  CODE: 'code',
+  LEVEL: 'level',
+  MANAGER: 'manager',
+  STATUS: 'status',
+  SORT_ORDER: 'sortOrder',
+  DESCRIPTION: 'description',
+  CREATED_AT: 'createdAt',
+  ACTIONS: 'actions'
+})

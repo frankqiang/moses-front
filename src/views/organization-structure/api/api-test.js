@@ -14,10 +14,7 @@ import {
   updateDepartment,
   deleteDepartment,
   updateDepartmentStatus,
-  updateDepartmentManager,
   getDepartmentOptions,
-  batchUpdateDepartmentStatus,
-  exportDepartmentList,
 
   // 岗位管理API
   createPosition,
@@ -26,11 +23,7 @@ import {
   updatePosition,
   deletePosition,
   updatePositionStatus,
-  getPositionOptions,
-  batchUpdatePositionStatus,
-  batchDeletePositions,
-  exportPositionList,
-  getPositionsByDepartment
+  getPositionOptions
 } from './index'
 
 /**

@@ -232,7 +232,8 @@ export function batchDeletePositions(ids, reason = '') {
  * @returns {Promise} 返回导出文件的blob数据
  */
 export function exportPositionList(params = {}) {
-  // 移除分页参数
+  // 移除分页参数，使用解构赋值忽略这些参数
+  // eslint-disable-next-line no-unused-vars
   const { page, limit, ...exportParams } = params
 
   return request({

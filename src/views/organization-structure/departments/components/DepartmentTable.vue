@@ -136,7 +136,8 @@ import {
   DEFAULT_VISIBLE_COLUMNS,
   STATUS_CONFIG,
   TOOLBAR_BUTTONS,
-  ACTION_BUTTONS
+  ACTION_BUTTONS,
+  DEPARTMENT_API_CONFIG
 } from '../constants'
 
 const DEFAULT_NODE = {
@@ -195,7 +196,7 @@ export default {
     // 导出API
     exportApi: {
       type: String,
-      default: '/v1/departments/export'
+      default: DEPARTMENT_API_CONFIG.EXPORT
     },
     // 虚拟滚动配置
     virtualConfig: {
@@ -429,25 +430,16 @@ export default {
          * 获取操作按钮
          */
     getActionButtons(row) {
-      const buttons = []
-
-      // 根据权限和业务逻辑动态生成按钮
-      Object.entries(ACTION_BUTTONS).forEach(([key, config]) => {
-        // 开发阶段暂时不检查权限
-        // if (!config.permission || this.$hasPermission(config.permission)) {
+      return Object.entries(ACTION_BUTTONS).map(([key, config]) => {
         const buttonConfig = { ...config, action: key, data: row }
 
-        // 特殊处理切换状态按钮
         if (key === 'toggleStatus') {
           buttonConfig.text = row.status === 'active' ? '禁用' : '启用'
           buttonConfig.icon = row.status === 'active' ? 'el-icon-close' : 'el-icon-check'
         }
 
-        buttons.push(buttonConfig)
-        // }
+        return buttonConfig
       })
-
-      return buttons
     },
 
     /**
@@ -511,6 +503,7 @@ export default {
       if (!button || !button.action) {
         return
       }
+
       this.$emit(button.action, button.data)
     },
 
@@ -521,6 +514,7 @@ export default {
       if (!button || !button.action) {
         return
       }
+
       this.$emit(button.action, button.data)
     },
 

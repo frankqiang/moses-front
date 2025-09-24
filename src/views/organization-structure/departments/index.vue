@@ -13,16 +13,39 @@
     <search-form :loading="loading" :parent-options="parentOptions" @search="handleSearch" @reset="handleReset" />
 
     <!-- 部门表格 -->
-    <department-table ref="departmentTable" :data="treeData" :loading="loading" :load-error="loadError" :total="total"
-      :page="pagination.page" :limit="pagination.limit" @pagination-change="handlePaginationChange"
-      @create="handleCreate" @edit="handleEdit" @view="handleView" @delete="handleDelete"
-      @batch-delete="handleBatchDelete" @toggleStatus="handleToggleStatus" @createChild="handleCreateChild"
-      @setManager="handleSetManager" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable"
-      @export-success="handleExportSuccess" @refresh="handleRefresh" @retry="handleRetry" />
+    <department-table
+      ref="departmentTable"
+      :data="treeData"
+      :loading="loading"
+      :load-error="loadError"
+      :total="total"
+      :page="pagination.page"
+      :limit="pagination.limit"
+      @pagination-change="handlePaginationChange"
+      @create="handleCreate"
+      @edit="handleEdit"
+      @view="handleView"
+      @delete="handleDelete"
+      @batch-delete="handleBatchDelete"
+      @toggleStatus="handleToggleStatus"
+      @createChild="handleCreateChild"
+      @setManager="handleSetManager"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @export-success="handleExportSuccess"
+      @refresh="handleRefresh"
+      @retry="handleRetry"
+    />
 
     <!-- 部门表单抽屉 -->
-    <department-form-drawer :visible.sync="formDrawerVisible" :mode="formMode" :department-data="currentDepartment"
-      :parent-options="parentOptions" :manager-options="managerOptions" @success="handleFormSuccess" />
+    <department-form-drawer
+      :visible.sync="formDrawerVisible"
+      :mode="formMode"
+      :department-data="currentDepartment"
+      :parent-options="parentOptions"
+      :manager-options="managerOptions"
+      @success="handleFormSuccess"
+    />
   </div>
 </template>
 
@@ -31,6 +54,10 @@ import { setTokens } from '@/utils/auth'
 import SearchForm from './components/SearchForm.vue'
 import DepartmentTable from './components/DepartmentTable.vue'
 import DepartmentFormDrawer from './components/DepartmentFormDrawer.vue'
+import {
+  DEFAULT_SEARCH_PARAMS,
+  DEPARTMENT_DEFAULT_QUERY
+} from './constants'
 import {
   getDepartmentList,
   getDepartmentTree,
@@ -52,11 +79,7 @@ export default {
   data() {
     return {
       // 搜索参数
-      searchParams: {
-        keyword: '',
-        status: '',
-        parentId: ''
-      },
+      searchParams: { ...DEFAULT_SEARCH_PARAMS },
       // 树形数据
       treeData: [],
       // 总记录数
@@ -198,10 +221,9 @@ export default {
 
     buildListQueryParams() {
       const params = {
+        ...DEPARTMENT_DEFAULT_QUERY,
         page: this.pagination.page,
-        limit: this.pagination.limit,
-        sortBy: 'level:asc,sortOrder:asc',
-        populate: 'manager,parent'
+        limit: this.pagination.limit
       }
 
       if (this.searchParams.keyword) {
@@ -301,7 +323,7 @@ export default {
     handleSearch(formData) {
       this.pagination.page = 1
       this.searchParams = {
-        ...this.searchParams,
+        ...DEFAULT_SEARCH_PARAMS,
         ...formData
       }
 
@@ -313,11 +335,7 @@ export default {
     // 重置搜索
     handleReset() {
       this.pagination.page = 1
-      this.searchParams = {
-        keyword: '',
-        status: '',
-        parentId: ''
-      }
+      this.searchParams = { ...DEFAULT_SEARCH_PARAMS }
       this.useListMode = false
       this.fetchList()
     },
