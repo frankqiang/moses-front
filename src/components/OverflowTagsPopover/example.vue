@@ -15,21 +15,9 @@
         <span>功能开关</span>
       </div>
       <div class="controls">
-        <el-switch
-          v-model="globalEnableModern"
-          active-text="现代化模式"
-          inactive-text="传统模式"
-        />
-        <el-switch
-          v-model="simulateLoading"
-          active-text="模拟加载"
-          inactive-text="正常状态"
-        />
-        <el-switch
-          v-model="simulateError"
-          active-text="模拟错误"
-          inactive-text="正常状态"
-        />
+        <el-switch v-model="globalEnableModern" active-text="现代化模式" inactive-text="传统模式" />
+        <el-switch v-model="simulateLoading" active-text="模拟加载" inactive-text="正常状态" />
+        <el-switch v-model="simulateError" active-text="模拟错误" inactive-text="正常状态" />
       </div>
     </el-card>
 
@@ -111,7 +99,7 @@
           title="产品标签搜索"
           @search="handleSearch"
         >
-          <template #popover-item="{ item, index }">
+          <template #popover-item="{ item }">
             <div class="product-item">
               <span class="product-name">{{ item.name }}</span>
               <span class="product-code">{{ item.code }}</span>
@@ -139,18 +127,14 @@
           :tag-type-mapper="getStatusTagType"
           title="状态标签"
         >
-          <template #tag="{ item, index }">
-            <el-tag
-              :type="getStatusTagType(item)"
-              size="small"
-              :class="{'premium-tag': item.premium}"
-            >
+          <template #tag="{ item }">
+            <el-tag :type="getStatusTagType(item)" size="small" :class="{ 'premium-tag': item.premium }">
               <i :class="item.icon" style="margin-right: 4px;" />
               {{ item.name }}
             </el-tag>
           </template>
 
-          <template #popover-item="{ item, index }">
+          <template #popover-item="{ item }">
             <div class="status-item">
               <i :class="item.icon" />
               <span class="status-name">{{ item.name }}</span>
@@ -218,18 +202,14 @@
           @export="handleExport"
           @error="handleError"
         >
-          <template #tag="{ item, index }">
-            <el-tag
-              :type="getFeatureTagType(item)"
-              size="small"
-              effect="dark"
-            >
+          <template #tag="{ item }">
+            <el-tag :type="getFeatureTagType(item)" size="small" effect="dark">
               {{ item.name }}
               <i v-if="item.featured" class="el-icon-star-on" style="margin-left: 4px;" />
             </el-tag>
           </template>
 
-          <template #popover-item="{ item, index }">
+          <template #popover-item="{ item }">
             <div class="feature-item">
               <div class="item-header">
                 <span class="item-name">{{ item.name }}</span>
@@ -239,13 +219,7 @@
               </div>
               <div class="item-desc">{{ item.description }}</div>
               <div class="item-tags">
-                <el-tag
-                  v-for="tag in item.tags"
-                  :key="tag"
-                  size="mini"
-                  type="info"
-                  effect="plain"
-                >
+                <el-tag v-for="tag in item.tags" :key="tag" size="mini" type="info" effect="plain">
                   {{ tag }}
                 </el-tag>
               </div>
@@ -266,11 +240,7 @@
         <div v-if="eventLogs.length === 0" class="no-logs">
           暂无事件日志
         </div>
-        <div
-          v-for="(log, index) in eventLogs"
-          :key="index"
-          class="log-item"
-        >
+        <div v-for="(log, index) in eventLogs" :key="index" class="log-item">
           <span class="log-time">{{ log.time }}</span>
           <span class="log-event">{{ log.event }}</span>
           <span class="log-data">{{ log.data }}</span>

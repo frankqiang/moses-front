@@ -6,20 +6,42 @@
 */
 <template>
   <div class="search-form-container">
-    <el-form ref="form" :model="localFormModel" :inline="inline" size="small" :label-width="labelWidth"
-      @keyup.enter.native="handleSubmitWithDebounce">
+    <el-form
+      ref="form"
+      :model="localFormModel"
+      :inline="inline"
+      size="small"
+      :label-width="labelWidth"
+      @keyup.enter.native="handleSubmitWithDebounce"
+    >
       <!-- 表单项渲染（包括可见项和展开项） -->
       <template v-for="(item, index) in computedFormItems">
-        <el-form-item v-show="showMore || index < visibleItemCount" :key="item.prop" :label="item.label"
-          :prop="item.prop" :class="[item.class, { 'hidden-item': !showMore && index >= visibleItemCount }]">
+        <el-form-item
+          v-show="showMore || index < visibleItemCount"
+          :key="item.prop"
+          :label="item.label"
+          :prop="item.prop"
+          :class="[item.class, { 'hidden-item': !showMore && index >= visibleItemCount }]"
+        >
           <!-- 表单控件组件 - 使用动态组件渲染不同类型表单项 -->
-          <component :is="getComponentName(item.type)" v-if="!isCustomComponent(item.type)"
-            v-model="localFormModel[item.prop]" v-bind="getComponentProps(item)" @change="handleItemChange(item)"
-            @clear="handleItemClear(item.prop)">
+          <component
+            :is="getComponentName(item.type)"
+            v-if="!isCustomComponent(item.type)"
+            v-model="localFormModel[item.prop]"
+            v-bind="getComponentProps(item)"
+            @change="handleItemChange(item)"
+            @clear="handleItemClear(item.prop)"
+          >
             <!-- 渲染options内容（针对select/radio/checkbox等） -->
             <template v-if="hasOptions(item.type)">
-              <component :is="getOptionComponentName(item.type)" v-for="opt in item.options" :key="opt.value"
-                :label="getOptionLabel(item.type, opt)" :value="opt.value" :disabled="opt.disabled">
+              <component
+                :is="getOptionComponentName(item.type)"
+                v-for="opt in item.options"
+                :key="opt.value"
+                :label="getOptionLabel(item.type, opt)"
+                :value="opt.value"
+                :disabled="opt.disabled"
+              >
                 {{ opt.label }}
               </component>
             </template>
@@ -40,8 +62,12 @@
         </el-button>
 
         <!-- 展开/收起按钮 -->
-        <el-button v-if="expandable && computedFormItems.length > visibleItemCount" type="text" class="expand-button"
-          @click="showMore = !showMore">
+        <el-button
+          v-if="expandable && computedFormItems.length > visibleItemCount"
+          type="text"
+          class="expand-button"
+          @click="showMore = !showMore"
+        >
           {{ showMore ? '收起' : '展开' }}
           <i :class="showMore ? 'el-icon-arrow-up' : 'el-icon-arrow-down'" />
         </el-button>
@@ -404,7 +430,7 @@ export default {
       if (!values || typeof values !== 'object') return
 
       Object.keys(values).forEach(key => {
-        if (this.localFormModel.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(this.localFormModel, key)) {
           this.localFormModel[key] = values[key]
         }
       })

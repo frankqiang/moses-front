@@ -13,16 +13,37 @@
       <search-form ref="searchForm" :loading="listLoading" @search="handleSearch" @reset="handleReset" />
 
       <!-- 角色列表表格区域 -->
-      <role-table ref="roleTable" :role-list="roleList" :loading="listLoading" :pagination="pagination"
-        :search-params="searchParams" @selection-change="handleSelectionChange"
-        @pagination-change="handlePaginationChange" @create="handleCreate" @view="handleView" @edit="handleEdit"
-        @delete="handleDelete" @copy="handleCopy" @status-change="handleStatusChange" @sort-change="handleSortChange"
-        @refresh="handleRefresh" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
-        @batch-disable="handleBatchDisable" @clear-search="handleClearSearch" />
+      <role-table
+        ref="roleTable"
+        :role-list="roleList"
+        :loading="listLoading"
+        :pagination="pagination"
+        :search-params="searchParams"
+        @selection-change="handleSelectionChange"
+        @pagination-change="handlePaginationChange"
+        @create="handleCreate"
+        @view="handleView"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @copy="handleCopy"
+        @status-change="handleStatusChange"
+        @sort-change="handleSortChange"
+        @refresh="handleRefresh"
+        @batch-delete="handleBatchDelete"
+        @batch-enable="handleBatchEnable"
+        @batch-disable="handleBatchDisable"
+        @clear-search="handleClearSearch"
+      />
 
       <!-- 角色表单抽屉 -->
-      <role-form-drawer ref="roleFormDrawer" :visible.sync="drawerVisible" :mode="drawerMode" :role-data="currentRole"
-        @success="handleFormSuccess" @close="handleDrawerClose" />
+      <role-form-drawer
+        ref="roleFormDrawer"
+        :visible.sync="drawerVisible"
+        :mode="drawerMode"
+        :role-data="currentRole"
+        @success="handleFormSuccess"
+        @close="handleDrawerClose"
+      />
     </div>
   </div>
 </template>

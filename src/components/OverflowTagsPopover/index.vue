@@ -1,28 +1,23 @@
 /**
- * 溢出标签弹出框组件 - 现代化版本
- * 功能描述：用于在表格单元格中显示多个标签，当标签数量超过设定值时，以弹出框形式显示全部标签
- * 创建日期：2024-11-18
- * 优化日期：2024-11-18
- *
- * 主要优化：
- * - 添加严格的Props验证和错误处理
- * - 实现虚拟滚动支持大数据集
- * - 增强用户体验（加载状态、错误反馈）
- * - 内存管理和性能优化
- * - 向后兼容性设计
- */
+* 溢出标签弹出框组件 - 现代化版本
+* 功能描述：用于在表格单元格中显示多个标签，当标签数量超过设定值时，以弹出框形式显示全部标签
+* 创建日期：2024-11-18
+* 优化日期：2024-11-18
+*
+* 主要优化：
+* - 添加严格的Props验证和错误处理
+* - 实现虚拟滚动支持大数据集
+* - 增强用户体验（加载状态、错误反馈）
+* - 内存管理和性能优化
+* - 向后兼容性设计
+*/
 <template>
-  <div class="overflow-tags-popover" :class="{'modern-mode': enableModernFeatures}">
+  <div class="overflow-tags-popover" :class="{ 'modern-mode': enableModernFeatures }">
     <!-- 错误状态显示 -->
     <div v-if="hasError" class="error-state">
       <slot name="error" :error="errorInfo" :retry="handleRetry">
         <span class="error-text">数据加载失败</span>
-        <el-button
-          v-if="enableModernFeatures && errorInfo.retryable"
-          size="mini"
-          type="text"
-          @click="handleRetry"
-        >
+        <el-button v-if="enableModernFeatures && errorInfo.retryable" size="mini" type="text" @click="handleRetry">
           重试
         </el-button>
       </slot>
@@ -39,13 +34,17 @@
     <!-- 正常显示状态 -->
     <template v-else-if="formattedData.length > 0">
       <!-- 直接显示的标签 -->
-      <div v-for="(item, index) in visibleItems" :key="getItemKey(item, index)" style="display: inline-block; margin-right: 8px;">
+      <div
+        v-for="(item, index) in visibleItems"
+        :key="getItemKey(item, index)"
+        style="display: inline-block; margin-right: 8px;"
+      >
         <slot name="tag" :item="item" :index="index">
           <el-tag
             :size="size"
             :type="getTagType(item, index)"
             :effect="effect"
-            :class="[tagClass, {'interactive-tag': enableModernFeatures}]"
+            :class="[tagClass, { 'interactive-tag': enableModernFeatures }]"
             @click="handleTagClick(item, index)"
           >
             {{ safeGetItemLabel(item) }}
@@ -73,7 +72,10 @@
           </div>
 
           <!-- 搜索框 (现代模式) -->
-          <div v-if="enableModernFeatures && enableSearch && formattedData.length > searchThreshold" class="overflow-tags-search">
+          <div
+            v-if="enableModernFeatures && enableSearch && formattedData.length > searchThreshold"
+            class="overflow-tags-search"
+          >
             <el-input
               v-model="searchKeyword"
               placeholder="搜索标签..."
@@ -85,25 +87,18 @@
           </div>
 
           <!-- 标签内容区域 -->
-          <div
-            ref="scrollContainer"
-            class="overflow-tags-content"
-            @scroll="handleScroll"
-          >
+          <div ref="scrollContainer" class="overflow-tags-content" @scroll="handleScroll">
             <!-- 虚拟滚动容器 -->
             <div v-if="enableModernFeatures && shouldVirtualize" class="virtual-scroll-container">
               <div :style="{ height: totalHeight + 'px' }" class="virtual-total">
-                <div
-                  :style="{ transform: `translateY(${startOffset}px)` }"
-                  class="virtual-items"
-                >
+                <div :style="{ transform: `translateY(${startOffset}px)` }" class="virtual-items">
                   <div
-                    v-for="(item, index) in visibleVirtualItems"
+                    v-for="item in visibleVirtualItems"
                     :key="getItemKey(item.data, item.index)"
                     :style="{ height: virtualItemHeight + 'px' }"
                     class="overflow-tags-item virtual-item"
                   >
-                    <slot name="popover-item" :item="item.data" :index="item.index">
+                    <slot name="popover-item" :item="item.data">
                       <span>{{ item.index + 1 }}. {{ safeGetItemLabel(item.data) }}</span>
                     </slot>
                   </div>
@@ -113,11 +108,7 @@
 
             <!-- 普通滚动模式 -->
             <div v-else>
-              <div
-                v-for="(item, index) in filteredData"
-                :key="getItemKey(item, index)"
-                class="overflow-tags-item"
-              >
+              <div v-for="(item, index) in filteredData" :key="getItemKey(item, index)" class="overflow-tags-item">
                 <slot name="popover-item" :item="item" :index="index">
                   <span>{{ index + 1 }}. {{ safeGetItemLabel(item) }}</span>
                 </slot>
@@ -134,38 +125,23 @@
 
           <!-- 弹出框底部 -->
           <div v-if="enableModernFeatures && (enableExport || enableSelectAll)" class="overflow-tags-footer">
-            <el-button
-              v-if="enableSelectAll"
-              size="mini"
-              type="text"
-              @click="handleSelectAll"
-            >
+            <el-button v-if="enableSelectAll" size="mini" type="text" @click="handleSelectAll">
               全选
             </el-button>
-            <el-button
-              v-if="enableExport"
-              size="mini"
-              type="text"
-              @click="handleExport"
-            >
+            <el-button v-if="enableExport" size="mini" type="text" @click="handleExport">
               导出
             </el-button>
           </div>
         </div>
 
         <!-- 触发弹出框的标签 -->
-        <slot
-          slot="reference"
-          name="more-tag"
-          :count="moreItemsCount"
-          :click="handleMoreTagClick"
-        >
+        <slot slot="reference" name="more-tag" :count="moreItemsCount" :click="handleMoreTagClick">
           <el-tag
             :size="size"
             :type="moreTagType"
             :effect="effect"
             class="more-tag"
-            :class="{'more-tag-modern': enableModernFeatures}"
+            :class="{ 'more-tag-modern': enableModernFeatures }"
             @click="handleMoreTagClick"
           >
             <span>+{{ moreItemsCount }}</span>
@@ -461,8 +437,8 @@ export default {
     // 是否启用虚拟滚动
     shouldVirtualize() {
       return this.enableModernFeatures &&
-             this.enableVirtualScroll &&
-             this.filteredData.length > this.virtualThreshold
+        this.enableVirtualScroll &&
+        this.filteredData.length > this.virtualThreshold
     },
 
     // 虚拟滚动相关计算
@@ -857,7 +833,7 @@ export default {
       border-top: 1px solid #ebeef5;
       text-align: right;
 
-      .el-button + .el-button {
+      .el-button+.el-button {
         margin-left: 8px;
       }
     }

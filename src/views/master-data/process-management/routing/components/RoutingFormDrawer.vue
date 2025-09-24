@@ -159,28 +159,15 @@
     <template #footer>
       <el-button @click="handleCancel">{{ mode === 'view' ? '关闭' : '取消' }}</el-button>
       <el-button v-if="mode !== 'view'" @click="handleReset">重置</el-button>
-      <el-button
-        v-if="mode === 'create'"
-        type="primary"
-        :loading="loading"
-        @click="handleSubmit(true)"
-      >
+      <el-button v-if="mode === 'create'" type="primary" :loading="loading" @click="handleSubmit(true)">
         保存并继续
       </el-button>
-      <el-button
-        v-if="mode !== 'view'"
-        type="primary"
-        :loading="loading"
-        @click="handleSubmit(false)"
-      >
+      <el-button v-if="mode !== 'view'" type="primary" :loading="loading" @click="handleSubmit(false)">
         {{ mode === 'create' ? '确认保存' : '保存修改' }}
       </el-button>
     </template>
 
-    <operation-selector-modal
-      :visible.sync="operationSelectorVisible"
-      @confirm="handleAddOperations"
-    />
+    <operation-selector-modal :visible.sync="operationSelectorVisible" @confirm="handleAddOperations" />
   </base-drawer>
 </template>
 
@@ -799,7 +786,6 @@ export default {
 
     // 为新类型重置表单
     resetFormForType(newType) {
-      const typeRule = getRoutingTypeRule(newType)
       this.formData = {
         ...this.initFormData(),
         type: newType
@@ -869,6 +855,7 @@ export default {
   padding: 20px;
   border-radius: 4px;
   margin-bottom: 20px;
+
   &:last-child {
     margin-bottom: 0;
   }
@@ -901,7 +888,8 @@ export default {
 
 .input-suffix {
   position: absolute;
-  right: 10px; /* Adjust as needed for alignment */
+  right: 10px;
+  /* Adjust as needed for alignment */
   top: 50%;
   transform: translateY(-50%);
   font-size: 16px;

@@ -1,9 +1,9 @@
 /**
- * 产品表格组件（新版）
- * 功能描述：展示产品列表数据，提供分页、选择、操作功能，支持动态列显示及持久化设置
- * 功能增强：支持批量操作、导入导出等高级功能
- * 创建日期：2024-11-10
- */
+* 产品表格组件（新版）
+* 功能描述：展示产品列表数据，提供分页、选择、操作功能，支持动态列显示及持久化设置
+* 功能增强：支持批量操作、导入导出等高级功能
+* 创建日期：2024-11-10
+*/
 <template>
   <div class="product-table">
     <!-- 使用全局表格工具栏组件 -->
@@ -62,12 +62,7 @@
       <el-table-column label="#" type="index" width="50" align="center" fixed="left" />
 
       <template v-for="col in tableColumns">
-        <el-table-column
-          :key="col.prop"
-          v-bind="col"
-          show-overflow-tooltip
-          align="center"
-        >
+        <el-table-column :key="col.prop" v-bind="col" show-overflow-tooltip align="center">
           <template slot-scope="scope">
             <!-- 使用StatusTag组件展示生命周期状态列 -->
             <template v-if="col.prop === 'lifecycleStatus'">
@@ -97,7 +92,8 @@
                   </div>
                 </div>
                 <el-tag slot="reference" type="success" style="cursor: pointer">
-                  {{ scope.row.processTemplates[0].name }} <span v-if="scope.row.processTemplates.length > 1">(+{{ scope.row.processTemplates.length - 1 }})</span>
+                  {{ scope.row.processTemplates[0].name }} <span v-if="scope.row.processTemplates.length > 1">(+{{
+                    scope.row.processTemplates.length - 1 }})</span>
                 </el-tag>
               </el-popover>
               <span v-else>无</span>
@@ -118,7 +114,8 @@
                   </div>
                 </div>
                 <el-tag slot="reference" type="primary" style="cursor: pointer">
-                  {{ scope.row.qualityStandards[0].name }} <span v-if="scope.row.qualityStandards.length > 1">(+{{ scope.row.qualityStandards.length - 1 }})</span>
+                  {{ scope.row.qualityStandards[0].name }} <span v-if="scope.row.qualityStandards.length > 1">(+{{
+                    scope.row.qualityStandards.length - 1 }})</span>
                 </el-tag>
               </el-popover>
               <span v-else>无</span>
@@ -165,7 +162,7 @@ import Pagination from '@/components/Pagination'
 import TableToolbar from '@/components/TableToolbar'
 import ActionButtons from '@/components/ActionButtons'
 import StatusTag from '@/components/StatusTag'
-import { CommonButtons, generateTableButtons } from '@/components/ActionButtons/presets'
+// TODO: 后续集成预设按钮配置
 import { productLifecycleMap } from '@/components/StatusTag/types'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import request from '@/utils/request'
@@ -539,6 +536,7 @@ export default {
 
     // 设置表格最小宽度，防止列过少时表格太窄
     min-width: 100%;
+
     table {
       width: 100% !important;
     }

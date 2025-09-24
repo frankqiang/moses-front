@@ -1,8 +1,8 @@
 /**
- * 炉型管理页面
- * 功能描述：管理系统中的炉型定义，包括炉型基础信息和能力参数配置
- * 创建日期：2024-11-16
- */
+* 炉型管理页面
+* 功能描述：管理系统中的炉型定义，包括炉型基础信息和能力参数配置
+* 创建日期：2024-11-16
+*/
 <template>
   <div class="app-container">
     <!-- 页面标题 -->
@@ -63,7 +63,6 @@
 // 导入API函数
 import {
   getFurnaceTypeList,
-  getFurnaceTypeDetail,
   createFurnaceType,
   updateFurnaceType,
   deleteFurnaceType,
@@ -76,9 +75,6 @@ import {
 import SearchForm from './components/SearchForm'
 import FurnaceTypeTable from './components/FurnaceTypeTable'
 import FurnaceTypeFormDrawer from './components/FurnaceTypeFormDrawer'
-
-// 引入工具函数
-import { scrollTo } from '@/utils/scroll-to'
 
 export default {
   name: 'FurnaceTypeManagement',

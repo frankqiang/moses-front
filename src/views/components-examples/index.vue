@@ -1,8 +1,8 @@
 /**
- * 额外全局组件演示页面
- * 功能描述：展示未在主演示页包含的全局组件
- * 创建日期：2023-12-20
- */
+* 额外全局组件演示页面
+* 功能描述：展示未在主演示页包含的全局组件
+* 创建日期：2023-12-20
+*/
 <template>
   <div class="app-container">
     <h2>额外全局组件演示</h2>
@@ -19,25 +19,10 @@
           style="width: 100%"
           @selection-change="handleSelectionChange"
         >
-          <el-table-column
-            type="selection"
-            width="55"
-          />
-          <el-table-column
-            prop="id"
-            label="ID"
-            width="120"
-          />
-          <el-table-column
-            prop="name"
-            label="名称"
-            width="160"
-          />
-          <el-table-column
-            prop="status"
-            label="状态"
-            width="120"
-          >
+          <el-table-column type="selection" width="55" />
+          <el-table-column prop="id" label="ID" width="120" />
+          <el-table-column prop="name" label="名称" width="160" />
+          <el-table-column prop="status" label="状态" width="120">
             <template slot-scope="scope">
               <StatusTag
                 :status="scope.row.status"
@@ -46,10 +31,7 @@
               />
             </template>
           </el-table-column>
-          <el-table-column
-            prop="type"
-            label="类型"
-          />
+          <el-table-column prop="type" label="类型" />
         </el-table>
 
         <BatchActionsToolbar
@@ -70,13 +52,7 @@
       <div class="demo-item">
         <RefreshButton @refresh="handleRefresh" />
 
-        <RefreshButton
-          text="刷新数据"
-          :animation-duration="1000"
-          type="success"
-          size="medium"
-          @refresh="handleRefresh"
-        />
+        <RefreshButton text="刷新数据" :animation-duration="1000" type="success" size="medium" @refresh="handleRefresh" />
 
         <p v-if="lastRefreshTime">上次刷新时间: {{ lastRefreshTime }}</p>
       </div>
@@ -86,11 +62,7 @@
     <div class="demo-section">
       <h3>基本用法</h3>
       <div class="demo-item">
-        <ImportButton
-          :import-api="mockImportApi"
-          :template-api="mockTemplateApi"
-          @import="handleImport"
-        />
+        <ImportButton :import-api="mockImportApi" :template-api="mockTemplateApi" @import="handleImport" />
 
         <ImportButton
           text="导入数据"
@@ -112,17 +84,12 @@
     <div class="demo-section">
       <h3>基本用法</h3>
       <div class="demo-item">
-        <ExportButton
-          :export-api="mockExportApi"
-          :params="{data: tableData}"
-          filename="用户数据"
-          @export="handleExport"
-        />
+        <ExportButton :export-api="mockExportApi" :params="{ data: tableData }" filename="用户数据" @export="handleExport" />
 
         <ExportButton
           text="导出为Excel"
           :export-api="mockExportApi"
-          :params="{data: tableData, columns: exportColumns}"
+          :params="{ data: tableData, columns: exportColumns }"
           filename="用户数据.xlsx"
           file-type="xlsx"
           type="success"
@@ -135,8 +102,7 @@
 </template>
 
 <script>
-import { productLifecycleMap } from '@/components/StatusTag/types'
-import { CommonButtons, generateTableButtons, createStatusButtons } from '@/components/ActionButtons/presets'
+// 示例页面，暂不使用这些组件
 
 export default {
   name: 'ComponentsExamples',

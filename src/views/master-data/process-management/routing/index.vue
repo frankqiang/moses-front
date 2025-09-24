@@ -1,10 +1,6 @@
 <template>
   <div class="app-container routing-management">
-    <search-form
-      :loading="loading"
-      @search="handleSearch"
-      @reset="handleReset"
-    />
+    <search-form :loading="loading" @search="handleSearch" @reset="handleReset" />
 
     <routing-table
       ref="routingTable"
@@ -56,9 +52,7 @@ import {
   submitRoutingApproval,
   approveRouting,
   rejectRouting,
-  archiveRouting,
-  getRoutingHistory,
-  getRoutingApprovalHistory
+  archiveRouting
 } from './api'
 import SearchForm from './components/SearchForm.vue'
 import RoutingTable from './components/RoutingTable.vue'

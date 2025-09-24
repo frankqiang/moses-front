@@ -9,7 +9,7 @@
 import request from '@/utils/request'
 
 // API基础路径 - 注意：VUE_APP_BASE_API已经包含了/v1，所以这里不需要重复
-const baseURL = ''
+// const baseURL = ''  // 暂时不使用，直接使用完整路径
 
 /**
  * 获取用户列表
@@ -221,7 +221,8 @@ export function changeUserPassword(data) {
  * @returns {Promise} 返回导出文件的blob数据
  */
 export function exportUserList(params = {}) {
-  // 移除分页参数
+  // 移除分页参数，使用解构赋值忽略这些参数
+  // eslint-disable-next-line no-unused-vars
   const { page, limit, ...exportParams } = params
 
   return request({

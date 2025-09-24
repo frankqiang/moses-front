@@ -72,9 +72,6 @@
 </template>
 
 <script>
-// 导入通用组件
-import DialogForm from '@/components/DialogForm'
-
 // 导入用户管理组件
 import UserTable from './components/UserTable.vue'
 import UserFormDrawer from './components/UserFormDrawer.vue'
@@ -114,7 +111,6 @@ export default {
     UserTable,
     UserFormDrawer,
     UserSearch,
-    DialogForm,
     ResetPasswordDialog,
     RoleAssignmentDialog
   },
@@ -483,12 +479,6 @@ export default {
      * 确认状态变更 - 提供友好的确认对话框
      */
     confirmStatusChange(row, targetStatus, actionName, description) {
-      const statusText = {
-        [USER_STATUS.ACTIVE]: '激活',
-        [USER_STATUS.INACTIVE]: '禁用',
-        [USER_STATUS.LOCKED]: '锁定'
-      }
-
       this.$confirm(
         `确定要${actionName}用户 "${row.name || row.username}" 吗？\n\n${description}`,
         `${actionName}用户`,

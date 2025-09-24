@@ -323,10 +323,8 @@ export function generateTableButtons(options = {}) {
     disableDisabled = false,
 
     // 现代化配置
-    theme = 'default',
     size = 'mini',
     showTooltip = true,
-    debounceDelay = 300,
 
     // 权限配置
     permissions = {},
@@ -589,7 +587,6 @@ export function generateApprovalButtons(options = {}) {
     showTooltip = true,
 
     // 审批状态
-    status = 'pending',
     canApprove = true,
     canReject = true,
     canTransfer = true,

@@ -277,7 +277,7 @@ export default {
         this.hasError = false
 
         // 发送确认事件并等待处理
-        const result = await new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) => {
           this.$emit('confirm', { resolve, reject })
 
           // 如果没有异步处理，默认成功

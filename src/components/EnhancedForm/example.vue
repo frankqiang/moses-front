@@ -1,7 +1,7 @@
 /**
- * EnhancedForm组件示例 - 展示现代前端开发范式优化特性
- * 创建日期：2024-12-16
- */
+* EnhancedForm组件示例 - 展示现代前端开发范式优化特性
+* 创建日期：2024-12-16
+*/
 <template>
   <div class="enhanced-form-example">
     <div class="demo-header">
@@ -56,10 +56,10 @@
         @form-update="handleFormUpdate"
       >
         <!-- 表单内容插槽 -->
-        <template v-slot="{ form, mode, hasChanges, isValid, setFieldValue }">
+        <template v-slot="{ form, formMode, formHasChanges, isValid, setFieldValue }">
           <!-- 状态指示器 -->
           <div class="status-indicators">
-            <el-tag v-if="hasChanges" type="warning" size="small">
+            <el-tag v-if="formHasChanges" type="warning" size="small">
               <i class="el-icon-edit" /> 有未保存的更改
             </el-tag>
             <el-tag v-if="isValid" type="success" size="small">
@@ -78,18 +78,14 @@
                 <el-input
                   v-model="form.username"
                   placeholder="请输入用户名"
-                  :disabled="mode === 'view'"
+                  :disabled="formMode === 'view'"
                   @blur="() => demoValidateField('username')"
                 />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="真实姓名" prop="realName">
-                <el-input
-                  v-model="form.realName"
-                  placeholder="请输入真实姓名"
-                  :disabled="mode === 'view'"
-                />
+                <el-input v-model="form.realName" placeholder="请输入真实姓名" :disabled="formMode === 'view'" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -97,20 +93,12 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="邮箱" prop="email">
-                <el-input
-                  v-model="form.email"
-                  placeholder="请输入邮箱地址"
-                  :disabled="mode === 'view' || autoGenerateEmail"
-                />
+                <el-input v-model="form.email" placeholder="请输入邮箱地址" :disabled="mode === 'view' || autoGenerateEmail" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="手机号" prop="phone">
-                <el-input
-                  v-model="form.phone"
-                  placeholder="请输入手机号"
-                  :disabled="mode === 'view'"
-                />
+                <el-input v-model="form.phone" placeholder="请输入手机号" :disabled="formMode === 'view'" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -122,7 +110,7 @@
               <el-form-item label="自动生成邮箱">
                 <el-switch
                   v-model="autoGenerateEmail"
-                  :disabled="mode === 'view'"
+                  :disabled="formMode === 'view'"
                   @change="(value) => handleAutoEmailChange(value, setFieldValue)"
                 />
                 <span class="feature-desc">根据用户名自动生成邮箱</span>
@@ -133,7 +121,7 @@
                 <el-select
                   v-model="form.department"
                   placeholder="请选择部门"
-                  :disabled="mode === 'view'"
+                  :disabled="formMode === 'view'"
                   @change="(value) => handleDepartmentChange(value, setFieldValue)"
                 >
                   <el-option label="技术部" value="tech" />
@@ -147,11 +135,7 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="角色" prop="role">
-                <el-select
-                  v-model="form.role"
-                  placeholder="请选择角色"
-                  :disabled="mode === 'view'"
-                >
+                <el-select v-model="form.role" placeholder="请选择角色" :disabled="formMode === 'view'">
                   <el-option
                     v-for="option in roleOptions"
                     :key="option.value"
@@ -185,36 +169,27 @@
         </template>
 
         <!-- 自定义底部按钮 -->
-        <template #footer="{ loading, submit, reset, hasChanges, isValid }">
+        <template #footer="{ loading, submit, reset, hasChanges: footerHasChanges, isValid }">
           <div class="custom-footer">
             <div class="left-actions">
               <el-button
-                v-if="mode !== 'view'"
-                :disabled="!hasChanges"
+                v-if="formMode !== 'view'"
+                :disabled="!footerHasChanges"
                 icon="el-icon-document"
                 @click="handleSaveDraft"
               >
                 保存草稿
               </el-button>
-              <el-button
-                v-if="mode !== 'view'"
-                :disabled="!isValid"
-                icon="el-icon-view"
-                @click="handlePreview"
-              >
+              <el-button v-if="formMode !== 'view'" :disabled="!isValid" icon="el-icon-view" @click="handlePreview">
                 预览
               </el-button>
             </div>
             <div class="right-actions">
-              <el-button
-                :disabled="!hasChanges"
-                icon="el-icon-refresh"
-                @click="reset"
-              >
+              <el-button :disabled="!footerHasChanges" icon="el-icon-refresh" @click="reset">
                 重置
               </el-button>
               <el-button
-                v-if="mode === 'create'"
+                v-if="formMode === 'create'"
                 type="primary"
                 :loading="loading"
                 :disabled="!isValid || !hasChanges"
@@ -224,14 +199,14 @@
                 创建并继续
               </el-button>
               <el-button
-                v-if="mode !== 'view'"
+                v-if="formMode !== 'view'"
                 type="primary"
                 :loading="loading"
                 :disabled="!isValid || !hasChanges"
                 icon="el-icon-check"
                 @click="submit"
               >
-                {{ mode === 'create' ? '创建' : '保存' }}
+                {{ formMode === 'create' ? '创建' : '保存' }}
               </el-button>
             </div>
           </div>
@@ -244,12 +219,7 @@
       <el-col :span="12">
         <el-card header="操作日志">
           <div class="log-container">
-            <div
-              v-for="(log, index) in operationLogs"
-              :key="index"
-              class="log-item"
-              :class="log.type"
-            >
+            <div v-for="(log, index) in operationLogs" :key="index" class="log-item" :class="log.type">
               <span class="log-time">{{ log.time }}</span>
               <span class="log-content">{{ log.content }}</span>
             </div>

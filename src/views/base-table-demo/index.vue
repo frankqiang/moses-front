@@ -1,8 +1,8 @@
 /**
- * BaseTable 组件演示页面
- * 功能描述：展示BaseTable组件的各种功能和使用方法
- * 创建日期：2024-12-18
- */
+* BaseTable 组件演示页面
+* 功能描述：展示BaseTable组件的各种功能和使用方法
+* 创建日期：2024-12-18
+*/
 <template>
   <div class="app-container">
     <div class="page-header">
@@ -15,13 +15,7 @@
       <div class="demo-description">
         <p>最基本的表格用法，通过 columns 配置定义表格列。</p>
       </div>
-      <base-table
-        :data="basicTableData"
-        :columns="basicColumns"
-        :loading="basicLoading"
-        border
-        stripe
-      />
+      <base-table :data="basicTableData" :columns="basicColumns" :loading="basicLoading" border stripe />
     </div>
 
     <div class="demo-section">
@@ -44,12 +38,7 @@
       <div class="demo-description">
         <p>内置状态列和时间列的渲染，通过 type 配置自动处理状态标签和时间格式化。</p>
       </div>
-      <base-table
-        :data="statusTableData"
-        :columns="statusColumns"
-        :loading="statusLoading"
-        border
-      />
+      <base-table :data="statusTableData" :columns="statusColumns" :loading="statusLoading" border />
     </div>
 
     <div class="demo-section">
@@ -90,12 +79,7 @@
       <div class="demo-description">
         <p>使用插槽自定义列的渲染内容，支持任意复杂的自定义内容。</p>
       </div>
-      <base-table
-        :data="customTableData"
-        :columns="customColumns"
-        :loading="customLoading"
-        border
-      >
+      <base-table :data="customTableData" :columns="customColumns" :loading="customLoading" border>
         <!-- 自定义头像列 -->
         <template v-slot:avatar="{ row }">
           <el-avatar :src="row.avatar" size="small">
@@ -110,13 +94,7 @@
 
         <!-- 自定义标签列 -->
         <template v-slot:tags="{ row }">
-          <el-tag
-            v-for="tag in row.tags"
-            :key="tag"
-            size="small"
-            :type="getTagType(tag)"
-            style="margin-right: 4px;"
-          >
+          <el-tag v-for="tag in row.tags" :key="tag" size="small" :type="getTagType(tag)" style="margin-right: 4px;">
             {{ tag }}
           </el-tag>
         </template>
@@ -148,12 +126,7 @@
       <div class="demo-description">
         <p>自定义空状态内容，当表格数据为空时显示。</p>
       </div>
-      <base-table
-        :data="[]"
-        :columns="basicColumns"
-        :loading="false"
-        border
-      >
+      <base-table :data="[]" :columns="basicColumns" :loading="false" border>
         <template v-slot:empty>
           <div class="custom-empty">
             <i class="el-icon-box" style="font-size: 64px; color: #c0c4cc;" />
@@ -172,12 +145,7 @@
 
       <!-- 前端排序示例 -->
       <h3>前端排序 (sortable: true)</h3>
-      <base-table
-        :data="sortTableData"
-        :columns="frontSortColumns"
-        :loading="false"
-        border
-      />
+      <base-table :data="sortTableData" :columns="frontSortColumns" :loading="false" border />
 
       <!-- 后端排序示例 -->
       <h3>后端排序 (sortable: 'custom')</h3>
@@ -230,12 +198,7 @@
         <template v-slot:actions>
           <el-table-column label="操作" width="150" align="center" fixed="right">
             <template v-slot="{ row }">
-              <action-buttons
-                :buttons="actionButtons"
-                :row="row"
-                mode="text"
-                @click="handleActionClick"
-              />
+              <action-buttons :buttons="actionButtons" :row="row" mode="text" @click="handleActionClick" />
             </template>
           </el-table-column>
         </template>
@@ -744,16 +707,6 @@ export default {
     // 格式化评级
     formatRating(row, column, cellValue) {
       return `${cellValue}★`
-    },
-
-    // 格式化价格
-    formatPrice(row, column, cellValue) {
-      return `¥${cellValue.toLocaleString()}`
-    },
-
-    // 格式化评分
-    formatScore(row, column, cellValue) {
-      return `${cellValue}★`
     }
   }
 }
@@ -820,43 +773,43 @@ export default {
   }
 }
 
-  .custom-empty {
-    padding: 60px;
-    text-align: center;
-    color: #909399;
+.custom-empty {
+  padding: 60px;
+  text-align: center;
+  color: #909399;
 
-    h3 {
-      margin: 16px 0 8px 0;
-      color: #606266;
-    }
-
-    p {
-      margin: 0;
-      font-size: 14px;
-    }
+  h3 {
+    margin: 16px 0 8px 0;
+    color: #606266;
   }
 
-  .sort-info {
-    margin-bottom: 16px;
-    padding: 12px;
-    background-color: #e8f4fd;
-    border: 1px solid #b3d8ff;
-    border-radius: 4px;
-
-    p {
-      margin: 0;
-      color: #409eff;
-      font-size: 14px;
-    }
+  p {
+    margin: 0;
+    font-size: 14px;
   }
+}
 
-  .el-dropdown-link {
+.sort-info {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #e8f4fd;
+  border: 1px solid #b3d8ff;
+  border-radius: 4px;
+
+  p {
+    margin: 0;
     color: #409eff;
-    cursor: pointer;
-    font-size: 12px;
-
-    &:hover {
-      color: #66b1ff;
-    }
+    font-size: 14px;
   }
+}
+
+.el-dropdown-link {
+  color: #409eff;
+  cursor: pointer;
+  font-size: 12px;
+
+  &:hover {
+    color: #66b1ff;
+  }
+}
 </style>

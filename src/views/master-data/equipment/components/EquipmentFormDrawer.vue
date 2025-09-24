@@ -1,9 +1,9 @@
 /**
- * 设备表单抽屉组件
- * 功能描述：提供设备新增、编辑和查看功能的表单，使用抽屉方式展示
- * 创建日期：2023-11-05
- * 更新日期：2024-10-28
- */
+* 设备表单抽屉组件
+* 功能描述：提供设备新增、编辑和查看功能的表单，使用抽屉方式展示
+* 创建日期：2023-11-05
+* 更新日期：2024-10-28
+*/
 <template>
   <drawer-form
     ref="drawerForm"
@@ -24,8 +24,14 @@
   >
     <template #footer>
       <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
-      <el-button v-if="type === 'create'" type="primary" :loading="loading" @click="handleSubmitAndContinue">保存并继续</el-button>
-      <el-button v-if="type !== 'view'" type="primary" :loading="loading" @click="handleSubmit">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
+      <el-button
+        v-if="type === 'create'"
+        type="primary"
+        :loading="loading"
+        @click="handleSubmitAndContinue"
+      >保存并继续</el-button>
+      <el-button v-if="type !== 'view'" type="primary" :loading="loading" @click="handleSubmit">{{ type === 'create' ?
+        '确认保存' : '保存修改' }}</el-button>
     </template>
   </drawer-form>
 </template>
@@ -525,7 +531,7 @@ export default {
 
           // 如果当前表单已有炉型编码，但不在可选列表中（可能是已禁用的炉型）
           if (this.form.furnaceTypeCode &&
-              !this.furnaceTypeOptions.some(option => option.value === this.form.furnaceTypeCode)) {
+            !this.furnaceTypeOptions.some(option => option.value === this.form.furnaceTypeCode)) {
             // 找到对应的炉型数据
             const disabledType = furnaceTypes.find(item => item.furnaceTypeCode === this.form.furnaceTypeCode)
             if (disabledType) {
@@ -875,7 +881,7 @@ export default {
           const fieldName = e.target.dataset.prop || e.target.name
           const fieldValue = e.target.value
 
-          if (fieldName && this.form.hasOwnProperty(fieldName)) {
+          if (fieldName && Object.prototype.hasOwnProperty.call(this.form, fieldName)) {
             console.log(`字段 ${fieldName} 变更为: ${fieldValue}`)
             this.form[fieldName] = fieldValue
           }
@@ -931,7 +937,8 @@ export default {
 
 .drawer-content {
   padding: 20px;
-  height: calc(100% - 80px); /* 减去footer高度 */
+  height: calc(100% - 80px);
+  /* 减去footer高度 */
   overflow-y: auto;
   position: relative;
 }

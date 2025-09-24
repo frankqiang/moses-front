@@ -1,5 +1,5 @@
 <template>
-  <div :class="{'hidden':hidden}" class="pagination-container">
+  <div :class="{ 'hidden': hidden }" class="pagination-container">
     <!-- 错误边界组件 -->
     <error-boundary v-if="enableModernFeatures" @error="handleError">
       <el-pagination
@@ -99,7 +99,7 @@ function throttle(func, limit) {
     if (!inThrottle) {
       func.apply(this, args)
       inThrottle = true
-      setTimeout(() => inThrottle = false, limit)
+      setTimeout(() => { inThrottle = false }, limit)
     }
   }
 }
@@ -671,8 +671,13 @@ export default {
 
 /* 加载状态动画 */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .pagination-loading {
@@ -685,6 +690,7 @@ export default {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

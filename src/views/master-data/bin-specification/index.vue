@@ -1,8 +1,8 @@
 /**
- * 料框规格主数据管理页面
- * 功能描述：管理系统中的料框规格信息，包括基础信息和参数配置
- * 创建日期：2024-10-30
- */
+* 料框规格主数据管理页面
+* 功能描述：管理系统中的料框规格信息，包括基础信息和参数配置
+* 创建日期：2024-10-30
+*/
 <template>
   <div class="app-container">
     <!-- 当前模块标题 -->
@@ -11,12 +11,7 @@
     </div>
 
     <!-- 搜索表单 -->
-    <search-form
-      :init-query="listQuery"
-      :loading="listLoading"
-      @search="handleSearch"
-      @reset="handleReset"
-    />
+    <search-form :init-query="listQuery" :loading="listLoading" @search="handleSearch" @reset="handleReset" />
 
     <!-- 表格组件 -->
     <specification-table
@@ -60,7 +55,6 @@
 <script>
 import {
   getBinSpecList,
-  getBinSpecDetail,
   createBinSpec,
   updateBinSpec,
   changeBinSpecStatus,
@@ -267,7 +261,7 @@ export default {
           this.$message.success(`${statusText}成功`)
           this.getList()
         })
-      }).catch(() => {})
+      }).catch(() => { })
     },
 
     // 批量删除

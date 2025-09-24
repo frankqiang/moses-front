@@ -1,17 +1,17 @@
 /**
  * 工艺路线表格配置
  */
-import { parseTime } from '@/utils'
-
 // 局部日期格式化工具函数，以处理无效日期
-const formatTableDate = (cellValue) => {
-  if (!cellValue) return ''
-  const date = new Date(cellValue)
-  if (isNaN(date.getTime())) {
-    return 'invalid-date'
-  }
-  return parseTime(cellValue, '{y}-{m}-{d} {h}:{i}')
-}
+// TODO: 后续如果需要特殊日期格式化可以启用此函数
+// import { parseTime } from '@/utils'
+// const formatTableDate = (cellValue) => {
+//   if (!cellValue) return ''
+//   const date = new Date(cellValue)
+//   if (isNaN(date.getTime())) {
+//     return 'invalid-date'
+//   }
+//   return parseTime(cellValue, '{y}-{m}-{d} {h}:{i}')
+// }
 
 export const TABLE_COLUMNS = [
   {

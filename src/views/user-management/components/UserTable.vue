@@ -94,8 +94,6 @@ import {
   TABLE_COLUMNS,
   STATUS_CONFIG,
   GENDER_CONFIG,
-  ACTION_BUTTONS_CONFIG,
-  ROW_CLASS_CONFIG,
   DEFAULT_VISIBLE_COLUMNS
 } from '../constants/table-config'
 import { USER_STATUS } from '../constants'

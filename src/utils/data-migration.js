@@ -137,7 +137,7 @@ class DataMigrationManager {
       const hasOldPrefix = this.oldPrefixes.some(prefix => key.startsWith(prefix))
 
       // 检查是否在特殊映射中
-      const hasSpecialMapping = this.keyMappings.hasOwnProperty(key)
+      const hasSpecialMapping = Object.prototype.hasOwnProperty.call(this.keyMappings, key)
 
       // 检查是否已经是moses前缀（避免重复迁移）
       const isMosesKey = key.startsWith('moses_')

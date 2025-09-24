@@ -1,8 +1,8 @@
 /**
- * 料框规格表格组件
- * 功能描述：展示料框规格列表数据，提供分页、选择、操作功能，支持动态列显示及持久化设置
- * 创建日期：2024-10-30
- */
+* 料框规格表格组件
+* 功能描述：展示料框规格列表数据，提供分页、选择、操作功能，支持动态列显示及持久化设置
+* 创建日期：2024-10-30
+*/
 <template>
   <div class="specification-table">
     <!-- 使用全局表格工具栏组件 -->
@@ -55,20 +55,11 @@
       <el-table-column label="#" type="index" width="50" align="center" fixed="left" />
 
       <template v-for="col in tableColumns">
-        <el-table-column
-          :key="col.prop"
-          v-bind="col"
-          show-overflow-tooltip
-          align="center"
-        >
+        <el-table-column :key="col.prop" v-bind="col" show-overflow-tooltip align="center">
           <template slot-scope="scope">
             <!-- 使用StatusTag组件展示状态列 -->
             <template v-if="col.prop === 'status'">
-              <status-tag
-                :status="scope.row.status"
-                :text-map="statusTextMap"
-                :type-map="statusTypeMap"
-              />
+              <status-tag :status="scope.row.status" :text-map="statusTextMap" :type-map="statusTypeMap" />
             </template>
             <!-- 尺寸列特殊处理 -->
             <template v-else-if="col.prop === 'dimensions'">
@@ -85,7 +76,10 @@
               >
                 {{ product.name }}
               </el-tag>
-              <span v-if="!scope.row.applicableProducts || scope.row.applicableProducts.length === 0" class="text-muted">无</span>
+              <span
+                v-if="!scope.row.applicableProducts || scope.row.applicableProducts.length === 0"
+                class="text-muted"
+              >无</span>
             </template>
             <template v-else-if="col.formatter">
               {{ col.formatter(scope.row[col.prop], scope.row) }}
@@ -129,7 +123,7 @@ import Pagination from '@/components/Pagination'
 import TableToolbar from '@/components/TableToolbar'
 import ActionButtons from '@/components/ActionButtons'
 import StatusTag from '@/components/StatusTag'
-import { CommonButtons, generateTableButtons } from '@/components/ActionButtons/presets'
+import { generateTableButtons } from '@/components/ActionButtons/presets'
 import { enabledStatusMap } from '@/components/StatusTag/types'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import request from '@/utils/request'
@@ -468,6 +462,7 @@ export default {
 
     // 设置表格最小宽度，防止列过少时表格太窄
     min-width: 100%;
+
     table {
       width: 100% !important;
     }

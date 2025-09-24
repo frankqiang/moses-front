@@ -1,8 +1,8 @@
 /**
- * 全局组件演示页面
- * 功能描述：展示所有全局组件的用法和示例
- * 创建日期：2023-11-20
- */
+* 全局组件演示页面
+* 功能描述：展示所有全局组件的用法和示例
+* 创建日期：2023-11-20
+*/
 <template>
   <div class="app-container">
     <h2>全局组件演示</h2>
@@ -113,7 +113,11 @@
         <el-table-column prop="name" label="姓名" />
         <el-table-column prop="status" label="状态">
           <template slot-scope="scope">
-            <StatusTag :status="scope.row.status" :text-map="{ 0: '禁用', 1: '启用' }" :type-map="{ 0: 'info', 1: 'success' }" />
+            <StatusTag
+              :status="scope.row.status"
+              :text-map="{ 0: '禁用', 1: '启用' }"
+              :type-map="{ 0: 'info', 1: 'success' }"
+            />
           </template>
         </el-table-column>
         <el-table-column label="操作" width="260">
@@ -132,12 +136,7 @@
     <el-divider content-position="left">3. 高级搜索表单 (SearchForm)</el-divider>
     <div class="demo-section">
       <h3>基本用法</h3>
-      <SearchForm
-        :items="searchItems"
-        :value="searchForm"
-        @search="handleSearch"
-        @reset="handleReset"
-      >
+      <SearchForm :items="searchItems" :value="searchForm" @search="handleSearch" @reset="handleReset">
         <template #buttons>
           <el-button type="success" icon="el-icon-download" size="small">导出</el-button>
         </template>
@@ -217,11 +216,27 @@
           <el-table-column v-if="tableColumns.includes('type')" prop="type" label="类型" width="140" align="center" />
           <el-table-column v-if="tableColumns.includes('status')" label="状态" width="100" align="center">
             <template slot-scope="scope">
-              <StatusTag :status="scope.row.status" :text-map="{ 0: '禁用', 1: '启用' }" :type-map="{ 0: 'info', 1: 'success' }" />
+              <StatusTag
+                :status="scope.row.status"
+                :text-map="{ 0: '禁用', 1: '启用' }"
+                :type-map="{ 0: 'info', 1: 'success' }"
+              />
             </template>
           </el-table-column>
-          <el-table-column v-if="tableColumns.includes('createTime')" prop="createTime" label="创建时间" width="180" align="center" />
-          <el-table-column v-if="tableColumns.includes('operations')" label="操作" width="170" align="center" fixed="right">
+          <el-table-column
+            v-if="tableColumns.includes('createTime')"
+            prop="createTime"
+            label="创建时间"
+            width="180"
+            align="center"
+          />
+          <el-table-column
+            v-if="tableColumns.includes('operations')"
+            label="操作"
+            width="170"
+            align="center"
+            fixed="right"
+          >
             <template slot-scope="scope">
               <ActionButtons
                 :buttons="getRowButtons(scope.row)"
@@ -244,7 +259,7 @@
 
 <script>
 import { productLifecycleMap } from '@/components/StatusTag/types'
-import { CommonButtons, generateTableButtons, createStatusButtons } from '@/components/ActionButtons/presets'
+import { CommonButtons } from '@/components/ActionButtons/presets'
 import TableToolbar from '@/components/TableToolbar'
 
 export default {
@@ -277,11 +292,13 @@ export default {
       // SearchForm示例数据
       searchItems: [
         { type: 'input', label: '姓名', prop: 'name', placeholder: '请输入姓名' },
-        { type: 'select', label: '状态', prop: 'status', options: [
-          { label: '全部', value: '' },
-          { label: '启用', value: 1 },
-          { label: '禁用', value: 0 }
-        ] },
+        {
+          type: 'select', label: '状态', prop: 'status', options: [
+            { label: '全部', value: '' },
+            { label: '启用', value: 1 },
+            { label: '禁用', value: 0 }
+          ]
+        },
         { type: 'date', label: '创建日期', prop: 'createDate' },
         { type: 'daterange', label: '日期范围', prop: 'dateRange', startProp: 'startDate', endProp: 'endDate' }
       ],
@@ -324,17 +341,21 @@ export default {
       formItems: [
         { type: 'input', label: '姓名', prop: 'name', placeholder: '请输入姓名' },
         { type: 'input', label: '年龄', prop: 'age', placeholder: '请输入年龄', inputType: 'number' },
-        { type: 'radio', label: '性别', prop: 'gender', options: [
-          { label: '男', value: 'male' },
-          { label: '女', value: 'female' }
-        ] },
+        {
+          type: 'radio', label: '性别', prop: 'gender', options: [
+            { label: '男', value: 'male' },
+            { label: '女', value: 'female' }
+          ]
+        },
         { type: 'input', label: '邮箱', prop: 'email', placeholder: '请输入邮箱' },
-        { type: 'checkbox', label: '兴趣爱好', prop: 'interests', options: [
-          { label: '阅读', value: 'reading' },
-          { label: '旅行', value: 'travel' },
-          { label: '运动', value: 'sports' },
-          { label: '音乐', value: 'music' }
-        ] }
+        {
+          type: 'checkbox', label: '兴趣爱好', prop: 'interests', options: [
+            { label: '阅读', value: 'reading' },
+            { label: '旅行', value: 'travel' },
+            { label: '运动', value: 'sports' },
+            { label: '音乐', value: 'music' }
+          ]
+        }
       ],
       formResult: null,
 
@@ -604,7 +625,7 @@ export default {
       background: #f9f9f9;
       border-radius: 4px;
 
-      .el-tag + .el-tag {
+      .el-tag+.el-tag {
         margin-left: 10px;
       }
     }

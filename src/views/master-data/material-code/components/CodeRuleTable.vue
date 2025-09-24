@@ -116,7 +116,6 @@
 import Pagination from '@/components/Pagination'
 import TableToolbar from '@/components/TableToolbar'
 import ActionButtons from '@/components/ActionButtons'
-import StatusTag from '@/components/StatusTag'
 import { generateTableButtons } from '@/components/ActionButtons/presets'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
 import request from '@/utils/request'
@@ -127,8 +126,7 @@ export default {
   components: {
     Pagination,
     TableToolbar,
-    ActionButtons,
-    StatusTag
+    ActionButtons
   },
   mixins: [columnSettingsMixin],
   props: {

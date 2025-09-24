@@ -65,9 +65,7 @@ export const STATUS_CONFIG = {
     [INSPECTION_ITEM_STATUS.DRAFT]: '草稿',
     // 兼容数字状态值
     1: '启用',
-    0: '禁用',
-    '1': '启用',
-    '0': '禁用'
+    0: '禁用'
   },
   typeMap: {
     [INSPECTION_ITEM_STATUS.ACTIVE]: 'success',
@@ -75,9 +73,7 @@ export const STATUS_CONFIG = {
     [INSPECTION_ITEM_STATUS.DRAFT]: 'warning',
     // 兼容数字状态值
     1: 'success',
-    0: 'danger',
-    '1': 'success',
-    '0': 'danger'
+    0: 'danger'
   }
 }
 

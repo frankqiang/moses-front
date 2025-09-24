@@ -22,12 +22,7 @@
       @custom-action="handleCustomBatchAction"
     >
       <template #toolbar-left>
-        <action-buttons
-          :buttons="toolbarButtons"
-          mode="normal"
-          :show-tooltip="true"
-          @click="handleToolbarAction"
-        />
+        <action-buttons :buttons="toolbarButtons" mode="normal" :show-tooltip="true" @click="handleToolbarAction" />
       </template>
     </table-toolbar>
 
@@ -45,11 +40,7 @@
       @pagination-change="handlePaginationChange"
     >
       <template #status="{ row }">
-        <status-tag
-          :status="row.status"
-          :text-map="statusTextMap"
-          :type-map="statusTypeMap"
-        />
+        <status-tag :status="row.status" :text-map="statusTextMap" :type-map="statusTypeMap" />
       </template>
 
       <template #type="{ row }">
@@ -385,7 +376,7 @@ export default {
           if (!config) return false
 
           // 检查自定义可见性条件
-          if (config.hasOwnProperty('visible') && !config.visible) {
+          if (Object.prototype.hasOwnProperty.call(config, 'visible') && !config.visible) {
             return false
           }
 

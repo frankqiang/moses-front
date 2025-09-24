@@ -7,13 +7,30 @@
 * - 2024-12-24: 重构使用EnhancedForm组件，遵循现代前端开发范式
 */
 <template>
-  <base-drawer :visible.sync="drawerVisible" :title="drawerTitle" width="700px" :wrapper-closable="false"
-    @open="handleDrawerOpen" @close="handleDrawerClose">
+  <base-drawer
+    :visible.sync="drawerVisible"
+    :title="drawerTitle"
+    width="700px"
+    :wrapper-closable="false"
+    @open="handleDrawerOpen"
+    @close="handleDrawerClose"
+  >
     <!-- 表单内容 -->
-    <enhanced-form ref="enhancedForm" :data="formData" :mode="innerMode" :rules="formRules" label-width="120px"
-      :show-footer="false" :clear-validate-on-data-update="true" :disable-initial-validation="true"
-      :validate-on-data-change="false" @submit="handleFormSubmit" @validate="handleCustomValidate"
-      @validate-error="handleValidateError" @reset="handleFormReset">
+    <enhanced-form
+      ref="enhancedForm"
+      :data="formData"
+      :mode="innerMode"
+      :rules="formRules"
+      label-width="120px"
+      :show-footer="false"
+      :clear-validate-on-data-update="true"
+      :disable-initial-validation="true"
+      :validate-on-data-change="false"
+      @submit="handleFormSubmit"
+      @validate="handleCustomValidate"
+      @validate-error="handleValidateError"
+      @reset="handleFormReset"
+    >
       <!-- 表单内容 -->
       <template v-slot="{ form, mode: formMode }">
         <!-- 一、基础信息 -->
@@ -22,8 +39,14 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="角色名称" prop="name">
-                <el-input v-model="form.name" placeholder="请输入角色名称（1-100字符）" maxlength="100" show-word-limit
-                  :disabled="formMode === 'view'" clearable />
+                <el-input
+                  v-model="form.name"
+                  placeholder="请输入角色名称（1-100字符）"
+                  maxlength="100"
+                  show-word-limit
+                  :disabled="formMode === 'view'"
+                  clearable
+                />
                 <div class="field-hint">
                   角色名称支持中文、英文、数字、空格、括号
                 </div>
@@ -34,8 +57,14 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="角色编码" prop="code">
-                <el-input v-model="form.code" placeholder="请输入角色编码（1-50字符）" maxlength="50" show-word-limit
-                  :disabled="isFieldDisabled('code')" clearable />
+                <el-input
+                  v-model="form.code"
+                  placeholder="请输入角色编码（1-50字符）"
+                  maxlength="50"
+                  show-word-limit
+                  :disabled="isFieldDisabled('code')"
+                  clearable
+                />
                 <div class="field-hint">
                   角色编码只能包含字母、数字、下划线、中划线，不能以数字、下划线或中划线开头或结尾
                   <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色编码不可修改）</span>
@@ -47,10 +76,19 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="角色类型" prop="type">
-                <el-select v-model="form.type" placeholder="请选择角色类型" style="width: 100%"
-                  :disabled="isFieldDisabled('type')">
-                  <el-option v-for="option in typeOptions" :key="option.value" :label="option.label"
-                    :value="option.value" :disabled="option.value === 'system'" />
+                <el-select
+                  v-model="form.type"
+                  placeholder="请选择角色类型"
+                  style="width: 100%"
+                  :disabled="isFieldDisabled('type')"
+                >
+                  <el-option
+                    v-for="option in typeOptions"
+                    :key="option.value"
+                    :label="option.label"
+                    :value="option.value"
+                    :disabled="option.value === 'system'"
+                  />
                 </el-select>
                 <div class="field-hint">
                   系统角色由系统预置，用户只能创建自定义角色
@@ -63,10 +101,18 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="角色级别" prop="level">
-                <el-select v-model="form.level" placeholder="请选择角色级别（1-999）" style="width: 100%"
-                  :disabled="isFieldDisabled('level')">
-                  <el-option v-for="level in levelOptions" :key="level.value" :label="level.label"
-                    :value="level.value" />
+                <el-select
+                  v-model="form.level"
+                  placeholder="请选择角色级别（1-999）"
+                  style="width: 100%"
+                  :disabled="isFieldDisabled('level')"
+                >
+                  <el-option
+                    v-for="level in levelOptions"
+                    :key="level.value"
+                    :label="level.label"
+                    :value="level.value"
+                  />
                 </el-select>
                 <div class="field-hint">
                   角色级别用于权限层级控制，数字越小级别越高
@@ -108,8 +154,15 @@
           <el-row>
             <el-col :span="24">
               <el-form-item label="角色描述" prop="description">
-                <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请输入角色描述（最大1000字符）"
-                  maxlength="1000" show-word-limit :disabled="formMode === 'view'" />
+                <el-input
+                  v-model="form.description"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="请输入角色描述（最大1000字符）"
+                  maxlength="1000"
+                  show-word-limit
+                  :disabled="formMode === 'view'"
+                />
               </el-form-item>
             </el-col>
           </el-row>

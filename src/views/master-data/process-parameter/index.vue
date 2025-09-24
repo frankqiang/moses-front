@@ -1,8 +1,8 @@
 /**
- * 工艺参数管理页面
- * 功能描述：管理系统中的工艺模板，包括不同类型的工艺参数设置、工艺曲线定义等
- * 创建日期：2024-11-15
- */
+* 工艺参数管理页面
+* 功能描述：管理系统中的工艺模板，包括不同类型的工艺参数设置、工艺曲线定义等
+* 创建日期：2024-11-15
+*/
 <template>
   <div class="app-container">
     <!-- 页面标题 -->
@@ -64,7 +64,6 @@
 // 导入API函数
 import {
   getProcessTemplateList,
-  getProcessTemplateDetail,
   createProcessTemplate,
   updateProcessTemplate,
   deleteProcessTemplate,
@@ -80,9 +79,6 @@ import { getAllFurnaceTypes } from '@/api/master-data/furnace-type'
 import SearchForm from './components/SearchForm'
 import ProcessTemplateTable from './components/ProcessTemplateTable'
 import ProcessTemplateFormDrawer from './components/ProcessTemplateFormDrawer'
-
-// 引入工具函数
-import { scrollTo } from '@/utils/scroll-to'
 
 export default {
   name: 'ProcessParameterManagement',

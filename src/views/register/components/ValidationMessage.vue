@@ -12,20 +12,13 @@
       >
         <div class="validation-content">
           <!-- 图标 -->
-          <i
-            class="validation-icon"
-            :class="iconClass"
-          />
+          <i class="validation-icon" :class="iconClass" />
 
           <!-- 消息内容 -->
           <span class="validation-text">{{ message }}</span>
 
           <!-- 关闭按钮 -->
-          <i
-            v-if="closable"
-            class="el-icon-close validation-close"
-            @click="handleClose"
-          />
+          <i v-if="closable" class="el-icon-close validation-close" @click="handleClose" />
         </div>
       </div>
     </transition>
@@ -43,28 +36,18 @@
       >
         <div class="validation-content">
           <!-- 图标 -->
-          <i
-            class="validation-icon"
-            :class="getIconClass(item.type || 'error')"
-          />
+          <i class="validation-icon" :class="getIconClass(item.type || 'error')" />
 
           <!-- 消息内容 -->
           <span class="validation-text">{{ item.message }}</span>
 
           <!-- 字段名称 -->
-          <span
-            v-if="item.field"
-            class="validation-field"
-          >
+          <span v-if="item.field" class="validation-field">
             ({{ item.field }})
           </span>
 
           <!-- 关闭按钮 -->
-          <i
-            v-if="closable"
-            class="el-icon-close validation-close"
-            @click="handleItemClose(index)"
-          />
+          <i v-if="closable" class="el-icon-close validation-close" @click="handleItemClose(index)" />
         </div>
       </div>
     </transition-group>
@@ -82,15 +65,10 @@
       </div>
 
       <div v-if="showSummaryDetails" class="summary-details">
-        <div
-          v-for="(count, type) in validationSummary.byType"
-          v-if="count > 0"
-          :key="type"
-          class="summary-item"
-        >
-          <i :class="getIconClass(type)" />
-          <span class="summary-type">{{ getTypeText(type) }}</span>
-          <span class="summary-type-count">{{ count }}</span>
+        <div v-for="item in filteredSummaryByType" :key="item.type" class="summary-item">
+          <i :class="getIconClass(item.type)" />
+          <span class="summary-type">{{ getTypeText(item.type) }}</span>
+          <span class="summary-type-count">{{ item.count }}</span>
         </div>
       </div>
     </div>
@@ -219,6 +197,15 @@ export default {
       })
 
       return summary
+    },
+
+    /**
+     * 过滤后的类型统计（去除计数为0的项）
+     */
+    filteredSummaryByType() {
+      const byType = this.validationSummary.byType
+      return Object.keys(byType).filter(type => byType[type] > 0)
+        .map(type => ({ type, count: byType[type] }))
     },
 
     /**
@@ -508,16 +495,19 @@ export default {
   transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
 }
 
-.slide-fade-enter, .slide-fade-leave-to {
+.slide-fade-enter,
+.slide-fade-leave-to {
   transform: translateY(-10px);
   opacity: 0;
 }
 
-.list-fade-enter-active, .list-fade-leave-active {
+.list-fade-enter-active,
+.list-fade-leave-active {
   transition: all 0.3s ease;
 }
 
-.list-fade-enter, .list-fade-leave-to {
+.list-fade-enter,
+.list-fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
 }

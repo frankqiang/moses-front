@@ -1,5 +1,4 @@
 import request from '@/utils/request'
-import { getAllFurnaceTypes } from '@/api/master-data/furnace-type'
 
 // API基础路径
 const baseURL = '/mes/master-data/process-parameter'
