@@ -14,8 +14,9 @@ export const SEARCH_FORM_CONFIG = [
     type: 'input',
     prop: 'search',
     label: '关键词搜索',
-    placeholder: '请输入角色名称或编码',
+    placeholder: '请输入角色名称或编码（最大100字符）',
     clearable: true,
+    maxlength: 100,
     span: 6
   },
   {
@@ -74,29 +75,34 @@ export const ROLE_FORM_CONFIG = [
     prop: 'name',
     label: '角色名称',
     type: 'input',
-    placeholder: '请输入角色名称',
+    placeholder: '请输入角色名称（1-100字符）',
     required: true,
-    maxlength: 50,
+    maxlength: 100,
     showWordLimit: true,
     rules: [
       { required: true, message: '请输入角色名称', trigger: 'blur' },
-      { min: 2, max: 50, message: '角色名称长度为2-50个字符', trigger: 'blur' }
+      { min: 1, max: 100, message: '角色名称长度为1-100个字符', trigger: 'blur' },
+      {
+        pattern: /^[\u4e00-\u9fa5a-zA-Z0-9\s()（）]+$/,
+        message: '角色名称只能包含中文、英文、数字、空格、括号',
+        trigger: 'blur'
+      }
     ]
   },
   {
     prop: 'code',
     label: '角色编码',
     type: 'input',
-    placeholder: '请输入角色编码（字母、数字、下划线、中划线）',
+    placeholder: '请输入角色编码（1-50字符）',
     required: true,
     maxlength: 50,
     showWordLimit: true,
     rules: [
       { required: true, message: '请输入角色编码', trigger: 'blur' },
-      { min: 2, max: 50, message: '角色编码长度为2-50个字符', trigger: 'blur' },
+      { min: 1, max: 50, message: '角色编码长度为1-50个字符', trigger: 'blur' },
       {
-        pattern: /^[a-zA-Z0-9_-]+$/,
-        message: '角色编码只能包含字母、数字、下划线、中划线',
+        pattern: /^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9]$|^[a-zA-Z]$/,
+        message: '角色编码只能包含字母、数字、下划线、中划线，不能以数字、下划线或中划线开头或结尾',
         trigger: 'blur'
       }
     ]
@@ -116,11 +122,18 @@ export const ROLE_FORM_CONFIG = [
     prop: 'level',
     label: '角色级别',
     type: 'select',
-    placeholder: '请选择角色级别',
+    placeholder: '请选择角色级别（1-999）',
     required: true,
     options: ROLE_LEVEL_OPTIONS,
     rules: [
-      { required: true, message: '请选择角色级别', trigger: 'change' }
+      { required: true, message: '请选择角色级别', trigger: 'change' },
+      {
+        type: 'number',
+        min: 1,
+        max: 999,
+        message: '角色级别必须在1-999之间',
+        trigger: 'change'
+      }
     ]
   },
   {
@@ -144,25 +157,33 @@ export const ROLE_FORM_CONFIG = [
     prop: 'description',
     label: '角色描述',
     type: 'textarea',
-    placeholder: '请输入角色描述',
+    placeholder: '请输入角色描述（最大1000字符）',
     rows: 4,
-    maxlength: 200,
-    showWordLimit: true
+    maxlength: 1000,
+    showWordLimit: true,
+    rules: [
+      { max: 1000, message: '角色描述不能超过1000个字符', trigger: 'blur' }
+    ]
   }
 ]
 
-// 表单验证规则
+// 表单验证规则 - 严格按照接口文档要求
 export const FORM_RULES = {
   name: [
     { required: true, message: '请输入角色名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '角色名称长度为2-50个字符', trigger: 'blur' }
+    { min: 1, max: 100, message: '角色名称长度为1-100个字符', trigger: 'blur' },
+    {
+      pattern: /^[\u4e00-\u9fa5a-zA-Z0-9\s()（）]+$/,
+      message: '角色名称只能包含中文、英文、数字、空格、括号',
+      trigger: 'blur'
+    }
   ],
   code: [
     { required: true, message: '请输入角色编码', trigger: 'blur' },
-    { min: 2, max: 50, message: '角色编码长度为2-50个字符', trigger: 'blur' },
+    { min: 1, max: 50, message: '角色编码长度为1-50个字符', trigger: 'blur' },
     {
-      pattern: /^[a-zA-Z0-9_-]+$/,
-      message: '角色编码只能包含字母、数字、下划线、中划线',
+      pattern: /^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9]$|^[a-zA-Z]$/,
+      message: '角色编码只能包含字母、数字、下划线、中划线，不能以数字、下划线或中划线开头或结尾',
       trigger: 'blur'
     }
   ],
@@ -170,9 +191,19 @@ export const FORM_RULES = {
     { required: true, message: '请选择角色类型', trigger: 'change' }
   ],
   level: [
-    { required: true, message: '请选择角色级别', trigger: 'change' }
+    { required: true, message: '请选择角色级别', trigger: 'change' },
+    {
+      type: 'number',
+      min: 1,
+      max: 999,
+      message: '角色级别必须在1-999之间',
+      trigger: 'change'
+    }
   ],
   status: [
     { required: true, message: '请选择角色状态', trigger: 'change' }
+  ],
+  description: [
+    { max: 1000, message: '角色描述不能超过1000个字符', trigger: 'blur' }
   ]
 }

@@ -128,4 +128,3 @@ export const ROW_CLASS_CONFIG = {
   'inactive': 'row-disabled'
 }
 
-

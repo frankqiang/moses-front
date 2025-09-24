@@ -35,9 +35,10 @@
             <el-col :span="24">
               <el-form-item label="角色编码" prop="code">
                 <el-input v-model="form.code" placeholder="请输入角色编码（1-50字符）" maxlength="50" show-word-limit
-                  :disabled="formMode === 'view' || formMode === 'update'" clearable />
+                  :disabled="isFieldDisabled('code')" clearable />
                 <div class="field-hint">
                   角色编码只能包含字母、数字、下划线、中划线，不能以数字、下划线或中划线开头或结尾
+                  <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色编码不可修改）</span>
                 </div>
               </el-form-item>
             </el-col>
@@ -47,12 +48,13 @@
             <el-col :span="24">
               <el-form-item label="角色类型" prop="type">
                 <el-select v-model="form.type" placeholder="请选择角色类型" style="width: 100%"
-                  :disabled="formMode === 'view'">
+                  :disabled="isFieldDisabled('type')">
                   <el-option v-for="option in typeOptions" :key="option.value" :label="option.label"
                     :value="option.value" :disabled="option.value === 'system'" />
                 </el-select>
                 <div class="field-hint">
                   系统角色由系统预置，用户只能创建自定义角色
+                  <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色类型不可修改）</span>
                 </div>
               </el-form-item>
             </el-col>
@@ -62,12 +64,13 @@
             <el-col :span="24">
               <el-form-item label="角色级别" prop="level">
                 <el-select v-model="form.level" placeholder="请选择角色级别（1-999）" style="width: 100%"
-                  :disabled="formMode === 'view'">
+                  :disabled="isFieldDisabled('level')">
                   <el-option v-for="level in levelOptions" :key="level.value" :label="level.label"
                     :value="level.value" />
                 </el-select>
                 <div class="field-hint">
                   角色级别用于权限层级控制，数字越小级别越高
+                  <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色级别不可修改）</span>
                 </div>
               </el-form-item>
             </el-col>
@@ -146,8 +149,8 @@
 <script>
 import BaseDrawer from '@/components/Drawer'
 import EnhancedForm from '@/components/EnhancedForm'
-import { createRole, updateRole, copyRole } from '../api'
-import { ROLE_LEVEL_OPTIONS, ROLE_TYPE_OPTIONS, FORM_RULES } from '../constants'
+import { createRole, updateRole, copyRole, getRoleById } from '../api'
+import { ROLE_LEVEL_OPTIONS, ROLE_TYPE_OPTIONS, FORM_RULES, ROLE_TYPES } from '../constants'
 
 export default {
   name: 'RoleFormDrawer',
@@ -209,6 +212,41 @@ export default {
     // 表单验证规则
     formRules() {
       return FORM_RULES
+    },
+    // 是否为系统角色
+    isSystemRole() {
+      return this.formData.type === ROLE_TYPES.SYSTEM
+    },
+    // 是否允许编辑
+    canEdit() {
+      // 新增模式和复制模式总是允许编辑
+      if (this.mode === 'create' || this.mode === 'copy') {
+        return true
+      }
+      // 查看模式不允许编辑
+      if (this.mode === 'view') {
+        return false
+      }
+      // 编辑模式：系统角色不允许编辑关键字段
+      return true
+    },
+    // 系统角色的字段是否禁用
+    isFieldDisabled() {
+      return (field) => {
+        // 查看模式所有字段都禁用
+        if (this.innerMode === 'view') {
+          return true
+        }
+
+        // 编辑模式下，系统角色的某些关键字段不允许修改
+        if (this.innerMode === 'update' && this.isSystemRole) {
+          const restrictedFields = ['code', 'type', 'level']
+          return restrictedFields.includes(field)
+        }
+
+        // 其他情况按默认逻辑处理
+        return this.innerMode === 'view'
+      }
     }
   },
   watch: {
@@ -228,7 +266,8 @@ export default {
       immediate: true,
       deep: true,
       handler(newVal) {
-        if (newVal && (this.mode === 'update' || this.mode === 'view' || this.mode === 'copy')) {
+        // 只在抽屉未打开时处理数据变化，避免与handleDrawerOpen冲突
+        if (newVal && !this.drawerVisible && (this.mode === 'update' || this.mode === 'view' || this.mode === 'copy')) {
           this.formData = this.prepareFormData(newVal)
         }
       }
@@ -274,15 +313,41 @@ export default {
     },
 
     // 抽屉打开处理
-    handleDrawerOpen() {
-      // 初始化表单数据
-      if (this.mode === 'create') {
-        this.formData = this.initFormData()
-      } else if (this.roleData) {
-        this.formData = this.prepareFormData(this.roleData)
-      }
+    async handleDrawerOpen() {
+      try {
+        // 初始化表单数据
+        if (this.mode === 'create') {
+          this.formData = this.initFormData()
+        } else if (this.roleData) {
+          // 对于编辑、查看、复制模式，先使用传入的数据进行快速回填
+          this.formData = this.prepareFormData(this.roleData)
+          
+          // 编辑和查看模式：重新获取最新数据
+          if (this.mode === 'update' || this.mode === 'view') {
+            this.loading = true
+            try {
+              const response = await getRoleById(this.roleData.id)
+              const latestRoleData = response.data
+              this.formData = this.prepareFormData(latestRoleData)
+            } catch (error) {
+              console.error('获取角色详情失败:', error)
+              this.$message.warning('获取最新角色信息失败，使用当前数据')
+            } finally {
+              this.loading = false
+            }
+          }
+        } else {
+          // 如果没有角色数据，说明数据传递有问题
+          console.error('roleData 为空，无法进行编辑/查看操作')
+          this.$message.error('角色数据获取失败，请重新尝试')
+          this.formData = this.initFormData()
+        }
 
-      // 由于组件已配置自动清除验证，无需手动处理
+        // 由于组件已配置自动清除验证，无需手动处理
+      } catch (error) {
+        console.error('抽屉打开处理失败:', error)
+        this.formData = this.initFormData()
+      }
     },
 
     // 抽屉关闭处理
@@ -335,6 +400,17 @@ export default {
 
         // 准备提交数据，移除不需要的字段
         const submitData = { ...formData }
+
+        // 系统角色编辑限制验证
+        if (this.mode === 'update' && this.isSystemRole) {
+          // 移除系统角色不允许修改的字段
+          delete submitData.code
+          delete submitData.type
+          delete submitData.level
+
+          // 提示用户系统角色的限制
+          this.$message.info('系统角色的编码、类型和级别不可修改')
+        }
 
         // 根据模式处理特殊字段
         if (this.mode === 'copy') {
@@ -438,6 +514,11 @@ export default {
   color: #909399;
   margin-top: 5px;
   line-height: 1.4;
+
+  .field-hint-warning {
+    color: #e6a23c;
+    font-weight: 500;
+  }
 }
 
 ::v-deep .el-form-item__label {

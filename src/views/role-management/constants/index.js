@@ -5,4 +5,3 @@ export * from './role'
 export * from './table-config'
 export * from './form-config'
 
-

@@ -14,10 +14,10 @@
 
       <!-- 角色列表表格区域 -->
       <role-table ref="roleTable" :role-list="roleList" :loading="listLoading" :pagination="pagination"
-        @selection-change="handleSelectionChange" @pagination-change="handlePaginationChange" @view="handleView"
-        @edit="handleEdit" @delete="handleDelete" @copy="handleCopy" @status-change="handleStatusChange"
-        @sort-change="handleSortChange" @refresh="handleRefresh" @batch-delete="handleBatchDelete"
-        @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable" />
+        @selection-change="handleSelectionChange" @pagination-change="handlePaginationChange" @create="handleCreate"
+        @view="handleView" @edit="handleEdit" @delete="handleDelete" @copy="handleCopy"
+        @status-change="handleStatusChange" @sort-change="handleSortChange" @refresh="handleRefresh"
+        @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable" />
 
       <!-- 角色表单抽屉 -->
       <role-form-drawer ref="roleFormDrawer" :visible.sync="drawerVisible" :mode="drawerMode" :role-data="currentRole"
@@ -64,7 +64,7 @@ export default {
       sortParams: {},
       // 抽屉可见状态
       drawerVisible: false,
-      // 抽屉模式：create-新增, edit-编辑, view-查看, copy-复制
+      // 抽屉模式：create-新增, update-编辑, view-查看, copy-复制
       drawerMode: 'create',
       // 当前操作的角色数据
       currentRole: null,
@@ -177,7 +177,7 @@ export default {
      * 处理编辑角色
      */
     handleEdit(role) {
-      this.drawerMode = 'edit'
+      this.drawerMode = 'update'
       this.currentRole = role
       this.drawerVisible = true
     },

@@ -7,62 +7,62 @@
 -->
 
 <template>
-    <SearchForm :items="searchFormConfig" :loading="loading" @search="handleSearch" @reset="handleReset" />
+  <SearchForm :items="searchFormConfig" :loading="loading" @search="handleSearch" @reset="handleReset" />
 </template>
 
 <script>
 import { SEARCH_FORM_CONFIG } from '../constants/position'
 
 export default {
-    name: 'PositionSearchForm',
-    props: {
-        // 加载状态
-        loading: {
-            type: Boolean,
-            default: false
-        },
-        // 部门选项
-        departmentOptions: {
-            type: Array,
-            default: () => []
-        }
+  name: 'PositionSearchForm',
+  props: {
+    // 加载状态
+    loading: {
+      type: Boolean,
+      default: false
     },
-    computed: {
-        /**
+    // 部门选项
+    departmentOptions: {
+      type: Array,
+      default: () => []
+    }
+  },
+  computed: {
+    /**
          * 搜索表单配置
          */
-        searchFormConfig() {
-            const config = [...SEARCH_FORM_CONFIG]
+    searchFormConfig() {
+      const config = [...SEARCH_FORM_CONFIG]
 
-            // 动态设置部门选项
-            const departmentField = config.find(item => item.prop === 'departmentId')
-            if (departmentField) {
-                departmentField.options = [
-                    { label: '全部', value: '' },
-                    ...this.departmentOptions.map(option => ({
-                        label: option.name,
-                        value: option.id
-                    }))
-                ]
-            }
+      // 动态设置部门选项
+      const departmentField = config.find(item => item.prop === 'departmentId')
+      if (departmentField) {
+        departmentField.options = [
+          { label: '全部', value: '' },
+          ...this.departmentOptions.map(option => ({
+            label: option.name,
+            value: option.id
+          }))
+        ]
+      }
 
-            return config
-        }
-    },
-    methods: {
-        /**
+      return config
+    }
+  },
+  methods: {
+    /**
          * 处理搜索
          */
-        handleSearch(formData) {
-            this.$emit('search', formData)
-        },
+    handleSearch(formData) {
+      this.$emit('search', formData)
+    },
 
-        /**
+    /**
          * 处理重置
          */
-        handleReset() {
-            this.$emit('reset')
-        }
+    handleReset() {
+      this.$emit('reset')
     }
+  }
 }
 </script>

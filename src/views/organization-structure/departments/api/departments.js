@@ -9,7 +9,7 @@
 import request from '@/utils/request'
 
 // API基础路径 - 严格按照接口文档路径 /v1/departments
-// 注意：VUE_APP_BASE_API已经包含了基础路径，这里直接使用接口路径
+// 注意：VUE_APP_BASE_API = 'http://localhost:3000/v1'，这里使用相对路径
 const baseURL = '/departments'
 
 /**
