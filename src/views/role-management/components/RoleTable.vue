@@ -8,31 +8,13 @@
 <template>
   <div class="role-table">
     <!-- 表格工具栏 -->
-    <table-toolbar
-      ref="toolbar"
-      :enable-column-settings="true"
-      :column-options="columnOptions"
-      :storage-key="columnSettingsKey"
-      :default-visible-columns="defaultVisibleColumns"
-      :enable-batch-actions="true"
-      :selected-rows="selectedRows"
-      :enable-export="false"
-      :hide-status-buttons="false"
-      :status-buttons-mode="'dropdown'"
-      :status-confirm="false"
-      :delete-confirm="false"
-      :table-data="roleList"
-      :smart-status-buttons="true"
-      :status-field="'status'"
-      :enabled-value="'active'"
-      :disabled-value="'inactive'"
-      :refresh-feedback-mode="'all'"
-      @refresh="handleRefresh"
-      @column-change="handleColumnChange"
-      @batch-delete="handleBatchDelete"
-      @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable"
-    >
+    <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
+      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true"
+      :selected-rows="selectedRows" :enable-export="false" :hide-status-buttons="false"
+      :status-buttons-mode="'dropdown'" :status-confirm="false" :delete-confirm="false" :table-data="roleList"
+      :smart-status-buttons="true" :status-field="'status'" :enabled-value="'active'" :disabled-value="'inactive'"
+      :refresh-feedback-mode="'all'" @refresh="handleRefresh" @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable">
       <template #toolbar-left>
         <action-buttons :buttons="toolbarButtons" mode="normal" @click="handleToolbarAction" />
         <slot name="toolbar-left" />
@@ -44,20 +26,10 @@
     </table-toolbar>
 
     <!-- 角色列表表格 -->
-    <base-table
-      ref="baseTable"
-      :data="roleList"
-      :columns="visibleTableColumns"
-      :loading="loading"
-      :pagination="paginationConfig"
-      :selection="true"
-      :index="true"
-      :border="true"
-      stripe
-      @selection-change="handleSelectionChange"
-      @sort-change="handleSortChange"
-      @pagination-change="handlePaginationChange"
-    >
+    <base-table ref="baseTable" :data="roleList" :columns="visibleTableColumns" :loading="loading"
+      :pagination="paginationConfig" :selection="true" :index="true" :border="true" stripe
+      @selection-change="handleSelectionChange" @sort-change="handleSortChange"
+      @pagination-change="handlePaginationChange">
       <!-- 角色名称列 -->
       <template #name="{ row }">
         <div class="role-name-cell">
@@ -97,13 +69,8 @@
 
       <!-- 操作列 -->
       <template #actions="{ row }">
-        <action-buttons
-          :buttons="getRowActionButtons(row)"
-          :row="row"
-          mode="text"
-          size="small"
-          @click="handleRowAction"
-        />
+        <action-buttons :buttons="getRowActionButtons(row)" :row="row" mode="text" size="small"
+          @click="handleRowAction" />
       </template>
     </base-table>
   </div>
@@ -319,28 +286,22 @@ export default {
     },
 
     /**
-     * 处理刷新
-     */
+             * 处理刷新
+             */
     handleRefresh() {
       this.$emit('refresh')
     },
 
     /**
-     * 处理列变化 - 确保立即生效
-     */
+             * 处理列变化（交由mixin默认实现处理）
+             */
     handleColumnChange(visibleColumns) {
-      // 使用$nextTick确保DOM更新后再触发重新渲染
-      this.$nextTick(() => {
-        // 强制更新表格组件
-        if (this.$refs.baseTable) {
-          this.$refs.baseTable.$forceUpdate()
-        }
-      })
+      columnSettingsMixin.methods.handleColumnChange.call(this, visibleColumns)
     },
 
     /**
-     * 处理工具栏操作
-     */
+             * 处理工具栏操作
+             */
     handleToolbarAction(action) {
       switch (action.action) {
         case 'create':
