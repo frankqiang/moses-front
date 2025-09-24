@@ -109,12 +109,14 @@ export function copyRole(id, data) {
 /**
  * 删除角色
  * @param {string} id - 角色ID
+ * @param {Object} [data] - 删除配置，支持force等可选参数
  * @returns {Promise} API响应
  */
-export function deleteRole(id) {
+export function deleteRole(id, data) {
   return request({
     url: `${baseURL}/${id}`,
-    method: 'delete'
+    method: 'delete',
+    data
   })
 }
 

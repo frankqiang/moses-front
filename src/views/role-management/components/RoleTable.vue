@@ -222,6 +222,10 @@ export default {
       // 防止在没有数据时调用
       if (!row) return []
 
+      const isSystemRole = row.type === 'system' || row.isSystem
+      const isDefaultRole = !!row.isDefault
+      const hasRelatedUsers = Number(row.userCount) > 0
+
       const buttons = [
         {
           text: '查看',
@@ -234,7 +238,7 @@ export default {
           icon: 'el-icon-edit',
           action: 'edit',
           data: row,
-          disabled: row.type === 'system' // 系统角色不允许编辑
+          disabled: isSystemRole // 系统角色不允许编辑
         },
         {
           text: '复制',
@@ -248,7 +252,7 @@ export default {
           action: 'toggle-status',
           data: row,
           type: row.status === 'active' ? 'warning' : 'success',
-          disabled: row.type === 'system' // 系统角色不允许状态切换
+          disabled: isSystemRole // 系统角色不允许状态切换
         },
         {
           text: '删除',
@@ -256,7 +260,7 @@ export default {
           action: 'delete',
           data: row,
           type: 'danger',
-          disabled: row.type === 'system' || (row.userCount && row.userCount > 0) // 系统角色或有用户的角色不允许删除
+          disabled: isSystemRole || isDefaultRole || hasRelatedUsers // 系统角色、默认角色或关联用户的角色不允许删除
         }
       ]
 
