@@ -1,74 +1,33 @@
 /**
- * 增强表单组件
- * 功能描述：增强的表单组件，专注于表单的数据处理和验证，支持多种模式和自定义验证
- * 创建日期：2024-11-21
- * 更新日期：2024-12-16 - 应用现代前端开发范式优化，增强用户体验和代码质量
- */
+* 增强表单组件
+* 功能描述：增强的表单组件，专注于表单的数据处理和验证，支持多种模式和自定义验证
+* 创建日期：2024-11-21
+* 更新日期：2024-12-16 - 应用现代前端开发范式优化，增强用户体验和代码质量
+*/
 <template>
-  <el-form
-    ref="form"
-    :model="formModel"
-    :rules="enhancedRules"
-    :label-width="labelWidth"
-    :size="size"
+  <el-form ref="form" :model="formModel" :rules="enhancedRules" :label-width="labelWidth" :size="size"
     :disabled="mode === 'view' || actualLoading"
-    :aria-label="`${mode === 'create' ? '创建' : mode === 'update' ? '编辑' : '查看'}表单`"
-    role="form"
-    @submit.native.prevent="handleSubmitClick"
-  >
+    :aria-label="`${mode === 'create' ? '创建' : mode === 'update' ? '编辑' : '查看'}表单`" role="form"
+    @submit.native.prevent="handleSubmitClick">
     <!-- 默认插槽提供表单内容 -->
-    <slot
-      :form="formModel"
-      :mode="mode"
-      :submit="handleSubmitClick"
-      :reset="handleResetClick"
-      :loading="actualLoading"
-      :hasChanges="hasFormChanges"
-      :setFieldValue="setFieldValue"
-      :validate="validate"
-    />
+    <slot :form="formModel" :mode="mode" :submit="handleSubmitClick" :reset="handleResetClick" :loading="actualLoading"
+      :hasChanges="hasFormChanges" :setFieldValue="setFieldValue" :validate="validate" />
 
     <!-- 底部按钮插槽 -->
-    <div
-      v-if="$slots.footer || showFooter"
-      class="form-footer"
-      role="toolbar"
-      :aria-label="'表单操作按钮区域'"
-    >
-      <slot
-        name="footer"
-        :loading="actualLoading"
-        :mode="mode"
-        :submit="handleSubmitClick"
-        :reset="handleResetClick"
-        :hasChanges="hasFormChanges"
-        :isValid="isFormValid"
-      >
-        <el-button
-          :disabled="actualLoading"
-          :aria-label="`重置表单到初始状态`"
-          @click="handleResetClick"
-        >
+    <div v-if="$slots.footer || showFooter" class="form-footer" role="toolbar" :aria-label="'表单操作按钮区域'">
+      <slot name="footer" :loading="actualLoading" :mode="mode" :submit="handleSubmitClick" :reset="handleResetClick"
+        :hasChanges="hasFormChanges" :isValid="isFormValid">
+        <el-button :disabled="actualLoading" :aria-label="`重置表单到初始状态`" @click="handleResetClick">
           {{ resetButtonText }}
         </el-button>
-        <el-button
-          v-if="mode === 'create' && showContinueButton"
-          type="primary"
-          :loading="actualLoading"
-          :disabled="!isFormValid || !hasFormChanges"
-          :aria-label="`${continueButtonText}操作`"
-          @click="handleContinueClick"
-        >
+        <el-button v-if="mode === 'create' && showContinueButton" type="primary" :loading="actualLoading"
+          :disabled="!isFormValid || !hasFormChanges" :aria-label="`${continueButtonText}操作`"
+          @click="handleContinueClick">
           {{ continueButtonText }}
         </el-button>
-        <el-button
-          v-if="mode !== 'view'"
-          type="primary"
-          :loading="actualLoading"
-          :disabled="!isFormValid || (!allowEmptySubmit && !hasFormChanges)"
-          :aria-label="`${submitButtonText}表单`"
-          @click="handleSubmitClick"
-        >
+        <el-button v-if="mode !== 'view'" type="primary" :loading="actualLoading"
+          :disabled="!isFormValid || (!allowEmptySubmit && !hasFormChanges)" :aria-label="`${submitButtonText}表单`"
+          @click="handleSubmitClick">
           {{ submitButtonText }}
         </el-button>
       </slot>
@@ -78,12 +37,7 @@
     <div v-if="showError && errorMessage" class="form-error" role="alert" aria-live="polite">
       <i class="el-icon-warning" aria-hidden="true" />
       <span class="error-text">{{ errorMessage }}</span>
-      <el-button
-        type="text"
-        size="mini"
-        :aria-label="'清除错误信息'"
-        @click="clearError"
-      >
+      <el-button type="text" size="mini" :aria-label="'清除错误信息'" @click="clearError">
         <i class="el-icon-close" aria-hidden="true" />
       </el-button>
     </div>
@@ -110,11 +64,11 @@ export default {
       }
     },
 
-    // 表单模式：create/update/view - 已有验证
+    // 表单模式：create/update/view/copy - 已有验证
     mode: {
       type: String,
       default: 'create',
-      validator: value => ['create', 'update', 'view'].includes(value)
+      validator: value => ['create', 'update', 'view', 'copy'].includes(value)
     },
 
     // 表单验证规则
@@ -504,7 +458,7 @@ export default {
           return
         }
 
-        this.$refs.form.validate(async(valid, invalidFields) => {
+        this.$refs.form.validate(async (valid, invalidFields) => {
           try {
             if (valid) {
               // 触发自定义验证事件，允许父组件进行额外验证
@@ -802,6 +756,7 @@ export default {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

@@ -304,7 +304,7 @@ export default {
 
       // 复制模式：修改名称和编码
       if (this.mode === 'copy') {
-        data.name = `${roleData.name}_副本`
+        data.name = `${roleData.name}（副本）`
         data.code = `${roleData.code}_copy`
         // 确保复制的角色不是默认角色
         data.isDefault = false
