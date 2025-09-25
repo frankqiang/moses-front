@@ -46,8 +46,9 @@
             :show-approval-info="true"
             :show-timeline="true"
             title="申请详细信息"
-            subtitle="以下是您的注册申请详细信息"
-            class="application-detail-card"
+            subtitle="以下是您的注册申请详细信息及当前状态"
+            title-icon="el-icon-document-checked"
+            class="application-detail-content"
             @timeline-loaded="handleTimelineLoaded"
             @timeline-error="handleTimelineError"
           />
@@ -154,13 +155,14 @@ export default {
         // 查询申请状态
         const response = await getApplicationStatus(this.queryForm.applicationId.trim())
 
-        if (response.data) {
-          this.applicationData = response.data
+        if (response.success && response.data) {
+          // 处理响应数据，确保新增字段正确映射
+          this.applicationData = this.processApplicationData(response.data)
           this.showEmptyState = false
 
           // 显示查询成功提示
           showStatusQuerySuccess({
-            statusText: this.applicationData.statusText || '查询成功'
+            statusText: response.message || '查询成功'
           })
         } else {
           this.applicationData = null
@@ -198,6 +200,68 @@ export default {
     },
 
     /**
+     * 处理申请数据，确保字段映射正确
+     * @param {Object} rawData - 从API返回的原始数据
+     * @returns {Object} 处理后的申请数据
+     */
+    processApplicationData(rawData) {
+      if (!rawData) return null
+
+      // 基于接口文档确保所有字段都正确映射
+      const processedData = {
+        // 基本信息
+        id: rawData.id,
+        applicantName: rawData.applicantName,
+        applicantEmail: rawData.applicantEmail,
+        username: rawData.username,
+
+        // 职业信息（支持嵌套对象）
+        departmentId: rawData.departmentId,
+        department: rawData.department || null, // 嵌套的部门信息
+        positionId: rawData.positionId,
+        position: rawData.position || null, // 嵌套的岗位信息
+        jobTitle: rawData.jobTitle,
+        employeeId: rawData.employeeId,
+        managerId: rawData.managerId,
+        manager: rawData.manager || null, // 嵌套的上级信息
+        hireDate: rawData.hireDate,
+
+        // 个人信息（新增字段）
+        gender: rawData.gender,
+        birthDate: rawData.birthDate,
+        phone: rawData.phone,
+        address: rawData.address,
+
+        // 紧急联系人（新增字段）
+        emergencyContact: rawData.emergencyContact,
+        emergencyPhone: rawData.emergencyPhone,
+
+        // 其他信息
+        applicationReason: rawData.applicationReason,
+        notes: rawData.notes,
+        customFields: rawData.customFields || {}, // 自定义字段（新增）
+
+        // 审批信息
+        status: rawData.status,
+        createdAt: rawData.createdAt,
+        updatedAt: rawData.updatedAt,
+        approver: rawData.approver || null,
+
+        // 兼容旧字段
+        submittedAt: rawData.createdAt,
+        reviewedAt: rawData.updatedAt,
+        reviewedBy: rawData.approver?.name || null,
+        reviewComments: rawData.approver?.comments || null
+      }
+
+      // 记录调试信息
+      console.log('API响应原始数据:', rawData)
+      console.log('处理后的申请数据:', processedData)
+
+      return processedData
+    },
+
+    /**
      * 格式化日期时间
      */
     formatDateTime(dateTime) {
@@ -225,7 +289,7 @@ export default {
      */
     handleTimelineLoaded(timelineData) {
       console.log('申请历史时间线加载完成:', timelineData)
-      this.$emit('timeline-loaded', timelineData)
+      // 可以在这里添加额外的时间线数据处理逻辑
     },
 
     /**
@@ -234,7 +298,7 @@ export default {
      */
     handleTimelineError(error) {
       console.error('申请历史时间线加载失败:', error)
-      this.$message.error('加载申请历史失败，请稍后重试')
+      this.$message.warning('申请历史记录加载失败，但不影响查看申请详情')
       this.$emit('timeline-error', error)
     }
   }
@@ -298,77 +362,13 @@ export default {
 }
 
 .status-result {
-  .result-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid #ecf0f1;
-
-    .result-title {
-      font-size: 20px;
-      font-weight: 600;
-      color: #2c3e50;
-      margin: 0;
-    }
-
-    .status-tag {
-      font-size: 14px;
-      font-weight: 600;
-    }
-  }
-
   .result-content {
-    .info-section {
-      margin-bottom: 32px;
-
-      .section-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: #34495e;
-        margin: 0 0 16px 0;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #ecf0f1;
-      }
-
-      .info-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 16px;
-      }
-
-      .info-item {
-        display: flex;
-        align-items: flex-start;
-
-        &.full-width {
-          grid-column: 1 / -1;
-          flex-direction: column;
-        }
-
-        label {
-          font-weight: 600;
-          color: #606266;
-          min-width: 100px;
-          margin-right: 8px;
-        }
-
-        .info-value {
-          color: #2c3e50;
-          word-break: break-word;
-
-          &.reason-text {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 6px;
-            border-left: 4px solid #409eff;
-            margin-top: 8px;
-            line-height: 1.6;
-            width: 100%;
-          }
-        }
-      }
+    .application-detail-content {
+      // 为ApplicationCard内容提供合适的样式环境
+      background: #FAFBFC;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
     }
 
     .status-description {
@@ -509,28 +509,10 @@ export default {
   }
 
   .status-result {
-    .result-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
     .result-content {
-      .info-section {
-        .info-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .info-item {
-          flex-direction: column;
-          align-items: flex-start;
-
-          label {
-            min-width: auto;
-            margin-right: 0;
-            margin-bottom: 4px;
-          }
-        }
+      .application-detail-content {
+        padding: 16px;
+        margin-bottom: 16px;
       }
     }
 

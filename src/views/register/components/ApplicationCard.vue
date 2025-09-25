@@ -6,9 +6,9 @@
  *   - 2024-01-20: 初始创建，实现申请信息展示功能
  */
 <template>
-  <el-card class="application-card" :shadow="shadow">
-    <!-- 卡片头部 -->
-    <div slot="header" class="card-header">
+  <div class="application-content">
+    <!-- 内容头部 -->
+    <div class="content-header">
       <div class="header-left">
         <h3 class="application-title">
           <i :class="titleIcon" class="title-icon" />
@@ -31,8 +31,8 @@
       </div>
     </div>
 
-    <!-- 卡片内容 -->
-    <div class="card-content">
+    <!-- 内容主体 -->
+    <div class="content-body">
       <!-- 基本信息 -->
       <div v-if="showBasicInfo" class="info-section">
         <h4 class="section-title">
@@ -151,7 +151,7 @@
       </div>
 
       <!-- 操作按钮 -->
-      <div v-if="showActions" class="card-actions">
+      <div v-if="showActions" class="content-actions">
         <slot name="actions">
           <el-button
             v-if="showRefreshButton"
@@ -165,22 +165,7 @@
         </slot>
       </div>
     </div>
-
-    <!-- 卡片底部操作区 -->
-    <div v-if="showActions" class="card-actions">
-      <slot name="actions">
-        <el-button
-          v-if="showRefreshButton"
-          type="primary"
-          icon="el-icon-refresh"
-          size="small"
-          @click="handleRefresh"
-        >
-          刷新
-        </el-button>
-      </slot>
-    </div>
-  </el-card>
+  </div>
 </template>
 
 <script>
@@ -227,14 +212,6 @@ export default {
       default: 'el-icon-document'
     },
 
-    /**
-     * 卡片阴影
-     */
-    shadow: {
-      type: String,
-      default: 'hover',
-      validator: value => ['always', 'hover', 'never'].includes(value)
-    },
 
     /**
      * 是否显示基本信息
@@ -414,28 +391,30 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.application-card {
-  margin-bottom: 20px;
-
-  .card-header {
+.application-content {
+  .content-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #F0F2F5;
 
     .header-left {
       flex: 1;
 
       .application-title {
         margin: 0 0 8px 0;
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 600;
         color: #303133;
         display: flex;
         align-items: center;
 
         .title-icon {
-          margin-right: 8px;
+          margin-right: 10px;
           color: #409EFF;
+          font-size: 22px;
         }
       }
 
@@ -443,6 +422,7 @@ export default {
         margin: 0;
         font-size: 14px;
         color: #909399;
+        line-height: 1.5;
       }
     }
 
@@ -452,9 +432,13 @@ export default {
     }
   }
 
-  .card-content {
+  .content-body {
     .info-section {
-      margin-bottom: 24px;
+      margin-bottom: 28px;
+      border-radius: 8px;
+      border: 1px solid #E4E7ED;
+      background: #FFFFFF;
+      overflow: hidden;
 
       &:last-child {
         margin-bottom: 0;
@@ -467,39 +451,55 @@ export default {
         color: #303133;
         display: flex;
         align-items: center;
-        border-bottom: 1px solid #EBEEF5;
-        padding-bottom: 8px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+        border-radius: 8px;
+        border-left: 4px solid #409EFF;
 
         .section-icon {
           margin-right: 8px;
           color: #409EFF;
+          font-size: 16px;
         }
       }
 
       .info-row {
+        padding: 0 16px 16px 16px;
+
         .info-item {
-          margin-bottom: 12px;
+          margin-bottom: 16px;
           display: flex;
           align-items: flex-start;
+          padding: 8px 0;
+          border-bottom: 1px solid #F5F7FA;
+
+          &:last-child {
+            border-bottom: none;
+            margin-bottom: 8px;
+          }
 
           .info-label {
-            font-weight: 500;
+            font-weight: 600;
             color: #606266;
-            min-width: 80px;
+            min-width: 120px;
             flex-shrink: 0;
+            padding: 8px 0;
           }
 
           .info-value {
             color: #303133;
-            word-break: break-all;
+            word-break: break-word;
+            padding: 8px 0;
+            line-height: 1.6;
 
             &.review-comments {
               background-color: #F5F7FA;
-              padding: 8px 12px;
-              border-radius: 4px;
-              border-left: 3px solid #409EFF;
+              padding: 12px 16px;
+              border-radius: 6px;
+              border-left: 4px solid #409EFF;
               margin-top: 4px;
-              line-height: 1.5;
+              line-height: 1.6;
+              font-style: italic;
             }
           }
         }
@@ -525,20 +525,29 @@ export default {
     }
   }
 
-  .card-actions {
+  .content-actions {
     border-top: 1px solid #EBEEF5;
-    padding-top: 16px;
-    margin-top: 16px;
+    padding: 16px 0 0 0;
+    margin-top: 20px;
     text-align: right;
   }
 }
 
 // 响应式设计
 @media (max-width: 768px) {
-  .application-card {
-    .card-header {
+  .application-content {
+    .content-header {
       flex-direction: column;
       align-items: flex-start;
+      margin-bottom: 20px;
+
+      .application-title {
+        font-size: 18px;
+
+        .title-icon {
+          font-size: 20px;
+        }
+      }
 
       .header-right {
         margin-left: 0;
@@ -546,9 +555,36 @@ export default {
       }
     }
 
-    .info-row {
-      .el-col {
-        margin-bottom: 8px;
+    .content-body {
+      .info-section {
+        margin-bottom: 20px;
+
+        .section-title {
+          font-size: 15px;
+          padding: 10px 12px;
+        }
+
+        .info-row {
+          .el-col {
+            margin-bottom: 8px;
+          }
+
+          .info-item {
+            flex-direction: column;
+            align-items: flex-start;
+
+            .info-label {
+              min-width: auto;
+              margin-bottom: 4px;
+              padding-bottom: 4px;
+            }
+
+            .info-value {
+              width: 100%;
+              padding-top: 0;
+            }
+          }
+        }
       }
     }
   }

@@ -15,15 +15,25 @@ const baseURL = '/auth'
 /**
  * 提交注册申请
  * @param {Object} data - 注册申请数据
- * @param {string} data.applicantName - 申请人姓名（必填）
- * @param {string} data.applicantEmail - 申请人邮箱（必填）
- * @param {string} data.username - 用户名（必填）
- * @param {string} data.password - 密码（必填）
- * @param {string} [data.departmentId] - 部门ID（可选）
- * @param {string} [data.jobTitle] - 职位名称（可选）
- * @param {string} [data.phone] - 手机号码（可选）
- * @param {string} [data.employeeId] - 员工ID（可选）
+ * @param {string} data.applicantName - 申请人姓名（必填，1-255字符）
+ * @param {string} data.applicantEmail - 申请人邮箱（必填，有效邮箱格式）
+ * @param {string} data.username - 用户名（必填，3-50字符，支持字母、数字、下划线，不能以数字开头）
+ * @param {string} data.password - 密码（必填，至少8位，必须包含字母和数字）
+ * @param {string} [data.departmentId] - 部门ID（可选，UUID格式）
+ * @param {string} [data.jobTitle] - 职位名称（可选，最多100字符）
+ * @param {string} [data.phone] - 手机号码（可选，有效的手机号码格式）
+ * @param {string} [data.employeeId] - 员工ID（可选，最多50字符）
+ * @param {string} [data.positionId] - 岗位ID（可选，UUID格式）
+ * @param {string} [data.hireDate] - 预期入职日期（可选，日期格式YYYY-MM-DD）
+ * @param {string} [data.birthDate] - 出生日期（可选，日期格式YYYY-MM-DD，不能是未来时间）
+ * @param {string} [data.gender] - 性别（可选，male/female/other）
+ * @param {string} [data.address] - 家庭住址（可选，最多500字符）
+ * @param {string} [data.emergencyContact] - 紧急联系人姓名（可选，最多100字符）
+ * @param {string} [data.emergencyPhone] - 紧急联系人电话（可选，有效的手机号码格式）
+ * @param {string} [data.managerId] - 直属上级用户ID（可选，UUID格式）
+ * @param {Object} [data.customFields] - 自定义字段（可选，JSON对象格式）
  * @param {string} [data.applicationReason] - 申请原因（可选）
+ * @param {string} [data.notes] - 备注信息（可选）
  * @returns {Promise} 返回申请结果，包含申请ID和基本信息
  * @throws {ApiError} 可能抛出的错误：
  *   - VAL_001: 缺少必填字段
@@ -72,21 +82,64 @@ export function submitRegistration(data) {
     throw new Error('手机号码格式不正确')
   }
 
+  if (data.emergencyPhone && !isValidPhone(data.emergencyPhone)) {
+    throw new Error('紧急联系人手机号码格式不正确')
+  }
+
+  if (data.positionId && !isValidUUID(data.positionId)) {
+    throw new Error('岗位ID格式不正确')
+  }
+
+  if (data.departmentId && !isValidUUID(data.departmentId)) {
+    throw new Error('部门ID格式不正确')
+  }
+
+  if (data.managerId && !isValidUUID(data.managerId)) {
+    throw new Error('直属上级ID格式不正确')
+  }
+
+  if (data.gender && !['male', 'female', 'other'].includes(data.gender)) {
+    throw new Error('性别选择无效')
+  }
+
+  if (data.birthDate && !isValidDate(data.birthDate)) {
+    throw new Error('出生日期格式不正确')
+  }
+
+  if (data.hireDate && !isValidDate(data.hireDate)) {
+    throw new Error('预期入职日期格式不正确')
+  }
+
   return request({
     url: `${baseURL}/register-application`,
     method: 'post',
     data: {
+      // 必填字段
       applicantName: data.applicantName.trim(),
       applicantEmail: data.applicantEmail.trim(),
       username: data.username.trim(),
       password: data.password,
+
+      // 可选字段 - 基本信息
       departmentId: data.departmentId ? data.departmentId.trim() : undefined,
       jobTitle: data.jobTitle ? data.jobTitle.trim() : undefined,
       phone: data.phone ? data.phone.trim() : undefined,
       employeeId: data.employeeId ? data.employeeId.trim() : undefined,
-      applicationReason: data.applicationReason
-        ? data.applicationReason.trim()
-        : undefined
+      positionId: data.positionId ? data.positionId.trim() : undefined,
+      hireDate: data.hireDate ? data.hireDate : undefined,
+      birthDate: data.birthDate ? data.birthDate : undefined,
+      gender: data.gender ? data.gender : undefined,
+      address: data.address ? data.address.trim() : undefined,
+
+      // 可选字段 - 联系人信息
+      emergencyContact: data.emergencyContact ? data.emergencyContact.trim() : undefined,
+      emergencyPhone: data.emergencyPhone ? data.emergencyPhone.trim() : undefined,
+      managerId: data.managerId ? data.managerId.trim() : undefined,
+
+      // 可选字段 - 其他信息
+      customFields: data.customFields && Object.keys(data.customFields).length > 0 ? data.customFields : undefined,
+      applicationReason: data.applicationReason ? data.applicationReason.trim() : undefined,
+      notes: data.notes ? data.notes.trim() : undefined
     }
   })
 }
@@ -223,6 +276,33 @@ function isValidPhone(phone) {
   // 中国大陆手机号码格式
   const phoneRegex = /^1[3-9]\d{9}$/
   return phoneRegex.test(phone)
+}
+
+/**
+ * 验证UUID格式
+ * @param {string} uuid - UUID字符串
+ * @returns {boolean} 是否有效
+ */
+function isValidUUID(uuid) {
+  const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/
+  return uuidRegex.test(uuid)
+}
+
+/**
+ * 验证日期格式
+ * @param {string} dateString - 日期字符串
+ * @returns {boolean} 是否有效
+ */
+function isValidDate(dateString) {
+  // 验证 YYYY-MM-DD 格式
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+  if (!dateRegex.test(dateString)) {
+    return false
+  }
+
+  // 验证日期是否真实存在
+  const date = new Date(dateString)
+  return date instanceof Date && !isNaN(date) && date.toISOString().slice(0, 10) === dateString
 }
 
 /**

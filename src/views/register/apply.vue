@@ -93,8 +93,15 @@
             <h3 class="section-title">可选信息</h3>
             <el-row :gutter="20">
               <el-col :span="12">
-                <el-form-item label="部门" prop="department">
-                  <el-select v-model="formData.department" placeholder="请选择部门" filterable style="width: 100%">
+                <el-form-item label="部门" prop="departmentId">
+                  <el-select
+                    v-model="formData.departmentId"
+                    placeholder="请选择部门"
+                    filterable
+                    style="width: 100%"
+                    :loading="loadingDepartments"
+                    @change="handleDepartmentChange"
+                  >
                     <el-option
                       v-for="option in departmentOptions"
                       :key="option.value"
@@ -107,9 +114,9 @@
               </el-col>
 
               <el-col :span="12">
-                <el-form-item label="职位名称" prop="position">
+                <el-form-item label="职位名称" prop="jobTitle">
                   <el-input
-                    v-model="formData.position"
+                    v-model="formData.jobTitle"
                     placeholder="请输入职位名称"
                     :maxlength="100"
                     :show-word-limit="true"
@@ -139,16 +146,151 @@
             </el-row>
             <el-row :gutter="20">
               <el-col :span="12">
-                <el-form-item label="申请原因" prop="reason">
+                <el-form-item label="岗位" prop="positionId">
+                  <el-select
+                    v-model="formData.positionId"
+                    placeholder="请选择岗位"
+                    filterable
+                    style="width: 100%"
+                    :loading="loadingPositions"
+                  >
+                    <el-option
+                      v-for="option in positionOptions"
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    />
+                  </el-select>
+                  <div class="help-text">选择具体岗位，便于角色权限分配</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="预期入职日期" prop="hireDate">
+                  <el-date-picker
+                    v-model="formData.hireDate"
+                    type="date"
+                    placeholder="请选择预期入职日期"
+                    format="yyyy-MM-dd"
+                    value-format="yyyy-MM-dd"
+                    style="width: 100%"
+                  />
+                  <div class="help-text">选择您期望的入职日期</div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="出生日期" prop="birthDate">
+                  <el-date-picker
+                    v-model="formData.birthDate"
+                    type="date"
+                    placeholder="请选择出生日期"
+                    format="yyyy-MM-dd"
+                    value-format="yyyy-MM-dd"
+                    style="width: 100%"
+                  />
+                  <div class="help-text">填写真实出生日期</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="性别" prop="gender">
+                  <el-radio-group v-model="formData.gender">
+                    <el-radio
+                      v-for="option in genderOptions"
+                      :key="option.value"
+                      :label="option.value"
+                    >
+                      {{ option.label }}
+                    </el-radio>
+                  </el-radio-group>
+                  <div class="help-text">选择您的性别</div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="24">
+                <el-form-item label="家庭住址" prop="address">
                   <el-input
-                    v-model="formData.reason"
-                    type="textarea"
-                    placeholder="请输入申请原因"
+                    v-model="formData.address"
+                    placeholder="请输入家庭住址"
                     :maxlength="500"
+                    :show-word-limit="true"
+                  />
+                  <div class="help-text">填写详细的家庭住址</div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="紧急联系人" prop="emergencyContact">
+                  <el-input
+                    v-model="formData.emergencyContact"
+                    placeholder="请输入紧急联系人姓名"
+                    :maxlength="100"
+                    :show-word-limit="true"
+                  />
+                  <div class="help-text">紧急情况下的联系人</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="紧急联系人电话" prop="emergencyPhone">
+                  <el-input
+                    v-model="formData.emergencyPhone"
+                    placeholder="请输入紧急联系人手机号"
+                    :maxlength="11"
+                  />
+                  <div class="help-text">紧急联系人的手机号码</div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="直属上级" prop="managerId">
+                  <el-select
+                    v-model="formData.managerId"
+                    placeholder="请选择直属上级"
+                    filterable
+                    style="width: 100%"
+                    :loading="loadingManagers"
+                  >
+                    <el-option
+                      v-for="option in managerOptions"
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    />
+                  </el-select>
+                  <div class="help-text">选择您的直属上级管理人员</div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="申请原因" prop="applicationReason">
+                  <el-select v-model="formData.applicationReason" placeholder="请选择申请原因" style="width: 100%">
+                    <el-option
+                      v-for="option in reasonOptions"
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    />
+                  </el-select>
+                  <div class="help-text">选择申请账户的原因</div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="24">
+                <el-form-item label="备注信息" prop="notes">
+                  <el-input
+                    v-model="formData.notes"
+                    type="textarea"
+                    placeholder="请输入备注信息"
+                    :maxlength="1000"
                     :show-word-limit="true"
                     :rows="3"
                   />
-                  <div class="help-text">详细说明申请原因有助于加快审核进度</div>
+                  <div class="help-text">其他需要说明的信息</div>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -208,8 +350,14 @@ import { submitRegistration, handleRegistrationError } from './api/register'
 import {
   DEFAULT_REGISTER_FORM,
   REGISTER_FORM_RULES,
-  DEPARTMENT_OPTIONS
+  GENDER_OPTIONS,
+  REASON_OPTIONS
 } from './constants'
+
+// 导入API服务
+import { getDepartmentOptions } from '@/views/organization-structure/shared/api/department-options'
+import { getPositionOptions } from '@/views/organization-structure/positions/api/positions'
+import { getManagerOptions } from '@/views/user-management/api/user-management'
 
 export default {
   name: 'RegisterApply',
@@ -242,7 +390,14 @@ export default {
           { text: '完成', type: 'default', action: 'finish' }
         ]
       },
-      departmentOptions: DEPARTMENT_OPTIONS
+      departmentOptions: [],
+      positionOptions: [],
+      genderOptions: GENDER_OPTIONS,
+      reasonOptions: REASON_OPTIONS,
+      managerOptions: [],
+      loadingDepartments: false,
+      loadingPositions: false,
+      loadingManagers: false
     }
   },
   computed: {
@@ -253,6 +408,10 @@ export default {
     formRules() {
       return REGISTER_FORM_RULES(this.formData)
     }
+  },
+  created() {
+    // 页面初始化时加载选项数据
+    this.loadAllOptions()
   },
   methods: {
     /**
@@ -426,6 +585,142 @@ export default {
       //   console.error('提交错误报告失败:', error)
       //   this.$message.error('提交错误报告失败')
       // }
+    },
+
+    /**
+     * 加载所有选项数据
+     */
+    async loadAllOptions() {
+      // 并行加载所有选项数据
+      await Promise.all([
+        this.loadDepartmentOptions(),
+        this.loadPositionOptions(),
+        this.loadManagerOptions()
+      ])
+    },
+
+    /**
+     * 加载部门选项
+     */
+    async loadDepartmentOptions() {
+      try {
+        this.loadingDepartments = true
+        const response = await getDepartmentOptions({
+          status: 'active',
+          limit: 100,
+          sortBy: 'level:asc,sortOrder:asc'
+        })
+
+        if (response && response.success && response.data && response.data.options) {
+          this.departmentOptions = response.data.options.map(dept => ({
+            value: dept.value,
+            label: dept.labelWithLevel || dept.label // 使用带层级缩进的标签
+          }))
+        }
+      } catch (error) {
+        console.error('加载部门选项失败:', error)
+        this.$message.error('加载部门选项失败，请稍后重试')
+      } finally {
+        this.loadingDepartments = false
+      }
+    },
+
+    /**
+     * 加载岗位选项
+     */
+    async loadPositionOptions() {
+      try {
+        this.loadingPositions = true
+        const response = await getPositionOptions({
+          status: 'active',
+          limit: 100,
+          sortBy: 'level:asc,sortOrder:asc',
+          populate: 'department'
+        })
+
+        if (response && response.success && response.data && response.data.options) {
+          this.positionOptions = response.data.options.map(pos => ({
+            value: pos.value,
+            label: pos.labelWithDepartment || pos.label, // 使用带部门信息的标签
+            departmentId: pos.departmentId
+          }))
+        }
+      } catch (error) {
+        console.error('加载岗位选项失败:', error)
+        this.$message.error('加载岗位选项失败，请稍后重试')
+      } finally {
+        this.loadingPositions = false
+      }
+    },
+
+    /**
+     * 加载直属上级选项
+     */
+    async loadManagerOptions() {
+      try {
+        this.loadingManagers = true
+        const response = await getManagerOptions({
+          status: 'active',
+          limit: 100,
+          sortBy: 'name:asc'
+        })
+
+        if (response && response.success && response.data && response.data.options) {
+          this.managerOptions = response.data.options.map(manager => ({
+            value: manager.value,
+            label: manager.label, // 格式：姓名 (用户名)
+            department: manager.department
+          }))
+        }
+      } catch (error) {
+        console.error('加载直属上级选项失败:', error)
+        this.$message.error('加载直属上级选项失败，请稍后重试')
+      } finally {
+        this.loadingManagers = false
+      }
+    },
+
+    /**
+     * 根据选择的部门筛选岗位
+     */
+    handleDepartmentChange() {
+      // 当部门改变时，清空岗位选择并重新加载相关岗位
+      this.formData.positionId = ''
+      if (this.formData.departmentId) {
+        this.loadPositionsByDepartment(this.formData.departmentId)
+      } else {
+        // 如果没有选择部门，显示所有岗位
+        this.loadPositionOptions()
+      }
+    },
+
+    /**
+     * 根据部门ID加载岗位选项
+     */
+    async loadPositionsByDepartment(departmentId) {
+      try {
+        this.loadingPositions = true
+        const response = await getPositionOptions({
+          status: 'active',
+          departmentId: departmentId,
+          limit: 100,
+          sortBy: 'level:asc,sortOrder:asc',
+          populate: 'department'
+        })
+
+        if (response && response.success && response.data && response.data.options) {
+          this.positionOptions = response.data.options.map(pos => ({
+            value: pos.value,
+            label: pos.label, // 已经是部门下的岗位，无需显示部门信息
+            departmentId: pos.departmentId
+          }))
+        }
+      } catch (error) {
+        console.error('加载部门岗位失败:', error)
+        this.$message.error('加载部门岗位失败，请稍后重试')
+      } finally {
+        this.loadingPositions = false
+      }
     }
   }
 }

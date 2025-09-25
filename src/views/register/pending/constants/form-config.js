@@ -2,6 +2,8 @@
  * 待审批申请表单配置
  */
 
+import { GENDER_OPTIONS, POSITION_OPTIONS, DEPARTMENT_OPTIONS, MANAGER_OPTIONS } from './application'
+
 // 表单验证规则
 export const FORM_RULES = {
   applicantName: [
@@ -50,9 +52,54 @@ export const SEARCH_FORM_CONFIG = [
     placeholder: '请选择部门',
     clearable: true,
     span: 6,
-    options: [
-      // 部门选项将通过API动态加载
-    ]
+    options: DEPARTMENT_OPTIONS
+  },
+  {
+    type: 'select',
+    prop: 'positionId',
+    label: '岗位',
+    placeholder: '请选择岗位',
+    clearable: true,
+    span: 6,
+    options: POSITION_OPTIONS
+  },
+  {
+    type: 'select',
+    prop: 'gender',
+    label: '性别',
+    placeholder: '请选择性别',
+    clearable: true,
+    span: 6,
+    options: GENDER_OPTIONS
+  },
+  {
+    type: 'date-range',
+    prop: 'hireDateRange',
+    label: '入职日期',
+    placeholder: ['开始日期', '结束日期'],
+    clearable: true,
+    span: 8,
+    format: 'yyyy-MM-dd',
+    valueFormat: 'yyyy-MM-dd'
+  },
+  {
+    type: 'date-range',
+    prop: 'birthDateRange',
+    label: '出生日期',
+    placeholder: ['开始日期', '结束日期'],
+    clearable: true,
+    span: 8,
+    format: 'yyyy-MM-dd',
+    valueFormat: 'yyyy-MM-dd'
+  },
+  {
+    type: 'select',
+    prop: 'managerId',
+    label: '直属上级',
+    placeholder: '请选择直属上级',
+    clearable: true,
+    span: 6,
+    options: MANAGER_OPTIONS
   }
 ]
 

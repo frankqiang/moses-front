@@ -118,8 +118,15 @@ export default {
       searchParams: {
         search: '',
         departmentId: '',
+        positionId: '',
+        gender: '',
+        managerId: '',
         startDate: '',
-        endDate: ''
+        endDate: '',
+        hireStartDate: '',
+        hireEndDate: '',
+        birthStartDate: '',
+        birthEndDate: ''
       },
 
       // 排序参数
@@ -213,6 +220,20 @@ export default {
       }
       delete formData.dateRange
 
+      // 处理入职日期范围
+      if (formData.hireDateRange && formData.hireDateRange.length === 2) {
+        formData.hireStartDate = formData.hireDateRange[0]
+        formData.hireEndDate = formData.hireDateRange[1]
+      }
+      delete formData.hireDateRange
+
+      // 处理出生日期范围
+      if (formData.birthDateRange && formData.birthDateRange.length === 2) {
+        formData.birthStartDate = formData.birthDateRange[0]
+        formData.birthEndDate = formData.birthDateRange[1]
+      }
+      delete formData.birthDateRange
+
       // 清理空值参数
       const cleanParams = {}
       Object.keys(formData).forEach(key => {
@@ -233,8 +254,15 @@ export default {
       this.searchParams = {
         search: '',
         departmentId: '',
+        positionId: '',
+        gender: '',
+        managerId: '',
         startDate: '',
-        endDate: ''
+        endDate: '',
+        hireStartDate: '',
+        hireEndDate: '',
+        birthStartDate: '',
+        birthEndDate: ''
       }
       this.pagination.page = 1
       this.fetchList()

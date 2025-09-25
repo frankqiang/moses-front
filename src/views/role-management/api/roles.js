@@ -200,7 +200,7 @@ export function getAvailableRoles(params = {}) {
     method: 'get',
     params: {
       status: 'active',
-      limit: 1000, // 获取所有可用角色
+      limit: 100, // 获取所有可用角色
       ...params
     }
   })
