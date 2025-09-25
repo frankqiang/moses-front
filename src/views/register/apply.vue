@@ -94,21 +94,14 @@
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="部门" prop="departmentId">
-                  <el-select
+                  <el-cascader
                     v-model="formData.departmentId"
+                    :options="departmentTreeOptions"
+                    :props="cascaderProps"
                     placeholder="请选择部门"
-                    filterable
                     style="width: 100%"
-                    :loading="loadingDepartments"
                     @change="handleDepartmentChange"
-                  >
-                    <el-option
-                      v-for="option in departmentOptions"
-                      :key="option.value"
-                      :label="option.label"
-                      :value="option.value"
-                    />
-                  </el-select>
+                  />
                   <div class="help-text">选择您所属的部门，便于管理员审核</div>
                 </el-form-item>
               </el-col>
@@ -355,9 +348,11 @@ import {
 } from './constants'
 
 // 导入API服务
-import { getDepartmentOptions } from '@/views/organization-structure/shared/api/department-options'
-import { getPositionOptions } from '@/views/organization-structure/positions/api/positions'
-import { getManagerOptions } from '@/views/user-management/api/user-management'
+import {
+  getPublicDepartmentOptions,
+  getPublicPositionOptions,
+  getPublicManagerOptions
+} from '@/api/public'
 
 export default {
   name: 'RegisterApply',
@@ -390,14 +385,24 @@ export default {
           { text: '完成', type: 'default', action: 'finish' }
         ]
       },
-      departmentOptions: [],
+      departmentOptions: [], // 旧单层选项，保留以便回退
+      departmentTreeOptions: [], // 新的树形选项
       positionOptions: [],
       genderOptions: GENDER_OPTIONS,
       reasonOptions: REASON_OPTIONS,
       managerOptions: [],
       loadingDepartments: false,
       loadingPositions: false,
-      loadingManagers: false
+      loadingManagers: false,
+
+      // el-cascader 配置
+      cascaderProps: {
+        checkStrictly: true,
+        emitPath: false,
+        value: 'value',
+        label: 'label',
+        children: 'children'
+      }
     }
   },
   computed: {
@@ -605,17 +610,20 @@ export default {
     async loadDepartmentOptions() {
       try {
         this.loadingDepartments = true
-        const response = await getDepartmentOptions({
-          status: 'active',
-          limit: 100,
-          sortBy: 'level:asc,sortOrder:asc'
+        const response = await getPublicDepartmentOptions({
+          includeInactive: false,
+          useTree: true // 使用树形结构显示层级关系
         })
 
-        if (response && response.success && response.data && response.data.options) {
-          this.departmentOptions = response.data.options.map(dept => ({
-            value: dept.value,
-            label: dept.labelWithLevel || dept.label // 使用带层级缩进的标签
-          }))
+        // 使用树接口重构为 el-cascader options 结构
+        if (response && response.success && response.data) {
+          const tree = Array.isArray(response.data.tree)
+            ? response.data.tree
+            : Array.isArray(response.data.options)
+              ? this.buildTreeFromFlatOptions(response.data.options)
+              : []
+
+          this.departmentTreeOptions = this.transformDeptTreeToCascader(tree)
         }
       } catch (error) {
         console.error('加载部门选项失败:', error)
@@ -625,25 +633,58 @@ export default {
       }
     },
 
+    // 将后端的树节点转换为 el-cascader 需要的结构
+    transformDeptTreeToCascader(nodes) {
+      if (!Array.isArray(nodes)) return []
+      const mapNode = (node) => ({
+        value: node.id || node.value,
+        label: node.name || node.label,
+        children: Array.isArray(node.children) && node.children.length > 0
+          ? node.children.map(mapNode)
+          : undefined
+      })
+      return nodes.map(mapNode)
+    },
+
+    // 兼容：若只拿到扁平 options，尝试构建树（父子通过 parentId）
+    buildTreeFromFlatOptions(options) {
+      const byId = new Map()
+      options.forEach(o => {
+        byId.set(o.value || o.id, {
+          id: o.value || o.id,
+          name: o.label || o.name,
+          parentId: o.parentId,
+          children: []
+        })
+      })
+      const roots = []
+      byId.forEach(node => {
+        if (node.parentId && byId.has(node.parentId)) {
+          byId.get(node.parentId).children.push(node)
+        } else {
+          roots.push(node)
+        }
+      })
+      return roots
+    },
+
     /**
      * 加载岗位选项
      */
     async loadPositionOptions() {
       try {
         this.loadingPositions = true
-        const response = await getPositionOptions({
-          status: 'active',
-          limit: 100,
-          sortBy: 'level:asc,sortOrder:asc',
-          populate: 'department'
+        const response = await getPublicPositionOptions({
+          // 不传 departmentId，获取所有岗位
         })
 
         if (response && response.success && response.data && response.data.options) {
-          this.positionOptions = response.data.options.map(pos => ({
+          const options = response.data.options.map(pos => ({
             value: pos.value,
             label: pos.labelWithDepartment || pos.label, // 使用带部门信息的标签
             departmentId: pos.departmentId
           }))
+          this.positionOptions = options
         }
       } catch (error) {
         console.error('加载岗位选项失败:', error)
@@ -659,18 +700,18 @@ export default {
     async loadManagerOptions() {
       try {
         this.loadingManagers = true
-        const response = await getManagerOptions({
-          status: 'active',
-          limit: 100,
-          sortBy: 'name:asc'
+        const response = await getPublicManagerOptions({
+          // 不传 departmentId，获取所有管理者
         })
 
         if (response && response.success && response.data && response.data.options) {
-          this.managerOptions = response.data.options.map(manager => ({
+          const options = response.data.options.map(manager => ({
             value: manager.value,
-            label: manager.label, // 格式：姓名 (用户名)
-            department: manager.department
+            label: manager.label, // 格式：姓名 (邮箱)
+            name: manager.name,
+            email: manager.email
           }))
+          this.managerOptions = options
         }
       } catch (error) {
         console.error('加载直属上级选项失败:', error)
@@ -700,20 +741,17 @@ export default {
     async loadPositionsByDepartment(departmentId) {
       try {
         this.loadingPositions = true
-        const response = await getPositionOptions({
-          status: 'active',
-          departmentId: departmentId,
-          limit: 100,
-          sortBy: 'level:asc,sortOrder:asc',
-          populate: 'department'
+        const response = await getPublicPositionOptions({
+          departmentId: departmentId
         })
 
         if (response && response.success && response.data && response.data.options) {
-          this.positionOptions = response.data.options.map(pos => ({
+          const options = response.data.options.map(pos => ({
             value: pos.value,
             label: pos.label, // 已经是部门下的岗位，无需显示部门信息
             departmentId: pos.departmentId
           }))
+          this.positionOptions = options
         }
       } catch (error) {
         console.error('加载部门岗位失败:', error)

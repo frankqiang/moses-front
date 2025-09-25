@@ -212,7 +212,6 @@ export default {
       default: 'el-icon-document'
     },
 
-
     /**
      * 是否显示基本信息
      */
