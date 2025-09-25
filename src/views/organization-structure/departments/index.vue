@@ -205,14 +205,14 @@ export default {
         Boolean(params[SEARCH_FORM_FIELDS.CODE]) ||
         Boolean(params[SEARCH_FORM_FIELDS.STATUS]) ||
         Boolean(params[SEARCH_FORM_FIELDS.PARENT_ID])
-      );
+      )
     },
 
     async loadTreeData() {
       // 如果有搜索条件，应该使用列表接口而不是树形接口
       if (this.hasActiveFilters(this.searchParams)) {
-        await this.loadListData();
-        return;
+        await this.loadListData()
+        return
       }
 
       const response = await getDepartmentTree()
@@ -252,26 +252,26 @@ export default {
       const params = {
         ...DEPARTMENT_DEFAULT_QUERY,
         page: this.pagination.page,
-        limit: this.pagination.limit,
-      };
+        limit: this.pagination.limit
+      }
 
-      const keyword = this.searchParams[SEARCH_FORM_FIELDS.KEYWORD];
-      const code = this.searchParams[SEARCH_FORM_FIELDS.CODE];
+      const keyword = this.searchParams[SEARCH_FORM_FIELDS.KEYWORD]
+      const code = this.searchParams[SEARCH_FORM_FIELDS.CODE]
 
       if (keyword) {
-        params.name = keyword;
+        params.name = keyword
       }
       if (code) {
-        params.code = code;
+        params.code = code
       }
       if (this.searchParams[SEARCH_FORM_FIELDS.STATUS]) {
-        params.status = this.searchParams[SEARCH_FORM_FIELDS.STATUS];
+        params.status = this.searchParams[SEARCH_FORM_FIELDS.STATUS]
       }
       if (this.searchParams[SEARCH_FORM_FIELDS.PARENT_ID]) {
-        params.parentId = this.searchParams[SEARCH_FORM_FIELDS.PARENT_ID];
+        params.parentId = this.searchParams[SEARCH_FORM_FIELDS.PARENT_ID]
       }
 
-      return formatQueryParams(params);
+      return formatQueryParams(params)
     },
 
     countTreeNodes(nodes) {
