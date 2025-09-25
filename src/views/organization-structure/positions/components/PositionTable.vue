@@ -9,34 +9,14 @@
 <template>
   <div class="position-table">
     <!-- 使用全局表格工具栏组件 -->
-    <table-toolbar
-      ref="toolbar"
-      :enable-column-settings="true"
-      :column-options="columnOptions"
-      :storage-key="columnSettingsKey"
-      :default-visible-columns="defaultVisibleColumns"
-      :enable-batch-actions="true"
-      :selected-rows="selectedRows"
-      :enable-export="true"
-      :export-api="exportApiFunction"
-      :export-params="exportParams"
-      :hide-status-buttons="false"
-      :status-buttons-mode="'dropdown'"
-      :status-confirm="false"
-      :delete-confirm="false"
-      :table-data="data"
-      :smart-status-buttons="true"
-      :status-field="'status'"
-      :enabled-value="'active'"
-      :disabled-value="'inactive'"
-      :refresh-feedback-mode="'all'"
-      @refresh="handleRefresh"
-      @column-change="handleColumnChange"
-      @batch-delete="handleBatchDelete"
-      @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable"
-      @export-success="handleExportSuccess"
-    >
+    <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
+      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true"
+      :selected-rows="selectedRows" :enable-export="true" :export-api="exportApiFunction" :export-params="exportParams"
+      :hide-status-buttons="false" :status-buttons-mode="'dropdown'" :status-confirm="false" :delete-confirm="false"
+      :table-data="safeData" :smart-status-buttons="true" :status-field="'status'" :enabled-value="'active'"
+      :disabled-value="'inactive'" :refresh-feedback-mode="'all'" @refresh="handleRefresh"
+      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable" @export-success="handleExportSuccess">
       <template #toolbar-left>
         <ActionButtons :buttons="toolbarButtons" mode="normal" @click="handleToolbarAction" />
         <slot name="toolbar-left" />
@@ -48,29 +28,11 @@
     </table-toolbar>
 
     <!-- 使用BaseTable组件 -->
-    <BaseTable
-      :data="data"
-      :columns="baseTableColumns"
-      :loading="loading"
-      :pagination="paginationConfig"
-      :show-selection="true"
-      :show-index="true"
-      :virtual-scroll="enableVirtualScroll"
-      :virtual-threshold="1000"
-      :virtual-height="600"
-      :item-height="48"
-      :allow-retry="true"
-      :load-error="loadError"
-      border
-      stripe
-      highlight-current-row
-      @selection-change="handleSelectionChange"
-      @retry="handleRetry"
-      @row-click="handleRowClick"
-      @data-error="handleDataError"
-      @format-error="handleFormatError"
-      @pagination-change="handlePaginationChange"
-    >
+    <BaseTable :data="safeData" :columns="baseTableColumns" :loading="loading" :pagination="paginationConfig"
+      :show-selection="true" :show-index="true" :virtual-scroll="enableVirtualScroll" :virtual-threshold="1000"
+      :virtual-height="600" :item-height="48" :allow-retry="true" :load-error="loadError" border stripe
+      highlight-current-row @selection-change="handleSelectionChange" @retry="handleRetry" @row-click="handleRowClick"
+      @data-error="handleDataError" @format-error="handleFormatError" @pagination-change="handlePaginationChange">
       <!-- 注意：type字段在接口文档中未定义，暂时注释掉 -->
       <!-- <template #type="{ row }">
         <span>{{ getTypeLabel(row.type) }}</span>
@@ -84,12 +46,15 @@
 
       <!-- 状态列 -->
       <template #status="{ row }">
-        <StatusTag :status="row.status" :text-map="statusTextMap" :type-map="statusTypeMap" />
+        <StatusTag v-if="row && row.status" :status="row.status" :text-map="statusTextMap" :type-map="statusTypeMap" />
+        <span v-else class="text-muted">-</span>
       </template>
 
       <!-- 操作列 -->
       <template #actions="{ row }">
-        <ActionButtons :buttons="getActionButtons(row)" mode="text" :row="row" @click="handleActionClick" />
+        <ActionButtons v-if="row && !row._error" :buttons="getActionButtons(row)" mode="text" :row="row"
+          @click="handleActionClick" />
+        <span v-else class="text-muted">-</span>
       </template>
 
       <!-- 空状态 -->
@@ -173,6 +138,20 @@ export default {
   },
   computed: {
     /**
+         * 安全的数据处理
+         */
+    safeData() {
+      // 确保data是数组，并且过滤掉无效数据
+      if (!Array.isArray(this.data)) {
+        return []
+      }
+
+      return this.data.filter(item => {
+        return item && typeof item === 'object' && !item._error
+      })
+    },
+
+    /**
          * 列配置存储键名
          */
     columnSettingsKey() {
@@ -197,7 +176,7 @@ export default {
          * BaseTable列配置
          */
     baseTableColumns() {
-      return this.visibleColumns
+      return this.tableColumns
     },
 
     /**
@@ -249,7 +228,7 @@ export default {
          */
     exportApiFunction() {
       // 返回一个函数，而不是字符串
-      return async(params) => {
+      return async (params) => {
         // 这里应该调用实际的导出API
         // 由于开发阶段暂时没有真实的导出接口，先返回Mock响应
         console.log('导出岗位数据，参数:', params)
@@ -273,6 +252,7 @@ export default {
   created() {
     // 创建防抖函数
     this.debouncedRefresh = debounce(this.handleRefresh, 300)
+    this.initColumns(this.columnOptions)
   },
   methods: {
     // 注意：type字段在接口文档中未定义，暂时注释掉
@@ -288,6 +268,11 @@ export default {
          * 获取操作按钮
          */
     getActionButtons(row) {
+      // 安全检查：确保row存在且不是错误数据
+      if (!row || row._error) {
+        return []
+      }
+
       const buttons = []
 
       // 根据权限和业务逻辑动态生成按钮
@@ -300,7 +285,7 @@ export default {
           const buttonConfig = { ...config, action: key, data: row }
 
           // 特殊处理切换状态按钮
-          if (key === 'toggleStatus') {
+          if (key === 'toggleStatus' && row.status) {
             buttonConfig.text = row.status === 'active' ? '禁用' : '启用'
             buttonConfig.icon = row.status === 'active' ? 'el-icon-close' : 'el-icon-check'
           }
