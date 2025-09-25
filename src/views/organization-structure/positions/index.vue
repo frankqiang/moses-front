@@ -9,18 +9,40 @@
 <template>
   <div class="position-management">
     <!-- 搜索表单 -->
-    <search-form :loading="loading" :department-options="departmentOptions" @search="handleSearch"
-      @reset="handleReset" />
+    <search-form
+      :loading="loading"
+      :department-options="departmentOptions"
+      @search="handleSearch"
+      @reset="handleReset"
+    />
 
     <!-- 岗位表格 -->
-    <position-table ref="positionTable" :data="tableData" :loading="loading" :total="total" :page="pagination.page"
-      :limit="pagination.limit" @pagination-change="handlePaginationChange" @create="handleCreate" @edit="handleEdit"
-      @view="handleView" @delete="handleDelete" @toggleStatus="handleToggleStatus" @export-success="handleExportSuccess"
-      @refresh="fetchList" @retry="fetchList" />
+    <position-table
+      ref="positionTable"
+      :data="tableData"
+      :loading="loading"
+      :total="total"
+      :page="pagination.page"
+      :limit="pagination.limit"
+      @pagination-change="handlePaginationChange"
+      @create="handleCreate"
+      @edit="handleEdit"
+      @view="handleView"
+      @delete="handleDelete"
+      @toggleStatus="handleToggleStatus"
+      @export-success="handleExportSuccess"
+      @refresh="fetchList"
+      @retry="fetchList"
+    />
 
     <!-- 岗位表单抽屉 -->
-    <position-form-drawer :visible.sync="formDrawerVisible" :mode="formMode" :position-data="currentPosition"
-      :department-options="departmentOptions" @success="handleFormSuccess" />
+    <position-form-drawer
+      :visible.sync="formDrawerVisible"
+      :mode="formMode"
+      :position-data="currentPosition"
+      :department-options="departmentOptions"
+      @success="handleFormSuccess"
+    />
   </div>
 </template>
 
@@ -213,9 +235,8 @@ export default {
       this.formDrawerVisible = true
     },
 
-    // 编辑岗位
     handleEdit(position) {
-      this.formMode = 'edit'
+      this.formMode = 'update'
       this.currentPosition = position
       this.formDrawerVisible = true
     },

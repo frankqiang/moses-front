@@ -34,7 +34,6 @@ __tests__/
 
 # 编辑器和IDE配置
 .idea/
-.vscode/
 *.suo
 *.ntvs*
 *.njsproj
@@ -64,4 +63,8 @@ __tests__/
 # !package.json
 # !tsconfig.json
 
+
+.trae/
+.qoderignore
+.promptx/
 

@@ -10,7 +10,12 @@
 <template>
   <div class="department-management">
     <!-- 搜索表单 -->
-    <search-form :loading="loading" :parent-options="parentOptions" @search="handleSearch" @reset="handleReset" />
+    <search-form
+      :loading="loading"
+      :parent-options="parentOptions"
+      @search="handleSearch"
+      @reset="handleReset"
+    />
 
     <!-- 部门表格 -->
     <department-table
@@ -50,31 +55,29 @@
 </template>
 
 <script>
-import { setTokens } from '@/utils/auth'
-import SearchForm from './components/SearchForm.vue'
-import DepartmentTable from './components/DepartmentTable.vue'
-import DepartmentFormDrawer from './components/DepartmentFormDrawer.vue'
-import {
-  DEFAULT_SEARCH_PARAMS,
-  DEPARTMENT_DEFAULT_QUERY
-} from './constants'
+import { setTokens } from "@/utils/auth";
+import SearchForm from "./components/SearchForm.vue";
+import DepartmentTable from "./components/DepartmentTable.vue";
+import DepartmentFormDrawer from "./components/DepartmentFormDrawer.vue";
+import { DEFAULT_SEARCH_PARAMS, DEPARTMENT_DEFAULT_QUERY } from "./constants";
 import {
   getDepartmentList,
   getDepartmentTree,
   updateDepartmentStatus,
   batchUpdateDepartmentStatus,
   deleteDepartment,
-  batchDeleteDepartments
-} from './api'
+  batchDeleteDepartments,
+} from "./api";
 
-const DEV_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZXZfdXNlciIsImlhdCI6MTY0Mjc4MTIzNCwiZXhwIjoxNjQyNzg0ODM0fQ.dev_token_signature'
+const DEV_ACCESS_TOKEN =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZXZfdXNlciIsImlhdCI6MTY0Mjc4MTIzNCwiZXhwIjoxNjQyNzg0ODM0fQ.dev_token_signature";
 
 export default {
-  name: 'DepartmentManagement',
+  name: "DepartmentManagement",
   components: {
     SearchForm,
     DepartmentTable,
-    DepartmentFormDrawer
+    DepartmentFormDrawer,
   },
   data() {
     return {
@@ -87,7 +90,7 @@ export default {
       // 分页参数
       pagination: {
         page: 1,
-        limit: 10
+        limit: 10,
       },
       // 加载状态
       loading: false,
@@ -96,7 +99,7 @@ export default {
       // 表单抽屉可见性
       formDrawerVisible: false,
       // 表单模式：create-新增, edit-编辑, view-查看
-      formMode: 'create',
+      formMode: "create",
       // 当前操作的部门数据
       currentDepartment: null,
       // 选项数据
@@ -105,18 +108,18 @@ export default {
       // 当前数据是否来自列表接口
       useListMode: false,
       // 部门经理详情映射，用于补充树形数据的经理信息
-      departmentManagerMap: new Map()
-    }
+      departmentManagerMap: new Map(),
+    };
   },
   created() {
     // 设置页面标题
-    document.title = '部门管理 - 组织结构管理'
+    document.title = "部门管理 - 组织结构管理";
 
     // 🚧 开发环境认证设置 - 确保API调用能正常工作
-    this.initDevelopmentAuth()
+    this.initDevelopmentAuth();
 
     // 初始化加载数据
-    this.fetchList()
+    this.fetchList();
   },
   methods: {
     /**
@@ -124,228 +127,237 @@ export default {
      * 在开发环境中设置临时token，使API调用能正常工作
      */
     initDevelopmentAuth() {
-      if (process.env.NODE_ENV !== 'development') {
-        return
+      if (process.env.NODE_ENV !== "development") {
+        return;
       }
 
       if (this.$store.getters.token) {
-        return
+        return;
       }
 
-      setTokens({ accessToken: DEV_ACCESS_TOKEN })
-      this.$store.commit('user/SET_TOKEN', DEV_ACCESS_TOKEN)
-      this.$store.commit('user/SET_NAME', '开发测试用户')
-      this.$store.commit('user/SET_ROLES', ['admin', 'organization_manager'])
-      this.$store.commit('user/SET_PERMISSIONS', ['getDepartments', 'createDepartment', 'updateDepartment', 'deleteDepartment'])
+      setTokens({ accessToken: DEV_ACCESS_TOKEN });
+      this.$store.commit("user/SET_TOKEN", DEV_ACCESS_TOKEN);
+      this.$store.commit("user/SET_NAME", "开发测试用户");
+      this.$store.commit("user/SET_ROLES", ["admin", "organization_manager"]);
+      this.$store.commit("user/SET_PERMISSIONS", [
+        "getDepartments",
+        "createDepartment",
+        "updateDepartment",
+        "deleteDepartment",
+      ]);
     },
 
     /**
      * 获取部门数据
      */
     async fetchList({ forceList = false } = {}) {
-      this.loading = true
-      this.loadError = false
+      this.loading = true;
+      this.loadError = false;
 
-      const shouldUseList = this.shouldUseList(forceList)
+      const shouldUseList = this.shouldUseList(forceList);
 
       try {
         if (!shouldUseList) {
-          await this.loadTreeData()
-          this.handleRefreshFeedback(true)
-          return
+          await this.loadTreeData();
+          this.handleRefreshFeedback(true);
+          return;
         }
 
-        await this.loadListData()
-        this.handleRefreshFeedback(true)
+        await this.loadListData();
+        this.handleRefreshFeedback(true);
       } catch (treeError) {
         if (!shouldUseList) {
           try {
-            await this.loadListData()
-            this.useListMode = true
-            this.$message.warning('树形接口暂不可用，已切换为列表数据。')
-            this.handleRefreshFeedback(true)
-            return
+            await this.loadListData();
+            this.useListMode = true;
+            this.$message.warning("树形接口暂不可用，已切换为列表数据。");
+            this.handleRefreshFeedback(true);
+            return;
           } catch (listError) {
-            this.handleFetchError(listError)
+            this.handleFetchError(listError);
           }
         } else {
-          this.handleFetchError(treeError)
+          this.handleFetchError(treeError);
         }
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
     shouldUseList(forceList = false) {
       if (forceList) {
-        return true
+        return true;
       }
 
-      return this.useListMode || this.hasActiveFilters(this.searchParams)
+      return this.useListMode || this.hasActiveFilters(this.searchParams);
     },
 
     hasActiveFilters(params) {
-      return Boolean(params.keyword) || Boolean(params.status) || Boolean(params.parentId)
+      return (
+        Boolean(params.keyword) ||
+        Boolean(params.status) ||
+        Boolean(params.parentId)
+      );
     },
 
     async loadTreeData() {
-      const response = await getDepartmentTree()
-      const treeData = Array.isArray(response.data) ? response.data : []
-      await this.attachManagersToTree(treeData)
-      this.applyTreeData(treeData)
+      const response = await getDepartmentTree();
+      const treeData = Array.isArray(response.data) ? response.data : [];
+      await this.attachManagersToTree(treeData);
+      this.applyTreeData(treeData);
     },
 
     async loadListData() {
-      const params = this.buildListQueryParams()
-      const response = await getDepartmentList(params)
-      const meta = response.data || {}
-      const list = meta.results || []
-      this.applyListData(list, meta)
+      const params = this.buildListQueryParams();
+      const response = await getDepartmentList(params);
+      const meta = response.data || {};
+      const list = meta.results || [];
+      this.applyListData(list, meta);
     },
 
     applyTreeData(treeData) {
-      this.treeData = treeData
-      this.total = this.countTreeNodes(treeData)
-      this.useListMode = false
-      this.buildParentOptions(treeData, true)
+      this.treeData = treeData;
+      this.total = this.countTreeNodes(treeData);
+      this.useListMode = false;
+      this.buildParentOptions(treeData, true);
     },
 
     applyListData(listData, meta = {}) {
-      this.treeData = this.buildTreeFromList(listData)
-      this.total = meta.totalResults || listData.length
-      this.pagination.page = meta.page || this.pagination.page
-      this.pagination.limit = meta.limit || this.pagination.limit
-      this.useListMode = true
-      this.buildParentOptions(listData, false)
+      this.treeData = this.buildTreeFromList(listData);
+      this.total = meta.totalResults || listData.length;
+      this.pagination.page = meta.page || this.pagination.page;
+      this.pagination.limit = meta.limit || this.pagination.limit;
+      this.useListMode = true;
+      this.buildParentOptions(listData, false);
     },
 
     buildListQueryParams() {
       const params = {
         ...DEPARTMENT_DEFAULT_QUERY,
         page: this.pagination.page,
-        limit: this.pagination.limit
-      }
+        limit: this.pagination.limit,
+      };
 
       if (this.searchParams.keyword) {
-        params.name = this.searchParams.keyword
+        params.name = this.searchParams.keyword;
       }
       if (this.searchParams.status) {
-        params.status = this.searchParams.status
+        params.status = this.searchParams.status;
       }
       if (this.searchParams.parentId) {
-        params.parentId = this.searchParams.parentId
+        params.parentId = this.searchParams.parentId;
       }
 
-      return params
+      return params;
     },
 
     countTreeNodes(nodes) {
       if (!Array.isArray(nodes) || nodes.length === 0) {
-        return 0
+        return 0;
       }
 
-      let count = 0
+      let count = 0;
       const traverse = (items) => {
-        items.forEach(item => {
-          count += 1
+        items.forEach((item) => {
+          count += 1;
           if (Array.isArray(item.children) && item.children.length > 0) {
-            traverse(item.children)
+            traverse(item.children);
           }
-        })
-      }
+        });
+      };
 
-      traverse(nodes)
-      return count
+      traverse(nodes);
+      return count;
     },
 
     buildParentOptions(source, isTree = true) {
-      const options = []
+      const options = [];
 
       if (isTree) {
         const traverse = (nodes, level = 0) => {
-          nodes.forEach(node => {
+          nodes.forEach((node) => {
             options.push({
               value: node.id,
-              label: `${'  '.repeat(level)}${node.name}`,
+              label: `${"  ".repeat(level)}${node.name}`,
               level,
-              status: node.status
-            })
+              status: node.status,
+            });
             if (Array.isArray(node.children) && node.children.length > 0) {
-              traverse(node.children, level + 1)
+              traverse(node.children, level + 1);
             }
-          })
-        }
+          });
+        };
 
-        traverse(source || [])
+        traverse(source || []);
       } else {
-        source.forEach(item => {
-          const level = Math.max((item.level || 1) - 1, 0)
+        source.forEach((item) => {
+          const level = Math.max((item.level || 1) - 1, 0);
           options.push({
             value: item.id,
-            label: `${'  '.repeat(level)}${item.name}`,
+            label: `${"  ".repeat(level)}${item.name}`,
             level,
-            status: item.status
-          })
-        })
+            status: item.status,
+          });
+        });
 
-        options.sort((a, b) => a.level - b.level)
+        options.sort((a, b) => a.level - b.level);
       }
 
-      this.parentOptions = options
+      this.parentOptions = options;
     },
 
     handleFetchError(error) {
-      const message = error?.message || '获取部门数据失败，请稍后重试'
-      this.treeData = []
-      this.total = 0
-      this.loadError = message
-      this.handleRefreshFeedback(false, message)
-      this.$message.error(message)
+      const message = error?.message || "获取部门数据失败，请稍后重试";
+      this.treeData = [];
+      this.total = 0;
+      this.loadError = message;
+      this.handleRefreshFeedback(false, message);
+      this.$message.error(message);
     },
 
-    handleRefreshFeedback(success, message = '') {
+    handleRefreshFeedback(success, message = "") {
       if (!this.$refs.departmentTable) {
-        return
+        return;
       }
 
       if (success) {
-        this.$refs.departmentTable.refreshSucceed()
+        this.$refs.departmentTable.refreshSucceed();
       } else {
-        this.$refs.departmentTable.refreshFail(message)
+        this.$refs.departmentTable.refreshFail(message);
       }
     },
 
     refreshCurrentMode() {
-      return this.fetchList({ forceList: this.useListMode })
+      return this.fetchList({ forceList: this.useListMode });
     },
 
     // 搜索处理
     handleSearch(formData) {
-      this.pagination.page = 1
+      this.pagination.page = 1;
       this.searchParams = {
         ...DEFAULT_SEARCH_PARAMS,
-        ...formData
-      }
+        ...formData,
+      };
 
-      const needList = this.hasActiveFilters(this.searchParams)
-      this.useListMode = needList
-      this.fetchList({ forceList: needList })
+      const needList = this.hasActiveFilters(this.searchParams);
+      this.useListMode = needList;
+      this.fetchList({ forceList: needList });
     },
 
     // 重置搜索
     handleReset() {
-      this.pagination.page = 1
-      this.searchParams = { ...DEFAULT_SEARCH_PARAMS }
-      this.useListMode = false
-      this.fetchList()
+      this.pagination.page = 1;
+      this.searchParams = { ...DEFAULT_SEARCH_PARAMS };
+      this.useListMode = false;
+      this.fetchList();
     },
 
     // 分页处理
     handlePaginationChange({ page, limit }) {
-      this.pagination.page = page
-      this.pagination.limit = limit
-      this.useListMode = true
-      this.fetchList({ forceList: true })
+      this.pagination.page = page;
+      this.pagination.limit = limit;
+      this.useListMode = true;
+      this.fetchList({ forceList: true });
     },
 
     /**
@@ -353,117 +365,118 @@ export default {
      */
     buildTreeFromList(listData) {
       if (!listData || listData.length === 0) {
-        return []
+        return [];
       }
 
       // 创建ID映射
-      const nodeMap = new Map()
-      const rootNodes = []
+      const nodeMap = new Map();
+      const rootNodes = [];
 
       // 第一遍遍历：创建节点映射
-      listData.forEach(item => {
+      listData.forEach((item) => {
         nodeMap.set(item.id, {
           ...item,
-          children: []
-        })
-      })
+          children: [],
+        });
+      });
 
       // 第二遍遍历：构建父子关系
-      listData.forEach(item => {
-        const node = nodeMap.get(item.id)
+      listData.forEach((item) => {
+        const node = nodeMap.get(item.id);
         if (item.parentId && nodeMap.has(item.parentId)) {
           // 有父节点，添加到父节点的children中
-          const parentNode = nodeMap.get(item.parentId)
-          parentNode.children.push(node)
+          const parentNode = nodeMap.get(item.parentId);
+          parentNode.children.push(node);
         } else {
           // 没有父节点或父节点不存在，作为根节点
-          rootNodes.push(node)
+          rootNodes.push(node);
         }
-      })
+      });
 
       // 排序处理
       const sortNodes = (nodes) => {
         nodes.sort((a, b) => {
           // 先按level排序，再按sortOrder排序
           if (a.level !== b.level) {
-            return (a.level || 0) - (b.level || 0)
+            return (a.level || 0) - (b.level || 0);
           }
-          return (a.sortOrder || 0) - (b.sortOrder || 0)
-        })
+          return (a.sortOrder || 0) - (b.sortOrder || 0);
+        });
 
         // 递归排序子节点
-        nodes.forEach(node => {
+        nodes.forEach((node) => {
           if (node.children && node.children.length > 0) {
-            sortNodes(node.children)
+            sortNodes(node.children);
           }
-        })
-      }
+        });
+      };
 
-      sortNodes(rootNodes)
-      return rootNodes
+      sortNodes(rootNodes);
+      return rootNodes;
     },
 
     async attachManagersToTree(treeData) {
       if (!Array.isArray(treeData) || treeData.length === 0) {
-        return
+        return;
       }
 
       try {
-        const managerMap = await this.fetchDepartmentManagerMap()
-        this.departmentManagerMap = managerMap
-        this.applyManagerInfoToTree(treeData, managerMap)
+        const managerMap = await this.fetchDepartmentManagerMap();
+        this.departmentManagerMap = managerMap;
+        this.applyManagerInfoToTree(treeData, managerMap);
       } catch (error) {
-        console.error('附加部门经理信息失败:', error)
+        console.error("附加部门经理信息失败:", error);
       }
     },
 
     async fetchDepartmentManagerMap() {
-      const managerMap = new Map()
-      const limit = 100
-      let page = 1
-      let totalPages = 1
+      const managerMap = new Map();
+      const limit = 100;
+      let page = 1;
+      let totalPages = 1;
 
       try {
         do {
           const params = {
             page,
             limit,
-            sortBy: 'level:asc,sortOrder:asc',
-            populate: 'manager'
-          }
+            sortBy: "level:asc,sortOrder:asc",
+            populate: "manager",
+          };
 
-          const response = await getDepartmentList(params)
-          const meta = response.data || {}
-          const list = Array.isArray(meta.results) ? meta.results : []
+          const response = await getDepartmentList(params);
+          const meta = response.data || {};
+          const list = Array.isArray(meta.results) ? meta.results : [];
 
-          list.forEach(department => {
-            managerMap.set(department.id, department.manager || null)
-          })
+          list.forEach((department) => {
+            managerMap.set(department.id, department.manager || null);
+          });
 
-          totalPages = meta.totalPages || Math.ceil((meta.totalResults || 0) / limit) || 1
-          page += 1
-        } while (page <= totalPages)
+          totalPages =
+            meta.totalPages || Math.ceil((meta.totalResults || 0) / limit) || 1;
+          page += 1;
+        } while (page <= totalPages);
       } catch (error) {
-        console.error('获取部门列表以补充经理信息失败:', error)
-        throw error
+        console.error("获取部门列表以补充经理信息失败:", error);
+        throw error;
       }
 
-      return managerMap
+      return managerMap;
     },
 
     applyManagerInfoToTree(nodes, managerMap) {
       if (!Array.isArray(nodes)) {
-        return
+        return;
       }
 
-      nodes.forEach(node => {
-        const manager = managerMap.get(node.id) || null
-        this.$set(node, 'manager', manager)
+      nodes.forEach((node) => {
+        const manager = managerMap.get(node.id) || null;
+        this.$set(node, "manager", manager);
 
         if (Array.isArray(node.children) && node.children.length > 0) {
-          this.applyManagerInfoToTree(node.children, managerMap)
+          this.applyManagerInfoToTree(node.children, managerMap);
         }
-      })
+      });
     },
 
     /**
@@ -471,66 +484,72 @@ export default {
      */
     // 新增部门
     handleCreate() {
-      this.formMode = 'create'
-      this.currentDepartment = null
-      this.formDrawerVisible = true
+      this.formMode = "create";
+      this.currentDepartment = null;
+      this.formDrawerVisible = true;
     },
 
     // 新增子部门
     handleCreateChild(department) {
-      this.formMode = 'create'
+      this.formMode = "create";
       this.currentDepartment = {
         parentId: department.id,
-        parentName: department.name
-      }
-      this.formDrawerVisible = true
+        parentName: department.name,
+      };
+      this.formDrawerVisible = true;
     },
 
     // 查看部门
     handleView(department) {
-      this.formMode = 'view'
-      this.currentDepartment = department
-      this.formDrawerVisible = true
+      this.formMode = "view";
+      this.currentDepartment = department;
+      this.formDrawerVisible = true;
     },
 
     // 编辑部门
     handleEdit(department) {
-      this.formMode = 'edit'
-      this.currentDepartment = department
-      this.formDrawerVisible = true
+      this.formMode = "edit";
+      this.currentDepartment = department;
+      this.formDrawerVisible = true;
     },
 
     // 切换状态
     async handleToggleStatus(department) {
-      const newStatus = department.status === 'active' ? 'inactive' : 'active'
-      const actionText = newStatus === 'active' ? '启用' : '禁用'
+      const newStatus = department.status === "active" ? "inactive" : "active";
+      const actionText = newStatus === "active" ? "启用" : "禁用";
 
       try {
         await this.$confirm(
           `确定要${actionText}部门「${department.name}」吗？`,
-          '确认操作',
+          "确认操作",
           {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning'
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
           }
-        )
+        );
 
         const response = await updateDepartmentStatus(department.id, {
-          status: newStatus
-        })
+          status: newStatus,
+        });
 
         if (response.success) {
-          this.$message.success(`${actionText}成功`)
-          await this.refreshCurrentMode()
+          this.$message.success(`${actionText}成功`);
+          await this.refreshCurrentMode();
         } else {
-          this.$message.error(response.error?.message || `${actionText}失败`)
+          this.$message.error(response.error?.message || `${actionText}失败`);
         }
       } catch (error) {
-        if (error !== 'cancel') {
-          console.error('切换部门状态失败:', error)
-          this.$message.error(`${actionText}失败，请稍后重试`)
+        if (error === "cancel" || error === "close") {
+          return;
         }
+
+        const errorMessage =
+          (typeof error === "string" ? error : error?.message) ||
+          `${actionText}失败，请稍后重试`;
+
+        console.error("切换部门状态失败:", error);
+        this.$message.error(errorMessage);
       }
     },
 
@@ -539,135 +558,162 @@ export default {
       try {
         await this.$confirm(
           `确定要删除部门「${department.name}」吗？\n删除后将无法恢复，请谨慎操作！`,
-          '确认删除',
+          "确认删除",
           {
-            confirmButtonText: '确定删除',
-            cancelButtonText: '取消',
-            type: 'error',
-            dangerouslyUseHTMLString: true
+            confirmButtonText: "确定删除",
+            cancelButtonText: "取消",
+            type: "error",
+            dangerouslyUseHTMLString: true,
           }
-        )
+        );
 
-        const response = await deleteDepartment(department.id)
+        const response = await deleteDepartment(department.id);
 
         if (response.success) {
-          this.$message.success('删除成功')
-          await this.refreshCurrentMode()
+          this.$message.success("删除成功");
+          await this.refreshCurrentMode();
         } else {
-          this.$message.error(response.error?.message || '删除失败')
+          this.$message.error(response.error?.message || "删除失败");
         }
       } catch (error) {
-        if (error !== 'cancel') {
-          console.error('删除部门失败:', error)
-          this.$message.error('删除失败，请稍后重试')
+        if (error === "cancel" || error === "close") {
+          return;
         }
+
+        const errorMessage =
+          (typeof error === "string" ? error : error?.message) ||
+          "删除失败，请稍后重试";
+
+        console.error("删除部门失败:", error);
+        this.$message.error(errorMessage);
       }
     },
 
     // 设置部门经理
     handleSetManager(department) {
       // TODO: 实现设置部门经理功能
-      this.$message.info('设置部门经理功能待实现')
+      this.$message.info("设置部门经理功能待实现");
     },
 
     // 批量删除
     async handleBatchDelete(ids) {
       if (!ids || ids.length === 0) {
-        this.$message.warning('请选择要删除的部门')
-        return
+        this.$message.warning("请选择要删除的部门");
+        return;
       }
 
       try {
         await this.$confirm(
           `确定要批量删除选中的 ${ids.length} 个部门吗？\n此操作不可恢复！`,
-          '批量删除确认',
+          "批量删除确认",
           {
-            confirmButtonText: '确定删除',
-            cancelButtonText: '取消',
-            type: 'error'
+            confirmButtonText: "确定删除",
+            cancelButtonText: "取消",
+            type: "error",
           }
-        )
+        );
 
-        const response = await batchDeleteDepartments(ids)
+        const response = await batchDeleteDepartments(ids);
 
         if (response.success) {
-          this.$message.success(`成功删除 ${response.data?.count || ids.length} 个部门`)
-          await this.refreshCurrentMode()
+          this.$message.success(
+            `成功删除 ${response.data?.count || ids.length} 个部门`
+          );
+          await this.refreshCurrentMode();
         } else {
-          this.$message.error(response.error?.message || '批量删除失败')
+          this.$message.error(response.error?.message || "批量删除失败");
         }
       } catch (error) {
-        if (error !== 'cancel') {
-          console.error('批量删除部门失败:', error)
-          this.$message.error('批量删除失败，请稍后重试')
+        if (error === "cancel" || error === "close") {
+          return;
         }
+
+        const errorMessage =
+          (typeof error === "string" ? error : error?.message) ||
+          "批量删除失败，请稍后重试";
+
+        console.error("批量删除部门失败:", error);
+        this.$message.error(errorMessage);
       }
     },
 
     // 批量启用
     async handleBatchEnable(ids) {
       if (!ids || ids.length === 0) {
-        this.$message.warning('请选择要启用的部门')
-        return
+        this.$message.warning("请选择要启用的部门");
+        return;
       }
 
       try {
-        const response = await batchUpdateDepartmentStatus(ids, 'active')
+        const response = await batchUpdateDepartmentStatus(ids, "active");
 
         if (response.success) {
-          this.$message.success(`成功启用 ${response.data?.count || ids.length} 个部门`)
-          await this.refreshCurrentMode()
+          this.$message.success(
+            `成功启用 ${response.data?.count || ids.length} 个部门`
+          );
+          await this.refreshCurrentMode();
         } else {
-          this.$message.error(response.error?.message || '批量启用失败')
+          this.$message.error(response.error?.message || "批量启用失败");
         }
       } catch (error) {
-        console.error('批量启用部门失败:', error)
-        this.$message.error('批量启用失败，请稍后重试')
+        const errorMessage =
+          (typeof error === "string" ? error : error?.message) ||
+          "批量启用失败，请稍后重试";
+
+        console.error("批量启用部门失败:", error);
+        this.$message.error(errorMessage);
       }
     },
 
     // 批量禁用
     async handleBatchDisable(ids) {
       if (!ids || ids.length === 0) {
-        this.$message.warning('请选择要禁用的部门')
-        return
+        this.$message.warning("请选择要禁用的部门");
+        return;
       }
 
       try {
-        const response = await batchUpdateDepartmentStatus(ids, 'inactive')
+        const response = await batchUpdateDepartmentStatus(ids, "inactive");
 
         if (response.success) {
-          this.$message.success(`成功禁用 ${response.data?.count || ids.length} 个部门`)
-          await this.refreshCurrentMode()
+          this.$message.success(
+            `成功禁用 ${response.data?.count || ids.length} 个部门`
+          );
+          await this.refreshCurrentMode();
         } else {
-          this.$message.error(response.error?.message || '批量禁用失败')
+          this.$message.error(response.error?.message || "批量禁用失败");
         }
       } catch (error) {
-        console.error('批量禁用部门失败:', error)
-        this.$message.error('批量禁用失败，请稍后重试')
+        const errorMessage =
+          (typeof error === "string" ? error : error?.message) ||
+          "批量禁用失败，请稍后重试";
+
+        console.error("批量禁用部门失败:", error);
+        this.$message.error(errorMessage);
       }
     },
 
     // 导出成功
     handleExportSuccess(result) {
-      this.$message.success('导出成功')
+      const successMessage = result?.message || "导出成功";
+      this.$message.success(successMessage);
     },
 
     // 表单操作成功处理
     handleFormSuccess() {
-      this.formDrawerVisible = false
-      this.refreshCurrentMode()
+      this.formDrawerVisible = false;
+      this.refreshCurrentMode();
     },
 
     handleRefresh() {
-      this.refreshCurrentMode()
+      this.refreshCurrentMode();
     },
 
     handleRetry() {
-      this.refreshCurrentMode()
-    }
-  }
-}
+      this.refreshCurrentMode();
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>

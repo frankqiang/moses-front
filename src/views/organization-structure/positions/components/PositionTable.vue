@@ -9,11 +9,22 @@
 <template>
   <div class="position-table">
     <!-- 使用全局表格工具栏组件 -->
-    <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
-      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="false"
-      :enable-export="true" :export-api="exportApiFunction" :export-params="exportParams" :hide-status-buttons="true"
-      :refresh-feedback-mode="'all'" @refresh="handleRefresh" @column-change="handleColumnChange"
-      @export-success="handleExportSuccess">
+    <table-toolbar
+      ref="toolbar"
+      :enable-column-settings="true"
+      :column-options="columnOptions"
+      :storage-key="columnSettingsKey"
+      :default-visible-columns="defaultVisibleColumns"
+      :enable-batch-actions="false"
+      :enable-export="true"
+      :export-api="exportApiFunction"
+      :export-params="exportParams"
+      :hide-status-buttons="true"
+      :refresh-feedback-mode="'all'"
+      @refresh="handleRefresh"
+      @column-change="handleColumnChange"
+      @export-success="handleExportSuccess"
+    >
       <template #toolbar-left>
         <ActionButtons :buttons="toolbarButtons" mode="normal" @click="handleToolbarAction" />
         <slot name="toolbar-left" />
@@ -25,11 +36,29 @@
     </table-toolbar>
 
     <!-- 使用BaseTable组件 -->
-    <BaseTable ref="baseTable" :data="safeData" :columns="baseTableColumns" :loading="loading"
-      :pagination="paginationConfig" :show-selection="false" :show-index="true" :virtual-scroll="enableVirtualScroll"
-      :virtual-threshold="1000" :virtual-height="600" :item-height="48" :allow-retry="true" :load-error="loadError"
-      border stripe highlight-current-row @retry="handleRetry" @row-click="handleRowClick" @data-error="handleDataError"
-      @format-error="handleFormatError" @pagination-change="handlePaginationChange">
+    <BaseTable
+      ref="baseTable"
+      :data="safeData"
+      :columns="baseTableColumns"
+      :loading="loading"
+      :pagination="paginationConfig"
+      :show-selection="false"
+      :show-index="true"
+      :virtual-scroll="enableVirtualScroll"
+      :virtual-threshold="1000"
+      :virtual-height="600"
+      :item-height="48"
+      :allow-retry="true"
+      :load-error="loadError"
+      border
+      stripe
+      highlight-current-row
+      @retry="handleRetry"
+      @row-click="handleRowClick"
+      @data-error="handleDataError"
+      @format-error="handleFormatError"
+      @pagination-change="handlePaginationChange"
+    >
       <!-- 注意：type字段在接口文档中未定义，暂时注释掉 -->
       <!-- <template #type="{ row }">
         <span>{{ getTypeLabel(row.type) }}</span>
@@ -49,8 +78,13 @@
 
       <!-- 操作列 -->
       <template #actions="{ row }">
-        <ActionButtons v-if="row && !row._error" :buttons="getActionButtons(row)" mode="text" :row="row"
-          @click="handleActionClick" />
+        <ActionButtons
+          v-if="row && !row._error"
+          :buttons="getActionButtons(row)"
+          mode="text"
+          :row="row"
+          @click="handleActionClick"
+        />
         <span v-else class="text-muted">-</span>
       </template>
 
@@ -224,7 +258,7 @@ export default {
          */
     exportApiFunction() {
       // 返回一个函数，而不是字符串
-      return async (params) => {
+      return async(params) => {
         // 这里应该调用实际的导出API
         // 由于开发阶段暂时没有真实的导出接口，先返回Mock响应
         console.log('导出岗位数据，参数:', params)
