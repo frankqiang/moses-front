@@ -1,10 +1,10 @@
 <template>
-  <el-dialog
+  <base-drawer
     :title="dialogTitle"
     :visible.sync="dialogVisible"
     width="800px"
-    :close-on-click-modal="false"
-    :close-on-press-escape="false"
+    :wrapper-closable="false"
+    :show-footer="false"
     @close="handleClose"
   >
     <div class="role-assignment-dialog">
@@ -121,21 +121,24 @@
       </div>
     </div>
 
-    <div slot="footer" class="dialog-footer">
-      <el-button :disabled="isRemoving || isAssigning" @click="handleClose">
-        关闭
-      </el-button>
-      <el-button type="primary" :loading="loading" @click="handleRefresh">
-        刷新
-      </el-button>
-    </div>
-  </el-dialog>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button :disabled="isRemoving || isAssigning" @click="handleClose">
+          关闭
+        </el-button>
+        <el-button type="primary" :loading="loading" @click="handleRefresh">
+          刷新
+        </el-button>
+      </div>
+    </template>
+  </base-drawer>
 </template>
 
 <script>
 import { debounce } from '@/utils'
+import BaseDrawer from '@/components/Drawer/index.vue'
+import { getUserDetail } from '../api/user-management'
 import {
-  getUserRoles,
   assignRolesToUser,
   removeUserRole
 } from '../api/user-roles'
@@ -143,6 +146,9 @@ import { getAvailableRoles } from '@/views/role-management/api/roles'
 
 export default {
   name: 'RoleAssignmentDialog',
+  components: {
+    BaseDrawer
+  },
   props: {
     // 对话框可见性
     visible: {
@@ -226,10 +232,9 @@ export default {
 
       this.loading = true
       try {
-        await Promise.all([
-          this.loadCurrentRoles(),
-          this.loadAvailableRoles()
-        ])
+        // 先加载用户当前角色，再加载可分配角色（需要基于当前角色进行过滤）
+        await this.loadCurrentRoles()
+        await this.loadAvailableRoles()
       } catch (error) {
         console.error('加载角色数据失败:', error)
         this.$message.error('加载角色数据失败，请稍后重试')
@@ -243,11 +248,19 @@ export default {
          */
     async loadCurrentRoles() {
       try {
-        const response = await getUserRoles(this.userInfo.id)
+        const response = await getUserDetail(this.userInfo.id)
         if (response.success) {
-          this.currentRoles = response.data || []
+          // 从用户详情中提取角色信息
+          const userRoles = response.data?.userRoles || []
+          // 转换为组件需要的格式
+          this.currentRoles = userRoles.map(userRole => ({
+            ...userRole.role, // 包含角色的基本信息：id, name, code, description
+            userRoleId: userRole.id, // 保存用户角色关联记录的ID
+            assignedAt: userRole.assignedAt,
+            status: userRole.status
+          }))
         } else {
-          throw new Error(response.message || '获取用户角色失败')
+          throw new Error(response.message || '获取用户信息失败')
         }
       } catch (error) {
         console.error('获取用户角色失败:', error)
@@ -260,9 +273,11 @@ export default {
          */
     async loadAvailableRoles() {
       try {
+        // 确保调用的是获取所有角色的接口，不传递任何用户ID
         const response = await getAvailableRoles({
           includeUserCount: true,
-          sortBy: 'name:asc'
+          sortBy: 'name:asc',
+          status: 'active' // 只获取激活状态的角色
         })
         if (response.success) {
           const allRoles = response.data.results || []
@@ -276,6 +291,11 @@ export default {
         }
       } catch (error) {
         console.error('获取角色列表失败:', error)
+        console.error('错误详情:', {
+          message: error.message,
+          response: error.response,
+          config: error.config
+        })
         throw error
       }
     },
@@ -435,8 +455,7 @@ export default {
 
 <style lang="scss" scoped>
 .role-assignment-dialog {
-    max-height: 600px;
-    overflow-y: auto;
+    // 移除容器滚动条，使用BaseDrawer的滚动管理
 
     .section-title {
         font-size: 16px;
@@ -512,8 +531,7 @@ export default {
     }
 
     .roles-list {
-        max-height: 300px;
-        overflow-y: auto;
+        // 移除滚动条，让内容自然展示
 
         .role-item {
             display: flex;
