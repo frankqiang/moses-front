@@ -63,11 +63,10 @@
                 <el-form-item label="密码" prop="password">
                   <el-input
                     v-model="formData.password"
-                    :type="passwordVisible ? 'text' : 'password'"
+                    type="password"
                     placeholder="至少8位，必须包含字母和数字"
                     :maxlength="50"
-                    :suffix-icon="passwordVisible ? 'el-icon-view' : 'el-icon-view-off'"
-                    @click="togglePasswordVisibility"
+                    show-password
                   />
                   <div class="help-text">密码强度越高，账户越安全</div>
                 </el-form-item>
@@ -78,9 +77,10 @@
                 <el-form-item label="确认密码" prop="confirmPassword">
                   <el-input
                     v-model="formData.confirmPassword"
-                    :type="passwordVisible ? 'text' : 'password'"
+                    type="password"
                     placeholder="请再次输入密码"
                     :maxlength="50"
+                    show-password
                   />
                   <div class="help-text">请确保两次输入的密码一致</div>
                 </el-form-item>
@@ -226,7 +226,6 @@ export default {
   data() {
     return {
       formData: { ...DEFAULT_REGISTER_FORM },
-      passwordVisible: false,
       submitLoading: false,
       applicationId: '',
 
@@ -256,13 +255,6 @@ export default {
     }
   },
   methods: {
-    /**
-     * 切换密码可见性
-     */
-    togglePasswordVisibility() {
-      this.passwordVisible = !this.passwordVisible
-    },
-
     /**
      * 处理表单提交
      */
@@ -329,7 +321,6 @@ export default {
      */
     handleReset() {
       this.$refs.enhancedForm.resetFields()
-      this.passwordVisible = false
     },
 
     /**
@@ -377,7 +368,6 @@ export default {
       this.successDialog.visible = false
       this.$refs.enhancedForm.resetFields()
       this.formData = { ...DEFAULT_REGISTER_FORM }
-      this.passwordVisible = false
       this.applicationId = ''
     },
 
