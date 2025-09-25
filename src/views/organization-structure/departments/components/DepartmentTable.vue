@@ -66,7 +66,6 @@
       highlight-current-row
       @selection-change="handleSelectionChange"
       @retry="handleRetry"
-      @row-click="handleRowClick"
       @row-dblclick="handleRowDblClick"
       @data-error="handleDataError"
       @format-error="handleFormatError"
@@ -79,7 +78,7 @@
             v-if="row.children && row.children.length > 0"
             class="tree-expand-icon"
             :class="{ 'is-expanded': row._expanded }"
-            @click="toggleExpand(row)"
+            @click.stop="toggleExpand(row)"
           >
             <i class="el-icon-caret-right" />
           </span>
@@ -98,18 +97,21 @@
 
       <!-- 状态列 -->
       <template #status="{ row }">
-        <StatusTag
-          v-if="row && row.status !== undefined"
-          :status="row.status"
-          :text-map="statusTextMap"
-          :type-map="statusTypeMap"
-        />
+        <div v-if="row && row.status !== undefined" @click.stop>
+          <StatusTag
+            :status="row.status"
+            :text-map="statusTextMap"
+            :type-map="statusTypeMap"
+          />
+        </div>
         <span v-else class="text-muted">-</span>
       </template>
 
       <!-- 操作列 -->
       <template #actions="{ row }">
-        <ActionButtons v-if="row" :buttons="getActionButtons(row)" mode="text" :row="row" @click="handleActionClick" />
+        <div v-if="row" @click.stop>
+          <ActionButtons :buttons="getActionButtons(row)" mode="text" :row="row" @click="handleActionClick" />
+        </div>
         <span v-else class="text-muted">-</span>
       </template>
 
@@ -461,12 +463,6 @@ export default {
          */
     handleRetry() {
       this.$emit('retry')
-    },
-
-    handleRowClick(row) {
-      if (row && row.children && row.children.length > 0) {
-        this.toggleExpand(row)
-      }
     },
 
     handleRowDblClick(row) {

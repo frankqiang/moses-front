@@ -60,11 +60,16 @@ BaseDrawer 和 EnhancedForm 统一交互风格 * 创建日期：2024-01-20 * 修
                   placeholder="请输入岗位编码，将自动转为大写"
                   maxlength="50"
                   show-word-limit
-                  :disabled="formMode === 'view'"
+                  :disabled="formMode === 'view' || formMode === 'update'"
                   @input="(value) => handleCodeInput(form, value)"
                 />
                 <div class="field-hint">
-                  岗位编码用于系统内部识别，建议使用英文缩写，如：DEV、QA等
+                  <span v-if="formMode === 'update'" class="edit-disabled-hint">
+                    编码创建后不可修改，确保系统数据一致性
+                  </span>
+                  <span v-else>
+                    岗位编码用于系统内部识别，建议使用英文缩写，如：DEV、QA等
+                  </span>
                 </div>
               </el-form-item>
             </el-col>
@@ -712,6 +717,11 @@ export default {
     font-size: 12px;
     color: #909399;
     line-height: 1.4;
+
+    .edit-disabled-hint {
+      color: #f56c6c;
+      font-weight: 500;
+    }
   }
 
   .employee-tag {
