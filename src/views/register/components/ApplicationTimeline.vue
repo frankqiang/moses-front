@@ -13,7 +13,7 @@
         <i class="el-icon-time timeline-icon" />
         申请历史
       </h4>
-      <p class="timeline-subtitle">查看申请的完整审批流程和状态变化</p>
+
     </div>
 
     <!-- 加载状态 -->
@@ -350,24 +350,24 @@ export default {
     margin-bottom: 20px;
 
     .timeline-title {
+      margin: 0 0 16px 0;
       font-size: 16px;
       font-weight: 600;
       color: #303133;
-      margin: 0 0 8px 0;
       display: flex;
       align-items: center;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+      border-radius: 8px;
+      border-left: 4px solid #409EFF;
 
       .timeline-icon {
         margin-right: 8px;
         color: #409EFF;
+        font-size: 16px;
       }
     }
 
-    .timeline-subtitle {
-      font-size: 14px;
-      color: #606266;
-      margin: 0;
-    }
   }
 
   .timeline-loading {
