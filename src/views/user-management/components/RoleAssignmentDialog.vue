@@ -134,7 +134,12 @@
 
 <script>
 import { debounce } from '@/utils'
-import { getAvailableRoles, getUserRoles, assignRolesToUser, removeUserRole } from '../api'
+import {
+  getUserRoles,
+  assignRolesToUser,
+  removeUserRole
+} from '../api/user-roles'
+import { getAvailableRoles } from '@/views/role-management/api/roles'
 
 export default {
   name: 'RoleAssignmentDialog',

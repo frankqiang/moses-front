@@ -438,11 +438,11 @@ import EnhancedForm from '@/components/EnhancedForm'
 import {
   createUser, // eslint-disable-line no-unused-vars
   updateUser, // eslint-disable-line no-unused-vars
-  getDepartmentOptions,
-  getPositionOptions,
-  getRoleOptions,
   getManagerOptions
-} from '../api'
+} from '../api/user-management'
+import { getDepartmentOptions as fetchDepartmentOptions } from '@/views/organization-structure/shared/api/department-options'
+import { getPositionOptions as fetchPositionOptions } from '@/views/organization-structure/positions/api/positions'
+import { getAvailableRoles as fetchAvailableRoles } from '@/views/role-management/api/roles'
 import {
   USER_STATUS_OPTIONS,
   GENDER_OPTIONS
@@ -1073,7 +1073,7 @@ export default {
       try {
         this.departmentLoading = true
 
-        const response = await getDepartmentOptions({
+        const response = await fetchDepartmentOptions({
           status: 'active' // 只获取激活状态的部门
         })
 
@@ -1113,7 +1113,7 @@ export default {
       try {
         this.positionLoading = true
 
-        const response = await getPositionOptions({
+        const response = await fetchPositionOptions({
           status: 'active' // 只获取激活状态的岗位
         })
 
@@ -1155,14 +1155,11 @@ export default {
       try {
         this.roleLoading = true
 
-        const response = await getRoleOptions({
+        const response = await fetchAvailableRoles({
           status: 'active' // 只获取激活状态的角色
         })
 
-        if (response && response.success && response.data && response.data.options) {
-          this.roleOptions = response.data.options
-        } else if (response && response.success && response.data && response.data.results) {
-          // 如果API返回的是标准列表格式，手动转换为选项格式
+        if (response && response.success && response.data && response.data.results) {
           this.roleOptions = response.data.results.map(role => ({
             value: role.id,
             label: role.name,
@@ -1173,6 +1170,8 @@ export default {
             status: role.status,
             isDefault: role.isDefault
           }))
+        } else if (response && response.success && response.data && response.data.options) {
+          this.roleOptions = response.data.options
         } else {
           console.warn('角色数据格式异常:', response)
           this.roleOptions = []

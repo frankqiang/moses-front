@@ -5,8 +5,7 @@
  * 修改记录：
  *   - 2024-01-15: 初始创建，统一导出用户管理API
  *   - 2024-01-20: 添加角色管理和用户角色分配API
+ *   - 2025-09-25: 重构为模块内聚导出，跨模块数据通过各自模块API复用
  */
 
 export * from './user-management'
-export * from './roles'
-export * from './user-roles'

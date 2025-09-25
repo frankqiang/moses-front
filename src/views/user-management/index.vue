@@ -91,7 +91,7 @@ import {
   batchUpdateUserStatus,
   resetUserPassword, // eslint-disable-line no-unused-vars
   exportUserList
-} from './api'
+} from './api/user-management'
 
 // 导入常量配置
 import {
