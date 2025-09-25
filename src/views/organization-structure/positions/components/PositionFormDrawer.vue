@@ -1,421 +1,483 @@
-<!--
- * 文件名称：PositionFormDrawer.vue
- * 文件描述：岗位表单抽屉组件，支持新增、编辑、查看模式
- * 创建日期：2024-01-20
- * 修改记录：
- *   - 2024-01-20: 创建，符合process-management/operations模块的开发范式
--->
+/**
+* 文件名称：PositionFormDrawer.vue
+* 文件描述：岗位表单抽屉组件，使用全局 BaseDrawer 和 EnhancedForm 统一交互风格
+* 创建日期：2024-01-20
+* 修改记录：
+* - 2024-01-20: 创建，符合process-management/operations模块的开发范式
+* - 2025-09-25: 重构为全局组件风格，接入部门选项API
+*/
 
 <template>
-  <el-drawer
-    :visible.sync="drawerVisible"
-    :title="drawerTitle"
-    :size="700"
-    :before-close="handleClose"
-    :close-on-click-modal="false"
-    class="position-form-drawer"
-  >
-    <div class="drawer-content">
-      <el-form
-        ref="positionForm"
-        :model="formData"
-        :rules="formRules"
-        :disabled="isViewMode"
-        label-width="100px"
-        size="medium"
-      >
-        <!-- 基本信息 -->
+  <base-drawer :visible.sync="drawerVisible" :title="drawerTitle" width="700px" :wrapper-closable="false"
+    custom-class="position-form-drawer" :loading="loading" @open="handleDrawerOpen" @close="handleDrawerClose">
+    <enhanced-form ref="enhancedForm" :data="formData" :mode="innerMode" :rules="formRules" label-width="120px"
+      :show-footer="false" :validate-on-data-change="false" :clear-validate-on-data-update="true"
+      :disable-initial-validation="true" :loading="loading" @submit="handleFormSubmit" @reset="handleFormReset"
+      @validate="handleCustomValidate" @validate-error="handleValidateError">
+      <template v-slot="{ form, mode: formMode }">
+        <!-- 一、基础信息 -->
         <div class="form-section">
           <div class="section-title">
             <i class="el-icon-info" />
             基本信息
           </div>
 
-          <el-form-item label="岗位名称" prop="name">
-            <el-input v-model="formData.name" placeholder="请输入岗位名称" maxlength="100" show-word-limit />
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="岗位名称" prop="name">
+                <el-input v-model="form.name" placeholder="请输入岗位名称" maxlength="100" show-word-limit
+                  :disabled="formMode === 'view'" />
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-          <el-form-item label="岗位编码" prop="code">
-            <el-input
-              v-model="formData.code"
-              placeholder="请输入岗位编码，将自动转为大写"
-              maxlength="50"
-              show-word-limit
-              @input="handleCodeInput"
-            />
-            <div class="form-tip">
-              岗位编码用于系统内部识别，建议使用英文缩写，如：DEV、QA等
-            </div>
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="岗位编码" prop="code">
+                <el-input v-model="form.code" placeholder="请输入岗位编码，将自动转为大写" maxlength="50" show-word-limit
+                  :disabled="formMode === 'view'" @input="value => handleCodeInput(form, value)" />
+                <div class="field-hint">
+                  岗位编码用于系统内部识别，建议使用英文缩写，如：DEV、QA等
+                </div>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-          <!-- 注意：type字段在接口文档中未定义，暂时注释掉 -->
-          <!-- <el-form-item label="岗位类型" prop="type">
-            <el-select v-model="formData.type" placeholder="请选择岗位类型" style="width: 100%">
-              <el-option
-                v-for="option in positionTypeOptions"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
-            </el-select>
-          </el-form-item> -->
-
-          <el-form-item label="岗位职责" prop="description">
-            <el-input
-              v-model="formData.description"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入岗位职责描述（可选）"
-              maxlength="1000"
-              show-word-limit
-            />
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="岗位职责" prop="description">
+                <el-input v-model="form.description" type="textarea" placeholder="请输入岗位职责描述（可选）" :rows="4"
+                  maxlength="1000" show-word-limit :disabled="formMode === 'view'" />
+              </el-form-item>
+            </el-col>
+          </el-row>
         </div>
 
-        <!-- 组织关系 -->
+        <!-- 二、组织关系 -->
         <div class="form-section">
           <div class="section-title">
             <i class="el-icon-connection" />
             组织关系
           </div>
 
-          <el-form-item label="所属部门" prop="departmentId">
-            <el-select v-model="formData.departmentId" placeholder="请选择所属部门" filterable style="width: 100%">
-              <el-option v-for="option in departmentOptions" :key="option.id" :label="option.name" :value="option.id" />
-            </el-select>
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="所属部门" prop="departmentId">
+                <el-select v-model="form.departmentId" placeholder="请选择所属部门" filterable style="width: 100%"
+                  :disabled="formMode === 'view'" :loading="departmentOptionsLoading">
+                  <el-option v-for="option in departmentSelectOptions" :key="option.value"
+                    :label="option.labelWithLevel || option.label" :value="option.value" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-          <el-form-item label="岗位级别" prop="level">
-            <el-input-number v-model="formData.level" :min="1" :max="20" placeholder="岗位级别" style="width: 100%" />
-            <div class="form-tip">
-              数值越小级别越高，用于岗位层级管理
-            </div>
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="岗位级别" prop="level">
+                <el-input-number v-model="form.level" :min="1" :max="10" :disabled="formMode === 'view'"
+                  style="width: 100%" />
+                <div class="field-hint">
+                  数值越小级别越高，用于岗位层级管理
+                </div>
+              </el-form-item>
+            </el-col>
 
-          <el-form-item label="排序顺序" prop="sortOrder">
-            <el-input-number v-model="formData.sortOrder" :min="0" :max="9999" placeholder="排序顺序" style="width: 100%" />
-            <div class="form-tip">
-              数值越小排序越靠前，用于同部门岗位的显示顺序
-            </div>
-          </el-form-item>
+            <el-col :span="12">
+              <el-form-item label="排序顺序" prop="sortOrder">
+                <el-input-number v-model="form.sortOrder" :min="0" :max="9999" :disabled="formMode === 'view'"
+                  style="width: 100%" />
+                <div class="field-hint">
+                  数值越小排序越靠前，用于同部门岗位的显示顺序
+                </div>
+              </el-form-item>
+            </el-col>
+          </el-row>
         </div>
 
-        <!-- 状态设置 -->
+        <!-- 三、状态设置 -->
         <div class="form-section">
           <div class="section-title">
             <i class="el-icon-setting" />
             状态设置
           </div>
 
-          <el-form-item label="岗位状态" prop="status">
-            <el-radio-group v-model="formData.status">
-              <el-radio label="active">启用</el-radio>
-              <el-radio label="inactive">禁用</el-radio>
-            </el-radio-group>
-            <div class="form-tip">
-              禁用的岗位将不能分配员工，也不会在选择器中显示
-            </div>
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="岗位状态" prop="status">
+                <el-radio-group v-model="form.status" :disabled="formMode === 'view'">
+                  <el-radio v-for="option in statusOptions" :key="option.value" :label="option.value">
+                    {{ option.label }}
+                  </el-radio>
+                </el-radio-group>
+                <div class="field-hint">
+                  禁用的岗位将不能分配员工，也不会在选择器中显示
+                </div>
+              </el-form-item>
+            </el-col>
+          </el-row>
         </div>
 
-        <!-- 查看模式下的额外信息 -->
-        <div v-if="isViewMode && positionData" class="form-section">
+        <!-- 查看模式的系统信息 -->
+        <div v-if="formMode === 'view' && positionData" class="form-section">
           <div class="section-title">
             <i class="el-icon-time" />
             系统信息
           </div>
 
-          <el-form-item label="创建时间">
-            <span>{{ formatDateTime(positionData.createdAt) }}</span>
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="创建时间">
+                <span>{{ formatDateTime(positionData.createdAt) }}</span>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-          <el-form-item label="更新时间">
-            <span>{{ formatDateTime(positionData.updatedAt) }}</span>
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="更新时间">
+                <span>{{ formatDateTime(positionData.updatedAt) }}</span>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-          <el-form-item v-if="positionData.employees && positionData.employees.length > 0" label="在职员工">
-            <el-tag
-              v-for="employee in positionData.employees"
-              :key="employee.id"
-              type="info"
-              size="small"
-              style="margin-right: 8px; margin-bottom: 4px;"
-            >
-              {{ employee.name }}
-            </el-tag>
-          </el-form-item>
+          <el-row v-if="positionData.employees && positionData.employees.length" :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="在职员工">
+                <el-tag v-for="employee in positionData.employees" :key="employee.id" type="info" size="small"
+                  class="employee-tag">
+                  {{ employee.name }}
+                </el-tag>
+              </el-form-item>
+            </el-col>
+          </el-row>
         </div>
-      </el-form>
-    </div>
+      </template>
+    </enhanced-form>
 
-    <!-- 操作按钮 -->
-    <div class="drawer-footer">
-      <el-button @click="handleClose">
-        {{ isViewMode ? '关闭' : '取消' }}
+    <template #footer>
+      <el-button @click="handleCancel">
+        {{ innerMode === 'view' ? '关闭' : '取消' }}
       </el-button>
-      <el-button v-if="!isViewMode" type="primary" :loading="submitting" @click="handleSubmit">
-        {{ isCreateMode ? '创建' : '更新' }}
+      <el-button v-if="innerMode !== 'view'" @click="handleReset">
+        重置
       </el-button>
-      <el-button
-        v-if="isCreateMode && !isViewMode"
-        type="success"
-        :loading="submitting"
-        @click="handleSubmitAndContinue"
-      >
+      <el-button v-if="innerMode === 'create'" type="primary" :loading="loading" @click="handleSubmitAndContinue">
         保存并继续
       </el-button>
-    </div>
-  </el-drawer>
+      <el-button v-if="innerMode !== 'view'" type="primary" :loading="loading" @click="handleSubmit">
+        {{ innerMode === 'create' ? '确认保存' : '保存修改' }}
+      </el-button>
+    </template>
+  </base-drawer>
 </template>
 
 <script>
-import { createPosition, updatePosition } from '../api'
+import BaseDrawer from '@/components/Drawer'
+import EnhancedForm from '@/components/EnhancedForm'
 import { parseTime } from '@/utils'
-import { FORM_RULES } from '../constants'
+import {
+  createPosition,
+  updatePosition,
+  getDepartmentOptions
+} from '../api'
+import {
+  FORM_RULES,
+  POSITION_STATUS,
+  POSITION_STATUS_OPTIONS,
+  POSITION_SUCCESS_MESSAGES,
+  POSITION_ERROR_MESSAGES
+} from '../constants'
 
 export default {
   name: 'PositionFormDrawer',
+  components: {
+    BaseDrawer,
+    EnhancedForm
+  },
   props: {
-    // 抽屉显示状态
     visible: {
       type: Boolean,
       default: false
     },
-    // 表单模式：create, edit, view
     mode: {
       type: String,
       default: 'create',
-      validator: value => ['create', 'edit', 'view'].includes(value)
+      validator: value => ['create', 'update', 'view'].includes(value)
     },
-    // 岗位数据（编辑和查看模式）
     positionData: {
       type: Object,
       default: null
-    },
-    // 部门选项
-    departmentOptions: {
-      type: Array,
-      default: () => []
     }
   },
   data() {
     return {
-      // 表单数据
-      formData: {
+      drawerVisible: false,
+      formData: this.initFormData(),
+      loading: false,
+      departmentOptions: [],
+      departmentOptionsLoading: false
+    }
+  },
+  computed: {
+    innerMode() {
+      return this.mode
+    },
+    drawerTitle() {
+      const titleMap = {
+        create: '新增岗位',
+        update: '编辑岗位',
+        view: '查看岗位'
+      }
+      return titleMap[this.innerMode] || '岗位管理'
+    },
+    formRules() {
+      return FORM_RULES
+    },
+    statusOptions() {
+      return POSITION_STATUS_OPTIONS
+    },
+    departmentSelectOptions() {
+      return this.departmentOptions
+    }
+  },
+  watch: {
+    visible: {
+      immediate: true,
+      handler(newVal) {
+        this.drawerVisible = newVal
+      }
+    },
+    drawerVisible(newVal) {
+      this.$emit('update:visible', newVal)
+    },
+    mode() {
+      if (this.drawerVisible) {
+        this.initializeForm()
+      }
+    },
+    positionData: {
+      deep: true,
+      handler() {
+        if (this.drawerVisible && (this.innerMode === 'update' || this.innerMode === 'view')) {
+          this.initializeForm()
+        }
+      }
+    }
+  },
+  methods: {
+    initFormData() {
+      return {
+        id: undefined,
         name: '',
         code: '',
         description: '',
         departmentId: '',
         level: 1,
         sortOrder: 0,
-        status: 'active'
-      },
-
-      // 状态
-      submitting: false
-    }
-  },
-  computed: {
-    /**
-         * 抽屉显示状态（双向绑定）
-         */
-    drawerVisible: {
-      get() {
-        return this.visible
-      },
-      set(value) {
-        this.$emit('update:visible', value)
+        status: POSITION_STATUS.ACTIVE
       }
     },
-
-    /**
-         * 抽屉标题
-         */
-    drawerTitle() {
-      const titles = {
-        create: '新增岗位',
-        edit: '编辑岗位',
-        view: '查看岗位'
-      }
-      return titles[this.mode] || '岗位管理'
-    },
-
-    /**
-         * 是否为创建模式
-         */
-    isCreateMode() {
-      return this.mode === 'create'
-    },
-
-    /**
-         * 是否为编辑模式
-         */
-    isEditMode() {
-      return this.mode === 'edit'
-    },
-
-    /**
-         * 是否为查看模式
-         */
-    isViewMode() {
-      return this.mode === 'view'
-    },
-
-    /**
-         * 表单验证规则
-         */
-    formRules() {
-      return FORM_RULES
-    }
-
-    // 注意：type字段在接口文档中未定义，暂时注释掉
-    // /**
-    //      * 岗位类型选项
-    //      */
-    // positionTypeOptions() {
-    //   return POSITION_TYPE_OPTIONS
-    // }
-  },
-  watch: {
-    /**
-         * 监听抽屉显示状态
-         */
-    visible(newValue) {
-      if (newValue) {
-        this.initForm()
-      } else {
-        this.resetForm()
-      }
-    },
-
-    /**
-         * 监听岗位数据变化
-         */
-    positionData: {
-      handler() {
-        if (this.visible) {
-          this.initForm()
-        }
-      },
-      deep: true
-    }
-  },
-  methods: {
-    /**
-         * 初始化表单
-         */
-    initForm() {
-      if (this.isCreateMode) {
-        // 创建模式
-        this.formData = {
-          name: '',
-          code: '',
-          description: '',
-          departmentId: '',
-          level: 1,
-          sortOrder: 0,
-          status: 'active'
-        }
+    initializeForm() {
+      if (this.innerMode === 'create') {
+        this.formData = this.initFormData()
       } else if (this.positionData) {
-        // 编辑或查看模式
-        this.formData = {
-          name: this.positionData.name || '',
-          code: this.positionData.code || '',
-          description: this.positionData.description || '',
-          departmentId: this.positionData.departmentId || '',
-          level: this.positionData.level || 1,
-          sortOrder: this.positionData.sortOrder || 0,
-          status: this.positionData.status || 'active'
-        }
+        this.formData = this.mapFormDataFromSource(this.positionData)
       }
     },
-
-    /**
-         * 重置表单
-         */
-    resetForm() {
+    mapFormDataFromSource(source = {}) {
+      const departmentId = source.departmentId || source.department?.id || ''
+      return {
+        id: source.id,
+        name: source.name || '',
+        code: (source.code || '').toUpperCase(),
+        description: source.description || '',
+        departmentId,
+        level: typeof source.level === 'number' ? source.level : 1,
+        sortOrder: typeof source.sortOrder === 'number' ? source.sortOrder : 0,
+        status: source.status || POSITION_STATUS.ACTIVE
+      }
+    },
+    async handleDrawerOpen() {
+      this.initializeForm()
+      await this.loadDepartmentOptions()
+    },
+    handleDrawerClose() {
+      this.loading = false
+      this.formData = this.initFormData()
       this.$nextTick(() => {
-        if (this.$refs.positionForm) {
-          this.$refs.positionForm.resetFields()
+        if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs?.form) {
+          this.$refs.enhancedForm.$refs.form.clearValidate()
         }
       })
+      this.$emit('close')
     },
-
-    /**
-         * 处理编码输入
-         */
-    handleCodeInput(value) {
-      // 自动转换为大写
-      this.formData.code = value.toUpperCase()
-    },
-
-    /**
-         * 格式化日期时间
-         */
-    formatDateTime(dateTime) {
-      return parseTime(dateTime, '{y}-{m}-{d} {h}:{i}')
-    },
-
-    /**
-         * 处理关闭
-         */
-    handleClose() {
-      if (this.submitting) {
+    handleCancel() {
+      if (this.loading) {
         this.$message.warning('正在保存中，请稍候...')
         return
       }
-      this.$emit('update:visible', false)
+      this.drawerVisible = false
     },
-
-    /**
-         * 处理提交
-         */
-    async handleSubmit() {
+    handleReset() {
+      if (this.innerMode === 'view') {
+        return
+      }
+      this.$confirm('确定要重置表单吗？', '重置确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.handleFormReset()
+        this.$message.success('表单已重置')
+      }).catch(() => {
+        // 用户取消重置
+      })
+    },
+    handleSubmit() {
+      if (this.$refs.enhancedForm) {
+        this.$refs.enhancedForm.handleSubmitClick()
+      }
+    },
+    handleSubmitAndContinue() {
+      if (this.$refs.enhancedForm) {
+        this.$refs.enhancedForm.handleContinueClick()
+      }
+    },
+    async handleFormSubmit(formData, continueEdit = false) {
       try {
-        // 表单验证
-        await this.$refs.positionForm.validate()
-
-        this.submitting = true
+        this.loading = true
+        const payload = {
+          ...formData,
+          code: (formData.code || '').toUpperCase().trim()
+        }
 
         let response
-        if (this.isCreateMode) {
-          // 创建岗位
-          response = await createPosition(this.formData)
-        } else if (this.isEditMode) {
-          // 更新岗位
-          response = await updatePosition(this.positionData.id, this.formData)
+        if (this.innerMode === 'create') {
+          delete payload.id
+          response = await createPosition(payload)
+        } else if (this.innerMode === 'update') {
+          const targetId = payload.id || this.positionData?.id
+          response = await updatePosition(targetId, payload)
+        } else {
+          return
         }
 
-        if (response.success) {
-          this.$message.success(response.message || (this.isCreateMode ? '创建成功' : '更新成功'))
-          this.$emit('success', response.data)
+        const messageKey = this.innerMode === 'create' ? 'create' : 'update'
+        const successMessage = response?.message || POSITION_SUCCESS_MESSAGES[messageKey] || '操作成功'
+        this.$message.success(successMessage)
+
+        this.$emit('success', {
+          mode: this.innerMode,
+          data: response?.data || payload,
+          continueEdit
+        })
+
+        if (continueEdit) {
+          this.formData = this.initFormData()
+          this.$nextTick(() => {
+            if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs?.form) {
+              this.$refs.enhancedForm.$refs.form.clearValidate()
+            }
+          })
         } else {
-          this.$message.error(response.error?.message || '操作失败')
+          this.drawerVisible = false
         }
       } catch (error) {
-        if (error !== 'validation failed') {
-          console.error('提交表单失败:', error)
-          this.$message.error('操作失败，请稍后重试')
-        }
+        console.error('岗位保存失败:', error)
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.response?.data?.error?.message ||
+          error?.message ||
+          POSITION_ERROR_MESSAGES.DEFAULT
+        this.$message.error(errorMessage)
       } finally {
-        this.submitting = false
+        this.loading = false
       }
     },
-
-    /**
-         * 处理保存并继续
-         */
-    async handleSubmitAndContinue() {
-      try {
-        await this.handleSubmit()
-        // 如果保存成功，重置表单继续创建
-        if (!this.submitting) {
-          this.initForm()
-          this.$message.success('已保存，可以继续创建下一个岗位')
+    handleFormReset() {
+      this.formData = this.innerMode === 'create'
+        ? this.initFormData()
+        : this.mapFormDataFromSource(this.positionData || {})
+      this.$nextTick(() => {
+        if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs?.form) {
+          this.$refs.enhancedForm.$refs.form.clearValidate()
         }
-      } catch (error) {
-        // 错误已在handleSubmit中处理
+      })
+    },
+    handleCustomValidate(formData, callback) {
+      callback(true)
+    },
+    handleValidateError(invalidFields) {
+      const fieldKeys = Object.keys(invalidFields || {})
+      if (!fieldKeys.length) {
+        return
       }
+      this.$nextTick(() => {
+        const firstErrorField = fieldKeys[0]
+        const formEl = this.$refs.enhancedForm && this.$refs.enhancedForm.$el
+        if (!formEl) {
+          return
+        }
+        const fieldElement = formEl.querySelector(`[prop="${firstErrorField}"] input, [prop="${firstErrorField}"] textarea, [prop="${firstErrorField}"] .el-select`)
+        if (fieldElement && typeof fieldElement.focus === 'function') {
+          fieldElement.focus()
+        }
+      })
+    },
+    async loadDepartmentOptions() {
+      this.departmentOptionsLoading = true
+      try {
+        const response = await getDepartmentOptions({
+          status: POSITION_STATUS.ACTIVE,
+          limit: 100,
+          sortBy: 'level:asc,sortOrder:asc'
+        })
+        const options = response?.data?.options || []
+        this.departmentOptions = options.map(option => ({
+          value: option.value,
+          label: option.label,
+          labelWithLevel: option.labelWithLevel || option.label,
+          code: option.code
+        }))
+        this.ensureCurrentDepartmentVisible()
+      } catch (error) {
+        console.error('加载部门选项失败:', error)
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.response?.data?.error?.message ||
+          error?.message ||
+          '加载部门选项失败，请稍后重试'
+        this.$message.error(errorMessage)
+      } finally {
+        this.departmentOptionsLoading = false
+      }
+    },
+    ensureCurrentDepartmentVisible() {
+      const currentId = this.formData.departmentId
+      if (!currentId) {
+        return
+      }
+      const exists = this.departmentOptions.some(option => option.value === currentId)
+      if (!exists) {
+        const fallbackLabel = this.positionData?.department?.name || this.positionData?.departmentName
+        if (fallbackLabel) {
+          this.departmentOptions = [
+            ...this.departmentOptions,
+            {
+              value: currentId,
+              label: fallbackLabel,
+              labelWithLevel: fallbackLabel
+            }
+          ]
+        }
+      }
+    },
+    handleCodeInput(form, value) {
+      form.code = (value || '').toUpperCase()
+    },
+    formatDateTime(dateTime) {
+      return parseTime(dateTime, '{y}-{m}-{d} {h}:{i}')
     }
   }
 }
@@ -423,60 +485,61 @@ export default {
 
 <style lang="scss" scoped>
 .position-form-drawer {
-  :deep(.el-drawer__body) {
+  :deep(.drawer-content) {
     padding: 0;
     display: flex;
     flex-direction: column;
   }
 
-  .drawer-content {
-    flex: 1;
+  :deep(.el-form) {
     padding: 24px;
-    overflow-y: auto;
+  }
 
-    .form-section {
-      margin-bottom: 32px;
+  .form-section {
+    margin-bottom: 32px;
 
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      .section-title {
-        display: flex;
-        align-items: center;
-        font-size: 16px;
-        font-weight: 500;
-        color: #303133;
-        margin-bottom: 16px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #e4e7ed;
-
-        i {
-          margin-right: 8px;
-          color: #409eff;
-        }
-      }
+    &:last-child {
+      margin-bottom: 0;
     }
 
-    .form-tip {
-      font-size: 12px;
-      color: #909399;
-      margin-top: 4px;
-      line-height: 1.4;
-    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+      font-weight: 500;
+      color: #303133;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e4e7ed;
 
-    :deep(.el-form-item) {
-      margin-bottom: 20px;
-    }
-
-    :deep(.el-textarea) {
-      .el-textarea__inner {
-        resize: vertical;
+      i {
+        margin-right: 8px;
+        color: #409eff;
       }
     }
   }
 
-  .drawer-footer {
+  .field-hint {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #909399;
+    line-height: 1.4;
+  }
+
+  .employee-tag {
+    margin-right: 8px;
+    margin-bottom: 4px;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
+  }
+
+  :deep(.el-radio) {
+    margin-right: 20px;
+  }
+
+  :deep(.drawer-footer) {
     padding: 16px 24px;
     border-top: 1px solid #e4e7ed;
     background: #fafafa;
@@ -486,19 +549,17 @@ export default {
   }
 }
 
-// 响应式设计
 @media (max-width: 768px) {
   .position-form-drawer {
     :deep(.el-drawer) {
       width: 100% !important;
     }
 
-    .drawer-content {
+    :deep(.el-form) {
       padding: 16px;
     }
 
-    .drawer-footer {
-      padding: 12px 16px;
+    :deep(.drawer-footer) {
       flex-direction: column-reverse;
 
       .el-button {

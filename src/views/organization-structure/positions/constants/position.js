@@ -51,8 +51,6 @@ export const POSITION_API_CONFIG = {
   BASE: '/positions',
   DETAIL: (id) => `/positions/${id}`,
   STATUS: (id) => `/positions/${id}/status`,
-  BATCH_STATUS: '/positions/batch-status',
-  BATCH_DELETE: '/positions/batch-delete',
   EXPORT: '/positions/export'
 }
 
@@ -67,11 +65,8 @@ export const POSITION_SUCCESS_MESSAGES = Object.freeze({
   create: '创建岗位成功',
   update: '更新岗位信息成功',
   delete: '删除岗位成功',
-  batchDelete: '批量删除岗位成功',
   activate: '岗位启用成功',
-  deactivate: '岗位禁用成功',
-  batchActivate: '批量启用岗位成功',
-  batchDeactivate: '批量禁用岗位成功'
+  deactivate: '岗位禁用成功'
 })
 
 export const POSITION_ERROR_MESSAGES = Object.freeze({
@@ -84,14 +79,16 @@ export const POSITION_ERROR_MESSAGES = Object.freeze({
 
 // 搜索表单字段定义（需要在SEARCH_FORM_CONFIG之前定义）
 export const SEARCH_FORM_FIELDS = Object.freeze({
-  KEYWORD: 'keyword',
+  NAME: 'name',
+  CODE: 'code',
   STATUS: 'status',
   DEPARTMENT_ID: 'departmentId'
 })
 
 // 默认搜索参数
 export const DEFAULT_SEARCH_PARAMS = Object.freeze({
-  [SEARCH_FORM_FIELDS.KEYWORD]: '',
+  [SEARCH_FORM_FIELDS.NAME]: '',
+  [SEARCH_FORM_FIELDS.CODE]: '',
   [SEARCH_FORM_FIELDS.STATUS]: '',
   [SEARCH_FORM_FIELDS.DEPARTMENT_ID]: ''
 })
@@ -100,11 +97,19 @@ export const DEFAULT_SEARCH_PARAMS = Object.freeze({
 export const SEARCH_FORM_CONFIG = [
   {
     type: 'input',
-    prop: SEARCH_FORM_FIELDS.KEYWORD,
-    label: '关键词',
-    placeholder: '请输入岗位名称或编码',
+    prop: SEARCH_FORM_FIELDS.NAME,
+    label: '岗位名称',
+    placeholder: '请输入岗位名称',
     clearable: true,
     style: { width: '200px' }
+  },
+  {
+    type: 'input',
+    prop: SEARCH_FORM_FIELDS.CODE,
+    label: '岗位编码',
+    placeholder: '请输入岗位编码',
+    clearable: true,
+    style: { width: '180px' }
   },
   {
     type: 'select',

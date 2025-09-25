@@ -15,8 +15,7 @@
     <!-- 岗位表格 -->
     <position-table ref="positionTable" :data="tableData" :loading="loading" :total="total" :page="pagination.page"
       :limit="pagination.limit" @pagination-change="handlePaginationChange" @create="handleCreate" @edit="handleEdit"
-      @view="handleView" @delete="handleDelete" @batch-delete="handleBatchDelete" @toggleStatus="handleToggleStatus"
-      @batch-enable="handleBatchEnable" @batch-disable="handleBatchDisable" @export-success="handleExportSuccess"
+      @view="handleView" @delete="handleDelete" @toggleStatus="handleToggleStatus" @export-success="handleExportSuccess"
       @refresh="fetchList" @retry="fetchList" />
 
     <!-- 岗位表单抽屉 -->
@@ -32,14 +31,13 @@ import PositionTable from './components/PositionTable.vue'
 import PositionFormDrawer from './components/PositionFormDrawer.vue'
 import {
   DEFAULT_SEARCH_PARAMS,
-  POSITION_DEFAULT_QUERY
+  POSITION_DEFAULT_QUERY,
+  SEARCH_FORM_FIELDS
 } from './constants'
 import {
   getPositionList,
   updatePositionStatus,
-  batchUpdatePositionStatus,
   deletePosition,
-  batchDeletePositions,
   getDepartmentOptions
 } from './api'
 
@@ -170,10 +168,20 @@ export default {
     // 搜索处理
     handleSearch(formData) {
       this.pagination.page = 1
-      this.searchParams = {
+      const sanitizedForm = {
         ...DEFAULT_SEARCH_PARAMS,
         ...formData
       }
+
+      if (sanitizedForm[SEARCH_FORM_FIELDS.NAME]) {
+        sanitizedForm[SEARCH_FORM_FIELDS.NAME] = sanitizedForm[SEARCH_FORM_FIELDS.NAME].trim()
+      }
+
+      if (sanitizedForm[SEARCH_FORM_FIELDS.CODE]) {
+        sanitizedForm[SEARCH_FORM_FIELDS.CODE] = sanitizedForm[SEARCH_FORM_FIELDS.CODE].trim().toUpperCase()
+      }
+
+      this.searchParams = sanitizedForm
       this.debouncedSearch()
     },
 
@@ -273,87 +281,6 @@ export default {
           console.error('删除岗位失败:', error)
           this.$message.error('删除失败，请稍后重试')
         }
-      }
-    },
-
-    // 批量删除
-    async handleBatchDelete(rows) {
-      if (!rows || rows.length === 0) {
-        this.$message.warning('请选择要删除的岗位')
-        return
-      }
-
-      try {
-        await this.$confirm(
-          `确定要批量删除选中的 ${rows.length} 个岗位吗？\n此操作不可恢复！`,
-          '批量删除确认',
-          {
-            confirmButtonText: '确定删除',
-            cancelButtonText: '取消',
-            type: 'error'
-          }
-        )
-
-        const ids = rows.map(row => row.id)
-        const response = await batchDeletePositions(ids)
-
-        if (response.success) {
-          this.$message.success(response.message || `成功删除 ${response.data.count || ids.length} 个岗位`)
-          this.fetchList()
-        } else {
-          this.$message.error(response.error?.message || '批量删除失败')
-        }
-      } catch (error) {
-        if (error !== 'cancel') {
-          console.error('批量删除岗位失败:', error)
-          this.$message.error('批量删除失败，请稍后重试')
-        }
-      }
-    },
-
-    // 批量启用
-    async handleBatchEnable(rows) {
-      if (!rows || rows.length === 0) {
-        this.$message.warning('请选择要启用的岗位')
-        return
-      }
-
-      try {
-        const ids = rows.map(row => row.id)
-        const response = await batchUpdatePositionStatus(ids, { status: 'active' })
-
-        if (response.success) {
-          this.$message.success(response.message || `成功启用 ${response.data.count || ids.length} 个岗位`)
-          this.fetchList()
-        } else {
-          this.$message.error(response.error?.message || '批量启用失败')
-        }
-      } catch (error) {
-        console.error('批量启用岗位失败:', error)
-        this.$message.error('批量启用失败，请稍后重试')
-      }
-    },
-
-    // 批量禁用
-    async handleBatchDisable(rows) {
-      if (!rows || rows.length === 0) {
-        this.$message.warning('请选择要禁用的岗位')
-        return
-      }
-
-      try {
-        const ids = rows.map(row => row.id)
-        const response = await batchUpdatePositionStatus(ids, { status: 'inactive' })
-
-        if (response.success) {
-          this.$message.success(response.message || `成功禁用 ${response.data.count || ids.length} 个岗位`)
-          this.fetchList()
-        } else {
-          this.$message.error(response.error?.message || '批量禁用失败')
-        }
-      } catch (error) {
-        console.error('批量禁用岗位失败:', error)
-        this.$message.error('批量禁用失败，请稍后重试')
       }
     },
 

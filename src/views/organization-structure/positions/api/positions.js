@@ -189,44 +189,6 @@ export function getPositionOptions(params = {}) {
 }
 
 /**
- * 批量更新岗位状态
- * @param {Array} ids - 岗位ID数组 (必填, UUID格式数组)
- * @param {string} status - 新的岗位状态 (必填, active/inactive)
- * @param {string} [reason] - 状态变更原因 (可选)
- * @description 批量变更多个岗位的状态，适用于批量操作场景
- * @returns {Promise} 返回批量操作结果
- */
-export function batchUpdatePositionStatus(ids, status, reason = '') {
-  return request({
-    url: `${baseURL}/batch-status`,
-    method: 'patch',
-    data: {
-      positionIds: ids,
-      status,
-      ...(reason && { reason })
-    }
-  })
-}
-
-/**
- * 批量删除岗位
- * @param {Array} ids - 岗位ID数组 (必填, UUID格式数组)
- * @param {string} [reason] - 删除原因 (可选)
- * @description 批量删除多个岗位，删除前会检查岗位是否有关联的员工
- * @returns {Promise} 返回批量删除结果
- */
-export function batchDeletePositions(ids, reason = '') {
-  return request({
-    url: `${baseURL}/batch-delete`,
-    method: 'delete',
-    data: {
-      positionIds: ids,
-      ...(reason && { reason })
-    }
-  })
-}
-
-/**
  * 导出岗位列表
  * @param {Object} params - 导出参数（与获取岗位列表相同的筛选条件，但不包含分页）
  * @returns {Promise} 返回导出文件的blob数据

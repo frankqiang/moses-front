@@ -10,13 +10,10 @@
   <div class="position-table">
     <!-- 使用全局表格工具栏组件 -->
     <table-toolbar ref="toolbar" :enable-column-settings="true" :column-options="columnOptions"
-      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="true"
-      :selected-rows="selectedRows" :enable-export="true" :export-api="exportApiFunction" :export-params="exportParams"
-      :hide-status-buttons="false" :status-buttons-mode="'dropdown'" :status-confirm="false" :delete-confirm="false"
-      :table-data="safeData" :smart-status-buttons="true" :status-field="'status'" :enabled-value="'active'"
-      :disabled-value="'inactive'" :refresh-feedback-mode="'all'" @refresh="handleRefresh"
-      @column-change="handleColumnChange" @batch-delete="handleBatchDelete" @batch-enable="handleBatchEnable"
-      @batch-disable="handleBatchDisable" @export-success="handleExportSuccess">
+      :storage-key="columnSettingsKey" :default-visible-columns="defaultVisibleColumns" :enable-batch-actions="false"
+      :enable-export="true" :export-api="exportApiFunction" :export-params="exportParams" :hide-status-buttons="true"
+      :refresh-feedback-mode="'all'" @refresh="handleRefresh" @column-change="handleColumnChange"
+      @export-success="handleExportSuccess">
       <template #toolbar-left>
         <ActionButtons :buttons="toolbarButtons" mode="normal" @click="handleToolbarAction" />
         <slot name="toolbar-left" />
@@ -28,11 +25,11 @@
     </table-toolbar>
 
     <!-- 使用BaseTable组件 -->
-    <BaseTable :data="safeData" :columns="baseTableColumns" :loading="loading" :pagination="paginationConfig"
-      :show-selection="true" :show-index="true" :virtual-scroll="enableVirtualScroll" :virtual-threshold="1000"
-      :virtual-height="600" :item-height="48" :allow-retry="true" :load-error="loadError" border stripe
-      highlight-current-row @selection-change="handleSelectionChange" @retry="handleRetry" @row-click="handleRowClick"
-      @data-error="handleDataError" @format-error="handleFormatError" @pagination-change="handlePaginationChange">
+    <BaseTable ref="baseTable" :data="safeData" :columns="baseTableColumns" :loading="loading"
+      :pagination="paginationConfig" :show-selection="false" :show-index="true" :virtual-scroll="enableVirtualScroll"
+      :virtual-threshold="1000" :virtual-height="600" :item-height="48" :allow-retry="true" :load-error="loadError"
+      border stripe highlight-current-row @retry="handleRetry" @row-click="handleRowClick" @data-error="handleDataError"
+      @format-error="handleFormatError" @pagination-change="handlePaginationChange">
       <!-- 注意：type字段在接口文档中未定义，暂时注释掉 -->
       <!-- <template #type="{ row }">
         <span>{{ getTypeLabel(row.type) }}</span>
@@ -132,8 +129,7 @@ export default {
   },
   data() {
     return {
-      // 选中的行
-      selectedRows: []
+      // 暂无需要的数据
     }
   },
   computed: {
@@ -298,13 +294,6 @@ export default {
     },
 
     /**
-         * 处理选择变化
-         */
-    handleSelectionChange(selection) {
-      this.selectedRows = selection
-    },
-
-    /**
          * 处理刷新
          */
     handleRefresh() {
@@ -368,27 +357,6 @@ export default {
          */
     handleAdd() {
       this.$emit('create')
-    },
-
-    /**
-         * 处理批量删除
-         */
-    handleBatchDelete(rows) {
-      this.$emit('batch-delete', rows)
-    },
-
-    /**
-         * 处理批量启用
-         */
-    handleBatchEnable(rows) {
-      this.$emit('batch-enable', rows)
-    },
-
-    /**
-         * 处理批量禁用
-         */
-    handleBatchDisable(rows) {
-      this.$emit('batch-disable', rows)
     },
 
     /**
