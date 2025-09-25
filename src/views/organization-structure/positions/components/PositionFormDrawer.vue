@@ -1,11 +1,7 @@
-/**
-* 文件名称：PositionFormDrawer.vue
-* 文件描述：岗位表单抽屉组件，使用全局 BaseDrawer 和 EnhancedForm 统一交互风格
-* 创建日期：2024-01-20
-* 修改记录：
-* - 2024-01-20: 创建，符合process-management/operations模块的开发范式
-* - 2025-09-25: 重构为全局组件风格，接入部门选项API
-*/
+/** * 文件名称：PositionFormDrawer.vue * 文件描述：岗位表单抽屉组件，使用全局
+BaseDrawer 和 EnhancedForm 统一交互风格 * 创建日期：2024-01-20 * 修改记录： * -
+2024-01-20: 创建，符合process-management/operations模块的开发范式 * -
+2025-09-25: 重构为全局组件风格，接入部门选项API */
 
 <template>
   <base-drawer
@@ -65,7 +61,7 @@
                   maxlength="50"
                   show-word-limit
                   :disabled="formMode === 'view'"
-                  @input="value => handleCodeInput(form, value)"
+                  @input="(value) => handleCodeInput(form, value)"
                 />
                 <div class="field-hint">
                   岗位编码用于系统内部识别，建议使用英文缩写，如：DEV、QA等
@@ -130,9 +126,7 @@
                   :disabled="formMode === 'view'"
                   style="width: 100%"
                 />
-                <div class="field-hint">
-                  数值越小级别越高，用于岗位层级管理
-                </div>
+                <div class="field-hint">数值越小级别越高，用于岗位层级管理</div>
               </el-form-item>
             </el-col>
 
@@ -163,8 +157,15 @@
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="岗位状态" prop="status">
-                <el-radio-group v-model="form.status" :disabled="formMode === 'view'">
-                  <el-radio v-for="option in statusOptions" :key="option.value" :label="option.value">
+                <el-radio-group
+                  v-model="form.status"
+                  :disabled="formMode === 'view'"
+                >
+                  <el-radio
+                    v-for="option in statusOptions"
+                    :key="option.value"
+                    :label="option.value"
+                  >
                     {{ option.label }}
                   </el-radio>
                 </el-radio-group>
@@ -199,7 +200,10 @@
             </el-col>
           </el-row>
 
-          <el-row v-if="latestDetail.employees && latestDetail.employees.length" :gutter="20">
+          <el-row
+            v-if="latestDetail.employees && latestDetail.employees.length"
+            :gutter="20"
+          >
             <el-col :span="24">
               <el-form-item label="在职员工">
                 <el-tag
@@ -220,16 +224,26 @@
 
     <template #footer>
       <el-button @click="handleCancel">
-        {{ innerMode === 'view' ? '关闭' : '取消' }}
+        {{ innerMode === "view" ? "关闭" : "取消" }}
       </el-button>
       <el-button v-if="innerMode !== 'view'" @click="handleReset">
         重置
       </el-button>
-      <el-button v-if="innerMode === 'create'" type="primary" :loading="drawerLoading" @click="handleSubmitAndContinue">
+      <el-button
+        v-if="innerMode === 'create'"
+        type="primary"
+        :loading="drawerLoading"
+        @click="handleSubmitAndContinue"
+      >
         保存并继续
       </el-button>
-      <el-button v-if="innerMode !== 'view'" type="primary" :loading="drawerLoading" @click="handleSubmit">
-        {{ innerMode === 'create' ? '确认保存' : '保存修改' }}
+      <el-button
+        v-if="innerMode !== 'view'"
+        type="primary"
+        :loading="drawerLoading"
+        @click="handleSubmit"
+      >
+        {{ innerMode === "create" ? "确认保存" : "保存修改" }}
       </el-button>
     </template>
   </base-drawer>
@@ -267,7 +281,7 @@ export default {
     mode: {
       type: String,
       default: 'create',
-      validator: value => ['create', 'update', 'view'].includes(value)
+      validator: (value) => ['create', 'update', 'view'].includes(value)
     },
     positionData: {
       type: Object,
@@ -373,7 +387,10 @@ export default {
         this.initializeForm()
         return
       }
-      if ((newMode === 'update' || newMode === 'view') && this.positionData?.id) {
+      if (
+        (newMode === 'update' || newMode === 'view') &&
+        this.positionData?.id
+      ) {
         this.latestDetail = null
         this.fetchPositionDetail(this.positionData.id)
       } else {
@@ -396,7 +413,10 @@ export default {
     async handleDrawerOpen() {
       this.initializeForm()
       const tasks = [this.loadDepartmentOptions()]
-      if ((this.innerMode === 'update' || this.innerMode === 'view') && this.positionData?.id) {
+      if (
+        (this.innerMode === 'update' || this.innerMode === 'view') &&
+        this.positionData?.id
+      ) {
         tasks.push(this.fetchPositionDetail(this.positionData.id))
       }
       await Promise.all(tasks)
@@ -428,12 +448,14 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        this.handleFormReset()
-        this.$message.success('表单已重置')
-      }).catch(() => {
-        // 用户取消重置
       })
+        .then(() => {
+          this.handleFormReset()
+          this.$message.success('表单已重置')
+        })
+        .catch(() => {
+          // 用户取消重置
+        })
     },
     handleSubmit() {
       if (this.$refs.enhancedForm) {
@@ -459,13 +481,18 @@ export default {
           response = await createPosition(payload)
         } else if (this.innerMode === 'update') {
           const targetId = payload.id || this.positionData?.id
-          response = await updatePosition(targetId, payload)
+          // eslint-disable-next-line no-unused-vars
+          const { code, id, ...updatePayload } = payload
+          response = await updatePosition(targetId, updatePayload)
         } else {
           return
         }
 
         const messageKey = this.innerMode === 'create' ? 'create' : 'update'
-        const successMessage = response?.message || POSITION_SUCCESS_MESSAGES[messageKey] || '操作成功'
+        const successMessage =
+          response?.message ||
+          POSITION_SUCCESS_MESSAGES[messageKey] ||
+          '操作成功'
         this.$message.success(successMessage)
 
         this.$emit('success', {
@@ -477,7 +504,10 @@ export default {
         if (continueEdit) {
           this.formData = this.initFormData()
           this.$nextTick(() => {
-            if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs?.form) {
+            if (
+              this.$refs.enhancedForm &&
+              this.$refs.enhancedForm.$refs?.form
+            ) {
               this.$refs.enhancedForm.$refs.form.clearValidate()
             }
           })
@@ -498,9 +528,10 @@ export default {
     },
     handleFormReset() {
       const sourceData = this.latestDetail || this.positionData || {}
-      this.formData = this.innerMode === 'create'
-        ? this.initFormData()
-        : this.mapFormDataFromSource(sourceData)
+      this.formData =
+        this.innerMode === 'create'
+          ? this.initFormData()
+          : this.mapFormDataFromSource(sourceData)
       this.$nextTick(() => {
         if (this.$refs.enhancedForm && this.$refs.enhancedForm.$refs?.form) {
           this.$refs.enhancedForm.$refs.form.clearValidate()
@@ -521,7 +552,9 @@ export default {
         if (!formEl) {
           return
         }
-        const fieldElement = formEl.querySelector(`[prop="${firstErrorField}"] input, [prop="${firstErrorField}"] textarea, [prop="${firstErrorField}"] .el-select`)
+        const fieldElement = formEl.querySelector(
+          `[prop="${firstErrorField}"] input, [prop="${firstErrorField}"] textarea, [prop="${firstErrorField}"] .el-select`
+        )
         if (fieldElement && typeof fieldElement.focus === 'function') {
           fieldElement.focus()
         }
@@ -536,13 +569,15 @@ export default {
           sortBy: 'level:asc,sortOrder:asc'
         })
         const options = response?.data?.options || []
-        this.departmentOptions = options.map(option => ({
+        this.departmentOptions = options.map((option) => ({
           value: option.value,
           label: option.label,
           labelWithLevel: option.labelWithLevel || option.label,
           code: option.code
         }))
-        this.ensureCurrentDepartmentVisible(this.latestDetail || this.positionData)
+        this.ensureCurrentDepartmentVisible(
+          this.latestDetail || this.positionData
+        )
       } catch (error) {
         console.error('加载部门选项失败:', error)
         const errorMessage =
@@ -557,13 +592,20 @@ export default {
     },
     ensureCurrentDepartmentVisible(detail) {
       const effectiveDetail = detail || this.latestDetail || this.positionData
-      const currentId = this.formData.departmentId || effectiveDetail?.departmentId || effectiveDetail?.department?.id
+      const currentId =
+        this.formData.departmentId ||
+        effectiveDetail?.departmentId ||
+        effectiveDetail?.department?.id
       if (!currentId) {
         return
       }
-      const exists = this.departmentOptions.some(option => option.value === currentId)
+      const exists = this.departmentOptions.some(
+        (option) => option.value === currentId
+      )
       if (!exists) {
-        const fallbackLabel = effectiveDetail?.department?.name || effectiveDetail?.departmentName ||
+        const fallbackLabel =
+          effectiveDetail?.department?.name ||
+          effectiveDetail?.departmentName ||
           this.positionData?.department?.name
         if (fallbackLabel) {
           this.departmentOptions = [

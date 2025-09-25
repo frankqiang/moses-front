@@ -84,7 +84,7 @@ export function getPositionDetail(id, params = {}) {
 export function updatePosition(id, data) {
   return request({
     url: `${baseURL}/${id}`,
-    method: 'put',
+    method: 'patch',
     data
   })
 }
@@ -146,23 +146,30 @@ export function getPositionOptions(params = {}) {
     url: baseURL,
     method: 'get',
     params: apiParams
-  }).then(response => {
+  }).then((response) => {
     // 将API响应转换为适合下拉框使用的格式
-    if (response && response.success && response.data && response.data.results) {
+    if (
+      response &&
+      response.success &&
+      response.data &&
+      response.data.results
+    ) {
       const positions = response.data.results
 
       // 转换为下拉框选项格式
-      const options = positions.map(pos => ({
+      const options = positions.map((pos) => ({
         value: pos.id,
         label: pos.name,
         code: pos.code,
         description: pos.description,
         departmentId: pos.departmentId,
-        department: pos.department ? {
-          id: pos.department.id,
-          name: pos.department.name,
-          code: pos.department.code
-        } : null,
+        department: pos.department
+          ? {
+            id: pos.department.id,
+            name: pos.department.name,
+            code: pos.department.code
+          }
+          : null,
         level: pos.level,
         status: pos.status,
         // 完整的显示文本（包含编码和部门）

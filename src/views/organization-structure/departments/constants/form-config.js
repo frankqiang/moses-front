@@ -6,12 +6,14 @@ import { DEPARTMENT_STATUS_OPTIONS } from './department'
 // 搜索表单常量键
 export const SEARCH_FORM_FIELDS = Object.freeze({
   KEYWORD: 'keyword',
+  CODE: 'code',
   STATUS: 'status',
   PARENT_ID: 'parentId'
 })
 
 export const DEFAULT_SEARCH_PARAMS = Object.freeze({
   [SEARCH_FORM_FIELDS.KEYWORD]: '',
+  [SEARCH_FORM_FIELDS.CODE]: '',
   [SEARCH_FORM_FIELDS.STATUS]: '',
   [SEARCH_FORM_FIELDS.PARENT_ID]: ''
 })
@@ -21,8 +23,16 @@ export const SEARCH_FORM_CONFIG = [
   {
     type: 'input',
     prop: SEARCH_FORM_FIELDS.KEYWORD,
-    label: '部门名称/编码',
-    placeholder: '支持输入名称或编码模糊搜索',
+    label: '部门名称',
+    placeholder: '支持名称模糊搜索',
+    clearable: true,
+    style: { width: '220px' }
+  },
+  {
+    type: 'input',
+    prop: SEARCH_FORM_FIELDS.CODE,
+    label: '部门编码',
+    placeholder: '支持编码模糊搜索',
     clearable: true,
     style: { width: '220px' }
   },
