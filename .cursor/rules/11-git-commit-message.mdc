@@ -27,7 +27,7 @@ alwaysApply: true
 - `chore`: 构建/工具变动
 
 ## 范围 (Scope)
-【推荐】提供提交影响的范围，例如：
+【必须】提供提交影响的范围，例如：
 - `feat(auth)`: 认证相关功能
 - `fix(operations)`: 工序管理模块修复
 - `docs(readme)`: 文档更新
@@ -49,30 +49,147 @@ feat(auth): 添加用户认证功能
 close #123
 ```
 
-## 分支管理
+## 2. 分支管理规则
 
-【推荐】使用：
-- `main`: 主分支
-- `feat/<功能名>`: 新功能分支
-- `fix/<问题描述>`: 修复分支
+### 2.1 分支命名规范
 
-## 🔍 检查清单：提交前确认
+- `main`: 主分支，用于生产环境部署
+- `develop`: 开发分支，用于集成开发中的功能
+- `feature/<功能名称>`: 功能分支，如 `feature/user-authentication`
+- `bugfix/<bug描述>`: 修复分支，如 `bugfix/login-error`
+- `hotfix/<紧急修复>`: 热修复分支，如 `hotfix/security-patch`
+- `release/<版本号>`: 发布分支，如 `release/v1.0.0`
 
-在执行 `git commit` 之前，【必须】逐项确认以下内容：
+### 2.2 功能开发流程（实操步骤）
 
-- [ ] **[P0]** 提交消息格式：本次提交的 commit message 是否严格遵循了 `<类型>([可选范围]): <简短描述>` 格式？（包括类型选择、描述简洁性、时态、标点等）
-- [ ] **[P0]** 代码质量：提交的代码是否无语法错误、无编译警告或错误？
-- [ ] **[P0]** 类型定义 (TypeScript)：所有相关的 TypeScript 类型定义是否完整、准确且已通过类型检查？
-- [ ] **[P0]** 代码规范符合性：代码是否遵循了项目约定的代码风格（如 ESLint, Prettier 配置）和命名规范？
-- [ ] **[P0]** 功能完整性：本次提交是否完整实现了其宣称的功能或修复？是否存在未完成或遗漏的逻辑？
-- [ ] **[P0]** 错误处理：相关的代码路径是否添加了必要的错误处理（参考 `error-handling.mdc`）？
-- [ ] **[P0]** 测试覆盖：是否为新增或修改的功能编写了必要的单元测试/集成测试，并且所有测试是否通过？
-- [ ] **[P0]** 本地工具检查：是否已在本地运行并通过了 ESLint, Prettier 等代码质量和格式化工具的检查？
-- [ ] **[P0]** 提交内容相关性：本次提交是否只包含与当前 `<类型>([可选范围]): <简短描述>` 直接相关的代码变更，没有混杂不相关的修改？
+```bash
+# 1. 切换到 develop 分支并拉取最新代码
+git checkout develop
+git pull origin develop
 
-- [ ] **[P0]** 详细描述与关联问题（可选）：如果提交涉及复杂更改，是否在消息体中提供了详细描述？如果关联了 issue，是否已正确标记？
-- [ ] **[P0]** 测试覆盖：是否为新增或修改的功能编写了必要的单元测试/集成测试，并且所有测试是否通过？
-- [ ] **[P0]** 本地工具检查：是否已在本地运行并通过了 ESLint, Prettier 等代码质量和格式化工具的检查？
-- [ ] **[P0]** 提交内容相关性：本次提交是否只包含与当前 `<类型>: <简短描述>` 直接相关的代码变更，没有混杂不相关的修改？
+# 2. 创建功能分支
+git checkout -b feature/功能名称
 
-- [ ] **[P0]** 详细描述与关联问题（可选）：如果提交涉及复杂更改，是否在消息体中提供了详细描述？如果关联了 issue，是否已正确标记？
+# 3. 开发过程中定期提交和推送
+git add .
+git commit -m "feat(scope): 功能描述"
+git push origin feature/功能名称
+
+# 4. 功能完成后合并前的准备
+git checkout develop
+git pull origin develop
+git checkout feature/功能名称
+git rebase develop
+
+# 5. 推送更新并创建 Pull Request
+git push origin feature/功能名称 --force-with-lease
+
+# 6. PR 合并后清理分支
+git branch -d feature/功能名称
+git push origin --delete feature/功能名称
+```
+
+### 2.3 热修复流程
+
+```bash
+# 1. 从 main 分支创建 hotfix 分支
+git checkout main
+git pull origin main
+git checkout -b hotfix/紧急修复描述
+
+# 2. 修复问题并提交
+git commit -m "fix(critical): 紧急修复描述"
+
+# 3. 合并到 main 和 develop 分支
+git checkout main
+git merge hotfix/紧急修复描述
+git push origin main
+
+git checkout develop
+git merge hotfix/紧急修复描述
+git push origin develop
+
+# 4. 删除 hotfix 分支
+git branch -d hotfix/紧急修复描述
+```
+
+### 2.4 分支保护规则
+
+#### main 分支保护
+- 禁止直接推送
+- 要求 Pull Request 审查
+- 要求状态检查通过
+- 要求分支是最新的
+
+#### develop 分支保护
+- 禁止直接推送
+- 要求 Pull Request 审查
+- 要求状态检查通过
+
+## 3. Pull Request 规范
+
+### 3.1 PR 检查清单
+- [ ] 代码符合项目编码规范
+- [ ] 所有测试用例通过
+- [ ] 代码覆盖率满足要求
+- [ ] 功能完整且符合需求
+- [ ] 没有明显的性能问题
+- [ ] 安全性检查通过
+- [ ] 文档更新（如需要）
+
+### 3.2 审查流程
+1. 开发者创建 Pull Request
+2. 至少一名团队成员进行代码审查
+3. 审查者提出修改建议（如有）
+4. 开发者根据建议修改代码
+5. 审查通过后合并代码
+6. 删除功能分支
+
+## 4. 版本管理
+
+### 4.1 版本号规范
+
+使用语义化版本控制（Semantic Versioning）：
+
+- `MAJOR.MINOR.PATCH`
+- `MAJOR`: 不兼容的 API 修改
+- `MINOR`: 向下兼容的功能性新增
+- `PATCH`: 向下兼容的问题修正
+
+### 4.2 发布流程
+
+```bash
+# 1. 从 develop 创建 release 分支
+git checkout develop
+git pull origin develop
+git checkout -b release/v1.0.0
+
+# 2. 更新版本号并进行最终测试
+git commit -m "chore(release): 准备发布 v1.0.0"
+
+# 3. 合并到 main 分支并打标签
+git checkout main
+git merge release/v1.0.0
+git tag -a v1.0.0 -m "Release version 1.0.0"
+git push origin main --tags
+
+# 4. 合并回 develop 分支
+git checkout develop
+git merge release/v1.0.0
+git push origin develop
+
+# 5. 删除 release 分支
+git branch -d release/v1.0.0
+```
+
+
+## 6. 重要注意事项
+
+1. **永远不要直接在 main 分支上开发**
+2. **功能开发完成后及时删除功能分支**
+3. **定期从 develop 分支拉取最新代码**
+4. **提交前确保代码通过所有检查**
+5. **Pull Request 描述要清晰明确**
+6. **遇到冲突时谨慎处理，必要时寻求帮助**
+
+良好的Git工作流程是团队协作成功的关键！
