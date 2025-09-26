@@ -321,7 +321,7 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   padding: 40px;
   width: 100%;
-  max-width: 800px;
+  max-width: 1500px;
   margin: 0 auto;
 }
 

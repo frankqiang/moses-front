@@ -423,11 +423,23 @@ export default {
      * 处理表单提交
      */
     async handleSubmit() {
+      if (!this.$refs.enhancedForm) {
+        this.$message.error('表单未加载完成，请稍后重试')
+        return
+      }
+
       try {
         // 表单验证
-        const valid = await this.$refs.enhancedForm.validate()
-        if (!valid) {
-          this.$message.warning('请检查表单中的错误信息')
+        const validationResult = await new Promise((resolve) => {
+          this.$refs.enhancedForm.validate((valid, invalidFields) => {
+            if (!valid) {
+              this.handleValidationError(invalidFields)
+            }
+            resolve({ valid, invalidFields })
+          })
+        })
+
+        if (!validationResult.valid) {
           return
         }
 
@@ -478,6 +490,30 @@ export default {
       } finally {
         this.submitLoading = false
       }
+    },
+
+    /**
+     * 表单验证失败处理
+     * @param {Object} invalidFields - 无效字段信息
+     */
+    handleValidationError(invalidFields) {
+      if (!invalidFields || Object.keys(invalidFields).length === 0) {
+        this.$message.warning('请检查表单中的错误信息')
+        return
+      }
+
+      const firstFieldKey = Object.keys(invalidFields)[0]
+      const firstError = invalidFields[firstFieldKey]?.[0]
+      const errorMessage = firstError?.message || '请检查表单中的错误信息'
+
+      this.$message.warning(errorMessage)
+
+      this.$nextTick(() => {
+        const formRef = this.$refs.enhancedForm?.$refs?.form
+        if (formRef && typeof formRef.scrollToField === 'function') {
+          formRef.scrollToField(firstFieldKey)
+        }
+      })
     },
 
     /**

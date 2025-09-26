@@ -166,18 +166,22 @@ export const REGISTER_FORM_RULES = (formData) => ({
   ],
   hireDate: [
     {
-      type: 'date',
-      message: '请选择预期入职日期',
-      trigger: 'change'
-    },
-    {
       validator: (rule, value, callback) => {
         if (!value) {
           callback()
           return
         }
-        const today = new Date()
+
         const selectedDate = new Date(value)
+        if (Number.isNaN(selectedDate.getTime())) {
+          callback(new Error('请选择有效的预期入职日期'))
+          return
+        }
+
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        selectedDate.setHours(0, 0, 0, 0)
+
         if (selectedDate < today) {
           callback(new Error('预期入职日期不能早于今天'))
         } else {
@@ -189,18 +193,22 @@ export const REGISTER_FORM_RULES = (formData) => ({
   ],
   birthDate: [
     {
-      type: 'date',
-      message: '请选择出生日期',
-      trigger: 'change'
-    },
-    {
       validator: (rule, value, callback) => {
         if (!value) {
           callback()
           return
         }
-        const today = new Date()
+
         const selectedDate = new Date(value)
+        if (Number.isNaN(selectedDate.getTime())) {
+          callback(new Error('请选择有效的出生日期'))
+          return
+        }
+
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        selectedDate.setHours(0, 0, 0, 0)
+
         if (selectedDate >= today) {
           callback(new Error('出生日期不能是未来时间'))
         } else {

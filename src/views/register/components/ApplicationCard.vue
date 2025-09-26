@@ -33,121 +33,126 @@
 
     <!-- 内容主体 -->
     <div class="content-body">
-      <!-- 基本信息 -->
-      <div v-if="showBasicInfo" class="info-section">
-        <h4 class="section-title">
-          <i class="el-icon-user section-icon" />
-          基本信息
-        </h4>
-        <el-row :gutter="16" class="info-row">
-          <el-col v-if="applicationData.id" :span="12">
-            <div class="info-item">
-              <span class="info-label">申请ID：</span>
-              <span class="info-value">{{ applicationData.id }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.applicantName" :span="12">
-            <div class="info-item">
-              <span class="info-label">申请人姓名：</span>
-              <span class="info-value">{{ applicationData.applicantName }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.applicantEmail" :span="12">
-            <div class="info-item">
-              <span class="info-label">邮箱地址：</span>
-              <span class="info-value">{{ applicationData.applicantEmail }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.username" :span="12">
-            <div class="info-item">
-              <span class="info-label">用户名：</span>
-              <span class="info-value">{{ applicationData.username }}</span>
-            </div>
-          </el-col>
-        </el-row>
-      </div>
+      <div class="info-grid">
+        <!-- 基本信息 -->
+        <div v-if="showBasicInfo" class="info-section">
+          <h4 class="section-title">
+            <i class="el-icon-user section-icon" />
+            基本信息
+          </h4>
+          <el-row :gutter="16" class="info-row">
+            <el-col v-if="applicationData.id" :span="12">
+              <div class="info-item">
+                <span class="info-label">申请ID：</span>
+                <span class="info-value">{{ applicationData.id }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.applicantName" :span="12">
+              <div class="info-item">
+                <span class="info-label">申请人姓名：</span>
+                <span class="info-value">{{ applicationData.applicantName }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.applicantEmail" :span="12">
+              <div class="info-item">
+                <span class="info-label">邮箱地址：</span>
+                <span class="info-value">{{ applicationData.applicantEmail }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.username" :span="12">
+              <div class="info-item">
+                <span class="info-label">用户名：</span>
+                <span class="info-value">{{ applicationData.username }}</span>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
 
-      <!-- 可选信息 -->
-      <div v-if="showOptionalInfo && hasOptionalInfo" class="info-section">
-        <h4 class="section-title">
-          <i class="el-icon-info section-icon" />
-          可选信息
-        </h4>
-        <el-row :gutter="16" class="info-row">
-          <el-col v-if="applicationData.departmentName" :span="12">
-            <div class="info-item">
-              <span class="info-label">部门：</span>
-              <span class="info-value">{{ applicationData.departmentName }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.jobTitle" :span="12">
-            <div class="info-item">
-              <span class="info-label">职位：</span>
-              <span class="info-value">{{ applicationData.jobTitle }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.phone" :span="12">
-            <div class="info-item">
-              <span class="info-label">手机号码：</span>
-              <span class="info-value">{{ applicationData.phone }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.employeeId" :span="12">
-            <div class="info-item">
-              <span class="info-label">员工ID：</span>
-              <span class="info-value">{{ applicationData.employeeId }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.applicationReason" :span="24">
-            <div class="info-item">
-              <span class="info-label">申请原因：</span>
-              <span class="info-value">{{ applicationData.applicationReason }}</span>
-            </div>
-          </el-col>
-        </el-row>
-      </div>
+        <!-- 可选信息 -->
+        <div v-if="showOptionalInfo && hasOptionalInfo" class="info-section">
+          <h4 class="section-title">
+            <i class="el-icon-info section-icon" />
+            可选信息
+          </h4>
+          <el-row :gutter="16" class="info-row">
+            <el-col v-if="applicationData.departmentName" :span="12">
+              <div class="info-item">
+                <span class="info-label">部门：</span>
+                <span class="info-value">{{ applicationData.departmentName }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.jobTitle" :span="12">
+              <div class="info-item">
+                <span class="info-label">职位：</span>
+                <span class="info-value">{{ applicationData.jobTitle }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.phone" :span="12">
+              <div class="info-item">
+                <span class="info-label">手机号码：</span>
+                <span class="info-value">{{ applicationData.phone }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.employeeId" :span="12">
+              <div class="info-item">
+                <span class="info-label">员工ID：</span>
+                <span class="info-value">{{ applicationData.employeeId }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.applicationReason" :span="24">
+              <div class="info-item">
+                <span class="info-label">申请原因：</span>
+                <span class="info-value">{{ applicationData.applicationReason }}</span>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
 
-      <!-- 审批信息 -->
-      <div v-if="showApprovalInfo && hasApprovalInfo" class="info-section">
-        <h4 class="section-title">
-          <i class="el-icon-document-checked section-icon" />
-          审批信息
-        </h4>
-        <el-row :gutter="16" class="info-row">
-          <el-col v-if="applicationData.submittedAt" :span="12">
-            <div class="info-item">
-              <span class="info-label">提交时间：</span>
-              <span class="info-value">{{ formatDateTime(applicationData.submittedAt) }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.reviewedAt" :span="12">
-            <div class="info-item">
-              <span class="info-label">审核时间：</span>
-              <span class="info-value">{{ formatDateTime(applicationData.reviewedAt) }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.reviewedBy" :span="12">
-            <div class="info-item">
-              <span class="info-label">审核人：</span>
-              <span class="info-value">{{ applicationData.reviewedBy }}</span>
-            </div>
-          </el-col>
-          <el-col v-if="applicationData.reviewComments" :span="24">
-            <div class="info-item">
-              <span class="info-label">审核意见：</span>
-              <span class="info-value review-comments">{{ applicationData.reviewComments }}</span>
-            </div>
-          </el-col>
-        </el-row>
-      </div>
+        <!-- 审批信息 -->
+        <div v-if="showApprovalInfo && hasApprovalInfo" class="info-section">
+          <h4 class="section-title">
+            <i class="el-icon-document-checked section-icon" />
+            审批信息
+          </h4>
+          <el-row :gutter="16" class="info-row">
+            <el-col v-if="applicationData.submittedAt" :span="12">
+              <div class="info-item">
+                <span class="info-label">提交时间：</span>
+                <span class="info-value">{{ formatDateTime(applicationData.submittedAt) }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.reviewedAt" :span="12">
+              <div class="info-item">
+                <span class="info-label">审核时间：</span>
+                <span class="info-value">{{ formatDateTime(applicationData.reviewedAt) }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.reviewedBy" :span="12">
+              <div class="info-item">
+                <span class="info-label">审核人：</span>
+                <span class="info-value">{{ applicationData.reviewedBy }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.reviewComments" :span="24">
+              <div class="info-item">
+                <span class="info-label">审核意见：</span>
+                <span class="info-value review-comments">{{ applicationData.reviewComments }}</span>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
 
-      <!-- 申请历史时间线 -->
-      <div v-if="showTimeline && applicationData.id" class="info-section">
-        <ApplicationTimeline
-          :application-id="applicationData.id"
-          @timeline-loaded="$emit('timeline-loaded', $event)"
-          @timeline-error="$emit('timeline-error', $event)"
-        />
+        <!-- 申请历史时间线 -->
+        <div
+          v-if="showTimeline && applicationData.id"
+          class="info-section info-section--full"
+        >
+          <ApplicationTimeline
+            :application-id="applicationData.id"
+            @timeline-loaded="$emit('timeline-loaded', $event)"
+            @timeline-error="$emit('timeline-error', $event)"
+          />
+        </div>
       </div>
 
       <!-- 操作按钮 -->
@@ -432,15 +437,23 @@ export default {
   }
 
   .content-body {
+    .info-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
     .info-section {
-      margin-bottom: 28px;
+      flex: 1 1 calc(50% - 12px);
+      min-width: 320px;
+      margin: 0;
       border-radius: 8px;
       border: 1px solid #E4E7ED;
       background: #FFFFFF;
       overflow: hidden;
 
-      &:last-child {
-        margin-bottom: 0;
+      &--full {
+        flex-basis: 100%;
       }
 
       .section-title {
@@ -555,8 +568,13 @@ export default {
     }
 
     .content-body {
+      .info-grid {
+        flex-direction: column;
+        gap: 16px;
+      }
+
       .info-section {
-        margin-bottom: 20px;
+        flex-basis: 100%;
 
         .section-title {
           font-size: 15px;
