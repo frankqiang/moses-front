@@ -41,7 +41,7 @@
             基本信息
           </h4>
           <el-row :gutter="16" class="info-row">
-            <el-col v-if="applicationData.id" :span="12">
+            <el-col v-if="applicationData.id" :span="24">
               <div class="info-item">
                 <span class="info-label">申请ID：</span>
                 <span class="info-value">{{ applicationData.id }}</span>
@@ -68,29 +68,29 @@
           </el-row>
         </div>
 
-        <!-- 可选信息 -->
-        <div v-if="showOptionalInfo && hasOptionalInfo" class="info-section">
+        <!-- 职业信息 -->
+        <div v-if="showOptionalInfo && hasJobInfo" class="info-section">
           <h4 class="section-title">
-            <i class="el-icon-info section-icon" />
-            可选信息
+            <i class="el-icon-suitcase section-icon" />
+            职业信息
           </h4>
           <el-row :gutter="16" class="info-row">
-            <el-col v-if="applicationData.departmentName" :span="12">
+            <el-col v-if="getDepartmentName()" :span="12">
               <div class="info-item">
                 <span class="info-label">部门：</span>
-                <span class="info-value">{{ applicationData.departmentName }}</span>
+                <span class="info-value">{{ getDepartmentName() }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="getPositionName()" :span="12">
+              <div class="info-item">
+                <span class="info-label">岗位：</span>
+                <span class="info-value">{{ getPositionName() }}</span>
               </div>
             </el-col>
             <el-col v-if="applicationData.jobTitle" :span="12">
               <div class="info-item">
-                <span class="info-label">职位：</span>
+                <span class="info-label">职位名称：</span>
                 <span class="info-value">{{ applicationData.jobTitle }}</span>
-              </div>
-            </el-col>
-            <el-col v-if="applicationData.phone" :span="12">
-              <div class="info-item">
-                <span class="info-label">手机号码：</span>
-                <span class="info-value">{{ applicationData.phone }}</span>
               </div>
             </el-col>
             <el-col v-if="applicationData.employeeId" :span="12">
@@ -99,10 +99,114 @@
                 <span class="info-value">{{ applicationData.employeeId }}</span>
               </div>
             </el-col>
+            <el-col v-if="getManagerName()" :span="12">
+              <div class="info-item">
+                <span class="info-label">直属上级：</span>
+                <span class="info-value">{{ getManagerName() }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.hireDate" :span="12">
+              <div class="info-item">
+                <span class="info-label">预期入职日期：</span>
+                <span class="info-value">{{ formatDate(applicationData.hireDate) }}</span>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 个人信息 -->
+        <div v-if="showOptionalInfo && hasPersonalInfo" class="info-section">
+          <h4 class="section-title">
+            <i class="el-icon-user-solid section-icon" />
+            个人信息
+          </h4>
+          <el-row :gutter="16" class="info-row">
+            <el-col v-if="applicationData.phone" :span="12">
+              <div class="info-item">
+                <span class="info-label">手机号码：</span>
+                <span class="info-value">{{ applicationData.phone }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.gender" :span="12">
+              <div class="info-item">
+                <span class="info-label">性别：</span>
+                <span class="info-value">{{ getGenderText(applicationData.gender) }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.birthDate" :span="12">
+              <div class="info-item">
+                <span class="info-label">出生日期：</span>
+                <span class="info-value">{{ formatDate(applicationData.birthDate) }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.address" :span="24">
+              <div class="info-item">
+                <span class="info-label">家庭住址：</span>
+                <span class="info-value">{{ applicationData.address }}</span>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 紧急联系人信息 -->
+        <div v-if="showOptionalInfo && hasEmergencyContact" class="info-section">
+          <h4 class="section-title">
+            <i class="el-icon-phone section-icon" />
+            紧急联系人
+          </h4>
+          <el-row :gutter="16" class="info-row">
+            <el-col v-if="applicationData.emergencyContact" :span="12">
+              <div class="info-item">
+                <span class="info-label">联系人姓名：</span>
+                <span class="info-value">{{ applicationData.emergencyContact }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.emergencyPhone" :span="12">
+              <div class="info-item">
+                <span class="info-label">联系人电话：</span>
+                <span class="info-value">{{ applicationData.emergencyPhone }}</span>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 自定义字段 -->
+        <div v-if="showOptionalInfo && hasCustomFields" class="info-section">
+          <h4 class="section-title">
+            <i class="el-icon-setting section-icon" />
+            自定义信息
+          </h4>
+          <el-row :gutter="16" class="info-row">
+            <el-col
+              v-for="(value, key) in applicationData.customFields"
+              :key="key"
+              :span="12"
+            >
+              <div class="info-item">
+                <span class="info-label">{{ formatCustomFieldLabel(key) }}：</span>
+                <span class="info-value">{{ value }}</span>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 其他信息 -->
+        <div v-if="showOptionalInfo && hasOtherInfo" class="info-section">
+          <h4 class="section-title">
+            <i class="el-icon-info section-icon" />
+            其他信息
+          </h4>
+          <el-row :gutter="16" class="info-row">
             <el-col v-if="applicationData.applicationReason" :span="24">
               <div class="info-item">
                 <span class="info-label">申请原因：</span>
-                <span class="info-value">{{ applicationData.applicationReason }}</span>
+                <span class="info-value">{{ getApplicationReasonText(applicationData.applicationReason) }}</span>
+              </div>
+            </el-col>
+            <el-col v-if="applicationData.notes" :span="24">
+              <div class="info-item">
+                <span class="info-label">备注信息：</span>
+                <span class="info-value">{{ applicationData.notes }}</span>
               </div>
             </el-col>
           </el-row>
@@ -175,13 +279,16 @@
 
 <script>
 import { APPLICATION_STATUS_CONFIG } from '../constants/application-status'
+import { REASON_OPTIONS } from '../constants/register'
 import ApplicationTimeline from './ApplicationTimeline.vue'
+import StatusTag from '@/components/StatusTag/index.vue'
 
 export default {
   name: 'ApplicationCard',
 
   components: {
-    ApplicationTimeline
+    ApplicationTimeline,
+    StatusTag
   },
 
   props: {
@@ -292,11 +399,47 @@ export default {
 
   computed: {
     /**
-     * 是否有可选信息
+     * 是否有职业信息
+     */
+    hasJobInfo() {
+      const jobFields = ['departmentId', 'department', 'positionId', 'position', 'jobTitle', 'employeeId', 'managerId', 'manager', 'hireDate']
+      return jobFields.some(field => this.applicationData[field])
+    },
+
+    /**
+     * 是否有个人信息
+     */
+    hasPersonalInfo() {
+      const personalFields = ['phone', 'gender', 'birthDate', 'address']
+      return personalFields.some(field => this.applicationData[field])
+    },
+
+    /**
+     * 是否有紧急联系人信息
+     */
+    hasEmergencyContact() {
+      return this.applicationData.emergencyContact || this.applicationData.emergencyPhone
+    },
+
+    /**
+     * 是否有自定义字段
+     */
+    hasCustomFields() {
+      return this.applicationData.customFields && Object.keys(this.applicationData.customFields).length > 0
+    },
+
+    /**
+     * 是否有其他信息
+     */
+    hasOtherInfo() {
+      return this.applicationData.applicationReason || this.applicationData.notes
+    },
+
+    /**
+     * 是否有可选信息（向后兼容）
      */
     hasOptionalInfo() {
-      const optionalFields = ['departmentName', 'jobTitle', 'phone', 'employeeId', 'applicationReason']
-      return optionalFields.some(field => this.applicationData[field])
+      return this.hasJobInfo || this.hasPersonalInfo || this.hasEmergencyContact || this.hasCustomFields || this.hasOtherInfo
     },
 
     /**
@@ -389,6 +532,106 @@ export default {
      */
     handleTimelineError(error) {
       this.$emit('timeline-error', error)
+    },
+
+    /**
+     * 获取部门名称
+     * @returns {string} 部门名称
+     */
+    getDepartmentName() {
+      // 优先使用嵌套的部门信息，然后是旧的departmentName字段
+      if (this.applicationData.department && this.applicationData.department.name) {
+        return this.applicationData.department.name
+      }
+      return this.applicationData.departmentName || ''
+    },
+
+    /**
+     * 获取岗位名称
+     * @returns {string} 岗位名称
+     */
+    getPositionName() {
+      // 使用嵌套的岗位信息
+      if (this.applicationData.position && this.applicationData.position.name) {
+        return this.applicationData.position.name
+      }
+      return ''
+    },
+
+    /**
+     * 获取上级名称
+     * @returns {string} 上级名称
+     */
+    getManagerName() {
+      // 使用嵌套的上级信息
+      if (this.applicationData.manager && this.applicationData.manager.name) {
+        return this.applicationData.manager.name
+      }
+      return ''
+    },
+
+    /**
+     * 获取性别文本
+     * @param {string} gender - 性别代码
+     * @returns {string} 性别文本
+     */
+    getGenderText(gender) {
+      const genderMap = {
+        'male': '男',
+        'female': '女',
+        'other': '其他'
+      }
+      return genderMap[gender] || gender || '-'
+    },
+
+    /**
+     * 格式化日期（不含时间）
+     * @param {string} date - 日期字符串
+     * @returns {string} 格式化后的日期
+     */
+    formatDate(date) {
+      if (!date) return '-'
+
+      try {
+        const dateObj = new Date(date)
+        return dateObj.toLocaleDateString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        })
+      } catch (error) {
+        console.warn('日期格式化失败:', error)
+        return date
+      }
+    },
+
+    /**
+     * 格式化自定义字段标签
+     * @param {string} key - 字段键名
+     * @returns {string} 格式化后的标签
+     */
+    formatCustomFieldLabel(key) {
+      // 将驼峰命名转换为可读的中文标签
+      const labelMap = {
+        'specialty': '专业特长',
+        'level': '技能等级',
+        'experience': '工作经验',
+        'education': '教育背景',
+        'certification': '相关认证'
+      }
+      return labelMap[key] || key
+    },
+
+    /**
+     * 获取申请原因的显示文本
+     * @param {string} reasonValue - 申请原因值
+     * @returns {string} 申请原因显示文本
+     */
+    getApplicationReasonText(reasonValue) {
+      if (!reasonValue) return '-'
+
+      const reasonOption = REASON_OPTIONS.find(option => option.value === reasonValue)
+      return reasonOption ? reasonOption.label : reasonValue
     }
   }
 }
@@ -478,43 +721,44 @@ export default {
       .info-row {
         padding: 0 16px 16px 16px;
 
-        .info-item {
-          margin-bottom: 16px;
-          display: flex;
-          align-items: flex-start;
-          padding: 8px 0;
-          border-bottom: 1px solid #F5F7FA;
-
-          &:last-child {
-            border-bottom: none;
-            margin-bottom: 8px;
-          }
-
-          .info-label {
-            font-weight: 600;
-            color: #606266;
-            min-width: 120px;
-            flex-shrink: 0;
+          .info-item {
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
             padding: 8px 0;
-          }
+            border-bottom: 1px solid #F5F7FA;
 
-          .info-value {
-            color: #303133;
-            word-break: break-word;
-            padding: 8px 0;
-            line-height: 1.6;
+            &:last-child {
+              border-bottom: none;
+              margin-bottom: 8px;
+            }
 
-            &.review-comments {
-              background-color: #F5F7FA;
-              padding: 12px 16px;
-              border-radius: 6px;
-              border-left: 4px solid #409EFF;
-              margin-top: 4px;
+            .info-label {
+              font-weight: 600;
+              color: #606266;
+              min-width: 120px;
+              flex-shrink: 0;
               line-height: 1.6;
-              font-style: italic;
+            }
+
+            .info-value {
+              color: #303133;
+              word-break: break-word;
+              line-height: 1.6;
+              flex: 1;
+
+              &.review-comments {
+                background-color: #F5F7FA;
+                padding: 12px 16px;
+                border-radius: 6px;
+                border-left: 4px solid #409EFF;
+                margin-top: 4px;
+                line-height: 1.6;
+                font-style: italic;
+                align-self: flex-start;
+              }
             }
           }
-        }
       }
     }
 
@@ -593,12 +837,12 @@ export default {
             .info-label {
               min-width: auto;
               margin-bottom: 4px;
-              padding-bottom: 4px;
+              line-height: 1.5;
             }
 
             .info-value {
               width: 100%;
-              padding-top: 0;
+              line-height: 1.5;
             }
           }
         }

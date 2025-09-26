@@ -128,6 +128,7 @@ export default {
       showEmptyState: false
     }
   },
+
   mounted() {
     // 如果URL中有申请ID参数，自动查询
     const applicationId = this.$route.query.id
@@ -215,31 +216,31 @@ export default {
         applicantEmail: rawData.applicantEmail,
         username: rawData.username,
 
-        // 职业信息（支持嵌套对象）
+        // 职业信息（包含新增字段）
         departmentId: rawData.departmentId,
         department: rawData.department || null, // 嵌套的部门信息
-        positionId: rawData.positionId,
-        position: rawData.position || null, // 嵌套的岗位信息
+        positionId: rawData.positionId, // 新增：岗位ID
+        position: rawData.position || null, // 新增：嵌套的岗位信息
         jobTitle: rawData.jobTitle,
         employeeId: rawData.employeeId,
-        managerId: rawData.managerId,
-        manager: rawData.manager || null, // 嵌套的上级信息
-        hireDate: rawData.hireDate,
+        managerId: rawData.managerId, // 新增：直属上级ID
+        manager: rawData.manager || null, // 新增：嵌套的上级信息
+        hireDate: rawData.hireDate, // 新增：预期入职日期
 
         // 个人信息（新增字段）
-        gender: rawData.gender,
-        birthDate: rawData.birthDate,
+        gender: rawData.gender, // 新增：性别
+        birthDate: rawData.birthDate, // 新增：出生日期
         phone: rawData.phone,
-        address: rawData.address,
+        address: rawData.address, // 新增：家庭住址
 
         // 紧急联系人（新增字段）
-        emergencyContact: rawData.emergencyContact,
-        emergencyPhone: rawData.emergencyPhone,
+        emergencyContact: rawData.emergencyContact, // 新增：紧急联系人姓名
+        emergencyPhone: rawData.emergencyPhone, // 新增：紧急联系人电话
 
         // 其他信息
         applicationReason: rawData.applicationReason,
         notes: rawData.notes,
-        customFields: rawData.customFields || {}, // 自定义字段（新增）
+        customFields: rawData.customFields || {}, // 新增：自定义字段
 
         // 审批信息
         status: rawData.status,
@@ -247,18 +248,49 @@ export default {
         updatedAt: rawData.updatedAt,
         approver: rawData.approver || null,
 
-        // 兼容旧字段
+        // 兼容旧字段（保持向后兼容性）
+        departmentName: rawData.department?.name || rawData.departmentName || null,
         submittedAt: rawData.createdAt,
         reviewedAt: rawData.updatedAt,
         reviewedBy: rawData.approver?.name || null,
         reviewComments: rawData.approver?.comments || null
       }
 
+      // 数据完整性检查和日志记录
+      this.logDataMappingInfo(rawData, processedData)
+
+      return processedData
+    },
+
+    /**
+     * 记录数据映射信息用于调试
+     * @param {Object} rawData - 原始数据
+     * @param {Object} processedData - 处理后数据
+     */
+    logDataMappingInfo(rawData, processedData) {
       // 记录调试信息
       console.log('API响应原始数据:', rawData)
       console.log('处理后的申请数据:', processedData)
 
-      return processedData
+      // 检查新增字段的映射情况
+      const newFields = ['positionId', 'hireDate', 'birthDate', 'gender', 'address', 'emergencyContact', 'emergencyPhone', 'managerId', 'customFields']
+      const mappedNewFields = newFields.filter(field => processedData[field] !== null && processedData[field] !== undefined)
+      if (mappedNewFields.length > 0) {
+        console.log('成功映射的新字段:', mappedNewFields)
+      }
+
+      // 检查嵌套对象的映射情况
+      const nestedFields = ['department', 'position', 'manager']
+      nestedFields.forEach(field => {
+        if (processedData[field]) {
+          console.log(`${field}嵌套对象信息:`, processedData[field])
+        }
+      })
+
+      // 检查自定义字段
+      if (processedData.customFields && Object.keys(processedData.customFields).length > 0) {
+        console.log('自定义字段内容:', processedData.customFields)
+      }
     },
 
     /**
@@ -484,6 +516,7 @@ export default {
       text-decoration: underline;
     }
   }
+
 }
 
 // 响应式设计
