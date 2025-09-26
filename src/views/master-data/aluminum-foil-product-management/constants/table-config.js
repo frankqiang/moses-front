@@ -63,6 +63,7 @@ export const TABLE_COLUMNS = [
     minWidth: 140,
     align: 'right',
     showOverflowTooltip: true,
+    slotName: 'thickness',
     formatter: (row) => (row.thickness ?? '-')
   },
   {
@@ -72,6 +73,7 @@ export const TABLE_COLUMNS = [
     minWidth: 140,
     align: 'right',
     showOverflowTooltip: true,
+    slotName: 'width',
     formatter: (row) => (row.width ?? '-')
   },
   {
@@ -81,6 +83,7 @@ export const TABLE_COLUMNS = [
     minWidth: 160,
     align: 'right',
     showOverflowTooltip: true,
+    slotName: 'unitWeight',
     formatter: (row) => (row.unitWeight ?? '-')
   },
   {
