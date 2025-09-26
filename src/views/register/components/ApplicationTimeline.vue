@@ -102,10 +102,10 @@
                 <div class="reason-content">{{ item.reason }}</div>
               </div>
 
-              <!-- 备注信息 -->
-              <div v-if="item.notes" class="notes-info">
-                <div class="notes-label">备注：</div>
-                <div class="notes-content">{{ item.notes }}</div>
+              <!-- 审批备注信息 -->
+              <div v-if="shouldShowApprovalNotes(item)" class="notes-info">
+                <div class="notes-label">审批备注：</div>
+                <div class="notes-content">{{ getApprovalNotes(item) }}</div>
               </div>
             </div>
           </el-card>
@@ -149,7 +149,8 @@ export default {
     return {
       loading: false,
       error: null,
-      timelineData: []
+      timelineData: [],
+      applicationData: null
     }
   },
 
@@ -182,6 +183,7 @@ export default {
 
         if (response.success && response.data && response.data.timeline) {
           this.timelineData = response.data.timeline
+          this.applicationData = response.data.application
           this.$emit('timeline-loaded', this.timelineData)
         } else {
           throw new Error('获取申请历史失败')
@@ -332,6 +334,31 @@ export default {
     formatDetailTimestamp(timestamp) {
       if (!timestamp) return ''
       return this.formatDate(timestamp, 'YYYY-MM-DD HH:mm:ss')
+    },
+
+    /**
+     * 判断是否应该显示审批备注
+     * @param {Object} item - 时间线项目
+     * @returns {boolean} 是否显示审批备注
+     */
+    shouldShowApprovalNotes(item) {
+      // 只有在审批相关的操作中才显示审批备注
+      const approvalActions = ['approved', 'rejected']
+      return approvalActions.includes(item.action) &&
+             this.applicationData &&
+             this.applicationData.approvalNotes
+    },
+
+    /**
+     * 获取审批备注内容
+     * @param {Object} item - 时间线项目
+     * @returns {string} 审批备注内容
+     */
+    getApprovalNotes(item) {
+      // 优先使用时间线项目中的审批备注，否则使用申请数据中的审批备注
+      return item.approvalNotes ||
+             (this.applicationData && this.applicationData.approvalNotes) ||
+             ''
     },
 
     /**

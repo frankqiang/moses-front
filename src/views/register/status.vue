@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import { getApplicationStatus, handleRegistrationError } from './api/register'
+import { getApplicationHistory, handleRegistrationError } from './api/register'
 import { showStatusQuerySuccess } from './utils/errorHandler'
 import ApplicationCard from './components/ApplicationCard.vue'
 import LoadingIndicator from './components/LoadingIndicator.vue'
@@ -153,12 +153,12 @@ export default {
         this.applicationData = null
         this.showEmptyState = false
 
-        // 查询申请状态
-        const response = await getApplicationStatus(this.queryForm.applicationId.trim())
+        // 查询申请历史（包含完整的申请信息和时间线）
+        const response = await getApplicationHistory(this.queryForm.applicationId.trim())
 
-        if (response.success && response.data) {
-          // 处理响应数据，确保新增字段正确映射
-          this.applicationData = this.processApplicationData(response.data)
+        if (response.success && response.data && response.data.application) {
+          // 处理响应数据，从application字段中获取申请信息
+          this.applicationData = this.processApplicationData(response.data.application)
           this.showEmptyState = false
 
           // 显示查询成功提示
@@ -242,18 +242,24 @@ export default {
         notes: rawData.notes,
         customFields: rawData.customFields || {}, // 新增：自定义字段
 
-        // 审批信息
+        // 审批信息（包含从getApplicationHistory获取的完整审批数据）
         status: rawData.status,
         createdAt: rawData.createdAt,
         updatedAt: rawData.updatedAt,
         approver: rawData.approver || null,
+        approvedBy: rawData.approvedBy || null, // 新增：审批人ID
+        approvedAt: rawData.approvedAt || null, // 新增：审批时间
+        createdUserId: rawData.createdUserId || null, // 新增：创建用户ID
+        createdUser: rawData.createdUser || null, // 新增：创建用户信息
+        rejectionReason: rawData.rejectionReason || null, // 新增：拒绝原因
+        approvalNotes: rawData.approvalNotes || null, // 新增：审批备注
 
         // 兼容旧字段（保持向后兼容性）
         departmentName: rawData.department?.name || rawData.departmentName || null,
         submittedAt: rawData.createdAt,
-        reviewedAt: rawData.updatedAt,
+        reviewedAt: rawData.approvedAt || rawData.updatedAt,
         reviewedBy: rawData.approver?.name || null,
-        reviewComments: rawData.approver?.comments || null
+        reviewComments: rawData.approvalNotes || rawData.approver?.comments || null
       }
 
       // 数据完整性检查和日志记录
@@ -273,14 +279,14 @@ export default {
       console.log('处理后的申请数据:', processedData)
 
       // 检查新增字段的映射情况
-      const newFields = ['positionId', 'hireDate', 'birthDate', 'gender', 'address', 'emergencyContact', 'emergencyPhone', 'managerId', 'customFields']
+      const newFields = ['positionId', 'hireDate', 'birthDate', 'gender', 'address', 'emergencyContact', 'emergencyPhone', 'managerId', 'customFields', 'approvedBy', 'approvedAt', 'createdUserId', 'createdUser', 'rejectionReason', 'approvalNotes']
       const mappedNewFields = newFields.filter(field => processedData[field] !== null && processedData[field] !== undefined)
       if (mappedNewFields.length > 0) {
         console.log('成功映射的新字段:', mappedNewFields)
       }
 
       // 检查嵌套对象的映射情况
-      const nestedFields = ['department', 'position', 'manager']
+      const nestedFields = ['department', 'position', 'manager', 'approver', 'createdUser']
       nestedFields.forEach(field => {
         if (processedData[field]) {
           console.log(`${field}嵌套对象信息:`, processedData[field])

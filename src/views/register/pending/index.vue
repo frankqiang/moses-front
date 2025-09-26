@@ -349,7 +349,7 @@ export default {
         this.$set(row, 'approving', true)
 
         // 调用批准接口
-        const response = await approveApplication(row.id, { notes })
+        const response = await approveApplication(row.id, { approvalNotes: notes })
 
         this.$message.success(response.message || '申请批准成功')
         this.fetchList()
@@ -416,7 +416,7 @@ export default {
         // 调用批量批准接口
         const response = await batchApproveApplications({
           applicationIds,
-          notes: notes || ''
+          approvalNotes: notes || ''
         })
 
         this.$message.success(response.message || `成功批准 ${selectedRows.length} 个申请`)
@@ -464,7 +464,7 @@ export default {
         // 批量拒绝
         const applicationIds = target.map(row => row.id)
         try {
-          const response = await batchRejectApplications({ applicationIds, reason, notes })
+          const response = await batchRejectApplications({ applicationIds, reason, approvalNotes: notes })
           this.$message.success(response.message || `成功拒绝 ${target.length} 个申请`)
           this.fetchList()
         } catch (error) {
@@ -479,7 +479,7 @@ export default {
         const row = target
         this.$set(row, 'rejecting', true)
         try {
-          const response = await rejectApplication(row.id, { reason, notes })
+          const response = await rejectApplication(row.id, { reason, approvalNotes: notes })
           this.$message.success(response.message || '申请已拒绝')
           this.fetchList()
         } catch (error) {
