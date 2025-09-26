@@ -164,33 +164,7 @@ export const REGISTER_FORM_RULES = (formData) => ({
       trigger: 'blur'
     }
   ],
-  hireDate: [
-    {
-      validator: (rule, value, callback) => {
-        if (!value) {
-          callback()
-          return
-        }
-
-        const selectedDate = new Date(value)
-        if (Number.isNaN(selectedDate.getTime())) {
-          callback(new Error('请选择有效的预期入职日期'))
-          return
-        }
-
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        selectedDate.setHours(0, 0, 0, 0)
-
-        if (selectedDate < today) {
-          callback(new Error('预期入职日期不能早于今天'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'change'
-    }
-  ],
+  hireDate: [],
   birthDate: [
     {
       validator: (rule, value, callback) => {
