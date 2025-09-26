@@ -21,28 +21,32 @@ export const SEARCH_FORM_CONFIG = [
     prop: 'productCode',
     label: '产品编码',
     placeholder: '请输入产品编码',
-    clearable: true
+    clearable: true,
+    priority: 'primary'
   },
   {
     type: 'input',
     prop: 'productName',
     label: '产品名称',
     placeholder: '请输入产品名称',
-    clearable: true
+    clearable: true,
+    priority: 'primary'
   },
   {
     type: 'input',
     prop: 'alloyGrade',
     label: '合金牌号',
     placeholder: '请输入合金牌号',
-    clearable: true
+    clearable: true,
+    priority: 'primary'
   },
   {
     type: 'input',
     prop: 'temper',
     label: '状态/硬度',
     placeholder: '请输入状态或硬度',
-    clearable: true
+    clearable: true,
+    priority: 'primary'
   },
   {
     type: 'select',
@@ -50,36 +54,64 @@ export const SEARCH_FORM_CONFIG = [
     label: '生命周期状态',
     placeholder: '请选择生命周期状态',
     options: LIFECYCLE_STATUS_OPTIONS,
-    clearable: true
+    clearable: true,
+    priority: 'primary'
   },
   {
-    type: 'numberRange',
-    prop: ['thicknessMin', 'thicknessMax'],
-    label: '厚度范围 (mm)',
-    placeholder: ['最小厚度', '最大厚度'],
+    type: 'number',
+    prop: 'thicknessMin',
+    label: '厚度下限 (mm)',
+    placeholder: '最小厚度',
     min: THICKNESS_LIMITS.MIN,
     max: THICKNESS_LIMITS.MAX,
     step: THICKNESS_LIMITS.STEP,
     precision: THICKNESS_LIMITS.PRECISION,
-    clearable: true
+    clearable: true,
+    priority: 'advanced'
   },
   {
-    type: 'numberRange',
-    prop: ['widthMin', 'widthMax'],
-    label: '宽度范围 (mm)',
-    placeholder: ['最小宽度', '最大宽度'],
+    type: 'number',
+    prop: 'thicknessMax',
+    label: '厚度上限 (mm)',
+    placeholder: '最大厚度',
+    min: THICKNESS_LIMITS.MIN,
+    max: THICKNESS_LIMITS.MAX,
+    step: THICKNESS_LIMITS.STEP,
+    precision: THICKNESS_LIMITS.PRECISION,
+    clearable: true,
+    priority: 'advanced'
+  },
+  {
+    type: 'number',
+    prop: 'widthMin',
+    label: '宽度下限 (mm)',
+    placeholder: '最小宽度',
     min: WIDTH_LIMITS.MIN,
     max: WIDTH_LIMITS.MAX,
     step: WIDTH_LIMITS.STEP,
     precision: WIDTH_LIMITS.PRECISION,
-    clearable: true
+    clearable: true,
+    priority: 'advanced'
+  },
+  {
+    type: 'number',
+    prop: 'widthMax',
+    label: '宽度上限 (mm)',
+    placeholder: '最大宽度',
+    min: WIDTH_LIMITS.MIN,
+    max: WIDTH_LIMITS.MAX,
+    step: WIDTH_LIMITS.STEP,
+    precision: WIDTH_LIMITS.PRECISION,
+    clearable: true,
+    priority: 'advanced'
   },
   {
     type: 'input',
     prop: 'search',
     label: '全文检索',
     placeholder: '支持产品编码/名称/备注模糊查询',
-    clearable: true
+    clearable: true,
+    priority: 'advanced'
   }
 ]
 

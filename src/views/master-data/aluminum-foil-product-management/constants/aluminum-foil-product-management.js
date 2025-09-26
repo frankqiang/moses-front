@@ -63,6 +63,19 @@ export const UNIT_DISPLAY = {
   unitWeight: 'kg'
 }
 
+export const LIFECYCLE_STATUS_CONFIG = {
+  textMap: {
+    [LIFECYCLE_STATUS.TRIAL]: '试产',
+    [LIFECYCLE_STATUS.MASS]: '量产',
+    [LIFECYCLE_STATUS.RETIRED]: '停产'
+  },
+  typeMap: {
+    [LIFECYCLE_STATUS.TRIAL]: 'warning',
+    [LIFECYCLE_STATUS.MASS]: 'success',
+    [LIFECYCLE_STATUS.RETIRED]: 'info'
+  }
+}
+
 // 默认排序
 export const DEFAULT_SORT = 'createdAt:desc'
 
