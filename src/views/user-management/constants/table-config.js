@@ -92,6 +92,17 @@ export const TABLE_COLUMNS = [
     showOverflowTooltip: true
   },
   {
+    prop: 'notes',
+    label: '用户备注',
+    sortable: false,
+    minWidth: 150,
+    align: 'center',
+    showOverflowTooltip: true,
+    formatter: (row) => {
+      return row.notes || '-'
+    }
+  },
+  {
     prop: 'status',
     label: '状态',
     sortable: true,
@@ -149,6 +160,7 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   'profile.gender',
   'profile.department.name',
   'profile.position.name',
+  'notes',
   'status',
   'lastLoginAt',
   'actions'
