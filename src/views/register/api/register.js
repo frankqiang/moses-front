@@ -387,7 +387,7 @@ export function isValidApplicationId(id) {
  * 批准注册申请
  * @param {string} id - 申请ID
  * @param {Object} data - 批准数据
- * @param {string} [data.notes] - 审批备注（可选）
+ * @param {string} [data.approvalNotes] - 审批备注（可选）
  * @returns {Promise} 返回批准结果
  * @throws {ApiError} 可能抛出的错误：
  *   - VAL_001: 申请ID不能为空
@@ -404,7 +404,7 @@ export function approveApplication(id, data = {}) {
     url: `${baseURL}/register-applications/${id.trim()}/approve`,
     method: 'put',
     data: {
-      notes: data.notes ? data.notes.trim() : undefined
+      approvalNotes: data.approvalNotes ? data.approvalNotes.trim() : undefined
     }
   })
 }
@@ -414,7 +414,7 @@ export function approveApplication(id, data = {}) {
  * @param {string} id - 申请ID
  * @param {Object} data - 拒绝数据
  * @param {string} data.reason - 拒绝理由（必填）
- * @param {string} [data.notes] - 审批备注（可选）
+ * @param {string} [data.approvalNotes] - 审批备注（可选）
  * @returns {Promise} 返回拒绝结果
  * @throws {ApiError} 可能抛出的错误：
  *   - VAL_001: 申请ID不能为空
@@ -437,7 +437,7 @@ export function rejectApplication(id, data) {
     method: 'put',
     data: {
       reason: data.reason.trim(),
-      notes: data.notes ? data.notes.trim() : undefined
+      approvalNotes: data.approvalNotes ? data.approvalNotes.trim() : undefined
     }
   })
 }
@@ -450,7 +450,7 @@ export function rejectApplication(id, data) {
  * 批量批准申请
  * @param {Object} data - 批量批准数据
  * @param {Array} data.applicationIds - 申请ID数组
- * @param {string} [data.notes] - 审批备注
+ * @param {string} [data.approvalNotes] - 审批备注
  * @returns {Promise} 返回批量操作结果
  */
 export function batchApproveApplications(data) {
@@ -468,7 +468,7 @@ export function batchApproveApplications(data) {
     data: {
       action: 'approve',
       applicationIds: data.applicationIds,
-      notes: data.notes || ''
+      approvalNotes: data.approvalNotes || ''
     }
   })
 }
@@ -478,7 +478,7 @@ export function batchApproveApplications(data) {
  * @param {Object} data - 批量拒绝数据
  * @param {Array} data.applicationIds - 申请ID数组
  * @param {string} data.reason - 拒绝理由
- * @param {string} [data.notes] - 审批备注
+ * @param {string} [data.approvalNotes] - 审批备注
  * @returns {Promise} 返回批量操作结果
  */
 export function batchRejectApplications(data) {
@@ -501,7 +501,7 @@ export function batchRejectApplications(data) {
       action: 'reject',
       applicationIds: data.applicationIds,
       reason: data.reason.trim(),
-      notes: data.notes || ''
+      approvalNotes: data.approvalNotes || ''
     }
   })
 }
