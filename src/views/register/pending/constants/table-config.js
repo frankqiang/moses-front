@@ -3,6 +3,8 @@
  * 支持BaseTable组件的完整配置
  */
 
+import { REASON_OPTIONS } from '../../constants/register'
+
 // 表格列配置 - 原生支持BaseTable组件
 export const TABLE_COLUMNS = [
   {
@@ -205,8 +207,26 @@ export const TABLE_COLUMNS = [
     minWidth: 200,
     align: 'left',
     showOverflowTooltip: true,
+    formatter: (row) => {
+      if (!row.applicationReason) return '-'
+      const reasonOption = REASON_OPTIONS.find(option => option.value === row.applicationReason)
+      return reasonOption ? reasonOption.label : row.applicationReason
+    },
     group: 'other', // 其他信息分组
     priority: 2 // 显示优先级
+  },
+  {
+    prop: 'notes',
+    label: '备注信息',
+    sortable: false,
+    minWidth: 200,
+    align: 'left',
+    showOverflowTooltip: true,
+    formatter: (row) => {
+      return row.notes || '-'
+    },
+    group: 'other', // 其他信息分组
+    priority: 3 // 显示优先级较低
   },
   {
     prop: 'actions',
@@ -221,7 +241,7 @@ export const TABLE_COLUMNS = [
 
 // 默认可见列（优先显示业务关键信息）
 export const DEFAULT_VISIBLE_COLUMNS = [
-  'applicantName', 'username', 'applicantEmail', 'department', 'jobTitle', 'phone', 'status', 'createdAt', 'actions'
+  'applicantName', 'username', 'applicantEmail', 'department', 'jobTitle', 'phone', 'applicationReason', 'notes', 'status', 'createdAt', 'actions'
 ]
 
 // 状态配置 - 可以在组件中引用
@@ -269,7 +289,7 @@ export const COLUMN_GROUPS = {
   },
   other: {
     label: '其他信息',
-    description: '申请原因等补充信息'
+    description: '申请原因、备注信息等补充信息'
   },
   actions: {
     label: '操作',
