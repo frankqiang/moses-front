@@ -461,9 +461,6 @@ export default {
 <style lang="scss" scoped>
 .aluminum-foil-product-management {
   padding: 20px;
-  background-color: #f5f5f5;
-  min-height: 100vh;
-
   // 响应式设计
   @media (max-width: 768px) {
     padding: 10px;

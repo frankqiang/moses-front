@@ -152,6 +152,7 @@ export const asyncRoutes = [
     component: Layout,
     redirect: '/master-data/aluminum-foil-product-management',
     name: 'MasterData',
+    alwaysShow: true, // 确保即使只有一个子路由也显示父级菜单
     meta: {
       title: '主数据管理',
       icon: 'el-icon-folder'
@@ -164,7 +165,7 @@ export const asyncRoutes = [
         component: () => import('@/views/master-data/aluminum-foil-product-management/index'),
         meta: {
           title: '铝箔产品管理',
-          icon: 'el-icon-cube'
+          icon: 'el-icon-box'
           // 开发阶段：移除 roles 限制
         }
       }
