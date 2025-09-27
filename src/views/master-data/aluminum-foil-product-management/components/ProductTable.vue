@@ -574,5 +574,3 @@ function fallbackCopyText(text, messageInstance) {
   background-color: rgba(144, 147, 153, 0.08);
 }
 </style>
-
-
