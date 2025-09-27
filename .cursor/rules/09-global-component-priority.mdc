@@ -12,30 +12,26 @@ alwaysApply: true
 
 ### 🗂 表格相关组件
 
-#### BaseTable - 配置驱动表格组件
-- **功能**：基于Element UI的增强表格，支持虚拟滚动、错误处理、防抖优化
-- **使用场景**：所有数据表格展示
+#### [BaseTable](mdc:src/components/BaseTable/index.vue) - 配置驱动表格组件
+- **功能**：基于Element UI的增强表格，支持虚拟滚动、内置分页、错误处理
+- **使用场景**：所有数据表格展示，完全替代 `el-table`
 - **核心特性**：
   - 配置驱动的列定义
-  - 内置分页、状态标签、时间格式化
+  - 内置分页功能，无需单独使用 `el-pagination`
   - 支持10万+条数据的虚拟滚动
   - 完整的错误边界保护
   - 自动防抖处理
+- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第56-133行
 
-
-#### TableToolbar - 表格工具栏组件
-- **功能**：完整的表格操作工具栏
-- **包含功能**：搜索、刷新、导入导出、列设置、批量操作
+#### [TableToolbar](mdc:src/components/TableToolbar/index.vue) - 表格工具栏组件
+- **功能**：完整的表格操作工具栏，集成所有表格相关操作
+- **包含功能**：搜索、刷新、导入导出、列设置、批量操作、状态切换
 - **使用场景**：所有需要表格操作的页面
-
-#### Pagination - 增强分页组件
-- **功能**：基于Element UI的增强分页，支持防抖、错误处理、性能监控
-- **使用场景**：所有分页场景
-- **现代化特性**：错误边界、防抖优化、智能重试、性能监控
+- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第13-53行
 
 ### 📝 表单相关组件
 
-#### SearchForm - 高级搜索表单组件
+#### [SearchForm](mdc:src/components/SearchForm/index.vue) - 高级搜索表单组件
 - **功能**：配置驱动的搜索表单，支持多种表单项类型
 - **核心特性**：
   - 防抖搜索
@@ -43,9 +39,9 @@ alwaysApply: true
   - 动态组件渲染
   - 支持插槽自定义
 - **使用场景**：所有搜索功能
+- **参考实现**：[SearchForm.vue](mdc:src/views/master-data/process-management/operations/components/SearchForm.vue)
 
-
-#### EnhancedForm - 增强表单组件
+#### [EnhancedForm](mdc:src/components/EnhancedForm/index.vue) - 增强表单组件
 - **功能**：专注表单数据处理和验证的增强组件
 - **核心特性**：
   - 支持创建、更新、查看三种模式
@@ -53,60 +49,66 @@ alwaysApply: true
   - 键盘快捷键支持
   - 变更检测和自动保存
 - **使用场景**：所有复杂表单场景
+- **参考实现**：[OperationFormDrawer.vue](mdc:src/views/master-data/process-management/operations/components/OperationFormDrawer.vue) 第16-163行
 
-#### DialogForm - 弹窗表单组件
-- **功能**：集成对话框的表单组件
-- **使用场景**：弹窗中的表单操作
-
-#### DrawerForm - 抽屉表单组件
-- **功能**：集成抽屉的表单组件
-- **使用场景**：侧边栏表单操作
+#### [Drawer](mdc:src/components/Drawer/index.vue) - 抽屉组件（BaseDrawer）
+- **功能**：集成抽屉的容器组件，支持表单、详情等内容
+- **使用场景**：侧边栏表单操作、详情查看
+- **参考实现**：[OperationFormDrawer.vue](mdc:src/views/master-data/process-management/operations/components/OperationFormDrawer.vue) 第7-14行
 
 ### 🎛 操作相关组件
 
-#### ActionButtons - 操作按钮组组件
+#### [ActionButtons](mdc:src/components/ActionButtons/index.vue) - 操作按钮组组件
 - **功能**：现代化的操作按钮组，支持权限控制、防抖保护
 - **核心特性**：
   - 预设按钮配置（表格操作、表单操作、审批操作）
   - 防抖保护、错误处理
   - 无障碍访问支持
+  - 支持文本模式和普通模式
 - **使用场景**：表格操作列、表单操作、批量操作
+- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第42-46行和第117-123行
 
-
-#### ExportButton - 导出按钮组件
+#### [ExportButton](mdc:src/components/ExportButton/index.vue) - 导出按钮组件
 - **功能**：通用表格数据导出组件，支持Excel导出
 - **现代化特性**：防抖保护、请求取消、智能重试、内存管理
 - **使用场景**：所有数据导出需求
+- **集成方式**：通过 TableToolbar 的 `:enable-export="true"` 属性启用
 
-#### ImportButton - 导入按钮组件
+#### [ImportButton](mdc:src/components/ImportButton/index.vue) - 导入按钮组件
 - **功能**：文件导入组件
 - **使用场景**：所有数据导入需求
+- **集成方式**：通过 TableToolbar 或独立使用
 
-#### RefreshButton - 刷新按钮组件
+#### [RefreshButton](mdc:src/components/RefreshButton/index.vue) - 刷新按钮组件
 - **功能**：带防抖保护的刷新按钮
 - **使用场景**：数据刷新操作
+- **集成方式**：通过 TableToolbar 的 `@refresh` 事件处理
 
 ### 📊 数据展示组件
 
-#### StatusTag - 状态标签组件
-- **功能**：标准化的状态显示标签
+#### [StatusTag](mdc:src/components/StatusTag/index.vue) - 状态标签组件
+- **功能**：标准化的状态显示标签，支持自定义映射
 - **使用场景**：状态字段展示
+- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第80-86行
 
-#### OverflowTagsPopover - 溢出标签组件
-- **功能**：标签数量过多时的溢出处理
-- **使用场景**：标签列表展示
+#### [OverflowTagsPopover](mdc:src/components/OverflowTagsPopover/index.vue) - 溢出标签组件
+- **功能**：标签数量过多时的溢出处理，支持弹窗展示全部标签
+- **使用场景**：标签列表展示、关联资源类型展示
+- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第99-113行
 
 ### 🔧 通用功能组件
 
-#### BatchAction - 批量操作组件
+#### [BatchAction](mdc:src/components/BatchAction/index.vue) - 批量操作组件
 - **功能**：批量操作功能组件
 - **使用场景**：表格批量操作
+- **集成方式**：通过 TableToolbar 的批量操作功能使用
 
-#### ColumnSettings - 列设置组件
-- **功能**：表格列显示设置
+#### [ColumnSettings](mdc:src/components/ColumnSettings/index.vue) - 列设置组件
+- **功能**：表格列显示设置，支持拖拽排序、显示隐藏
 - **使用场景**：表格个性化配置
+- **集成方式**：通过 TableToolbar 的 `:enable-column-settings="true"` 属性启用
 
-#### ErrorHandler - 错误处理组件
+#### [ErrorHandler](mdc:src/components/ErrorHandler/index.vue) - 错误处理组件
 - **功能**：统一错误处理
 - **使用场景**：错误边界保护
 
@@ -183,22 +185,40 @@ alwaysApply: true
 ### 1. 目录结构查找
 ```bash
 src/components/
-├── BaseTable/          # 表格组件
-├── SearchForm/         # 搜索表单
-├── EnhancedForm/       # 增强表单
-├── ActionButtons/      # 操作按钮
-├── ExportButton/       # 导出按钮
-├── Pagination/         # 分页组件
-└── ...
+├── BaseTable/              # 表格组件（替代el-table）
+├── SearchForm/             # 搜索表单
+├── EnhancedForm/           # 增强表单
+├── ActionButtons/          # 操作按钮组
+├── TableToolbar/           # 表格工具栏
+├── StatusTag/              # 状态标签
+├── OverflowTagsPopover/    # 溢出标签弹窗
+├── Drawer/                 # 抽屉组件（BaseDrawer）
+├── ExportButton/           # 导出按钮
+├── ImportButton/           # 导入按钮
+├── RefreshButton/          # 刷新按钮
+├── Pagination/             # 分页组件（独立使用时）
+├── BatchAction/            # 批量操作
+├── ColumnSettings/         # 列设置
+└── ErrorHandler/           # 错误处理
 ```
 
-### 3. 功能关键词搜索
-- 表格 → BaseTable
+### 2. 功能关键词搜索
+- 表格 → BaseTable（完全替代 el-table）
 - 搜索 → SearchForm
-- 表单 → EnhancedForm、DialogForm、DrawerForm
-- 按钮 → ActionButtons、ExportButton、ImportButton
-- 分页 → Pagination
+- 表单 → EnhancedForm + Drawer 组合
+- 按钮 → ActionButtons、ExportButton、ImportButton、RefreshButton
+- 工具栏 → TableToolbar（集成所有表格操作）
 - 状态 → StatusTag
+- 标签溢出 → OverflowTagsPopover
+
+### 3. 组件组合模式（推荐）
+基于 [operations 模块](mdc:src/views/master-data/process-management/operations) 的最佳实践：
+- **表格页面**：TableToolbar + BaseTable
+- **搜索功能**：SearchForm（配置驱动）
+- **表单抽屉**：Drawer + EnhancedForm
+- **操作按钮**：ActionButtons（支持预设和自定义）
+- **状态显示**：StatusTag（自定义映射）
+- **标签展示**：OverflowTagsPopover（数量过多时）
 
 
 ## 🚨 违规处理
@@ -220,21 +240,20 @@ src/components/
 ## 🎨 设计风格一致性要求
 
 ### 📋 参考标准模块
-所有后续模块开发**必须严格按照 `user-management` 模块的设计风格和架构模式**，确保整个项目的一致性和可维护性。
+所有后续模块开发**必须严格按照 `process-management/operations` 模块的设计风格和架构模式**，确保整个项目的一致性和可维护性。该模块是全局组件使用的最佳实践典范。
 
 ### 🏗️ 模块架构标准
-参考 [user-management模块](mdc:src/views/user-management) 的完整架构：
+参考 [operations模块](mdc:src/views/master-data/process-management/operations) 的完整架构：
 
 ```
-module-name/
+operations/
 ├── api/                    # API接口层
 │   ├── index.js           # 统一导出入口
 │   └── module-name.js     # 具体API实现
 ├── components/            # 组件层
-│   ├── ModuleTable.vue    # 表格组件
-│   ├── ModuleSearch.vue   # 搜索组件
-│   ├── ModuleFormDrawer.vue # 表单抽屉
-│   └── ...Dialog.vue      # 各种对话框
+│   ├── OperationTable.vue    # 表格组件（使用BaseTable+TableToolbar）
+│   ├── SearchForm.vue        # 搜索组件（使用SearchForm）
+│   └── OperationFormDrawer.vue # 表单抽屉（使用Drawer+EnhancedForm）
 ├── constants/             # 常量配置层
 │   ├── index.js          # 统一导出入口
 │   ├── module-name.js    # 基础常量
@@ -247,7 +266,6 @@ module-name/
 │   ├── 接口文档/         # API文档
 │   └── *.md             # 各种说明文档
 ├── utils/               # 工具函数（可选）
-├── detail.vue           # 详情页面（可选）
 └── index.vue            # 主页面入口
 ```
 
@@ -270,48 +288,10 @@ module-name/
 - **API入口**：`api/index.js`
 - **具体实现**：`api/{module-name}.js`
 
-### 🔧 代码结构标准
-
-#### 主页面组件结构
-参考 [user-management/index.vue](mdc:src/views/user-management/index.vue) 的标准结构：
-- 搜索表单组件
-- 数据表格组件（带工具栏）
-- 表单抽屉组件
-- 各类对话框组件
-
-#### 组件导入顺序
-1. 子组件导入
-2. API函数导入
-3. 常量配置导入
-4. 工具函数导入
-
-#### 数据结构标准
-- 列表数据：moduleList, listLoading, selectedModules
-- 分页配置：pagination (page, limit, total)
-- 搜索条件：searchQuery
-- 排序条件：sortBy
-- 抽屉表单：drawerVisible, drawerMode, currentModule
-
-### 📊 表格组件设计标准
-
-#### 必须使用的全局组件
-- **TableToolbar**：表格工具栏（搜索、刷新、导入导出、列设置、批量操作）
-- **BaseTable**：数据表格（替代el-table）
-- **StatusTag**：状态标签显示
-- **ActionButtons**：操作按钮组
-
-### 🔍 搜索组件设计标准
-
-#### 必须使用SearchForm组件
-参考 [UserSearch.vue](mdc:src/views/user-management/components/UserSearch.vue) 的实现：
-- 使用SearchForm全局组件
-- 配置驱动的搜索表单项
-- 从constants/form-config.js导入配置
-
 ### 📁 常量配置标准
 
 #### constants/index.js 统一导出
-参考 [user-management/constants/index.js](mdc:src/views/user-management/constants/index.js)：
+参考 [operations/constants/index.js](mdc:src/views/master-data/process-management/operations/constants/index.js)：
 - 基础常量（状态、枚举等）
 - 表格配置 (table-config.js)
 - 表单配置 (form-config.js)
@@ -319,7 +299,7 @@ module-name/
 - 消息配置 (messages-config.js)
 
 #### 表格配置标准
-参考 [user-management/constants/table-config.js](mdc:src/views/user-management/constants/table-config.js)：
+参考 [operations/constants/table-config.js](mdc:src/views/master-data/process-management/operations/constants/table-config.js)：
 - TABLE_COLUMNS：列配置（prop、label、sortable、slotName等）
 - STATUS_CONFIG：状态配置（typeMap、textMap）
 
@@ -329,41 +309,14 @@ module-name/
 每个文件必须包含：文件名称、文件描述、创建日期、修改记录
 
 #### 必需文档文件
-- `docs/接口文档/{模块名}接口说明文档.md`
-- `docs/任务清单/{模块名}前端开发任务清单.md`
 - 各组件内的README.md文档
 
-### 🎯 开发流程规范
+### 🌟 最佳实践参考
 
-#### 开发前检查清单
-- [ ] **架构对齐**：目录结构严格按照user-management模块
-- [ ] **组件复用**：优先使用已定义的全局组件
-- [ ] **命名规范**：文件和组件命名遵循既定规范
-- [ ] **配置分离**：常量配置独立到constants目录
-- [ ] **文档完整**：API文档和开发文档齐全
+#### 完整示例文件
+- **主页面**：[operations/index.vue](mdc:src/views/master-data/process-management/operations/index.vue)
+- **表格组件**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue)
+- **搜索组件**：[SearchForm.vue](mdc:src/views/master-data/process-management/operations/components/SearchForm.vue)
+- **表单抽屉**：[OperationFormDrawer.vue](mdc:src/views/master-data/process-management/operations/components/OperationFormDrawer.vue)
 
-#### 代码风格要求
-- **组件拆分**：页面组件化，功能单一职责
-- **配置驱动**：表格和表单使用配置文件驱动
-- **统一导入**：通过index.js统一导出和导入
-- **错误处理**：参考user-management的错误处理模式
-- **样式规范**：使用scoped样式，响应式设计
-
-#### 质量保证标准
-- **功能一致性**：相同功能的实现方式必须一致
-- **用户体验**：交互模式和视觉风格保持统一
-- **代码复用**：最大化利用已有组件和工具函数
-- **文档维护**：及时更新相关文档
-
-### 🚨 一致性检查清单
-
-开发完成后必须检查：
-- [ ] 目录结构与user-management模块完全一致
-- [ ] 组件命名遵循既定规范
-- [ ] 使用了正确的全局组件（BaseTable、SearchForm、ActionButtons等）
-- [ ] 常量配置独立且结构统一
-- [ ] API调用模式与user-management一致
-- [ ] 错误处理和消息提示模式一致
-- [ ] 文档格式和内容完整性符合标准
-
-通过严格遵循user-management模块的设计风格，确保整个项目的架构一致性、代码可维护性和团队开发效率。
+通过严格遵循operations模块的设计风格和全局组件使用模式，确保整个项目的架构一致性、代码可维护性和团队开发效率。
