@@ -34,6 +34,7 @@
       @pagination-change="handlePaginationChange"
       @sort-change="handleSortChange"
       @refresh="handleRefresh"
+      @create="handleCreate"
       @view="handleView"
       @edit="handleEdit"
       @selection-change="handleSelectionChange"

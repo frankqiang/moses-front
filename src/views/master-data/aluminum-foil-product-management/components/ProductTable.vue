@@ -22,6 +22,7 @@
       @column-change="handleToolbarColumnChange"
     >
       <template #toolbar-left>
+        <action-buttons :buttons="toolbarButtons" mode="normal" @click="handleToolbarAction" />
         <slot name="toolbar-left">
           <span v-if="selectedRows.length" class="product-table__selection-indicator">
             已选{{ selectedRows.length }}项
@@ -347,6 +348,17 @@ export default {
     },
     copyTooltip() {
       return '点击复制产品编码'
+    },
+    toolbarButtons() {
+      return [
+        {
+          action: 'create',
+          text: '新增产品',
+          type: 'primary',
+          icon: 'el-icon-plus',
+          size: 'small'
+        }
+      ]
     }
   },
   created() {
@@ -377,6 +389,15 @@ export default {
     },
     handleRetry() {
       this.$emit('retry')
+    },
+    handleToolbarAction(action) {
+      switch (action.action) {
+        case 'create':
+          this.$emit('create')
+          break
+        default:
+          console.warn('未处理的工具栏操作:', action)
+      }
     },
     handleCopyProductCode(code) {
       if (!code) {
