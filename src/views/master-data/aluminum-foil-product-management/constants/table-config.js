@@ -143,7 +143,8 @@ export const TABLE_COLUMNS = [
     label: '操作',
     minWidth: 220,
     fixed: 'right',
-    slotName: 'actions'
+    slotName: 'actions',
+    showOverflowTooltip: false
   }
 ]
 
@@ -186,6 +187,7 @@ export const TABLE_TOOLBAR_CONFIG = {
   enableExport: false,
   enableImport: false,
   enableRefresh: true,
+  refreshFeedbackMode: 'all',
   enableDensity: true,
   columnSettings: {
     cacheKey: 'aluminumFoilProductTableColumns'

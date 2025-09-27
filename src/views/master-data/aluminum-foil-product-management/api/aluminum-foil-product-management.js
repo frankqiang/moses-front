@@ -8,11 +8,11 @@
 
 import request from '@/utils/request'
 
-const BASE_URL = '/aluminum-foil-products'
+const BASE_URL = '/mdm/aluminum-foil-products'
 
 /**
  * 分页查询铝箔产品列表
- * @param {Object} params - 查询参数，参考接口文档 GET /v1/aluminum-foil-products
+ * @param {Object} params - 查询参数，参考接口文档 GET /v1/mdm/aluminum-foil-products
  * @param {string} [params.productCode] - 产品编码（模糊查询）
  * @param {string} [params.productName] - 产品名称（模糊查询）
  * @param {string} [params.alloyGrade] - 合金牌号（精确匹配）

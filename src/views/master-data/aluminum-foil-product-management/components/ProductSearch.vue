@@ -50,7 +50,8 @@ import {
   DEFAULT_PAGINATION,
   DEFAULT_SORT,
   SPEC_RANGE_FIELDS,
-  LIFECYCLE_STATUS_CONFIG
+  LIFECYCLE_STATUS_CONFIG,
+  LIFECYCLE_STATUS
 } from '../constants/aluminum-foil-product-management'
 
 const ADVANCED_FIELDS = [
@@ -100,6 +101,9 @@ export default {
     },
     lifecycleStatusConfig() {
       return LIFECYCLE_STATUS_CONFIG
+    },
+    LIFECYCLE_STATUS() {
+      return LIFECYCLE_STATUS
     }
   },
   watch: {
@@ -226,11 +230,15 @@ export default {
 </script>
 
 <style scoped>
-.product-search {
-  padding: 12px 16px 0;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+.status-tags {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.status-tags .el-tag {
+  margin: 0;
 }
 </style>
 

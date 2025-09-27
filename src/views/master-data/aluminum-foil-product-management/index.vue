@@ -97,7 +97,9 @@ export default {
       // 当前操作的产品数据
       currentProduct: null,
       // 选中的行数据
-      selectedRows: []
+      selectedRows: [],
+      // 全局loading实例
+      globalLoading: null
     }
   },
   computed: {
@@ -129,11 +131,11 @@ export default {
   },
   created() {
     // 创建防抖搜索函数
-    this.debouncedFetchList = debounce(this.fetchList, 300)
+    this.debouncedFetchList = debounce(this.fetchListSafe, 300)
     // 从路由查询参数恢复搜索状态
     this.restoreSearchFromRoute()
     // 页面初始化时加载列表
-    this.fetchList()
+    this.fetchListSafe()
   },
   beforeRouteLeave(to, from, next) {
     // 页面离开时保存缓存
@@ -142,7 +144,18 @@ export default {
   },
   methods: {
     /**
-     * 加载产品列表
+     * 安全加载产品列表（不抛出异常）
+     */
+    async fetchListSafe() {
+      try {
+        await this.fetchList()
+      } catch (error) {
+        // 静默处理，错误已在fetchList中显示
+      }
+    },
+
+    /**
+     * 加载产品列表（会抛出异常供调用者处理）
      */
     async fetchList() {
       this.showGlobalLoading()
@@ -150,11 +163,18 @@ export default {
       try {
         const response = await fetchFoilProductList(this.searchParams)
 
-        this.tableData = response.data.results || []
-        this.pagination = {
-          page: response.data.page || 1,
-          limit: response.data.limit || 20,
-          total: response.data.totalResults || 0
+        // 根据接口文档处理响应数据
+        if (response.success && response.data) {
+          this.tableData = response.data.results || []
+          this.pagination = {
+            page: response.data.page || 1,
+            limit: response.data.limit || 20,
+            total: response.data.totalResults || 0
+          }
+        } else {
+          this.tableData = []
+          this.pagination.total = 0
+          this.$message.error(response.message || '获取铝箔产品列表失败')
         }
 
         // 缓存页面数据
@@ -170,7 +190,25 @@ export default {
         console.error('加载产品列表失败:', error)
         this.tableData = []
         this.pagination.total = 0
-        this.$message.error(error.message || '加载产品列表失败')
+
+        // 处理不同类型的错误
+        let errorMessage = '获取铝箔产品列表失败'
+        if (error.response) {
+          const { status, data } = error.response
+          if (status === 401) {
+            errorMessage = '请先登录'
+          } else if (status === 403) {
+            errorMessage = '权限不足'
+          } else if (data && data.error && data.error.message) {
+            errorMessage = data.error.message
+          }
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+
+        this.$message.error(errorMessage)
+        // 重新抛出错误，供调用者处理（如刷新反馈）
+        throw error
       } finally {
         this.loading = false
         this.hideGlobalLoading()
@@ -192,13 +230,21 @@ export default {
     /**
      * 处理刷新
      */
-    handleRefresh() {
-      // 埋点统计
-      this.trackEvent('refresh', {
-        page: this.searchParams.page,
-        limit: this.searchParams.limit
-      })
-      this.fetchList()
+    async handleRefresh() {
+      try {
+        // 埋点统计
+        this.trackEvent('refresh', {
+          page: this.searchParams.page,
+          limit: this.searchParams.limit
+        })
+        await this.fetchList()
+        // 刷新成功时调用子组件的反馈方法
+        this.$refs.productTable.refreshSucceed('铝箔产品列表刷新成功')
+      } catch (error) {
+        // 刷新失败时调用子组件的反馈方法
+        this.$refs.productTable.refreshFail('铝箔产品列表刷新失败，请重试')
+        console.error('刷新铝箔产品列表失败:', error)
+      }
     },
 
     /**
@@ -215,7 +261,7 @@ export default {
         sortBy: DEFAULT_SORT,
         limit: this.pagination.limit
       }
-      this.fetchList()
+      this.fetchListSafe()
     },
 
     /**
@@ -226,7 +272,7 @@ export default {
       this.pagination.limit = limit
       this.searchParams.page = page
       this.searchParams.limit = limit
-      this.fetchList()
+      this.fetchListSafe()
     },
 
     /**
@@ -236,7 +282,7 @@ export default {
       this.sortBy = sortBy
       this.searchParams.sortBy = sortBy
       this.searchParams.page = 1 // 排序时重置到第一页
-      this.fetchList()
+      this.fetchListSafe()
     },
 
     /**
@@ -305,7 +351,7 @@ export default {
      */
     handleFormSuccess() {
       this.formDrawerVisible = false
-      this.fetchList()
+      this.fetchListSafe()
     },
 
     /**
@@ -325,7 +371,7 @@ export default {
 
       try {
         const response = await this.$utils.request({
-          url: '/v1/aluminum-foil-products/export',
+          url: '/mdm/aluminum-foil-products/export',
           method: 'post',
           data: params,
           responseType: 'blob'
@@ -412,7 +458,7 @@ export default {
      * 显示全局加载遮罩
      */
     showGlobalLoading() {
-      this.$loading.show({
+      this.globalLoading = this.$loading({
         text: '加载中...',
         background: 'rgba(0, 0, 0, 0.7)'
       })
@@ -422,7 +468,10 @@ export default {
      * 隐藏全局加载遮罩
      */
     hideGlobalLoading() {
-      this.$loading.hide()
+      if (this.globalLoading) {
+        this.globalLoading.close()
+        this.globalLoading = null
+      }
     },
 
     /**

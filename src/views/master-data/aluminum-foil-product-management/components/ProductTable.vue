@@ -133,9 +133,10 @@
 
       <template #actions="{ row }">
         <action-buttons
-          mode="text"
           :buttons="getActionButtons(row)"
           :row="row"
+          mode="text"
+          size="small"
           @click="handleActionClick"
         />
       </template>
@@ -442,20 +443,17 @@ export default {
         {
           text: '查看详情',
           action: 'view',
-          icon: 'el-icon-view',
-          type: 'text'
+          icon: 'el-icon-view'
         },
         {
           text: '编辑',
           action: 'edit',
-          icon: 'el-icon-edit',
-          type: 'text'
+          icon: 'el-icon-edit'
         },
         {
           text: '刷新数据',
           action: 'refresh',
-          icon: 'el-icon-refresh',
-          type: 'text'
+          icon: 'el-icon-refresh'
         }
       ]
     },
@@ -464,6 +462,22 @@ export default {
         return
       }
       this.$emit(action, row)
+    },
+    /**
+     * 刷新成功反馈
+     */
+    refreshSucceed(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshSucceed(message)
+      }
+    },
+    /**
+     * 刷新失败反馈
+     */
+    refreshFail(message) {
+      if (this.$refs.toolbar) {
+        this.$refs.toolbar.refreshFail(message)
+      }
     }
   }
 }
