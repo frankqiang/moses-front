@@ -5,8 +5,8 @@
  * 更新日期：2024-10-28
  */
 <template>
-  <drawer-form
-    ref="drawerForm"
+  <Drawer
+    ref="drawer"
     :visible.sync="drawerVisible"
     :title="type === 'create' ? '新增编码规则' : '编辑编码规则'"
     :mode="type"
@@ -32,18 +32,18 @@
         <el-button v-if="type !== 'view'" type="primary" :loading="submitLoading" @click="handleSubmit">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
       </div>
     </template>
-  </drawer-form>
+  </Drawer>
 </template>
 
 <script>
-import DrawerForm from '@/components/DrawerForm'
+import Drawer from '@/components/Drawer'
 import { cloneDeep } from 'lodash'
 import { generatePreviewCode } from '@/api/master-data/material-code'
 
 export default {
   name: 'CodeRuleForm',
   components: {
-    DrawerForm
+    Drawer
   },
   props: {
     type: {

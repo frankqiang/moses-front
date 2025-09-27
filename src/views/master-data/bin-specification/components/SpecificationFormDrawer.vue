@@ -4,8 +4,8 @@
  * 创建日期：2024-10-30
  */
 <template>
-  <drawer-form
-    ref="drawerForm"
+  <Drawer
+    ref="drawer"
     :visible.sync="drawerVisible"
     :title="getDrawerTitle()"
     :mode="type"
@@ -24,16 +24,16 @@
       <el-button v-if="type === 'create'" type="primary" :loading="loading" @click="handleSubmitAndContinue">保存并继续</el-button>
       <el-button v-if="type !== 'view'" type="primary" :loading="loading" @click="handleSubmit">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
     </template>
-  </drawer-form>
+  </Drawer>
 </template>
 
 <script>
-import DrawerForm from '@/components/DrawerForm'
+import Drawer from '@/components/Drawer'
 
 export default {
   name: 'SpecificationFormDrawer',
   components: {
-    DrawerForm
+    Drawer
   },
   props: {
     // 抽屉可见性

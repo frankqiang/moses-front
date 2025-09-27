@@ -5,8 +5,8 @@
 * 更新日期：2024-10-28
 */
 <template>
-  <drawer-form
-    ref="drawerForm"
+  <Drawer
+    ref="drawer"
     :visible.sync="drawerVisible"
     :title="getDrawerTitle()"
     :mode="type"
@@ -33,17 +33,17 @@
       <el-button v-if="type !== 'view'" type="primary" :loading="loading" @click="handleSubmit">{{ type === 'create' ?
         '确认保存' : '保存修改' }}</el-button>
     </template>
-  </drawer-form>
+  </Drawer>
 </template>
 
 <script>
-import DrawerForm from '@/components/DrawerForm'
+import Drawer from '@/components/Drawer'
 import { getAllFurnaceTypes } from '@/api/master-data/furnace-type'
 
 export default {
   name: 'EquipmentFormDrawer',
   components: {
-    DrawerForm
+    Drawer
   },
   props: {
     // 抽屉可见性

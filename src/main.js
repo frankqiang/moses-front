@@ -22,8 +22,8 @@ import ErrorHandler from '@/components/ErrorHandler'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import SearchForm from '@/components/SearchForm'
-import DialogForm from '@/components/DialogForm'
-import DrawerForm from '@/components/DrawerForm'
+import Drawer from '@/components/Drawer'
+import EnhancedForm from '@/components/EnhancedForm'
 import TableToolbar from '@/components/TableToolbar'
 import Pagination from '@/components/Pagination'
 import BatchAction from '@/components/BatchAction'
@@ -67,8 +67,8 @@ Vue.use(ElementUI, { locale })
 Vue.component('StatusTag', StatusTag)
 Vue.component('ActionButtons', ActionButtons)
 Vue.component('SearchForm', SearchForm)
-Vue.component('DialogForm', DialogForm)
-Vue.component('DrawerForm', DrawerForm)
+Vue.component('Drawer', Drawer)
+Vue.component('EnhancedForm', EnhancedForm)
 Vue.component('TableToolbar', TableToolbar)
 Vue.component('Pagination', Pagination)
 Vue.component('BatchAction', BatchAction)

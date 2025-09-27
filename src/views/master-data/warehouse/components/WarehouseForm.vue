@@ -5,8 +5,8 @@
  */
 <template>
   <div class="warehouse-form">
-    <drawer-form
-      ref="drawerForm"
+    <Drawer
+      ref="drawer"
       :visible.sync="innerVisible"
       :title="formTitle"
       :mode="type"
@@ -21,12 +21,12 @@
 </template>
 
 <script>
-import DrawerForm from '@/components/DrawerForm'
+import Drawer from '@/components/Drawer'
 
 export default {
   name: 'WarehouseForm',
   components: {
-    DrawerForm
+    Drawer
   },
   props: {
     // 表单类型：create-新增，update-编辑，view-查看

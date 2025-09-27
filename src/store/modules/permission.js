@@ -150,7 +150,7 @@ export const asyncRoutes = [
   {
     path: '/master-data',
     component: Layout,
-    redirect: '/master-data/equipment',
+    redirect: '/master-data/aluminum-foil-product-management',
     name: 'MasterData',
     meta: {
       title: '主数据管理',
@@ -159,22 +159,12 @@ export const asyncRoutes = [
     },
     children: [
       {
-        path: 'equipment',
-        name: 'Equipment',
-        component: () => import('@/views/master-data/equipment/index'),
+        path: 'aluminum-foil-product-management',
+        name: 'AluminumFoilProductManagement',
+        component: () => import('@/views/master-data/aluminum-foil-product-management/index'),
         meta: {
-          title: '设备管理',
-          icon: 'el-icon-cpu'
-          // 开发阶段：移除 roles 限制
-        }
-      },
-      {
-        path: 'process-parameter',
-        name: 'ProcessParameter',
-        component: () => import('@/views/master-data/process-parameter/index'),
-        meta: {
-          title: '工艺参数',
-          icon: 'el-icon-setting'
+          title: '铝箔产品管理',
+          icon: 'el-icon-cube'
           // 开发阶段：移除 roles 限制
         }
       }

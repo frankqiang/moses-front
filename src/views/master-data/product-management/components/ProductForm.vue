@@ -3,8 +3,8 @@
  * 功能描述：提供铝箔产品的新增和编辑表单
  */
 <template>
-  <drawer-form
-    ref="drawerForm"
+  <Drawer
+    ref="drawer"
     :visible.sync="drawerVisible"
     :title="formTitle"
     :mode="type"
@@ -18,7 +18,7 @@
       <el-button @click="handleClose">{{ type === 'view' ? '关闭' : '取消' }}</el-button>
       <el-button v-if="type !== 'view'" type="primary" :loading="submitLoading" @click="submitForm">{{ type === 'create' ? '确认保存' : '保存修改' }}</el-button>
     </template>
-  </drawer-form>
+  </Drawer>
 </template>
 
 <script>
@@ -26,12 +26,12 @@
  * 产品表单组件
  * 功能描述：提供铝箔产品的新增和编辑表单
  */
-import DrawerForm from '@/components/DrawerForm'
+import Drawer from '@/components/Drawer'
 
 export default {
   name: 'ProductForm',
   components: {
-    DrawerForm
+    Drawer
   },
   props: {
     type: {

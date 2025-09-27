@@ -4,8 +4,8 @@
  * 创建日期：2024-11-15
  */
 <template>
-  <drawer-form
-    ref="drawerForm"
+  <Drawer
+    ref="drawer"
     :visible.sync="drawerVisible"
     :title="getDrawerTitle()"
     :mode="type"
@@ -116,11 +116,11 @@
         <el-empty v-else description="暂无审批记录" :image-size="80" />
       </div>
     </template>
-  </drawer-form>
+  </Drawer>
 </template>
 
 <script>
-import DrawerForm from '@/components/DrawerForm'
+import Drawer from '@/components/Drawer'
 import ProcessCurveChart from './ProcessCurveChart'
 import ProcessSegmentTable from './ProcessSegmentTable'
 import FurnaceTypeSelector from './FurnaceTypeSelector'
@@ -130,7 +130,7 @@ import { getAllProductList } from '@/api/master-data/product-management'
 export default {
   name: 'ProcessTemplateFormDrawer',
   components: {
-    DrawerForm,
+    Drawer,
     ProcessCurveChart,
     ProcessSegmentTable,
     FurnaceTypeSelector
