@@ -470,11 +470,6 @@ export default {
           text: '编辑',
           action: 'edit',
           icon: 'el-icon-edit'
-        },
-        {
-          text: '刷新数据',
-          action: 'refresh',
-          icon: 'el-icon-refresh'
         }
       ]
     },
