@@ -7,18 +7,80 @@ const baseURL = '/mes/master-data/process-parameter'
 export function getProcessTemplateList(query) {
   console.log('API请求参数:', query)
 
-  return request({
-    url: `${baseURL}/list`,
-    method: 'get',
-    params: query
+  // TODO: 临时返回模拟数据，工艺参数模块后端接口实现后恢复以下代码：
+  // return request({
+  //   url: `${baseURL}/list`,
+  //   method: 'get',
+  //   params: query
+  // })
+
+  // 临时模拟数据 - 避免调用未实现的后端接口
+  return Promise.resolve({
+    success: true,
+    data: {
+      items: [
+        {
+          id: '456e4567-e89b-12d3-a456-426614174001',
+          name: '退火工艺模板1号',
+          code: 'PT001',
+          version: '1.0',
+          status: 'effective',
+          description: '铝箔退火工艺标准模板',
+          parameters: {
+            temperature: 300,
+            duration: 120,
+            atmosphere: 'nitrogen'
+          }
+        },
+        {
+          id: '456e4567-e89b-12d3-a456-426614174002',
+          name: '退火工艺模板2号',
+          code: 'PT002',
+          version: '1.0',
+          status: 'effective',
+          description: '铝箔退火工艺快速模板',
+          parameters: {
+            temperature: 350,
+            duration: 90,
+            atmosphere: 'nitrogen'
+          }
+        }
+      ],
+      total: 2
+    },
+    message: '获取工艺模板列表成功（临时数据）'
   })
 }
 
 // 获取工艺模板详情
 export function getProcessTemplateDetail(id) {
-  return request({
-    url: `${baseURL}/detail/${id}`,
-    method: 'get'
+  // TODO: 临时返回模拟数据，工艺参数模块后端接口实现后恢复以下代码：
+  // return request({
+  //   url: `${baseURL}/detail/${id}`,
+  //   method: 'get'
+  // })
+
+  // 临时模拟数据 - 避免调用未实现的后端接口
+  return Promise.resolve({
+    success: true,
+    data: {
+      id: id,
+      name: '退火工艺模板详情',
+      code: 'ANNEAL_TPL_001',
+      version: '1.0',
+      status: 'effective',
+      description: '铝箔退火工艺标准模板详情',
+      parameters: {
+        temperature: 300,
+        duration: 120,
+        atmosphere: 'nitrogen',
+        coolingRate: 5,
+        qualityChecks: ['温度均匀性', '表面质量']
+      },
+      createdAt: '2024-01-15T10:30:00Z',
+      updatedAt: '2024-01-15T10:30:00Z'
+    },
+    message: '获取工艺模板详情成功（临时数据）'
   })
 }
 

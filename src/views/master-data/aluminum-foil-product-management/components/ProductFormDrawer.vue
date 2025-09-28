@@ -10,7 +10,7 @@
   <base-drawer
     :visible.sync="drawerVisible"
     :title="drawerTitle"
-    width="720px"
+    width="1000px"
     :wrapper-closable="false"
     @open="handleDrawerOpen"
     @close="handleDrawerClose"
@@ -18,6 +18,7 @@
     <enhanced-form
       ref="enhancedForm"
       :data="formData"
+      :sync-changes="true"
       :mode="innerMode"
       :rules="formRules"
       label-width="130px"
@@ -26,6 +27,7 @@
       :disable-initial-validation="true"
       :validate-on-data-change="false"
       :loading="loading"
+      @update:data="handleFormChange"
       @submit="handleFormSubmit"
       @reset="handleFormReset"
       @validate-error="handleValidateError"
@@ -127,17 +129,18 @@
             <el-col :span="12">
               <el-form-item label="厚度 (mm)" prop="thickness">
                 <div class="number-field">
-                  <el-input-number
-                    v-model="form.thickness"
-                    :min="thicknessLimits.MIN"
-                    :max="thicknessLimits.MAX"
-                    :precision="thicknessLimits.PRECISION"
-                    :step="thicknessLimits.STEP"
-                    :controls="false"
-                    :disabled="formMode === 'view'"
-                    placeholder="请输入厚度"
-                  />
-                  <span class="unit-label">mm</span>
+                  <div class="input-row">
+                    <el-input-number
+                      v-model="form.thickness"
+                      :min="thicknessLimits.MIN"
+                      :max="thicknessLimits.MAX"
+                      :precision="thicknessLimits.PRECISION"
+                      :step="thicknessLimits.STEP"
+                      :disabled="formMode === 'view'"
+                      placeholder="请输入厚度"
+                    />
+                    <span class="unit-label">mm</span>
+                  </div>
                   <div class="quick-actions">
                     <span class="quick-actions__label">常用：</span>
                     <el-button
@@ -156,17 +159,18 @@
             <el-col :span="12">
               <el-form-item label="宽度 (mm)" prop="width">
                 <div class="number-field">
-                  <el-input-number
-                    v-model="form.width"
-                    :min="widthLimits.MIN"
-                    :max="widthLimits.MAX"
-                    :precision="widthLimits.PRECISION"
-                    :step="widthLimits.STEP"
-                    :controls="false"
-                    :disabled="formMode === 'view'"
-                    placeholder="请输入宽度"
-                  />
-                  <span class="unit-label">mm</span>
+                  <div class="input-row">
+                    <el-input-number
+                      v-model="form.width"
+                      :min="widthLimits.MIN"
+                      :max="widthLimits.MAX"
+                      :precision="widthLimits.PRECISION"
+                      :step="widthLimits.STEP"
+                      :disabled="formMode === 'view'"
+                      placeholder="请输入宽度"
+                    />
+                    <span class="unit-label">mm</span>
+                  </div>
                   <div class="quick-actions">
                     <span class="quick-actions__label">快速：</span>
                     <el-button
@@ -188,17 +192,18 @@
             <el-col :span="12">
               <el-form-item label="单位重量 (kg)" prop="unitWeight">
                 <div class="number-field">
-                  <el-input-number
-                    v-model="form.unitWeight"
-                    :min="unitWeightLimits.MIN"
-                    :max="unitWeightLimits.MAX"
-                    :precision="unitWeightLimits.PRECISION"
-                    :step="unitWeightLimits.STEP"
-                    :controls="false"
-                    :disabled="formMode === 'view'"
-                    placeholder="请输入单位重量"
-                  />
-                  <span class="unit-label">kg</span>
+                  <div class="input-row">
+                    <el-input-number
+                      v-model="form.unitWeight"
+                      :min="unitWeightLimits.MIN"
+                      :max="unitWeightLimits.MAX"
+                      :precision="unitWeightLimits.PRECISION"
+                      :step="unitWeightLimits.STEP"
+                      :disabled="formMode === 'view'"
+                      placeholder="请输入单位重量"
+                    />
+                    <span class="unit-label">kg</span>
+                  </div>
                   <div class="quick-actions">
                     <span class="quick-actions__label">常规：</span>
                     <el-button
@@ -263,39 +268,11 @@
                     :value="option.value"
                   />
                 </el-select>
-                <div class="field-hint">支持关键词搜索，滚动到底自动加载更多</div>
+                <div class="field-hint">支持关键词搜索，滚动到底自动加载更多 <span class="temp-notice">（当前为模拟数据，非必填）</span></div>
               </el-form-item>
             </el-col>
           </el-row>
 
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="质量标准" prop="qualityStandardId">
-                <el-select
-                  ref="qualityStandardSelect"
-                  v-model="form.qualityStandardId"
-                  filterable
-                  remote
-                  reserve-keyword
-                  :disabled="formMode === 'view'"
-                  :loading="qualityStandardLoading"
-                  placeholder="请选择质量标准"
-                  style="width: 100%"
-                  clearable
-                  :remote-method="handleQualityStandardSearch"
-                  @visible-change="handleQualityStandardVisibleChange"
-                >
-                  <el-option
-                    v-for="option in qualityStandardOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                  />
-                </el-select>
-                <div class="field-hint">必须选择一个生效的质量标准，支持搜索与分页</div>
-              </el-form-item>
-            </el-col>
-          </el-row>
         </section>
 
         <section class="form-section">
@@ -361,7 +338,7 @@ import {
 } from '../constants'
 import { MESSAGE_KEYS } from '../constants/messages-config'
 import { formatQueryParams } from '@/utils'
-import { getProcessTemplateList, getQualityStandardList } from '@/api/master-data/product-management'
+import { getProcessTemplateList } from '@/api/master-data/product-management'
 
 const THICKNESS_PRESETS = Object.freeze([0.004, 0.005, 0.006, 0.0075, 0.009])
 const WIDTH_PRESETS = Object.freeze([900, 1000, 1200, 1300, 1500])
@@ -408,16 +385,12 @@ export default {
       loading: false,
       isDirty: false,
       processTemplateLoading: false,
-      qualityStandardLoading: false,
       processTemplateOptions: [],
-      qualityStandardOptions: [],
       paginationState: {
-        processTemplate: PAGINATION_DEFAULT(),
-        qualityStandard: PAGINATION_DEFAULT()
+        processTemplate: PAGINATION_DEFAULT()
       },
       dropdownScrollHandlers: {
-        processTemplate: null,
-        qualityStandard: null
+        processTemplate: null
       }
     }
   },
@@ -507,26 +480,25 @@ export default {
     this.debouncedProcessTemplateSearch = debounce((keyword) => {
       this.loadProcessTemplateOptions(keyword, false)
     }, 300)
-    this.debouncedQualityStandardSearch = debounce((keyword) => {
-      this.loadQualityStandardOptions(keyword, false)
-    }, 300)
   },
   beforeDestroy() {
     this.detachDropdownScroll('processTemplate')
-    this.detachDropdownScroll('qualityStandard')
   },
   methods: {
     handleFormChange(form) {
-      this.formData = form
-      this.isDirty = !isEqual(form, this.originData)
+      if (!form) return
+      const merged = cloneDeep(this.formData)
+      Object.keys(form).forEach((key) => {
+        const fieldValue = form[key]
+        merged[key] = Array.isArray(fieldValue) ? cloneDeep(fieldValue) : fieldValue
+      })
+      this.formData = merged
+      this.isDirty = !isEqual(this.formData, this.originData)
     },
     async handleDrawerOpen() {
       try {
         await this.initializeFormData()
-        await Promise.all([
-          this.loadProcessTemplateOptions('', false),
-          this.loadQualityStandardOptions('', false)
-        ])
+        await this.loadProcessTemplateOptions('', false)
         this.originData = cloneDeep(this.formData)
         this.isDirty = false
       } catch (error) {
@@ -612,7 +584,10 @@ export default {
         }
       } catch (error) {
         console.error('保存铝箔产品失败', error)
-        this.$message.error(this.extractErrorMessage(error, '保存失败'))
+        // 检查是否为验证错误，避免重复提示（request.js已统一处理验证错误）
+        if (!this.isValidationError(error)) {
+          this.$message.error(this.extractErrorMessage(error, '保存失败'))
+        }
       } finally {
         this.loading = false
       }
@@ -656,29 +631,41 @@ export default {
       this.originData = cloneDeep(FORM_DEFAULTS)
       this.isDirty = false
       this.processTemplateOptions = []
-      this.qualityStandardOptions = []
       this.paginationState = {
-        processTemplate: PAGINATION_DEFAULT(),
-        qualityStandard: PAGINATION_DEFAULT()
+        processTemplate: PAGINATION_DEFAULT()
       }
       this.detachDropdownScroll('processTemplate')
-      this.detachDropdownScroll('qualityStandard')
-      this.$refs.enhancedForm?.resetFields?.()
+      this.$nextTick(() => {
+        this.$refs.enhancedForm?.resetFields?.()
+      })
     },
     handleProductCodeInput(value) {
-      this.formData.productCode = value ? value.toUpperCase().trim() : value
+      const formatted = value ? value.toUpperCase().trim() : value
+      this.$set(this.formData, 'productCode', formatted)
+      if (formatted !== value) {
+        this.$refs.enhancedForm?.setFieldValue?.('productCode', formatted)
+      }
     },
     handleAlloyGradeInput(value) {
-      this.formData.alloyGrade = value ? value.toUpperCase().trim() : value
+      const formatted = value ? value.toUpperCase().trim() : value
+      this.$set(this.formData, 'alloyGrade', formatted)
+      if (formatted !== value) {
+        this.$refs.enhancedForm?.setFieldValue?.('alloyGrade', formatted)
+      }
     },
     handleTemperInput(value) {
-      this.formData.temper = value ? value.toUpperCase().trim() : value
+      const formatted = value ? value.toUpperCase().trim() : value
+      this.$set(this.formData, 'temper', formatted)
+      if (formatted !== value) {
+        this.$refs.enhancedForm?.setFieldValue?.('temper', formatted)
+      }
     },
     handleSetNumericValue(field, value) {
       if (this.innerMode === 'view') return
       const formatted = Number(value)
       if (!Number.isNaN(formatted)) {
         this.$set(this.formData, field, formatted)
+        this.$refs.enhancedForm?.setFieldValue?.(field, formatted)
       }
     },
     buildSubmitPayload(form) {
@@ -689,8 +676,10 @@ export default {
       payload.thickness = payload.thickness !== null ? Number(payload.thickness) : null
       payload.width = payload.width !== null ? Number(payload.width) : null
       payload.unitWeight = payload.unitWeight !== null ? Number(payload.unitWeight) : null
-      payload.processTemplateIds = Array.isArray(payload.processTemplateIds) ? payload.processTemplateIds : []
-      payload.qualityStandardId = payload.qualityStandardId || ''
+      // 确保工艺模板ID是UUID格式的数组
+      payload.processTemplateIds = Array.isArray(payload.processTemplateIds) ? payload.processTemplateIds.filter(id => id && typeof id === 'string') : []
+      // 移除质量标准字段
+      delete payload.qualityStandardId
       return payload
     },
     extractErrorMessage(error, defaultMessage) {
@@ -701,6 +690,10 @@ export default {
       if (response.error?.message) return response.error.message
       if (response.message) return response.message
       return defaultMessage
+    },
+    isValidationError(error) {
+      const errorCode = error?.response?.data?.error?.code || error?.code
+      return errorCode && errorCode.startsWith('VAL_')
     },
     applyCopyDefaults() {
       if (this.mode !== 'copy' || !this.productData) return
@@ -734,8 +727,8 @@ export default {
         const data = response?.data || {}
         const items = data.results || data.items || []
         const mapped = items.map((item) => ({
-          value: item.id || item.templateId,
-          label: item.name || item.templateName || item.code || ''
+          value: item.id || item.templateId, // UUID作为value
+          label: `${item.code || ''} - ${item.name || item.templateName || ''}`.trim().replace(/^- /, '') // 编码 + 名称作为label
         })).filter((item) => item.value)
         if (append) {
           const existingMap = new Map(this.processTemplateOptions.map((item) => [item.value, item]))
@@ -755,55 +748,8 @@ export default {
         this.processTemplateLoading = false
       }
     },
-    async loadQualityStandardOptions(keyword = '', append = false) {
-      const pagination = this.paginationState.qualityStandard
-      if (this.qualityStandardLoading) return
-      if (append) {
-        if (!pagination.hasNextPage) return
-        pagination.page += 1
-      } else {
-        pagination.page = 1
-        pagination.keyword = keyword
-        pagination.hasNextPage = false
-      }
-      this.qualityStandardLoading = true
-      try {
-        const params = formatQueryParams({
-          search: pagination.keyword,
-          status: 'active',
-          limit: 20,
-          page: pagination.page
-        })
-        const response = await getQualityStandardList(params)
-        const data = response?.data || {}
-        const items = data.results || data.items || []
-        const mapped = items.map((item) => ({
-          value: item.id || item.standardId,
-          label: item.name || item.standardName || ''
-        })).filter((item) => item.value)
-        if (append) {
-          const existingMap = new Map(this.qualityStandardOptions.map((item) => [item.value, item]))
-          mapped.forEach((item) => existingMap.set(item.value, item))
-          this.qualityStandardOptions = Array.from(existingMap.values())
-        } else {
-          this.qualityStandardOptions = mapped
-        }
-        const totalPages = data.totalPages ?? data.meta?.totalPages ?? pagination.totalPages
-        pagination.totalPages = totalPages || pagination.page
-        const hasNext = data.hasNextPage ?? (pagination.page < pagination.totalPages)
-        pagination.hasNextPage = Boolean(hasNext)
-      } catch (error) {
-        console.error('加载质量标准失败', error)
-        this.$message.warning(this.extractErrorMessage(error, '加载质量标准失败'))
-      } finally {
-        this.qualityStandardLoading = false
-      }
-    },
     handleProcessTemplateSearch(keyword) {
       this.debouncedProcessTemplateSearch(keyword || '')
-    },
-    handleQualityStandardSearch(keyword) {
-      this.debouncedQualityStandardSearch(keyword || '')
     },
     handleProcessTemplateVisibleChange(visible) {
       if (visible) {
@@ -815,37 +761,23 @@ export default {
         this.detachDropdownScroll('processTemplate')
       }
     },
-    handleQualityStandardVisibleChange(visible) {
-      if (visible) {
-        this.attachDropdownScroll('qualityStandard')
-        if (!this.qualityStandardOptions.length) {
-          this.loadQualityStandardOptions('', false)
-        }
-      } else {
-        this.detachDropdownScroll('qualityStandard')
-      }
-    },
     attachDropdownScroll(type) {
       this.$nextTick(() => {
-        const refName = type === 'processTemplate' ? 'processTemplateSelect' : 'qualityStandardSelect'
-        const select = this.$refs[refName]
+        if (type !== 'processTemplate') return
+        const select = this.$refs.processTemplateSelect
         if (!select || !select.$refs || !select.$refs.popper) return
         const dropdown = select.$refs.popper.$el.querySelector('.el-select-dropdown__wrap')
         if (!dropdown) return
         const handler = () => {
-          const pagination = this.paginationState[type]
+          const pagination = this.paginationState.processTemplate
           if (this.loading || !pagination.hasNextPage) return
           const nearBottom = dropdown.scrollTop + dropdown.clientHeight >= dropdown.scrollHeight - 10
           if (nearBottom) {
-            if (type === 'processTemplate') {
-              this.loadProcessTemplateOptions(pagination.keyword, true)
-            } else {
-              this.loadQualityStandardOptions(pagination.keyword, true)
-            }
+            this.loadProcessTemplateOptions(pagination.keyword, true)
           }
         }
         dropdown.addEventListener('scroll', handler)
-        this.dropdownScrollHandlers[type] = { dropdown, handler }
+        this.dropdownScrollHandlers.processTemplate = { dropdown, handler }
       })
     },
     detachDropdownScroll(type) {
@@ -898,15 +830,33 @@ export default {
   font-size: 12px;
   color: #909399;
   line-height: 1.4;
+
+  .temp-notice {
+    color: #e6a23c;
+    font-weight: 500;
+    background-color: #fef6ec;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #f5dab1;
+    margin-left: 8px;
+  }
 }
 
 .number-field {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  flex-direction: column;
 
   .el-input-number {
-    flex: 1;
+    min-width: 160px;
+    flex: 0 0 auto;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 }
 
@@ -914,23 +864,35 @@ export default {
   color: #606266;
   font-size: 12px;
   min-width: 24px;
+  flex-shrink: 0;
+  line-height: 32px;
+  display: flex;
+  align-items: center;
 }
 
 .quick-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 8px;
+  margin-top: 6px;
+  width: 100%;
 
   &__label {
     color: #909399;
     font-size: 12px;
     margin-right: 4px;
+    flex-shrink: 0;
+    line-height: 20px;
   }
 
   .el-button {
     padding: 0 6px;
     font-size: 12px;
+    height: 20px;
+    line-height: 18px;
+    margin: 0;
+    vertical-align: baseline;
   }
 }
 
@@ -944,6 +906,17 @@ export default {
 
 :deep(.el-select-dropdown__wrap) {
   max-height: 244px;
+}
+
+:deep(.el-input-number) {
+  .el-input__inner {
+    text-align: left;
+  }
+
+  .el-input-number__increase,
+  .el-input-number__decrease {
+    line-height: 15px;
+  }
 }
 </style>
 

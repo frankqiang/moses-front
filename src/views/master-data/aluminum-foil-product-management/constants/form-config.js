@@ -128,7 +128,7 @@ export const FORM_CONFIG = [
     rules: [
       { required: true, message: '请填写产品编码', trigger: 'blur' },
       {
-        pattern: /^AF-[A-Z0-9]+-[A-Z0-9]+-[0-9]*\.?[0-9]+x[0-9]*\.?[0-9]+$/,
+        pattern: /^AF-[A-Z0-9]+-[A-Z0-9]+-[0-9]*\.?[0-9]+[xX][0-9]*\.?[0-9]+$/,
         message: '格式应为AF-合金-硬度-厚度x宽度',
         trigger: 'blur'
       }
@@ -288,19 +288,11 @@ export const FORM_CONFIG = [
     multiple: true,
     filterable: true,
     collapseTags: true,
-    rules: [
-      { required: true, message: '请选择至少一个工艺模板', trigger: 'change' }
-    ]
-  },
-  {
-    type: 'select',
-    prop: 'qualityStandardId',
-    label: '质量标准',
-    placeholder: '请选择质量标准',
-    filterable: true,
-    rules: [
-      { required: true, message: '请选择质量标准', trigger: 'change' }
-    ]
+    // TODO: 工艺模块接口实现后恢复必填验证：
+    // rules: [
+    //   { required: true, message: '请选择至少一个工艺模板', trigger: 'change' }
+    // ]
+    rules: [] // 临时移除必填验证，因为目前使用模拟数据
   },
   {
     type: 'select',
@@ -337,7 +329,6 @@ export const FORM_DEFAULTS = {
   unitWeight: null,
   unitWeightType: UNIT_WEIGHT_TYPE_OPTIONS[0]?.value || '',
   processTemplateIds: [],
-  qualityStandardId: '',
   lifecycleStatus: LIFECYCLE_STATUS_OPTIONS[0]?.value || '',
   description: ''
 }
@@ -360,7 +351,7 @@ export const FORM_GROUPS = [
   },
   {
     title: '关联配置',
-    fields: ['processTemplateIds', 'qualityStandardId', 'lifecycleStatus']
+    fields: ['processTemplateIds', 'lifecycleStatus']
   },
   {
     title: '其他信息',
