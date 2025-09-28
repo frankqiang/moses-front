@@ -1,0 +1,109 @@
+---
+alwaysApply: true
+---
+
+# 项目注释规范
+
+基于 [user-management模块](mdc:src/views/user-management) 的注释风格，确保代码具备良好的可读性和维护性。
+
+## 📝 文件头注释（必须）
+
+所有 `.js`、`.vue`、`.ts` 文件必须包含文件头注释：
+
+```javascript
+/**
+ * 文件名称：filename.js
+ * 文件描述：简要说明文件的功能和用途
+ * 创建日期：YYYY-MM-DD
+ * 修改记录：
+ *   - YYYY-MM-DD: 初始创建
+ *   - YYYY-MM-DD: 重要修改说明
+ */
+```
+
+## 🔧 函数注释（推荐）
+
+重要函数使用JSDoc风格：
+
+```javascript
+/**
+ * 函数功能简要描述
+ * @param {string} param1 - 参数1说明
+ * @param {Object} param2 - 参数2说明
+ * @returns {boolean} 返回值说明
+ */
+export function functionName(param1, param2) {
+  // 函数实现
+}
+```
+
+## 📊 常量配置注释（必须）
+
+```javascript
+// 用户状态选项 - 用于下拉选择和状态显示
+export const USER_STATUS_OPTIONS = [
+  { label: '正常', value: 'active' },
+  { label: '禁用', value: 'disabled' }
+]
+
+/**
+ * 表格列配置
+ * 定义用户管理表格的显示列和操作列
+ */
+export const TABLE_COLUMNS = [
+  // 列配置项...
+]
+```
+
+## 🎯 Vue模板注释（推荐）
+
+```vue
+<template>
+  <div class="app-container">
+    <!-- 搜索表单 -->
+    <search-form />
+
+    <!-- 数据表格 -->
+    <data-table />
+
+    <!-- 操作弹窗 -->
+    <operation-dialog />
+  </div>
+</template>
+```
+
+## ⚡ 关键业务逻辑注释（必须）
+
+```javascript
+// 根据需求文档的密码策略：至少8位，必须包含字母和数字
+if (password.length < 8) {
+  return false
+}
+
+// 检查用户权限：只有管理员可以重置其他用户密码
+if (!this.hasAdminRole && userId !== this.currentUserId) {
+  throw new Error('权限不足')
+}
+```
+
+## 📌 注释要求
+
+### 必须注释的场景
+- 所有文件头
+- 复杂业务逻辑
+- 配置对象和常量
+- 关键算法实现
+- API接口调用
+
+### 注释风格
+- 使用中文注释，便于团队理解
+- 注释要简洁明了，避免冗余
+- 解释"为什么"而不只是"做什么"
+- 重要的配置项要说明用途和影响
+
+### 不需要注释的场景
+- 显而易见的简单代码
+- 变量名已经足够清晰的情况
+- 标准的getter/setter方法
+
+遵循此规范确保代码的可读性和团队协作效率。
