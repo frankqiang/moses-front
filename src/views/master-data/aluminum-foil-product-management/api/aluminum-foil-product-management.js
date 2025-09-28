@@ -159,3 +159,54 @@ export function extractFoilProductDetail(response) {
   return response?.data || null
 }
 
+/**
+ * 获取铝箔产品详情
+ * @param {string|number} productId - 产品ID
+ * @returns {Promise} API响应Promise
+ */
+export function getProductDetail(productId) {
+  return request({
+    url: `${BASE_URL}/${productId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 创建铝箔产品
+ * @param {Object} productData - 产品数据
+ * @returns {Promise} API响应Promise
+ */
+export function createProduct(productData) {
+  return request({
+    url: BASE_URL,
+    method: 'post',
+    data: productData
+  })
+}
+
+/**
+ * 更新铝箔产品
+ * @param {string|number} productId - 产品ID
+ * @param {Object} productData - 产品数据
+ * @returns {Promise} API响应Promise
+ */
+export function updateProduct(productId, productData) {
+  return request({
+    url: `${BASE_URL}/${productId}`,
+    method: 'put',
+    data: productData
+  })
+}
+
+/**
+ * 删除铝箔产品
+ * @param {string|number} productId - 产品ID
+ * @returns {Promise} API响应Promise
+ */
+export function deleteProduct(productId) {
+  return request({
+    url: `${BASE_URL}/${productId}`,
+    method: 'delete'
+  })
+}
+

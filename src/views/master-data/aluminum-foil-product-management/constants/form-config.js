@@ -317,6 +317,180 @@ export const FORM_CONFIG = [
   }
 ]
 
+// 表单验证规则配置
+export const FORM_CONFIGS = {
+  create: {
+    code: [
+      { required: true, message: '请填写产品编码', trigger: 'blur' },
+      { min: 2, max: 50, message: '产品编码长度为2-50个字符', trigger: 'blur' },
+      {
+        pattern: /^[A-Za-z][A-Za-z0-9_-]*$/,
+        message: '产品编码必须以字母开头，只能包含字母、数字、下划线和横线',
+        trigger: 'blur'
+      }
+    ],
+    name: [
+      { required: true, message: '请填写产品名称', trigger: 'blur' },
+      { min: 2, max: 100, message: '产品名称长度为2-100个字符', trigger: 'blur' }
+    ],
+    series: [
+      { required: true, message: '请选择产品系列', trigger: 'change' }
+    ],
+    lifecycleStatus: [
+      { required: true, message: '请选择生命周期状态', trigger: 'change' }
+    ],
+    thickness: [
+      { required: true, message: '请填写厚度', trigger: 'change' },
+      {
+        validator: (_, value, callback) => {
+          if (value === undefined || value === null) {
+            callback(new Error('请填写厚度'))
+            return
+          }
+          if (value <= 0) {
+            callback(new Error('厚度必须大于0'))
+            return
+          }
+          if (value > 1000) {
+            callback(new Error('厚度不能超过1000μm'))
+            return
+          }
+          callback()
+        },
+        trigger: 'change'
+      }
+    ],
+    width: [
+      { required: true, message: '请填写宽度', trigger: 'change' },
+      {
+        validator: (_, value, callback) => {
+          if (value === undefined || value === null) {
+            callback(new Error('请填写宽度'))
+            return
+          }
+          if (value <= 0) {
+            callback(new Error('宽度必须大于0'))
+            return
+          }
+          if (value > 10000) {
+            callback(new Error('宽度不能超过10000mm'))
+            return
+          }
+          callback()
+        },
+        trigger: 'change'
+      }
+    ],
+    unitWeight: [
+      { required: true, message: '请填写单位重量', trigger: 'change' },
+      {
+        validator: (_, value, callback) => {
+          if (value === undefined || value === null) {
+            callback(new Error('请填写单位重量'))
+            return
+          }
+          if (value <= 0) {
+            callback(new Error('单位重量必须大于0'))
+            return
+          }
+          if (value > 1000) {
+            callback(new Error('单位重量不能超过1000g/m²'))
+            return
+          }
+          callback()
+        },
+        trigger: 'change'
+      }
+    ],
+    processTemplates: [],
+    qualityStandards: [],
+    remarks: [
+      { max: 500, message: '备注不能超过500个字符', trigger: 'blur' }
+    ]
+  },
+  update: {
+    name: [
+      { required: true, message: '请填写产品名称', trigger: 'blur' },
+      { min: 2, max: 100, message: '产品名称长度为2-100个字符', trigger: 'blur' }
+    ],
+    series: [
+      { required: true, message: '请选择产品系列', trigger: 'change' }
+    ],
+    lifecycleStatus: [
+      { required: true, message: '请选择生命周期状态', trigger: 'change' }
+    ],
+    thickness: [
+      { required: true, message: '请填写厚度', trigger: 'change' },
+      {
+        validator: (_, value, callback) => {
+          if (value === undefined || value === null) {
+            callback(new Error('请填写厚度'))
+            return
+          }
+          if (value <= 0) {
+            callback(new Error('厚度必须大于0'))
+            return
+          }
+          if (value > 1000) {
+            callback(new Error('厚度不能超过1000μm'))
+            return
+          }
+          callback()
+        },
+        trigger: 'change'
+      }
+    ],
+    width: [
+      { required: true, message: '请填写宽度', trigger: 'change' },
+      {
+        validator: (_, value, callback) => {
+          if (value === undefined || value === null) {
+            callback(new Error('请填写宽度'))
+            return
+          }
+          if (value <= 0) {
+            callback(new Error('宽度必须大于0'))
+            return
+          }
+          if (value > 10000) {
+            callback(new Error('宽度不能超过10000mm'))
+            return
+          }
+          callback()
+        },
+        trigger: 'change'
+      }
+    ],
+    unitWeight: [
+      { required: true, message: '请填写单位重量', trigger: 'change' },
+      {
+        validator: (_, value, callback) => {
+          if (value === undefined || value === null) {
+            callback(new Error('请填写单位重量'))
+            return
+          }
+          if (value <= 0) {
+            callback(new Error('单位重量必须大于0'))
+            return
+          }
+          if (value > 1000) {
+            callback(new Error('单位重量不能超过1000g/m²'))
+            return
+          }
+          callback()
+        },
+        trigger: 'change'
+      }
+    ],
+    processTemplates: [],
+    qualityStandards: [],
+    remarks: [
+      { max: 500, message: '备注不能超过500个字符', trigger: 'blur' }
+    ]
+  },
+  view: {}
+}
+
 // 表单初始值
 export const FORM_DEFAULTS = {
   productCode: '',
