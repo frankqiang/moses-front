@@ -112,3 +112,27 @@ export const SPEC_RANGE_FIELDS = {
   width: true
 }
 
+// 产品系列选项 - 临时模拟数据
+export const PRODUCT_SERIES_OPTIONS = [
+  { value: 'aluminum_foil', label: '铝箔系列' },
+  { value: 'food_packaging', label: '食品包装系列' },
+  { value: 'industrial', label: '工业用途系列' },
+  { value: 'household', label: '家用系列' }
+]
+
+// 工艺模板选项 - 临时模拟数据（实际应从工艺模块获取）
+export const PROCESS_TEMPLATE_OPTIONS = [
+  { value: 'template_1', label: '标准退火工艺模板' },
+  { value: 'template_2', label: '快速冷却工艺模板' },
+  { value: 'template_3', label: '保温退火工艺模板' },
+  { value: 'template_4', label: '分段升温工艺模板' }
+]
+
+// 质量标准选项 - 临时模拟数据（实际应从质量模块获取）
+export const QUALITY_STANDARD_OPTIONS = [
+  { value: 'standard_1', label: '食品级质量标准' },
+  { value: 'standard_2', label: '工业级质量标准' },
+  { value: 'standard_3', label: '医用级质量标准' },
+  { value: 'standard_4', label: '电子级质量标准' }
+]
+

@@ -242,7 +242,7 @@ export default {
   data() {
     return {
       // 内部表单数据模型
-    formModel: {},
+      formModel: {},
       // 原始表单数据（用于重置和变更检测）
       originFormData: {},
       // 内部加载状态
