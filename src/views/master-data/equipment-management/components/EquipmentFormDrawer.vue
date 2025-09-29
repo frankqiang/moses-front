@@ -38,6 +38,8 @@
       :rules="formRules"
       :label-width="'140px'"
       :show-footer="false"
+      :validate-on-data-change="false"
+      :merge-on-data-update="true"
       @data-change="handleFormDataChange"
       @validation-change="handleValidationChange"
     >
@@ -61,7 +63,6 @@
                       :prop="field.prop"
                       :label="field.label"
                       :rules="field.rules"
-                      :required="field.required"
                     >
                       <!-- 设备类型字段特殊处理 -->
                       <el-select
@@ -102,7 +103,6 @@
                         v-else
                         v-model="form[field.prop]"
                         v-bind="getFieldProps(field, scopedMode, loading)"
-                        @input="handleFieldInput(field, $event)"
                       />
 
                       <!-- 字段提示 -->
@@ -137,7 +137,6 @@
                       :prop="field.prop"
                       :label="field.label"
                       :rules="field.rules"
-                      :required="field.required"
                     >
                       <!-- 通讯参数特殊组件 -->
                       <template v-if="field.type === 'key-value-editor'">
@@ -191,7 +190,6 @@
                       :prop="field.prop"
                       :label="field.label"
                       :rules="field.rules"
-                      :required="field.required"
                     >
                       <component
                         :is="getFieldComponent(field)"
@@ -238,14 +236,12 @@
                       :prop="field.prop"
                       :label="field.label"
                       :rules="field.rules"
-                      :required="field.required"
                     >
                       <template v-if="field.type === 'key-value-editor'">
                         <KeyValueEditor
                           v-model="form.detail[getDetailFieldKey(field.prop)]"
                           :disabled="scopedMode === 'view' || loading"
                           :placeholder="field.placeholder || '请添加控制参数'"
-                          @input="value => handleDetailFieldInput(field, value)"
                         />
                       </template>
 
@@ -254,7 +250,6 @@
                         v-model="form.detail.navigationType"
                         :placeholder="field.placeholder"
                         :disabled="scopedMode === 'view' || loading"
-                        @change="value => handleDetailFieldInput(field, value)"
                       >
                         <el-option
                           v-for="option in field.options"
@@ -269,7 +264,6 @@
                         v-else
                         v-model="form.detail[getDetailFieldKey(field.prop)]"
                         v-bind="getFieldProps(field, scopedMode, loading)"
-                        @input="value => handleDetailFieldInput(field, value)"
                       />
 
                       <div v-if="field.tooltip" class="field-tooltip">
@@ -446,7 +440,7 @@ export default {
     },
 
     drawerWidth() {
-      return this.currentEquipmentType ? '900px' : '800px'
+      return this.currentEquipmentType ? '1200px' : '1000px'
     },
 
     formMode() {
@@ -611,6 +605,9 @@ export default {
         if (this.formData.detail[key] === undefined) {
           this.$set(this.formData.detail, key, field.type === 'key-value-editor' ? {} : '')
         }
+        if (this.formData[field.prop] === undefined) {
+          this.$set(this.formData, field.prop, this.formData.detail[key])
+        }
       })
     },
 
@@ -625,17 +622,15 @@ export default {
       this.formData.equipmentType = value
 
       // 重置详情字段
+      if (!this.formData.detail) {
+        this.$set(this.formData, 'detail', {})
+      }
+
       DETAIL_FORM_FIELDS[this.currentEquipmentType]?.forEach(field => {
         const key = this.getDetailFieldKey(field.prop)
         const defaultValue = field.type === 'key-value-editor' ? {} : ''
-        if (this.formData[field.prop] === undefined) {
-          this.$set(this.formData, field.prop, defaultValue)
-        }
-        if (!this.formData.detail) {
-          this.$set(this.formData, 'detail', {})
-        }
         if (this.formData.detail[key] === undefined) {
-          this.$set(this.formData.detail, key, this.formData[field.prop])
+          this.$set(this.formData.detail, key, defaultValue)
         }
       })
 
@@ -703,29 +698,10 @@ export default {
     },
 
     // 处理字段输入
-    handleFieldInput(field, value) {
-      if (field.formatter) {
-        this.formData[field.prop] = field.formatter(value)
-      }
-
-      if (field.prop && field.prop.startsWith('detail.')) {
-        const key = field.prop.replace('detail.', '')
-        if (!this.formData.detail) {
-          this.$set(this.formData, 'detail', {})
-        }
-        this.$set(this.formData.detail, key, this.formData[field.prop])
-      }
-    },
+    handleFieldInput() {},
 
     // 处理详情字段输入
-    handleDetailFieldInput(field, value) {
-      const key = this.getDetailFieldKey(field.prop)
-      if (!this.formData.detail) {
-        this.$set(this.formData, 'detail', {})
-      }
-      this.$set(this.formData.detail, key, field.formatter ? field.formatter(value) : value)
-      this.$set(this.formData, field.prop, this.formData.detail[key])
-    },
+    handleDetailFieldInput() {},
 
     // 切换分组展开状态
     toggleSection(section) {
@@ -734,9 +710,21 @@ export default {
 
     // 处理表单数据变更
     handleFormDataChange(data) {
-      this.formData = { ...data }
+      // 仅合并根层简单字段，保持 detail 引用不变，防止已填详情被覆盖
+      const { detail: incomingDetail, ...rest } = data || {}
+      Object.keys(rest || {}).forEach(key => {
+        this.$set(this.formData, key, cloneDeep(rest[key]))
+      })
       if (!this.formData.detail) {
         this.$set(this.formData, 'detail', {})
+      }
+      // 仅在缺少键时补充，不覆盖已有值
+      if (incomingDetail && typeof incomingDetail === 'object') {
+        Object.keys(incomingDetail).forEach(k => {
+          if (this.formData.detail[k] === undefined) {
+            this.$set(this.formData.detail, k, cloneDeep(incomingDetail[k]))
+          }
+        })
       }
     },
 

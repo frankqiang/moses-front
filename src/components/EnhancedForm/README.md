@@ -6,6 +6,13 @@ EnhancedForm 是一个增强的表单组件，专注于表单的数据处理和�
 
 **已应用现代前端开发范式优化** - 提供卓越的用户体验、完整的错误处理和优秀的可访问性支持。
 
+## 更新记录
+
+### 2025-09-29
+- 新增可选属性 `mergeOnDataUpdate`（默认 `false`，保持向后兼容）：当外部 `data` 更新时，按“字段合并”的方式更新内部表单模型，避免复杂表单场景下输入中被整体覆盖
+- 最佳实践：在复杂表单（如带嵌套对象的详情表单）中，建议与 `validateOnDataChange=false` 搭配使用，进一步避免输入过程中的回写干扰
+- 文档补充“数据合并策略（复杂表单最佳实践）”示例
+
 ## 主要特点
 
 1. **专注表单功能**：组件专注于提供表单的数据处理和验证功能，不耦合其他逻辑
@@ -59,11 +66,11 @@ EnhancedForm 是一个增强的表单组件，专注于表单的数据处理和�
       <el-form-item label="用户名" prop="username">
         <el-input v-model="form.username"></el-input>
       </el-form-item>
-      
+
       <el-form-item label="邮箱" prop="email">
         <el-input v-model="form.email"></el-input>
       </el-form-item>
-      
+
       <el-form-item label="角色" prop="role">
         <el-select v-model="form.role" placeholder="请选择角色">
           <el-option label="管理员" value="admin"></el-option>
@@ -71,7 +78,7 @@ EnhancedForm 是一个增强的表单组件，专注于表单的数据处理和�
         </el-select>
       </el-form-item>
     </template>
-    
+
     <!-- 自定义底部按钮 -->
     <template #footer="{ loading, mode, submit, reset }">
       <el-button @click="reset">重置</el-button>
@@ -116,7 +123,7 @@ export default {
       console.log('表单提交:', formData, continueEdit)
       // 处理表单提交
       this.loading = true
-      
+
       // 模拟API请求
       setTimeout(() => {
         this.loading = false
@@ -150,6 +157,7 @@ export default {
 | clearValidateOnDataUpdate | Boolean | false | 是否在数据更新时清除验证状态 |
 | disableInitialValidation | Boolean | false | 是否在组件初始化时禁用验证 |
 | syncChanges | Boolean | false | 是否同步内部变更到外部data（v2024.12.19+） |
+| mergeOnDataUpdate | Boolean | false | 外部 data 更新时按“字段合并”方式更新内部表单，不整体替换（渐进增强，复杂表单推荐） |
 
 ## 事件
 
@@ -219,7 +227,7 @@ export default {
       <el-radio-button label="update">编辑</el-radio-button>
       <el-radio-button label="view">查看</el-radio-button>
     </el-radio-group>
-    
+
     <enhanced-form
       ref="form"
       :data="formData"
@@ -369,6 +377,25 @@ export default {
 </template>
 ```
 
+### 数据合并策略（复杂表单最佳实践）
+
+```vue
+<template>
+  <enhanced-form
+    :data="formData"
+    :rules="rules"
+    :merge-on-data-update="true"
+    :validate-on-data-change="false"
+  >
+    <!-- 表单内容（包含 detail.* 等嵌套字段） -->
+  </enhanced-form>
+</template>
+```
+
+说明：
+- `mergeOnDataUpdate=true` 仅在外部 data 变化时按字段合并，避免复杂表单输入过程中被整体替换
+- `validateOnDataChange=false` 避免每次输入触发整表单验证导致的数据回写干扰
+
 ### 错误处理
 
 ```vue
@@ -428,31 +455,31 @@ export default {
         <h3>{{ mode === 'create' ? '创建用户' : '编辑用户' }}</h3>
         <el-tag v-if="hasChanges" type="warning">有未保存的更改</el-tag>
       </div>
-      
+
       <!-- 表单项 -->
       <el-form-item label="用户名" prop="username">
-        <el-input 
+        <el-input
           v-model="form.username"
           @blur="validateUsername"
         ></el-input>
       </el-form-item>
-      
+
       <!-- 联动字段 -->
       <el-form-item label="自动生成邮箱">
-        <el-switch 
+        <el-switch
           v-model="autoEmail"
           @change="handleAutoEmailChange"
         ></el-switch>
       </el-form-item>
-      
+
       <el-form-item label="邮箱" prop="email">
-        <el-input 
+        <el-input
           v-model="form.email"
           :disabled="autoEmail"
         ></el-input>
       </el-form-item>
     </template>
-    
+
     <!-- 自定义底部 -->
     <template #footer="{ loading, submit, reset, hasChanges, isValid }">
       <div class="custom-footer">
@@ -465,9 +492,9 @@ export default {
           <el-button @click="reset" :disabled="!hasChanges">
             重置
           </el-button>
-          <el-button 
-            type="primary" 
-            @click="submit" 
+          <el-button
+            type="primary"
+            @click="submit"
             :loading="loading"
             :disabled="!isValid || !hasChanges"
           >

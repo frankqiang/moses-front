@@ -236,6 +236,13 @@ export default {
     showError: {
       type: Boolean,
       default: true
+    },
+
+    // 是否在外部data更新时采用“按字段合并”的方式，而非整体替换
+    // 默认为 false（保持全局默认行为），仅在复杂表单中按需开启
+    mergeOnDataUpdate: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -424,24 +431,38 @@ export default {
       try {
         // 标记为数据初始化状态
         this.isInitializingData = true
-        this.formModel = cloneDeep(val || {})
-        this.originFormData = cloneDeep(val || {})
+
+        if (this.mergeOnDataUpdate) {
+          const incoming = val || {}
+          // 按字段合并，保留已有输入
+          Object.keys(incoming).forEach(key => {
+            this.$set(this.formModel, key, cloneDeep(incoming[key]))
+          })
+          // 移除外部已删除的字段
+          Object.keys(this.formModel).forEach(key => {
+            if (incoming[key] === undefined) {
+              this.$delete(this.formModel, key)
+            }
+          })
+        } else {
+          // 全量替换（全局默认行为）
+          this.formModel = cloneDeep(val || {})
+        }
+
+        this.originFormData = cloneDeep(this.formModel)
         this.clearError()
 
-        // 如果启用了数据更新时清除验证
         if (this.clearValidateOnDataUpdate) {
           this.$nextTick(() => {
             this.clearValidate()
           })
         }
 
-        // 通知父组件表单数据已更新
         this.$emit('form-update', this.formModel)
       } catch (error) {
         console.error('[EnhancedForm] Failed to update form model:', error)
         this.setError('更新表单数据失败')
       } finally {
-        // 使用 nextTick 确保 DOM 更新完成后再取消初始化状态
         this.$nextTick(() => {
           this.isInitializingData = false
         })
