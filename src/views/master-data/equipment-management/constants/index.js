@@ -11,4 +11,5 @@ export * from './table-config'
 export * from './form-config'
 export * from './api-config'
 export * from './messages-config'
+export * from './detail-config'
 
