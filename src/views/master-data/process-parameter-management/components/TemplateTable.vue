@@ -8,14 +8,53 @@
 
 <template>
   <div class="template-table">
+    <!-- 表格工具栏，提供导出、列设置、批量操作入口 -->
+    <TableToolbar
+      v-if="showToolbar"
+      ref="tableToolbar"
+      :loading="loading"
+      :enable-column-settings="true"
+      :column-options="columnOptions"
+      :storage-key="columnSettingsKey"
+      :default-visible-columns="visibleColumns"
+      :enable-batch-actions="enableBatchActions"
+      :selected-rows="selectedRows"
+      :enable-export="true"
+      :export-api="exportApi"
+      :export-params="exportParams"
+      :export-filename="exportFilename"
+      :enable-refresh="true"
+      :refresh-feedback-mode="'all'"
+      @refresh="handleRefresh"
+      @column-change="handleColumnChange"
+      @batch-delete="handleBatchDelete"
+      @batch-enable="handleBatchEnable"
+      @batch-disable="handleBatchDisable"
+      @custom-action="handleCustomBatchAction"
+      @export-success="handleExportSuccess"
+      @export-error="handleExportError"
+      @column-settings="handleColumnSettings"
+    >
+      <template #toolbar-left>
+        <ActionButtons
+          v-if="toolbarButtons && toolbarButtons.length"
+          :buttons="toolbarButtons"
+          mode="normal"
+          size="mini"
+          @click="handleToolbarAction"
+        />
+      </template>
+    </TableToolbar>
+
     <!-- 使用BaseTable组件渲染模板列表 -->
     <BaseTable
+      ref="baseTable"
       :data="data"
       :columns="tableColumns"
       :loading="loading"
       :load-error="loadError"
       :pagination="paginationConfig"
-      :show-selection="false"
+      :show-selection="enableBatchActions"
       :show-index="true"
       :virtual-scroll="enableVirtualScroll"
       :virtual-threshold="1000"
@@ -30,6 +69,7 @@
       @row-click="handleRowClick"
       @pagination-change="handlePaginationChange"
       @sort-change="handleSortChange"
+      @selection-change="handleSelectionChange"
     >
       <!-- 模板状态列 -->
       <template #templateStatus="{ row }">
@@ -144,9 +184,12 @@ import BaseTable from '@/components/BaseTable'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
+import TableToolbar from '@/components/TableToolbar'
+import tableConfigStore from '@/utils/table-config-store'
 import {
   TABLE_COLUMNS,
-  DEFAULT_VISIBLE_COLUMNS
+  DEFAULT_VISIBLE_COLUMNS,
+  TABLE_COLUMN_SETTINGS_ID
 } from '../constants'
 import {
   TEMPLATE_STATUS_CONFIG,
@@ -160,7 +203,8 @@ export default {
     BaseTable,
     StatusTag,
     ActionButtons,
-    OverflowTagsPopover
+    OverflowTagsPopover,
+    TableToolbar
   },
   props: {
     // 表格数据
@@ -191,12 +235,52 @@ export default {
     visibleColumns: {
       type: Array,
       default: () => DEFAULT_VISIBLE_COLUMNS
+    },
+    // 是否显示工具栏
+    showToolbar: {
+      type: Boolean,
+      default: true
+    },
+    // 是否启用批量操作
+    enableBatchActions: {
+      type: Boolean,
+      default: true
+    },
+    // 导出API方法（返回Promise）
+    exportApi: {
+      type: Function,
+      default: null
+    },
+    // 导出参数（默认使用当前查询条件）
+    exportParams: {
+      type: Object,
+      default: () => ({})
+    },
+    // 导出文件名
+    exportFilename: {
+      type: String,
+      default: '工艺模板导出'
+    },
+    // 工具栏左侧按钮配置
+    toolbarButtons: {
+      type: Array,
+      default: () => []
     }
   },
   data() {
     return {
       // 温度段概览最大显示数量
-      maxVisibleSegments: 3
+      maxVisibleSegments: 3,
+      // 当前选中的行
+      selectedRows: [],
+      // 列设置存储键
+      columnSettingsKey: TABLE_COLUMN_SETTINGS_ID,
+      // 可配置列选项
+      columnOptions: TABLE_COLUMNS,
+      // 批量操作Loading状态
+      batchLoading: false,
+      // 批量操作加载状态管理
+      pendingActions: {}
     }
   },
   computed: {
@@ -245,6 +329,11 @@ export default {
         background: true,
         autoScroll: true
       }
+    }
+  },
+  watch: {
+    visibleColumns(newVal) {
+      tableConfigStore.saveColumnConfig(this.columnSettingsKey, newVal)
     }
   },
   methods: {
@@ -526,6 +615,95 @@ export default {
      */
     handleCreateTemplate() {
       this.$emit('create')
+    },
+
+    handleSelectionChange(selection) {
+      this.selectedRows = selection
+      this.$emit('selection-change', selection)
+    },
+
+    handleRefresh() {
+      this.$emit('refresh')
+    },
+
+    handleColumnChange(columns) {
+      const columnIds = columns.map(column => column.columnId || column)
+      tableConfigStore.saveColumnConfig(this.columnSettingsKey, columnIds)
+      this.$emit('column-change', columnIds)
+    },
+
+    handleBatchDelete(rows) {
+      this.emitBatchAction('batch-delete', rows)
+    },
+
+    handleBatchEnable(rows) {
+      this.emitBatchAction('batch-enable', rows)
+    },
+
+    handleBatchDisable(rows) {
+      this.emitBatchAction('batch-disable', rows)
+    },
+
+    handleCustomBatchAction(action, rows) {
+      switch (action) {
+        case 'batch-approve':
+        case 'batch-void':
+        case 'batch-submit-approval':
+          this.emitBatchAction(action, rows)
+          break
+        default:
+          this.emitBatchAction('batch-custom', rows)
+          this.$emit('batch-custom', action, rows)
+      }
+    },
+
+    emitBatchAction(eventName, rows) {
+      if (!rows || rows.length === 0) {
+        this.$message.warning('请至少选择一条记录')
+        return
+      }
+
+      this.$emit(eventName, {
+        rows,
+        templateIds: rows.map(item => item.id),
+        versionIds: rows.map(item => item.latestVersion?.id).filter(Boolean)
+      })
+    },
+
+    togglePendingAction(action, templateId, versionId, loading) {
+      const key = `${action}_${templateId || 'unknown'}_${versionId || 'none'}`
+      if (loading) {
+        this.$set(this.pendingActions, key, true)
+      } else if (Object.prototype.hasOwnProperty.call(this.pendingActions, key)) {
+        this.$delete(this.pendingActions, key)
+      }
+    },
+
+    isActionPending(action, templateId, versionId) {
+      const key = `${action}_${templateId || 'unknown'}_${versionId || 'none'}`
+      return Boolean(this.pendingActions[key])
+    },
+
+    handleExportSuccess(result) {
+      this.$emit('export-success', result)
+    },
+
+    handleExportError(error) {
+      this.$emit('export-error', error)
+    },
+
+    handleColumnSettings() {
+      this.$emit('column-settings')
+    },
+
+    handleToolbarAction({ action }) {
+      this.$emit('toolbar-action', action)
+    },
+
+    clearSelection() {
+      if (this.$refs.baseTable) {
+        this.$refs.baseTable.clearSelection()
+      }
     }
   }
 }
