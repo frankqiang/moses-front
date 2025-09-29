@@ -188,6 +188,14 @@ export const EQUIPMENT_TYPE_MAP = {
   [EQUIPMENT_TYPES.PREPARATION_STATION]: '备料台'
 }
 
+// 设备类型标签类型映射 - 用于StatusTag样式统一
+export const EQUIPMENT_TYPE_TYPE_MAP = {
+  [EQUIPMENT_TYPES.ANNEALING_FURNACE]: 'warning',
+  [EQUIPMENT_TYPES.CRANE]: 'primary',
+  [EQUIPMENT_TYPES.AUTOMATIC_CART]: 'success',
+  [EQUIPMENT_TYPES.PREPARATION_STATION]: 'info'
+}
+
 // 设备状态映射 - 方便快速获取标签（P1-#9）
 export const EQUIPMENT_STATUS_MAP = {
   [EQUIPMENT_STATUS.ENABLED]: '启用',

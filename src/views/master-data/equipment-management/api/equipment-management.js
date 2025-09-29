@@ -9,6 +9,8 @@
 import service from '@/utils/request'
 import { formatQueryParams } from '@/utils'
 
+const BASE_URL = '/mdm/equipments'
+
 /**
  * 获取设备列表
  * @param {Object} params 查询参数
@@ -32,7 +34,7 @@ export function fetchEquipmentList(params = {}) {
   const queryParams = formatQueryParams(params)
 
   return service({
-    url: '/v1/mdm/equipments',
+    url: BASE_URL,
     method: 'get',
     params: queryParams
   }).then(response => {
@@ -70,7 +72,7 @@ export function getEquipmentDetail(equipmentId, options = {}) {
   }
 
   return service({
-    url: `/v1/mdm/equipments/${equipmentId}`,
+    url: `${BASE_URL}/${equipmentId}`,
     method: 'get',
     params
   }).then(response => {
@@ -117,7 +119,7 @@ export function createEquipment(data) {
   }
 
   return service({
-    url: '/v1/mdm/equipments',
+    url: BASE_URL,
     method: 'post',
     data
   }).then(response => {
@@ -157,7 +159,7 @@ export function updateEquipment(equipmentId, data) {
   }
 
   return service({
-    url: `/v1/mdm/equipments/${equipmentId}`,
+    url: `${BASE_URL}/${equipmentId}`,
     method: 'patch',
     data
   }).then(response => {
@@ -187,7 +189,7 @@ export function deleteEquipment(equipmentId) {
   }
 
   return service({
-    url: `/v1/mdm/equipments/${equipmentId}`,
+    url: `${BASE_URL}/${equipmentId}`,
     method: 'delete'
   }).then(response => {
     if (response.success) {
@@ -215,7 +217,7 @@ export function batchDeleteEquipments(equipmentIds) {
   }
 
   return service({
-    url: '/v1/mdm/equipments/batch',
+    url: `${BASE_URL}/batch`,
     method: 'delete',
     data: { equipmentIds }
   }).then(response => {
@@ -249,7 +251,7 @@ export function exportEquipmentList(params = {}, options = {}) {
   })
 
   return service({
-    url: '/v1/mdm/equipments/export',
+    url: `${BASE_URL}/export`,
     method: 'get',
     params: queryParams,
     responseType: 'blob',
@@ -273,7 +275,7 @@ export function exportEquipmentList(params = {}, options = {}) {
  */
 export function getEquipmentStatusStats(filters = {}) {
   return service({
-    url: '/v1/mdm/equipments/stats/status',
+    url: `${BASE_URL}/stats/status`,
     method: 'get',
     params: formatQueryParams(filters)
   }).then(response => {
@@ -309,7 +311,7 @@ export function validateEquipmentCode(equipmentCode, excludeId = null) {
   }
 
   return service({
-    url: '/v1/mdm/equipments/validate/code',
+    url: `${BASE_URL}/validate/code`,
     method: 'get',
     params
   }).then(response => {

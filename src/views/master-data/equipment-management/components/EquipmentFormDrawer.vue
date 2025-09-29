@@ -17,307 +17,305 @@
     @confirm="handleConfirm"
   >
     <!-- 抽屉内容 -->
-    <div class="equipment-form-container">
-      <!-- 错误提示 -->
-      <div v-if="errorMessage" class="form-error-alert" role="alert">
-        <el-alert
-          show-icon
-          :title="errorMessage"
-          type="error"
-          :closable="true"
-          @close="clearError"
-        />
-      </div>
-
-      <!-- 表单主体 -->
-      <EnhancedForm
-        ref="enhancedForm"
-        :data="formData"
-        :mode="formMode"
-        :loading="formLoading"
-        :rules="formRules"
-        :label-width="'140px'"
-        :show-footer="false"
-        @data-change="handleFormDataChange"
-        @validation-change="handleValidationChange"
-      >
-        <template #default="{ form, mode: scopedMode, loading }">
-          <!-- 基础信息分组 -->
-          <div class="form-section">
-            <div class="section-header" @click="toggleSection('basic')">
-              <i
-                :class="['section-toggle', sectionStates.basic ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
-                aria-hidden="true"
-              />
-              <h3 class="section-title">{{ DETAIL_FIELD_GROUPS.BASIC.label }}</h3>
-              <span v-if="scopedMode !== 'view'" class="section-badge">必填</span>
-            </div>
-            <el-collapse-transition>
-              <div v-show="sectionStates.basic" class="section-content">
-                <el-row :gutter="20">
-                  <template v-for="field in basicFormFields">
-                    <el-col :key="field.prop" :span="getFieldSpan(field)">
-                      <el-form-item
-                        :prop="field.prop"
-                        :label="field.label"
-                        :rules="field.rules"
-                        :required="field.required"
-                      >
-                        <!-- 设备类型字段特殊处理 -->
-                        <el-select
-                          v-if="field.prop === 'equipmentType'"
-                          v-model="form[field.prop]"
-                          :placeholder="field.placeholder"
-                          :disabled="field.disabledOnEdit && scopedMode === 'update' || scopedMode === 'view' || loading"
-                          :clearable="field.clearable && scopedMode !== 'view'"
-                          @change="handleEquipmentTypeChange"
-                        >
-                          <el-option
-                            v-for="option in field.options"
-                            :key="option.value"
-                            :label="option.label"
-                            :value="option.value"
-                          />
-                        </el-select>
-
-                        <!-- 状态字段处理 -->
-                        <el-select
-                          v-else-if="field.prop === 'status'"
-                          v-model="form[field.prop]"
-                          :placeholder="field.placeholder"
-                          :disabled="scopedMode === 'view' || loading"
-                          :clearable="field.clearable && scopedMode !== 'view'"
-                        >
-                          <el-option
-                            v-for="option in field.options"
-                            :key="option.value"
-                            :label="option.label"
-                            :value="option.value"
-                          />
-                        </el-select>
-
-                        <!-- 其他基础字段 -->
-                        <component
-                          :is="getFieldComponent(field)"
-                          v-else
-                          v-model="form[field.prop]"
-                          v-bind="getFieldProps(field, scopedMode, loading)"
-                          @input="handleFieldInput(field, $event)"
-                        />
-
-                        <!-- 字段提示 -->
-                        <div v-if="field.tooltip" class="field-tooltip">
-                          <i class="el-icon-info" />
-                          {{ field.tooltip }}
-                        </div>
-                      </el-form-item>
-                    </el-col>
-                  </template>
-                </el-row>
-              </div>
-            </el-collapse-transition>
-          </div>
-
-          <!-- 通讯参数分组 -->
-          <div class="form-section">
-            <div class="section-header" @click="toggleSection('communication')">
-              <i
-                :class="['section-toggle', sectionStates.communication ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
-                aria-hidden="true"
-              />
-              <h3 class="section-title">{{ DETAIL_FIELD_GROUPS.COMMUNICATION.label }}</h3>
-              <span v-if="scopedMode !== 'view'" class="section-badge important">重要</span>
-            </div>
-            <el-collapse-transition>
-              <div v-show="sectionStates.communication" class="section-content">
-                <el-row :gutter="20">
-                  <template v-for="field in communicationFormFields">
-                    <el-col :key="field.prop" :span="getFieldSpan(field)">
-                      <el-form-item
-                        :prop="field.prop"
-                        :label="field.label"
-                        :rules="field.rules"
-                        :required="field.required"
-                      >
-                        <!-- 通讯参数特殊组件 -->
-                        <template v-if="field.type === 'key-value-editor'">
-                          <KeyValueEditor
-                            v-model="form[field.prop]"
-                            :disabled="scopedMode === 'view' || loading"
-                            :placeholder="field.placeholder || '请添加参数'"
-                            :sensitive-keys="COMMUNICATION_SENSITIVE_KEYS"
-                          />
-                          <div v-if="field.tooltip" class="field-tooltip">
-                            <i class="el-icon-warning-outline" />
-                            {{ field.tooltip }}
-                          </div>
-                        </template>
-
-                        <!-- 其他通讯字段 -->
-                        <template v-else>
-                          <component
-                            :is="getFieldComponent(field)"
-                            v-model="form[field.prop]"
-                            v-bind="getFieldProps(field, scopedMode, loading)"
-                          />
-                          <div v-if="field.tooltip" class="field-tooltip">
-                            <i class="el-icon-info" />
-                            {{ field.tooltip }}
-                          </div>
-                        </template>
-                      </el-form-item>
-                    </el-col>
-                  </template>
-                </el-row>
-              </div>
-            </el-collapse-transition>
-          </div>
-
-          <!-- 维护计划分组 -->
-          <div class="form-section">
-            <div class="section-header" @click="toggleSection('maintenance')">
-              <i
-                :class="['section-toggle', sectionStates.maintenance ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
-                aria-hidden="true"
-              />
-              <h3 class="section-title">{{ DETAIL_FIELD_GROUPS.MAINTENANCE.label }}</h3>
-              <span v-if="scopedMode !== 'view'" class="section-badge optional">可选</span>
-            </div>
-            <el-collapse-transition>
-              <div v-show="sectionStates.maintenance" class="section-content">
-                <el-row :gutter="20">
-                  <template v-for="field in maintenanceFormFields">
-                    <el-col :key="field.prop" :span="getFieldSpan(field)">
-                      <el-form-item
-                        :prop="field.prop"
-                        :label="field.label"
-                        :rules="field.rules"
-                        :required="field.required"
-                      >
-                        <component
-                          :is="getFieldComponent(field)"
-                          v-model="form[field.prop]"
-                          v-bind="getFieldProps(field, scopedMode, loading)"
-                        />
-                        <div v-if="field.tooltip" class="field-tooltip">
-                          <i class="el-icon-info" />
-                          {{ field.tooltip }}
-                        </div>
-                      </el-form-item>
-                    </el-col>
-                  </template>
-                </el-row>
-              </div>
-            </el-collapse-transition>
-          </div>
-
-          <!-- 类型化详情分组 - 根据设备类型动态显示 -->
-          <div v-if="currentEquipmentType && detailFormFields.length > 0" class="form-section">
-            <div class="section-header" @click="toggleSection('detail')">
-              <i
-                :class="['section-toggle', sectionStates.detail ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
-                aria-hidden="true"
-              />
-              <h3 class="section-title">
-                {{ EQUIPMENT_TYPE_DETAIL_TITLES[currentEquipmentType] || '设备详情' }}
-              </h3>
-              <el-tag
-                :color="EQUIPMENT_TYPE_COLORS[currentEquipmentType]"
-                size="small"
-                class="section-type-tag"
-              >
-                {{ EQUIPMENT_TYPE_MAP[currentEquipmentType] }}
-              </el-tag>
-              <span v-if="scopedMode !== 'view'" class="section-badge">必填</span>
-            </div>
-            <el-collapse-transition>
-              <div v-show="sectionStates.detail" class="section-content">
-                <el-row :gutter="20">
-                  <template v-for="field in detailFormFields">
-                    <el-col :key="field.prop" :span="getFieldSpan(field)">
-                      <el-form-item
-                        :prop="field.prop"
-                        :label="field.label"
-                        :rules="field.rules"
-                        :required="field.required"
-                      >
-                        <!-- 控制接口参数特殊处理 -->
-                        <template v-if="field.type === 'key-value-editor'">
-                          <KeyValueEditor
-                            v-model="form.detail[getDetailFieldKey(field.prop)]"
-                            :disabled="scopedMode === 'view' || loading"
-                            :placeholder="field.placeholder || '请添加控制参数'"
-                          />
-                        </template>
-
-                        <!-- 导航方式选择器特殊处理 -->
-                        <el-select
-                          v-else-if="field.prop === 'detail.navigationType'"
-                          v-model="form.detail.navigationType"
-                          :placeholder="field.placeholder"
-                          :disabled="scopedMode === 'view' || loading"
-                        >
-                          <el-option
-                            v-for="option in field.options"
-                            :key="option.value"
-                            :label="option.label"
-                            :value="option.value"
-                          />
-                        </el-select>
-
-                        <!-- 其他详情字段 -->
-                        <component
-                          :is="getFieldComponent(field)"
-                          v-model="form.detail[getDetailFieldKey(field.prop)]"
-                          v-bind="getFieldProps(field, scopedMode, loading)"
-                          @input="handleDetailFieldInput(field, $event)"
-                        />
-
-                        <div v-if="field.tooltip" class="field-tooltip">
-                          <i class="el-icon-info" />
-                          {{ field.tooltip }}
-                        </div>
-                      </el-form-item>
-                    </el-col>
-                  </template>
-                </el-row>
-              </div>
-            </el-collapse-transition>
-          </div>
-
-          <!-- 备注分组 -->
-          <div class="form-section">
-            <div class="section-header" @click="toggleSection('remark')">
-              <i
-                :class="['section-toggle', sectionStates.remark ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
-                aria-hidden="true"
-              />
-              <h3 class="section-title">备注信息</h3>
-              <span v-if="scopedMode !== 'view'" class="section-badge optional">可选</span>
-            </div>
-            <el-collapse-transition>
-              <div v-show="sectionStates.remark" class="section-content">
-                <el-form-item prop="remark" label="备注" :rules="remarkRules">
-                  <el-input
-                    v-model="form.remark"
-                    type="textarea"
-                    :rows="3"
-                    :placeholder="scopedMode === 'view' ? '暂无备注' : '请输入备注信息，最多1000字符'"
-                    :disabled="scopedMode === 'view' || loading"
-                    :maxlength="1000"
-                    show-word-limit
-                  />
-                </el-form-item>
-              </div>
-            </el-collapse-transition>
-          </div>
-        </template>
-      </EnhancedForm>
+    <!-- 错误提示 -->
+    <div v-if="errorMessage" class="form-error-alert" role="alert">
+      <el-alert
+        show-icon
+        :title="errorMessage"
+        type="error"
+        :closable="true"
+        @close="clearError"
+      />
     </div>
+
+    <!-- 表单主体 -->
+    <EnhancedForm
+      ref="enhancedForm"
+      class="equipment-form"
+      :data="formData"
+      :mode="formMode"
+      :loading="formLoading"
+      :rules="formRules"
+      :label-width="'140px'"
+      :show-footer="false"
+      @data-change="handleFormDataChange"
+      @validation-change="handleValidationChange"
+    >
+      <template #default="{ form, mode: scopedMode, loading }">
+        <!-- 基础信息分组 -->
+        <div class="form-section">
+          <div class="section-header" @click="toggleSection('basic')">
+            <i
+              :class="['section-toggle', sectionStates.basic ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
+              aria-hidden="true"
+            />
+            <h3 class="section-title">{{ DETAIL_FIELD_GROUPS.BASIC.label }}</h3>
+            <span v-if="scopedMode !== 'view'" class="section-badge">必填</span>
+          </div>
+          <el-collapse-transition>
+            <div v-show="sectionStates.basic" class="section-content">
+              <el-row :gutter="20">
+                <template v-for="field in basicFormFields">
+                  <el-col :key="field.prop" :span="getFieldSpan(field)">
+                    <el-form-item
+                      :prop="field.prop"
+                      :label="field.label"
+                      :rules="field.rules"
+                      :required="field.required"
+                    >
+                      <!-- 设备类型字段特殊处理 -->
+                      <el-select
+                        v-if="field.prop === 'equipmentType'"
+                        v-model="form[field.prop]"
+                        :placeholder="field.placeholder"
+                        :disabled="field.disabledOnEdit && scopedMode === 'update' || scopedMode === 'view' || loading"
+                        :clearable="field.clearable && scopedMode !== 'view'"
+                        @change="handleEquipmentTypeChange"
+                      >
+                        <el-option
+                          v-for="option in field.options"
+                          :key="option.value"
+                          :label="option.label"
+                          :value="option.value"
+                        />
+                      </el-select>
+
+                      <!-- 状态字段处理 -->
+                      <el-select
+                        v-else-if="field.prop === 'status'"
+                        v-model="form[field.prop]"
+                        :placeholder="field.placeholder"
+                        :disabled="scopedMode === 'view' || loading"
+                        :clearable="field.clearable && scopedMode !== 'view'"
+                      >
+                        <el-option
+                          v-for="option in field.options"
+                          :key="option.value"
+                          :label="option.label"
+                          :value="option.value"
+                        />
+                      </el-select>
+
+                      <!-- 其他基础字段 -->
+                      <component
+                        :is="getFieldComponent(field)"
+                        v-else
+                        v-model="form[field.prop]"
+                        v-bind="getFieldProps(field, scopedMode, loading)"
+                        @input="handleFieldInput(field, $event)"
+                      />
+
+                      <!-- 字段提示 -->
+                      <div v-if="field.tooltip" class="field-tooltip">
+                        <i class="el-icon-info" />
+                        {{ field.tooltip }}
+                      </div>
+                    </el-form-item>
+                  </el-col>
+                </template>
+              </el-row>
+            </div>
+          </el-collapse-transition>
+        </div>
+
+        <!-- 通讯参数分组 -->
+        <div class="form-section">
+          <div class="section-header" @click="toggleSection('communication')">
+            <i
+              :class="['section-toggle', sectionStates.communication ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
+              aria-hidden="true"
+            />
+            <h3 class="section-title">{{ DETAIL_FIELD_GROUPS.COMMUNICATION.label }}</h3>
+            <span v-if="scopedMode !== 'view'" class="section-badge important">重要</span>
+          </div>
+          <el-collapse-transition>
+            <div v-show="sectionStates.communication" class="section-content">
+              <el-row :gutter="20">
+                <template v-for="field in communicationFormFields">
+                  <el-col :key="field.prop" :span="getFieldSpan(field)">
+                    <el-form-item
+                      :prop="field.prop"
+                      :label="field.label"
+                      :rules="field.rules"
+                      :required="field.required"
+                    >
+                      <!-- 通讯参数特殊组件 -->
+                      <template v-if="field.type === 'key-value-editor'">
+                        <KeyValueEditor
+                          v-model="form.detail[getDetailFieldKey(field.prop)]"
+                          :disabled="scopedMode === 'view' || loading"
+                          :placeholder="field.placeholder || '请添加控制参数'"
+                        />
+                        <div v-if="field.tooltip" class="field-tooltip">
+                          <i class="el-icon-warning-outline" />
+                          {{ field.tooltip }}
+                        </div>
+                      </template>
+
+                      <!-- 其他通讯字段 -->
+                      <template v-else>
+                        <component
+                          :is="getFieldComponent(field)"
+                          v-model="form[field.prop]"
+                          v-bind="getFieldProps(field, scopedMode, loading)"
+                        />
+                        <div v-if="field.tooltip" class="field-tooltip">
+                          <i class="el-icon-info" />
+                          {{ field.tooltip }}
+                        </div>
+                      </template>
+                    </el-form-item>
+                  </el-col>
+                </template>
+              </el-row>
+            </div>
+          </el-collapse-transition>
+        </div>
+
+        <!-- 维护计划分组 -->
+        <div class="form-section">
+          <div class="section-header" @click="toggleSection('maintenance')">
+            <i
+              :class="['section-toggle', sectionStates.maintenance ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
+              aria-hidden="true"
+            />
+            <h3 class="section-title">{{ DETAIL_FIELD_GROUPS.MAINTENANCE.label }}</h3>
+            <span v-if="scopedMode !== 'view'" class="section-badge optional">可选</span>
+          </div>
+          <el-collapse-transition>
+            <div v-show="sectionStates.maintenance" class="section-content">
+              <el-row :gutter="20">
+                <template v-for="field in maintenanceFormFields">
+                  <el-col :key="field.prop" :span="getFieldSpan(field)">
+                    <el-form-item
+                      :prop="field.prop"
+                      :label="field.label"
+                      :rules="field.rules"
+                      :required="field.required"
+                    >
+                      <component
+                        :is="getFieldComponent(field)"
+                        v-model="form[field.prop]"
+                        v-bind="getFieldProps(field, scopedMode, loading)"
+                      />
+                      <div v-if="field.tooltip" class="field-tooltip">
+                        <i class="el-icon-info" />
+                        {{ field.tooltip }}
+                      </div>
+                    </el-form-item>
+                  </el-col>
+                </template>
+              </el-row>
+            </div>
+          </el-collapse-transition>
+        </div>
+
+        <!-- 类型化详情分组 - 根据设备类型动态显示 -->
+        <div v-if="currentEquipmentType && detailFormFields.length > 0" class="form-section">
+          <div class="section-header" @click="toggleSection('detail')">
+            <i
+              :class="['section-toggle', sectionStates.detail ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
+              aria-hidden="true"
+            />
+            <h3 class="section-title">
+              {{ EQUIPMENT_TYPE_DETAIL_TITLES[currentEquipmentType] || '设备详情' }}
+            </h3>
+            <StatusTag
+              :status="currentEquipmentType"
+              :text-map="EQUIPMENT_TYPE_MAP"
+              :type-map="EQUIPMENT_TYPE_TYPE_MAP"
+              size="small"
+              effect="light"
+            />
+            <span v-if="scopedMode !== 'view'" class="section-badge">必填</span>
+          </div>
+          <el-collapse-transition>
+            <div v-show="sectionStates.detail" class="section-content">
+              <el-row :gutter="20">
+                <template v-for="field in detailFormFields">
+                  <el-col :key="field.prop" :span="getFieldSpan(field)">
+                    <el-form-item
+                      :prop="field.prop"
+                      :label="field.label"
+                      :rules="field.rules"
+                      :required="field.required"
+                    >
+                      <template v-if="field.type === 'key-value-editor'">
+                        <KeyValueEditor
+                          v-model="form.detail[getDetailFieldKey(field.prop)]"
+                          :disabled="scopedMode === 'view' || loading"
+                          :placeholder="field.placeholder || '请添加控制参数'"
+                          @input="value => handleDetailFieldInput(field, value)"
+                        />
+                      </template>
+
+                      <el-select
+                        v-else-if="field.prop === 'detail.navigationType'"
+                        v-model="form.detail.navigationType"
+                        :placeholder="field.placeholder"
+                        :disabled="scopedMode === 'view' || loading"
+                        @change="value => handleDetailFieldInput(field, value)"
+                      >
+                        <el-option
+                          v-for="option in field.options"
+                          :key="option.value"
+                          :label="option.label"
+                          :value="option.value"
+                        />
+                      </el-select>
+
+                      <component
+                        :is="getFieldComponent(field)"
+                        v-else
+                        v-model="form.detail[getDetailFieldKey(field.prop)]"
+                        v-bind="getFieldProps(field, scopedMode, loading)"
+                        @input="value => handleDetailFieldInput(field, value)"
+                      />
+
+                      <div v-if="field.tooltip" class="field-tooltip">
+                        <i class="el-icon-info" />
+                        {{ field.tooltip }}
+                      </div>
+                    </el-form-item>
+                  </el-col>
+                </template>
+              </el-row>
+            </div>
+          </el-collapse-transition>
+        </div>
+
+        <!-- 备注分组 -->
+        <div class="form-section">
+          <div class="section-header" @click="toggleSection('remark')">
+            <i
+              :class="['section-toggle', sectionStates.remark ? 'el-icon-arrow-down' : 'el-icon-arrow-right']"
+              aria-hidden="true"
+            />
+            <h3 class="section-title">备注信息</h3>
+            <span v-if="scopedMode !== 'view'" class="section-badge optional">可选</span>
+          </div>
+          <el-collapse-transition>
+            <div v-show="sectionStates.remark" class="section-content">
+              <el-form-item prop="remark" label="备注" :rules="remarkRules">
+                <el-input
+                  v-model="form.remark"
+                  type="textarea"
+                  :rows="3"
+                  :placeholder="scopedMode === 'view' ? '暂无备注' : '请输入备注信息，最多1000字符'"
+                  :disabled="scopedMode === 'view' || loading"
+                  :maxlength="1000"
+                  show-word-limit
+                />
+              </el-form-item>
+            </div>
+          </el-collapse-transition>
+        </div>
+      </template>
+    </EnhancedForm>
 
     <!-- 自定义底部 -->
     <template #footer>
-      <div class="drawer-footer">
+      <div>
         <el-button
           :disabled="formLoading"
           @click="handleCancel"
@@ -342,6 +340,7 @@
 import Drawer from '@/components/Drawer'
 import EnhancedForm from '@/components/EnhancedForm'
 import KeyValueEditor from './KeyValueEditor' // 需要实现的键值对编辑器
+import StatusTag from '@/components/StatusTag'
 import {
   FORM_FIELDS,
   DETAIL_FORM_FIELDS
@@ -354,6 +353,10 @@ import {
   DETAIL_FIELD_GROUPS,
   COMMUNICATION_SENSITIVE_KEYS
 } from '../constants/equipment-management'
+import {
+  EQUIPMENT_DETAIL_LABELS,
+  EQUIPMENT_TYPE_TYPE_MAP
+} from '../constants/equipment-management'
 import { createEquipment, updateEquipment, getEquipmentDetail } from '../api'
 import { cloneDeep } from 'lodash'
 
@@ -362,7 +365,8 @@ export default {
   components: {
     Drawer,
     EnhancedForm,
-    KeyValueEditor
+    KeyValueEditor,
+    StatusTag
   },
   props: {
     visible: {
@@ -390,6 +394,7 @@ export default {
       EQUIPMENT_TYPES,
       EQUIPMENT_TYPE_MAP,
       EQUIPMENT_TYPE_COLORS,
+      EQUIPMENT_TYPE_TYPE_MAP,
       EQUIPMENT_TYPE_DETAIL_TITLES,
       DETAIL_FIELD_GROUPS,
       COMMUNICATION_SENSITIVE_KEYS,
@@ -415,7 +420,10 @@ export default {
       // 备注校验规则
       remarkRules: [
         { max: 1000, message: '长度不能超过1000字符', trigger: 'blur' }
-      ]
+      ],
+
+      // 临时存储详情字段值，用于在编辑时避免直接修改form.detail
+      temporaryDetail: {}
     }
   },
   computed: {
@@ -594,14 +602,14 @@ export default {
 
       // 确保detail对象存在
       if (!this.formData.detail) {
-        this.formData.detail = {}
+        this.$set(this.formData, 'detail', {})
       }
 
       // 为每个详情字段设置默认值
       detailFields.forEach(field => {
         const key = this.getDetailFieldKey(field.prop)
         if (this.formData.detail[key] === undefined) {
-          this.formData.detail[key] = field.type === 'key-value-editor' ? {} : ''
+          this.$set(this.formData.detail, key, field.type === 'key-value-editor' ? {} : '')
         }
       })
     },
@@ -614,10 +622,22 @@ export default {
     // 处理设备类型变更
     handleEquipmentTypeChange(value) {
       this.currentEquipmentType = value
+      this.formData.equipmentType = value
 
       // 重置详情字段
-      this.formData.detail = {}
-      this.initDetailFields()
+      DETAIL_FORM_FIELDS[this.currentEquipmentType]?.forEach(field => {
+        const key = this.getDetailFieldKey(field.prop)
+        const defaultValue = field.type === 'key-value-editor' ? {} : ''
+        if (this.formData[field.prop] === undefined) {
+          this.$set(this.formData, field.prop, defaultValue)
+        }
+        if (!this.formData.detail) {
+          this.$set(this.formData, 'detail', {})
+        }
+        if (this.formData.detail[key] === undefined) {
+          this.$set(this.formData.detail, key, this.formData[field.prop])
+        }
+      })
 
       // 根据设备类型自动展开详情分组
       if (value) {
@@ -687,14 +707,24 @@ export default {
       if (field.formatter) {
         this.formData[field.prop] = field.formatter(value)
       }
+
+      if (field.prop && field.prop.startsWith('detail.')) {
+        const key = field.prop.replace('detail.', '')
+        if (!this.formData.detail) {
+          this.$set(this.formData, 'detail', {})
+        }
+        this.$set(this.formData.detail, key, this.formData[field.prop])
+      }
     },
 
     // 处理详情字段输入
     handleDetailFieldInput(field, value) {
       const key = this.getDetailFieldKey(field.prop)
-      if (field.formatter) {
-        this.formData.detail[key] = field.formatter(value)
+      if (!this.formData.detail) {
+        this.$set(this.formData, 'detail', {})
       }
+      this.$set(this.formData.detail, key, field.formatter ? field.formatter(value) : value)
+      this.$set(this.formData, field.prop, this.formData.detail[key])
     },
 
     // 切换分组展开状态
@@ -705,6 +735,9 @@ export default {
     // 处理表单数据变更
     handleFormDataChange(data) {
       this.formData = { ...data }
+      if (!this.formData.detail) {
+        this.$set(this.formData, 'detail', {})
+      }
     },
 
     // 处理表单验证状态变更
@@ -829,12 +862,12 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.equipment-form-container {
-  padding: 0 4px;
+.form-error-alert {
+  margin-bottom: 20px;
+}
 
-  .form-error-alert {
-    margin-bottom: 20px;
-  }
+.equipment-form {
+  padding: 0 4px;
 
   .form-section {
     margin-bottom: 24px;
@@ -941,12 +974,4 @@ export default {
   }
 }
 
-.drawer-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 0;
-  border-top: 1px solid #e4e7ed;
-  margin-top: 20px;
-}
 </style>

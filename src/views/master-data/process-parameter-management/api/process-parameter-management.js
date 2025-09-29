@@ -10,6 +10,7 @@ import service, { ApiError } from '@/utils/request'
 import { formatQueryParams } from '@/utils'
 
 const BASE_URL = '/v1/mdm/process-templates'
+const PRODUCT_URL = '/v1/mdm/aluminum-foil-products'
 
 function assertTemplateId(templateId) {
   if (!templateId) {
@@ -26,6 +27,51 @@ function assertVersionId(versionId) {
 function assertCurrentStatus(payload) {
   if (!payload || !payload.currentStatus) {
     throw new ApiError('PTM_CLIENT_003', 'currentStatus为必填字段', 400)
+  }
+}
+
+export async function fetchProductOptions(params = {}) {
+  const {
+    keyword = '',
+    limit = 20,
+    lifecycleStatus = '量产',
+    page = 1,
+    sortBy = 'productCode:asc'
+  } = params
+
+  const queryParams = formatQueryParams({
+    search: keyword ? keyword.trim() : undefined,
+    lifecycleStatus,
+    limit,
+    page,
+    sortBy
+  })
+
+  const response = await service({
+    url: PRODUCT_URL,
+    method: 'get',
+    params: queryParams
+  })
+
+  const results = response.data?.results || []
+
+  return {
+    data: {
+      options: results.map(item => ({
+        id: item.id,
+        productCode: item.productCode,
+        productName: item.productName,
+        lifecycleStatus: item.lifecycleStatus
+      })),
+      pagination: {
+        page: response.data?.page ?? page,
+        limit: response.data?.limit ?? limit,
+        totalPages: response.data?.totalPages ?? 0,
+        totalResults: response.data?.totalResults ?? results.length
+      }
+    },
+    message: response.message,
+    meta: response.meta
   }
 }
 

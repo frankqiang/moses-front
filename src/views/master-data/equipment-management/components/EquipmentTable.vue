@@ -171,13 +171,6 @@ export default {
           type: 'primary',
           icon: 'el-icon-plus',
           size: 'small'
-        },
-        {
-          action: 'refresh',
-          text: '刷新',
-          type: 'default',
-          icon: 'el-icon-refresh-right',
-          size: 'small'
         }
       ]
     },
@@ -225,10 +218,6 @@ export default {
     handleToolbarAction(button, context) {
       if (button.action === 'create') {
         this.$emit('create')
-        return
-      }
-      if (button.action === 'refresh') {
-        this.$emit('refresh')
         return
       }
       this.$emit('toolbar-action', { button, context })
