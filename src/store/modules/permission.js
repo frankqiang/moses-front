@@ -168,6 +168,16 @@ export const asyncRoutes = [
           icon: 'el-icon-box'
           // 开发阶段：移除 roles 限制
         }
+      },
+      {
+        path: 'equipment-management',
+        name: 'EquipmentManagement',
+        component: () => import('@/views/master-data/equipment-management/index'),
+        meta: {
+          title: '设备管理',
+          icon: 'el-icon-cpu'
+          // 开发阶段：移除 roles 限制
+        }
       }
       // 可以继续添加其他主数据管理路由...
     ]
