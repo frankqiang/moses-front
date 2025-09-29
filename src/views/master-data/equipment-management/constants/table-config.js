@@ -122,3 +122,4 @@ export const STATUS_CONFIG = EQUIPMENT_STATUS_CONFIG
 
 // 列配置版本（用于 table-config-store 持久化）
 export const TABLE_CONFIG_VERSION = 'v1.0.0'
+

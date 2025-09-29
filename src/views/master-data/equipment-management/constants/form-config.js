@@ -539,3 +539,4 @@ export const DETAIL_FORM_FIELDS = {
 
 // 详情字段拓展定义 - 便于父组件动态渲染（P1-#6）
 export const EQUIPMENT_DETAIL_FIELD_CONFIG = EQUIPMENT_DETAIL_FIELDS
+

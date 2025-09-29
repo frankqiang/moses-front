@@ -21,3 +21,4 @@ export const MESSAGE_TIPS = {
   includeDetailsEnabled: '已启用详情字段，返回数据将包含类型化详情',
   communicationSensitive: '敏感通讯参数已自动脱敏，如需修改请重新填写'
 }
+

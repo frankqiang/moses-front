@@ -24,3 +24,4 @@ export const EQUIPMENT_QUERY_PARAM_MAP = {
 }
 
 export const EQUIPMENT_MUTATION_REQUIRED_FIELDS = ['equipmentCode', 'name', 'equipmentType', 'communicationEndpoint', 'communicationParams']
+
