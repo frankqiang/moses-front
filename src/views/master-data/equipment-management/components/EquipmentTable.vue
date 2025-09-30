@@ -50,6 +50,9 @@
       :empty-text="emptyText"
       @pagination-change="$emit('pagination-change', $event)"
     >
+      <template #equipmentType="{ row }">
+        <span>{{ getEquipmentTypeText(row.equipmentType) }}</span>
+      </template>
       <template #status="{ row }">
         <StatusTag
           :status="row.status"
@@ -89,7 +92,7 @@ import {
   DEFAULT_VISIBLE_COLUMNS,
   STATUS_CONFIG
 } from '../constants/table-config'
-import { EQUIPMENT_DETAIL_LABELS } from '../constants/equipment-management'
+import { EQUIPMENT_DETAIL_LABELS, EQUIPMENT_TYPE_MAP } from '../constants/equipment-management'
 
 const COLUMN_STORAGE_KEY = 'equipment_columns_EquipmentTable'
 
@@ -235,14 +238,11 @@ export default {
           text: '编辑',
           icon: 'el-icon-edit-outline',
           type: 'text'
-        },
-        {
-          action: 'refresh',
-          text: '刷新',
-          icon: 'el-icon-refresh',
-          type: 'text'
         }
       ]
+    },
+    getEquipmentTypeText(equipmentType) {
+      return EQUIPMENT_TYPE_MAP[equipmentType] || equipmentType || '-'
     },
     handleRowAction({ action, row }) {
       if (!row) return
@@ -252,9 +252,6 @@ export default {
           break
         case 'edit':
           this.$emit('edit', row)
-          break
-        case 'refresh':
-          this.$emit('refresh')
           break
         default:
           this.$emit('row-action', { action, row })
