@@ -57,62 +57,60 @@
           <el-collapse-transition>
             <div v-show="sectionStates.basic" class="section-content">
               <el-row :gutter="20">
-                <template v-for="field in basicFormFields">
-                  <el-col :key="field.prop" :span="getFieldSpan(field)">
-                    <el-form-item
-                      :prop="field.prop"
-                      :label="field.label"
-                      :rules="field.rules"
+                <el-col v-for="field in basicFormFields" :key="field.prop" :span="getFieldSpan(field)">
+                  <el-form-item
+                    :prop="field.prop"
+                    :label="field.label"
+                    :rules="field.rules"
+                  >
+                    <!-- 设备类型字段特殊处理 -->
+                    <el-select
+                      v-if="field.prop === 'equipmentType'"
+                      v-model="form[field.prop]"
+                      :placeholder="field.placeholder"
+                      :disabled="field.disabledOnEdit && scopedMode === 'update' || scopedMode === 'view' || loading"
+                      :clearable="field.clearable && scopedMode !== 'view'"
+                      @change="handleEquipmentTypeChange"
                     >
-                      <!-- 设备类型字段特殊处理 -->
-                      <el-select
-                        v-if="field.prop === 'equipmentType'"
-                        v-model="form[field.prop]"
-                        :placeholder="field.placeholder"
-                        :disabled="field.disabledOnEdit && scopedMode === 'update' || scopedMode === 'view' || loading"
-                        :clearable="field.clearable && scopedMode !== 'view'"
-                        @change="handleEquipmentTypeChange"
-                      >
-                        <el-option
-                          v-for="option in field.options"
-                          :key="option.value"
-                          :label="option.label"
-                          :value="option.value"
-                        />
-                      </el-select>
-
-                      <!-- 状态字段处理 -->
-                      <el-select
-                        v-else-if="field.prop === 'status'"
-                        v-model="form[field.prop]"
-                        :placeholder="field.placeholder"
-                        :disabled="scopedMode === 'view' || loading"
-                        :clearable="field.clearable && scopedMode !== 'view'"
-                      >
-                        <el-option
-                          v-for="option in field.options"
-                          :key="option.value"
-                          :label="option.label"
-                          :value="option.value"
-                        />
-                      </el-select>
-
-                      <!-- 其他基础字段 -->
-                      <component
-                        :is="getFieldComponent(field)"
-                        v-else
-                        v-model="form[field.prop]"
-                        v-bind="getFieldProps(field, scopedMode, loading)"
+                      <el-option
+                        v-for="option in field.options"
+                        :key="option.value"
+                        :label="option.label"
+                        :value="option.value"
                       />
+                    </el-select>
 
-                      <!-- 字段提示 -->
-                      <div v-if="field.tooltip" class="field-tooltip">
-                        <i class="el-icon-info" />
-                        {{ field.tooltip }}
-                      </div>
-                    </el-form-item>
-                  </el-col>
-                </template>
+                    <!-- 状态字段处理 -->
+                    <el-select
+                      v-else-if="field.prop === 'status'"
+                      v-model="form[field.prop]"
+                      :placeholder="field.placeholder"
+                      :disabled="scopedMode === 'view' || loading"
+                      :clearable="field.clearable && scopedMode !== 'view'"
+                    >
+                      <el-option
+                        v-for="option in field.options"
+                        :key="option.value"
+                        :label="option.label"
+                        :value="option.value"
+                      />
+                    </el-select>
+
+                    <!-- 其他基础字段 -->
+                    <component
+                      :is="getFieldComponent(field)"
+                      v-else
+                      v-model="form[field.prop]"
+                      v-bind="getFieldProps(field, scopedMode, loading)"
+                    />
+
+                    <!-- 字段提示 -->
+                    <div v-if="field.tooltip" class="field-tooltip">
+                      <i class="el-icon-info" />
+                      {{ field.tooltip }}
+                    </div>
+                  </el-form-item>
+                </el-col>
               </el-row>
             </div>
           </el-collapse-transition>
@@ -131,41 +129,39 @@
           <el-collapse-transition>
             <div v-show="sectionStates.communication" class="section-content">
               <el-row :gutter="20">
-                <template v-for="field in communicationFormFields">
-                  <el-col :key="field.prop" :span="getFieldSpan(field)">
-                    <el-form-item
-                      :prop="field.prop"
-                      :label="field.label"
-                      :rules="field.rules"
-                    >
-                      <!-- 通讯参数特殊组件 -->
-                      <template v-if="field.type === 'key-value-editor'">
-                        <KeyValueEditor
-                          v-model="form.detail[getDetailFieldKey(field.prop)]"
-                          :disabled="scopedMode === 'view' || loading"
-                          :placeholder="field.placeholder || '请添加控制参数'"
-                        />
-                        <div v-if="field.tooltip" class="field-tooltip">
-                          <i class="el-icon-warning-outline" />
-                          {{ field.tooltip }}
-                        </div>
-                      </template>
+                <el-col v-for="field in communicationFormFields" :key="field.prop" :span="getFieldSpan(field)">
+                  <el-form-item
+                    :prop="field.prop"
+                    :label="field.label"
+                    :rules="field.rules"
+                  >
+                    <!-- 通讯参数特殊组件 -->
+                    <template v-if="field.type === 'key-value-editor'">
+                      <KeyValueEditor
+                        v-model="form[field.prop]"
+                        :disabled="scopedMode === 'view' || loading"
+                        :placeholder="field.placeholder || '请添加控制参数'"
+                      />
+                      <div v-if="field.tooltip" class="field-tooltip">
+                        <i class="el-icon-warning-outline" />
+                        {{ field.tooltip }}
+                      </div>
+                    </template>
 
-                      <!-- 其他通讯字段 -->
-                      <template v-else>
-                        <component
-                          :is="getFieldComponent(field)"
-                          v-model="form[field.prop]"
-                          v-bind="getFieldProps(field, scopedMode, loading)"
-                        />
-                        <div v-if="field.tooltip" class="field-tooltip">
-                          <i class="el-icon-info" />
-                          {{ field.tooltip }}
-                        </div>
-                      </template>
-                    </el-form-item>
-                  </el-col>
-                </template>
+                    <!-- 其他通讯字段 -->
+                    <template v-else>
+                      <component
+                        :is="getFieldComponent(field)"
+                        v-model="form[field.prop]"
+                        v-bind="getFieldProps(field, scopedMode, loading)"
+                      />
+                      <div v-if="field.tooltip" class="field-tooltip">
+                        <i class="el-icon-info" />
+                        {{ field.tooltip }}
+                      </div>
+                    </template>
+                  </el-form-item>
+                </el-col>
               </el-row>
             </div>
           </el-collapse-transition>
@@ -184,25 +180,23 @@
           <el-collapse-transition>
             <div v-show="sectionStates.maintenance" class="section-content">
               <el-row :gutter="20">
-                <template v-for="field in maintenanceFormFields">
-                  <el-col :key="field.prop" :span="getFieldSpan(field)">
-                    <el-form-item
-                      :prop="field.prop"
-                      :label="field.label"
-                      :rules="field.rules"
-                    >
-                      <component
-                        :is="getFieldComponent(field)"
-                        v-model="form[field.prop]"
-                        v-bind="getFieldProps(field, scopedMode, loading)"
-                      />
-                      <div v-if="field.tooltip" class="field-tooltip">
-                        <i class="el-icon-info" />
-                        {{ field.tooltip }}
-                      </div>
-                    </el-form-item>
-                  </el-col>
-                </template>
+                <el-col v-for="field in maintenanceFormFields" :key="field.prop" :span="getFieldSpan(field)">
+                  <el-form-item
+                    :prop="field.prop"
+                    :label="field.label"
+                    :rules="field.rules"
+                  >
+                    <component
+                      :is="getFieldComponent(field)"
+                      v-model="form[field.prop]"
+                      v-bind="getFieldProps(field, scopedMode, loading)"
+                    />
+                    <div v-if="field.tooltip" class="field-tooltip">
+                      <i class="el-icon-info" />
+                      {{ field.tooltip }}
+                    </div>
+                  </el-form-item>
+                </el-col>
               </el-row>
             </div>
           </el-collapse-transition>
@@ -230,49 +224,47 @@
           <el-collapse-transition>
             <div v-show="sectionStates.detail" class="section-content">
               <el-row :gutter="20">
-                <template v-for="field in detailFormFields">
-                  <el-col :key="field.prop" :span="getFieldSpan(field)">
-                    <el-form-item
-                      :prop="field.prop"
-                      :label="field.label"
-                      :rules="field.rules"
-                    >
-                      <template v-if="field.type === 'key-value-editor'">
-                        <KeyValueEditor
-                          v-model="form.detail[getDetailFieldKey(field.prop)]"
-                          :disabled="scopedMode === 'view' || loading"
-                          :placeholder="field.placeholder || '请添加控制参数'"
-                        />
-                      </template>
-
-                      <el-select
-                        v-else-if="field.prop === 'detail.navigationType'"
-                        v-model="form.detail.navigationType"
-                        :placeholder="field.placeholder"
-                        :disabled="scopedMode === 'view' || loading"
-                      >
-                        <el-option
-                          v-for="option in field.options"
-                          :key="option.value"
-                          :label="option.label"
-                          :value="option.value"
-                        />
-                      </el-select>
-
-                      <component
-                        :is="getFieldComponent(field)"
-                        v-else
+                <el-col v-for="field in detailFormFields" :key="field.prop" :span="getFieldSpan(field)">
+                  <el-form-item
+                    :prop="field.prop"
+                    :label="field.label"
+                    :rules="field.rules"
+                  >
+                    <template v-if="field.type === 'key-value-editor'">
+                      <KeyValueEditor
                         v-model="form.detail[getDetailFieldKey(field.prop)]"
-                        v-bind="getFieldProps(field, scopedMode, loading)"
+                        :disabled="scopedMode === 'view' || loading"
+                        :placeholder="field.placeholder || '请添加控制参数'"
                       />
+                    </template>
 
-                      <div v-if="field.tooltip" class="field-tooltip">
-                        <i class="el-icon-info" />
-                        {{ field.tooltip }}
-                      </div>
-                    </el-form-item>
-                  </el-col>
-                </template>
+                    <el-select
+                      v-else-if="field.prop === 'detail.navigationType'"
+                      v-model="form.detail.navigationType"
+                      :placeholder="field.placeholder"
+                      :disabled="scopedMode === 'view' || loading"
+                    >
+                      <el-option
+                        v-for="option in field.options"
+                        :key="option.value"
+                        :label="option.label"
+                        :value="option.value"
+                      />
+                    </el-select>
+
+                    <component
+                      :is="getFieldComponent(field)"
+                      v-else
+                      v-model="form[field.prop]"
+                      v-bind="getFieldProps(field, scopedMode, loading)"
+                    />
+
+                    <div v-if="field.tooltip" class="field-tooltip">
+                      <i class="el-icon-info" />
+                      {{ field.tooltip }}
+                    </div>
+                  </el-form-item>
+                </el-col>
               </el-row>
             </div>
           </el-collapse-transition>
@@ -348,7 +340,6 @@ import {
   COMMUNICATION_SENSITIVE_KEYS
 } from '../constants/equipment-management'
 import {
-  EQUIPMENT_DETAIL_LABELS,
   EQUIPMENT_TYPE_TYPE_MAP
 } from '../constants/equipment-management'
 import { createEquipment, updateEquipment, getEquipmentDetail } from '../api'
@@ -766,7 +757,15 @@ export default {
     async handleConfirm() {
       try {
         // 表单验证
-        const valid = await this.$refs.enhancedForm.validate()
+        const valid = await new Promise(resolve => {
+          if (this.$refs.enhancedForm && typeof this.$refs.enhancedForm.validate === 'function') {
+            this.$refs.enhancedForm.validate((isValid) => {
+              resolve(!!isValid)
+            })
+          } else {
+            resolve(false)
+          }
+        })
         if (!valid) return
 
         this.formLoading = true
@@ -818,7 +817,26 @@ export default {
 
     // 重置表单
     resetForm() {
-      this.formData = {}
+      this.formData = {
+        equipmentCode: '',
+        name: '',
+        equipmentType: '',
+        status: 'enabled',
+        model: '',
+        manufacturer: '',
+        locationDescription: '',
+        installationDate: '',
+        maintenanceCycleDays: null,
+        lastMaintenanceDate: '',
+        nextMaintenanceDate: '',
+        communicationEndpoint: '',
+        communicationParams: {},
+        plcNodeId: '',
+        controlSystemAddress: '',
+        remark: '',
+        metadata: {},
+        detail: {}
+      }
       this.currentEquipmentType = null
       this.clearError()
 
@@ -832,7 +850,7 @@ export default {
       }
 
       if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.resetFields()
+        this.$refs.enhancedForm.clearValidate()
       }
     },
 
