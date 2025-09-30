@@ -591,6 +591,7 @@ export default {
       if (this.$refs.form) {
         this.$refs.form.validate((valid, invalidFields) => {
           this.isFormValid = valid
+          this.$emit('validation-change', this.isFormValid)
           if (!valid && invalidFields) {
             // 可以在这里处理验证失败的逻辑
             console.debug('[EnhancedForm] Validation failed:', invalidFields)
@@ -604,6 +605,7 @@ export default {
       if (this.$refs.form) {
         this.$refs.form.validate((valid, invalidFields) => {
           this.isFormValid = valid
+          this.$emit('validation-change', this.isFormValid)
           if (callback) {
             callback(valid, invalidFields)
           }
@@ -619,6 +621,7 @@ export default {
     clearValidate(props) {
       this.$refs.form && this.$refs.form.clearValidate(props)
       this.isFormValid = true
+      this.$emit('validation-change', this.isFormValid)
     },
 
     // 获取表单数据

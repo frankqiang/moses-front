@@ -154,10 +154,6 @@ export default {
       _emitChangeDebounced: null
     }
   },
-  created() {
-    // 150ms 防抖，避免高频击键导致父级频繁更新
-    this._emitChangeDebounced = debounce(this.emitChangeCore, 150)
-  },
   computed: {
     // 获取当前值对象
     currentValue() {
@@ -184,6 +180,10 @@ export default {
       immediate: true,
       deep: false
     }
+  },
+  created() {
+    // 150ms 防抖，避免高频击键导致父级频繁更新
+    this._emitChangeDebounced = debounce(this.emitChangeCore, 150)
   },
   methods: {
     // 初始化键值对
@@ -442,7 +442,4 @@ export default {
   cursor: not-allowed;
 }
 
-::v-deep .pair-key .el-input__inner {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-}
 </style>

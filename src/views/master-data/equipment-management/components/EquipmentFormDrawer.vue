@@ -100,6 +100,12 @@
                     <!-- 其他基础字段 -->
                     <component
                       :is="getFieldComponent(field)"
+                      v-else-if="isDetailProp(field.prop)"
+                      v-model="form.detail[getDetailFieldKey(field.prop)]"
+                      v-bind="getFieldProps(field, scopedMode, loading)"
+                    />
+                    <component
+                      :is="getFieldComponent(field)"
                       v-else
                       v-model="form[field.prop]"
                       v-bind="getFieldProps(field, scopedMode, loading)"
@@ -153,6 +159,13 @@
                     <template v-else>
                       <component
                         :is="getFieldComponent(field)"
+                        v-if="isDetailProp(field.prop)"
+                        v-model="form.detail[getDetailFieldKey(field.prop)]"
+                        v-bind="getFieldProps(field, scopedMode, loading)"
+                      />
+                      <component
+                        :is="getFieldComponent(field)"
+                        v-else
                         v-model="form[field.prop]"
                         v-bind="getFieldProps(field, scopedMode, loading)"
                       />
@@ -227,7 +240,7 @@
               <el-row :gutter="20">
                 <el-col v-for="field in detailFormFields" :key="field.prop" :span="getFieldSpan(field)">
                   <el-form-item
-                    :prop="field.prop"
+                    :prop="`detail.${getDetailFieldKey(field.prop)}`"
                     :label="field.label"
                     :rules="field.rules"
                   >
@@ -256,7 +269,7 @@
                     <component
                       :is="getFieldComponent(field)"
                       v-else
-                      v-model="form[field.prop]"
+                      v-model="form.detail[getDetailFieldKey(field.prop)]"
                       v-bind="getFieldProps(field, scopedMode, loading)"
                     />
 
@@ -507,6 +520,11 @@ export default {
     }
   },
   methods: {
+    // 判断是否为详情字段（detail.*）
+    isDetailProp(prop) {
+      return typeof prop === 'string' && prop.indexOf('detail.') === 0
+    },
+
     // 初始化表单
     async initializeForm() {
       this.clearError()
@@ -823,10 +841,7 @@ export default {
         }
 
         if (response.success) {
-          // 使用后端返回的message
-          this.$message.success(response.message || '操作成功')
-
-          // 透传保存结果给父组件
+          // 透传保存结果给父组件，由父组件统一展示成功提示
           this.$emit('success', {
             mode: this.formMode,
             data: response.data,
