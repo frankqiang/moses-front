@@ -294,7 +294,8 @@ export default {
       errorMessage: '',
       detailData: null,
       statusConfig: STATUS_CONFIG,
-      pendingToken: null
+      pendingToken: null,
+      fetchQueued: false
     }
   },
   computed: {
@@ -407,7 +408,7 @@ export default {
           label: '通讯参数',
           value: this.normalizeKeyValue(this.detailData.communicationParams),
           isKeyValue: true,
-          tooltip: EQUIPMENT_DETAIL_TOOLTIPS.controlInterfaceParams
+          tooltip: EQUIPMENT_DETAIL_TOOLTIPS.communicationParams
         })
       }
 
@@ -423,11 +424,14 @@ export default {
       }))
     },
     detailItems() {
-      if (!this.detailData || !this.detailData.detail) {
+      if (!this.detailData) {
         return []
       }
 
-      const detail = this.detailData.detail
+      const detail = this.getTypedDetail() || this.detailData.detail
+      if (!detail) {
+        return []
+      }
       const items = []
 
       Object.keys(detail).forEach((key) => {
@@ -465,18 +469,43 @@ export default {
   watch: {
     visible(newVal) {
       if (newVal) {
-        this.fetchDetail()
+        this.queueFetch()
       } else {
         this.resetState()
       }
     },
     equipmentId() {
       if (this.visible) {
-        this.fetchDetail()
+        this.queueFetch()
       }
     }
   },
   methods: {
+    getTypedDetail() {
+      if (!this.detailData) return null
+      switch (this.detailData.equipmentType) {
+        case 'annealing_furnace':
+          return this.detailData.annealingFurnaceDetail
+        case 'crane':
+          return this.detailData.craneDetail
+        case 'automatic_cart':
+          return this.detailData.automaticCartDetail
+        case 'preparation_station':
+          return this.detailData.preparationStationDetail
+        default:
+          return null
+      }
+    },
+    queueFetch() {
+      if (this.fetchQueued) return
+      this.fetchQueued = true
+      this.$nextTick(() => {
+        this.fetchQueued = false
+        if (this.visible && this.equipmentId) {
+          this.fetchDetail()
+        }
+      })
+    },
     formatDate(value) {
       const formatted = parseTime(value, '{y}-{m}-{d}')
       return formatted || '-'

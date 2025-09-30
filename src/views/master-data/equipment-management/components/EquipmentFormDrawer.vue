@@ -579,10 +579,9 @@ export default {
           this.formData = cloneDeep(response.data)
           this.currentEquipmentType = this.formData.equipmentType
 
-          // 确保detail对象存在
-          if (!this.formData.detail) {
-            this.formData.detail = {}
-          }
+          // 兼容后端返回的类型化详情字段 → 映射到 formData.detail
+          const typedDetail = this.extractTypedDetail(this.formData)
+          this.formData.detail = typedDetail || this.formData.detail || {}
 
           // 初始化详情字段
           this.initDetailFields()
@@ -594,6 +593,22 @@ export default {
         console.error('Load equipment detail error:', error)
       } finally {
         this.formLoading = false
+      }
+    },
+    // 从返回数据中提取类型化详情
+    extractTypedDetail(data) {
+      if (!data || !data.equipmentType) return null
+      switch (data.equipmentType) {
+        case 'annealing_furnace':
+          return data.annealingFurnaceDetail || null
+        case 'crane':
+          return data.craneDetail || null
+        case 'automatic_cart':
+          return data.automaticCartDetail || null
+        case 'preparation_station':
+          return data.preparationStationDetail || null
+        default:
+          return null
       }
     },
 

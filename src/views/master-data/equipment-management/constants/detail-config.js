@@ -22,7 +22,8 @@ export const EQUIPMENT_DETAIL_TOOLTIPS = {
   controlSystemAddress: '用于REST或RPC控制接口，需保证网络可达',
   maintenanceCycleDays: '根据设备制造商建议填写，单位为天',
   lastMaintenanceDate: '记录最近一次维护完成日期，便于追踪维护周期',
-  nextMaintenanceDate: '计划下次维护日期，提醒维护团队准时执行'
+  nextMaintenanceDate: '计划下次维护日期，提醒维护团队准时执行',
+  communicationParams: '通讯参数为已脱敏字段，仅展示非敏感键；编辑时需填写完整敏感项'
 }
 
 // 通讯字段展示映射
