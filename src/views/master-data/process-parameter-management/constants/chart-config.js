@@ -92,8 +92,43 @@ export const SEGMENT_TYPE_STYLE = {
   }
 }
 
+export const TEMPERATURE_COMPARISON_COLORS = ['#FFA726', '#26C6DA', '#AB47BC', '#66BB6A', '#EC407A', '#8D6E63']
+
+export const TEMPERATURE_ALARM_ZONES = [
+  {
+    id: 'low-alarm',
+    label: '低温报警区',
+    min: -100,
+    max: 0,
+    color: 'rgba(64, 158, 255, 0.12)'
+  },
+  {
+    id: 'high-alarm',
+    label: '超温报警区',
+    min: 1200,
+    max: 1500,
+    color: 'rgba(245, 108, 108, 0.15)'
+  }
+]
+
+export const DEVICE_CAPABILITY_ZONES = [
+  {
+    id: 'default-device-range',
+    label: '设备安全运行区',
+    min: 0,
+    max: 1200,
+    color: 'rgba(103, 194, 58, 0.08)'
+  }
+]
+
+export const TEMPERATURE_SUDDEN_DROP_THRESHOLD = 150
+
 export default {
   TEMPERATURE_CHART_CONFIG,
-  SEGMENT_TYPE_STYLE
+  SEGMENT_TYPE_STYLE,
+  TEMPERATURE_COMPARISON_COLORS,
+  TEMPERATURE_ALARM_ZONES,
+  DEVICE_CAPABILITY_ZONES,
+  TEMPERATURE_SUDDEN_DROP_THRESHOLD
 }
 

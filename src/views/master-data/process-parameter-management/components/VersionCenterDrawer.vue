@@ -7,285 +7,323 @@
 -->
 
 <template>
-  <Drawer
-    :visible.sync="internalVisible"
-    :title="drawerTitle"
-    :width="drawerWidth"
-    :loading="loading"
-    :wrapper-closable="false"
-    custom-class="version-center-drawer"
-    @close="handleDrawerClose"
-  >
-    <template #error>
-      <el-alert
-        v-if="errorMessage"
-        :title="errorMessage"
-        type="error"
-        :closable="false"
-        show-icon
-      />
-    </template>
-
-    <div
-      v-if="templateDetail"
-      class="version-center"
+  <div class="version-center-container">
+    <Drawer
+      :visible.sync="internalVisible"
+      :title="drawerTitle"
+      :width="drawerWidth"
+      :loading="loading"
+      :wrapper-closable="false"
+      custom-class="version-center-drawer"
+      @close="handleDrawerClose"
     >
-      <aside class="version-center__sidebar">
-        <div class="version-center__sidebar-header">
-          <div class="version-center__template-name" :title="templateDetail.templateName">
-            {{ templateDetail.templateName || '未命名模板' }}
-          </div>
-          <StatusTag
-            v-if="templateDetail.status"
-            :status="templateDetail.status"
-            :text-map="templateStatusConfig.textMap"
-            :type-map="templateStatusConfig.typeMap"
-            size="mini"
-          />
-        </div>
+      <template #error>
+        <el-alert
+          v-if="errorMessage"
+          :title="errorMessage"
+          type="error"
+          :closable="false"
+          show-icon
+        />
+      </template>
 
-        <div class="version-center__sidebar-subtitle">
-          版本列表
-        </div>
-
-        <div class="version-center__sidebar-actions">
-          <el-select
-            v-model="versionStatusFilter"
-            size="mini"
-            placeholder="筛选版本状态"
-            @change="handleVersionStatusChange"
-          >
-            <el-option label="全部状态" value="ALL" />
-            <el-option
-              v-for="option in versionStatusOptions"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
-          </el-select>
-          <el-button
-            type="primary"
-            size="mini"
-            plain
-            @click="handleLocateActiveVersion"
-          >
-            定位生效版本
-          </el-button>
-        </div>
-
-        <el-scrollbar class="version-center__version-scroll">
-          <el-empty
-            v-if="!versionList.length && !versionsLoading"
-            description="暂无版本"
-            image-size="120"
-          />
-
-          <el-skeleton
-            v-else-if="versionsLoading"
-            animated
-            :count="3"
-            :throttle="200"
-          >
-            <template #template>
-              <div class="version-item version-item--skeleton">
-                <el-skeleton-item variant="text" style="width: 60%" />
-                <el-skeleton-item variant="text" style="width: 40%" />
-                <el-skeleton-item variant="text" style="width: 80%" />
-              </div>
-            </template>
-          </el-skeleton>
-
-          <div
-            v-for="version in versionList"
-            v-else
-            :key="version.id"
-            class="version-item"
-            :class="{ 'is-active': version.id === selectedVersionId }"
-            @click="handleVersionSelect(version.id)"
-          >
-            <div class="version-item__row">
-              <span class="version-item__title">{{ version.versionNumber }}</span>
-              <StatusTag
-                v-if="version.status"
-                :status="version.status"
-                :text-map="versionStatusConfig.textMap"
-                :type-map="versionStatusConfig.typeMap"
-                size="mini"
-              />
+      <div
+        v-if="templateDetail"
+        class="version-center"
+      >
+        <aside class="version-center__sidebar">
+          <div class="version-center__sidebar-header">
+            <div class="version-center__template-name" :title="templateDetail.templateName">
+              {{ templateDetail.templateName || '未命名模板' }}
             </div>
-            <div class="version-item__meta">
-              <span>{{ formatVersionMeta(version) }}</span>
-            </div>
-            <div v-if="version.isLatestVersion" class="version-item__badge">
-              最新版本
-            </div>
-          </div>
-        </el-scrollbar>
-      </aside>
-
-      <section class="version-center__content">
-        <div class="version-overview-header">
-          <div class="version-overview-header__title">
-            <h3 class="version-overview-header__name">
-              {{ selectedVersion?.versionNumber || '未选择版本' }}
-            </h3>
             <StatusTag
-              v-if="selectedVersion?.status"
-              :status="selectedVersion.status"
-              :text-map="versionStatusConfig.textMap"
-              :type-map="versionStatusConfig.typeMap"
-              size="small"
-            />
-          </div>
-          <div v-if="selectedVersion" class="version-overview-header__actions">
-            <ActionButtons
-              :buttons="approvalButtons"
-              mode="normal"
+              v-if="templateDetail.status"
+              :status="templateDetail.status"
+              :text-map="templateStatusConfig.textMap"
+              :type-map="templateStatusConfig.typeMap"
               size="mini"
-              @click="handleApprovalAction"
             />
           </div>
-          <p class="version-overview-header__description">
-            {{ selectedVersion?.versionDescription || '尚未填写版本说明' }}
-          </p>
 
-          <div class="version-overview-header__meta">
-            <div class="version-meta-item">
-              <span class="version-meta-item__label">创建时间</span>
-              <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.createdAt) }}</span>
-            </div>
-            <div class="version-meta-item">
-              <span class="version-meta-item__label">最后更新时间</span>
-              <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.updatedAt) }}</span>
-            </div>
-            <div class="version-meta-item">
-              <span class="version-meta-item__label">生效时间</span>
-              <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.effectiveDate) }}</span>
-            </div>
-            <div class="version-meta-item">
-              <span class="version-meta-item__label">失效时间</span>
-              <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.expiryDate) }}</span>
-            </div>
+          <div class="version-center__sidebar-subtitle">
+            版本列表
           </div>
-        </div>
 
-        <el-tabs v-model="activeTab" type="border-card">
-          <el-tab-pane label="版本概览" name="overview">
-            <el-descriptions
-              v-if="selectedVersion"
-              :column="2"
-              border
-              size="small"
+          <div class="version-center__sidebar-actions">
+            <el-select
+              v-model="versionStatusFilter"
+              size="mini"
+              placeholder="筛选版本状态"
+              @change="handleVersionStatusChange"
             >
-              <el-descriptions-item label="模板编码">
-                {{ templateDetail.templateCode || '-' }}
-              </el-descriptions-item>
-              <el-descriptions-item label="模板状态">
+              <el-option label="全部状态" value="ALL" />
+              <el-option
+                v-for="option in versionStatusOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+            <el-button
+              type="primary"
+              size="mini"
+              plain
+              @click="handleLocateActiveVersion"
+            >
+              定位生效版本
+            </el-button>
+          </div>
+
+          <el-scrollbar class="version-center__version-scroll">
+            <el-empty
+              v-if="!versionList.length && !versionsLoading"
+              description="暂无版本"
+              image-size="120"
+            />
+
+            <el-skeleton
+              v-else-if="versionsLoading"
+              animated
+              :count="3"
+              :throttle="200"
+            >
+              <template #template>
+                <div class="version-item version-item--skeleton">
+                  <el-skeleton-item variant="text" style="width: 60%" />
+                  <el-skeleton-item variant="text" style="width: 40%" />
+                  <el-skeleton-item variant="text" style="width: 80%" />
+                </div>
+              </template>
+            </el-skeleton>
+
+            <div
+              v-for="version in versionList"
+              v-else
+              :key="version.id"
+              class="version-item"
+              :class="{ 'is-active': version.id === selectedVersionId }"
+              @click="handleVersionSelect(version.id)"
+            >
+              <div class="version-item__row">
+                <span class="version-item__title">{{ version.versionNumber }}</span>
                 <StatusTag
-                  :status="templateDetail.status"
-                  :text-map="templateStatusConfig.textMap"
-                  :type-map="templateStatusConfig.typeMap"
-                  size="mini"
-                />
-              </el-descriptions-item>
-              <el-descriptions-item label="版本状态">
-                <StatusTag
-                  :status="selectedVersion.status"
+                  v-if="version.status"
+                  :status="version.status"
                   :text-map="versionStatusConfig.textMap"
                   :type-map="versionStatusConfig.typeMap"
                   size="mini"
                 />
-              </el-descriptions-item>
-              <el-descriptions-item label="适用产品数量">
-                {{ (templateDetail.applicableProducts || []).length || 0 }}
-              </el-descriptions-item>
-              <el-descriptions-item label="最新版本">
-                {{ templateDetail.latestVersion?.versionNumber || '-' }}
-              </el-descriptions-item>
-            </el-descriptions>
-            <el-empty v-else description="请选择版本" />
-          </el-tab-pane>
+              </div>
+              <div class="version-item__meta">
+                <span>{{ formatVersionMeta(version) }}</span>
+              </div>
+              <div v-if="version.isLatestVersion" class="version-item__badge">
+                最新版本
+              </div>
+            </div>
+          </el-scrollbar>
+        </aside>
 
-          <el-tab-pane label="审批历史" name="approval">
-            <div class="approval-actions">
-              <el-button
-                v-if="selectedVersion && (selectedVersion.approvalRecords || []).length"
+        <section class="version-center__content">
+          <div class="version-overview-header">
+            <div class="version-overview-header__title">
+              <h3 class="version-overview-header__name">
+                {{ selectedVersion?.versionNumber || '未选择版本' }}
+              </h3>
+              <StatusTag
+                v-if="selectedVersion?.status"
+                :status="selectedVersion.status"
+                :text-map="versionStatusConfig.textMap"
+                :type-map="versionStatusConfig.typeMap"
+                size="small"
+              />
+            </div>
+            <div v-if="selectedVersion" class="version-overview-header__actions">
+              <ActionButtons
+                :buttons="approvalButtons"
+                mode="normal"
                 size="mini"
-                icon="el-icon-download"
-                @click="handleExportApprovalLog"
+                @click="handleApprovalAction"
+              />
+              <el-button
+                size="mini"
+                type="primary"
+                icon="el-icon-data-analysis"
+                :disabled="!selectedVersion"
+                @click="openCurveViewer"
               >
-                导出审批记录
+                查看曲线
               </el-button>
             </div>
-            <el-timeline v-if="selectedVersion && (selectedVersion.approvalRecords || []).length">
-              <el-timeline-item
-                v-for="(record, index) in formattedApprovalRecords"
-                :key="`${record.timestamp}-${index}`"
-                :timestamp="record.timestampText"
-                placement="top"
-                :color="record.color"
+            <p class="version-overview-header__description">
+              {{ selectedVersion?.versionDescription || '尚未填写版本说明' }}
+            </p>
+
+            <div class="version-overview-header__meta">
+              <div class="version-meta-item">
+                <span class="version-meta-item__label">创建时间</span>
+                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.createdAt) }}</span>
+              </div>
+              <div class="version-meta-item">
+                <span class="version-meta-item__label">最后更新时间</span>
+                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.updatedAt) }}</span>
+              </div>
+              <div class="version-meta-item">
+                <span class="version-meta-item__label">生效时间</span>
+                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.effectiveDate) }}</span>
+              </div>
+              <div class="version-meta-item">
+                <span class="version-meta-item__label">失效时间</span>
+                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.expiryDate) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <el-tabs v-model="activeTab" type="border-card">
+            <el-tab-pane label="版本概览" name="overview">
+              <el-descriptions
+                v-if="selectedVersion"
+                :column="2"
+                border
+                size="small"
               >
-                <div class="approval-record">
-                  <div class="approval-record__action">{{ record.action }}</div>
-                  <div class="approval-record__meta">
-                    <span>{{ record.operator }}</span>
-                    <span v-if="record.comment" class="approval-record__comment">{{ record.comment }}</span>
+                <el-descriptions-item label="模板编码">
+                  {{ templateDetail.templateCode || '-' }}
+                </el-descriptions-item>
+                <el-descriptions-item label="模板状态">
+                  <StatusTag
+                    :status="templateDetail.status"
+                    :text-map="templateStatusConfig.textMap"
+                    :type-map="templateStatusConfig.typeMap"
+                    size="mini"
+                  />
+                </el-descriptions-item>
+                <el-descriptions-item label="版本状态">
+                  <StatusTag
+                    :status="selectedVersion.status"
+                    :text-map="versionStatusConfig.textMap"
+                    :type-map="versionStatusConfig.typeMap"
+                    size="mini"
+                  />
+                </el-descriptions-item>
+                <el-descriptions-item label="适用产品数量">
+                  {{ (templateDetail.applicableProducts || []).length || 0 }}
+                </el-descriptions-item>
+                <el-descriptions-item label="最新版本">
+                  {{ templateDetail.latestVersion?.versionNumber || '-' }}
+                </el-descriptions-item>
+              </el-descriptions>
+              <el-empty v-else description="请选择版本" />
+            </el-tab-pane>
+
+            <el-tab-pane label="审批历史" name="approval">
+              <div class="approval-actions">
+                <el-button
+                  v-if="selectedVersion && (selectedVersion.approvalRecords || []).length"
+                  size="mini"
+                  icon="el-icon-download"
+                  @click="handleExportApprovalLog"
+                >
+                  导出审批记录
+                </el-button>
+              </div>
+              <el-timeline v-if="selectedVersion && (selectedVersion.approvalRecords || []).length">
+                <el-timeline-item
+                  v-for="(record, index) in formattedApprovalRecords"
+                  :key="`${record.timestamp}-${index}`"
+                  :timestamp="record.timestampText"
+                  placement="top"
+                  :color="record.color"
+                >
+                  <div class="approval-record">
+                    <div class="approval-record__action">{{ record.action }}</div>
+                    <div class="approval-record__meta">
+                      <span>{{ record.operator }}</span>
+                      <span v-if="record.comment" class="approval-record__comment">{{ record.comment }}</span>
+                    </div>
                   </div>
-                </div>
-              </el-timeline-item>
-            </el-timeline>
-            <el-empty
-              v-else
-              description="暂无审批记录"
-              image-size="140"
-            />
-          </el-tab-pane>
+                </el-timeline-item>
+              </el-timeline>
+              <el-empty
+                v-else
+                description="暂无审批记录"
+                image-size="140"
+              />
+            </el-tab-pane>
 
-          <el-tab-pane label="版本对比" name="compare">
-            <VersionComparePanel
-              v-if="selectedVersion"
-              :template-id="templateId"
-              :current-version="selectedVersion"
-            />
-            <el-empty
-              v-else
-              description="请选择需要对比的版本"
-              image-size="160"
-            />
-          </el-tab-pane>
+            <el-tab-pane label="版本对比" name="compare">
+              <VersionComparePanel
+                v-if="selectedVersion"
+                :template-id="templateId"
+                :current-version="selectedVersion"
+              />
+              <el-empty
+                v-else
+                description="请选择需要对比的版本"
+                image-size="160"
+              />
+            </el-tab-pane>
 
-          <el-tab-pane label="参数配置" name="parameters">
-            <VersionParametersPanel
-              v-if="selectedVersion"
-              :template-id="templateId"
-              :version="selectedVersion"
-              :editable="isVersionEditable(selectedVersion)"
-              :saving="saving"
-              @save="handleParametersSave"
-              @change="handleParametersChange"
-            />
-            <el-empty
-              v-else
-              description="请选择需要查看的版本"
-              image-size="160"
-            />
-          </el-tab-pane>
-        </el-tabs>
-      </section>
-    </div>
-
-    <el-empty
-      v-else-if="!loading && !errorMessage"
-      description="未找到工艺模板数据"
-    />
-
-    <template #footer>
-      <div class="version-center__footer">
-        <el-button @click="handleDrawerClose">关闭</el-button>
-        <el-button type="primary" :loading="loading" @click="handleReload">刷新数据</el-button>
+            <el-tab-pane label="参数配置" name="parameters">
+              <VersionParametersPanel
+                v-if="selectedVersion"
+                :template-id="templateId"
+                :version="selectedVersion"
+                :editable="isVersionEditable(selectedVersion)"
+                :saving="saving"
+                :comparison-versions="curveComparisonVersions"
+                :device-capability="curveDeviceCapability"
+                @save="handleParametersSave"
+                @change="handleParametersChange"
+              />
+              <el-empty
+                v-else
+                description="请选择需要查看的版本"
+                image-size="160"
+              />
+            </el-tab-pane>
+          </el-tabs>
+        </section>
       </div>
-    </template>
-  </Drawer>
+
+      <el-empty
+        v-else-if="!loading && !errorMessage"
+        description="未找到工艺模板数据"
+      />
+
+      <template #footer>
+        <div class="version-center__footer">
+          <el-button @click="handleDrawerClose">关闭</el-button>
+          <el-button type="primary" :loading="loading" @click="handleReload">刷新数据</el-button>
+        </div>
+      </template>
+    </Drawer>
+
+    <el-dialog
+      title="温度曲线"
+      :visible.sync="showCurveViewer"
+      width="960px"
+      append-to-body
+      destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="version-center__curve-dialog"
+    >
+      <TemperatureCurveViewer
+        v-if="selectedVersion"
+        :segments="selectedVersion.segments || []"
+        :comparison-versions="curveComparisonVersions"
+        :template-id="templateId"
+        :version-id="selectedVersion.id"
+        :device-capability="curveDeviceCapability"
+      />
+      <el-empty v-else description="暂无版本信息" />
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="showCurveViewer = false">关闭</el-button>
+      </span>
+    </el-dialog>
+  </div>
 </template>
 
 <script>
@@ -293,6 +331,7 @@ import Drawer from '@/components/Drawer'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import VersionParametersPanel from './VersionParametersPanel.vue'
+import TemperatureCurveViewer from './TemperatureCurveViewer.vue'
 import VersionComparePanel from './VersionComparePanel.vue'
 import { parseTime } from '@/utils'
 import { cloneDeep } from 'lodash'
@@ -322,6 +361,7 @@ export default {
     StatusTag,
     ActionButtons,
     VersionParametersPanel,
+    TemperatureCurveViewer,
     VersionComparePanel
   },
   props: {
@@ -357,7 +397,13 @@ export default {
       saving: false,
       pendingChanges: null,
       pendingActions: {},
-      versionStatusFilter: 'ALL'
+      versionStatusFilter: 'ALL',
+      showCurveViewer: false,
+      curveComparisonVersions: [],
+      curveDeviceCapability: {
+        min: 0,
+        max: 1200
+      }
     }
   },
   computed: {
@@ -513,6 +559,7 @@ export default {
         }
 
         this.resolveDefaultSelection()
+        this.prepareCurveComparison()
       } catch (error) {
         console.error('[VersionCenterDrawer] initialize failed', error)
         this.errorMessage = error?.message || '加载工艺模板版本信息失败，请稍后重试'
@@ -622,6 +669,7 @@ export default {
       })
       this.pendingChanges = null
       this.refreshSelectedVersion()
+      this.prepareCurveComparison()
     },
 
     handleVersionStatusChange() {
@@ -699,6 +747,68 @@ export default {
       this.pendingChanges = cloneDeep(changes)
     },
 
+    openCurveViewer() {
+      if (!this.selectedVersion) {
+        this.$message.info('请选择需要查看的版本')
+        return
+      }
+      this.prepareCurveComparison()
+      this.showCurveViewer = true
+    },
+
+    prepareCurveComparison() {
+      if (!this.templateDetail || !this.selectedVersion) {
+        this.curveComparisonVersions = []
+        return
+      }
+
+      const versions = this.templateDetail.versions || []
+      const comparison = versions
+        .filter(item => item.id !== this.selectedVersion.id)
+        .slice(0, 5)
+        .map(item => ({
+          id: item.id,
+          versionNumber: item.versionNumber,
+          status: item.status,
+          segments: item.segments || []
+        }))
+
+      this.curveComparisonVersions = comparison
+
+      const capability = this.templateDetail?.latestVersion?.deviceCapability || {}
+      this.curveDeviceCapability = {
+        min: capability.minTemperature ?? 0,
+        max: capability.maxTemperature ?? 1200
+      }
+
+      this.popCurveWarningIfNeeded()
+    },
+
+    popCurveWarningIfNeeded() {
+      const segments = this.selectedVersion?.segments || []
+      if (!segments.length) {
+        return
+      }
+
+      const sorted = [...segments].sort((a, b) => (a.segmentOrder || 0) - (b.segmentOrder || 0))
+      let warning = false
+      for (let i = 1; i < sorted.length; i += 1) {
+        const prev = Number(sorted[i - 1].targetTemperature)
+        const curr = Number(sorted[i].targetTemperature)
+        if (Number.isFinite(prev) && Number.isFinite(curr)) {
+          const delta = Math.abs(curr - prev)
+          if (delta >= 150) {
+            warning = true
+            break
+          }
+        }
+      }
+
+      if (warning) {
+        this.$message.warning('检测到温度段之间存在较大温差，请确认升降温策略符合工艺安全要求')
+      }
+    },
+
     refreshSelectedVersion() {
       if (!this.selectedVersionId) return
       const target = this.versionList.find(item => item.id === this.selectedVersionId)
@@ -717,6 +827,8 @@ export default {
       this.versionsLoading = false
       this.saving = false
       this.pendingChanges = null
+      this.showCurveViewer = false
+      this.curveComparisonVersions = []
     },
 
     formatVersionMeta(version) {
@@ -776,6 +888,10 @@ export default {
       }
 
       this.ensureVersionInList(updatedVersion)
+
+      if (updatedVersion.id === this.selectedVersionId) {
+        this.prepareCurveComparison()
+      }
     },
 
     isActionLoading(action) {

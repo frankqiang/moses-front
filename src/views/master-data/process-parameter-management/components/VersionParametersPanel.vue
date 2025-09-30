@@ -19,6 +19,15 @@
 
     <el-tabs v-model="activeTab" type="card">
       <el-tab-pane label="温度段配置" name="segments">
+        <TemperatureCurveViewer
+          class="version-parameters-panel__curve"
+          :segments="segmentList"
+          :comparison-versions="comparisonVersions"
+          :template-id="templateId"
+          :version-id="version.id"
+          :device-capability="deviceCapability"
+        />
+
         <section class="parameter-section">
           <header class="parameter-section__header">
             <div>
@@ -34,6 +43,15 @@
                 @click="handleAddSegment"
               >
                 新增段
+              </el-button>
+              <el-button
+                v-if="editable"
+                type="default"
+                size="mini"
+                icon="el-icon-refresh"
+                @click="handleApplyRecommendations"
+              >
+                应用推荐模板
               </el-button>
             </div>
           </header>
@@ -476,6 +494,7 @@ import {
   FAN_MODE_OPTIONS,
   DEFAULT_SEGMENT_TEMPLATE
 } from '../constants/process-parameter-management'
+import TemperatureCurveViewer from './TemperatureCurveViewer.vue'
 
 const DEFAULT_ATMOSPHERE = () => ({
   atmosphereType: '',
@@ -501,7 +520,8 @@ const DEFAULT_FAN = () => ({
 export default {
   name: 'VersionParametersPanel',
   components: {
-    draggable
+    draggable,
+    TemperatureCurveViewer
   },
   props: {
     templateId: {
@@ -519,6 +539,14 @@ export default {
     saving: {
       type: Boolean,
       default: false
+    },
+    comparisonVersions: {
+      type: Array,
+      default: () => []
+    },
+    deviceCapability: {
+      type: Object,
+      default: () => ({})
     }
   },
   data() {
@@ -739,6 +767,13 @@ export default {
 
     segmentDragKey(segment, index) {
       return segment?.id || `segment-${index}`
+    },
+
+    handleApplyRecommendations() {
+      this.segmentList = cloneDeep(DEFAULT_SEGMENT_TEMPLATE)
+      this.renumberSegments()
+      this.emitChange()
+      this.$message.success('已应用温度段推荐模板')
     }
   }
 }
@@ -749,6 +784,10 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.version-parameters-panel__curve {
+  margin-bottom: 16px;
 }
 
 .version-parameters-panel__readonly-tip {
