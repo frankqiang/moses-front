@@ -28,8 +28,9 @@
       />
     </div>
 
-    <!-- 表单主体 -->
+    <!-- 表单主体：仅在抽屉可见时渲染，避免初次挂载即创建大量 watcher -->
     <EnhancedForm
+      v-if="drawerVisible"
       ref="enhancedForm"
       class="equipment-form"
       :data="formData"
@@ -127,7 +128,7 @@
             <span v-if="scopedMode !== 'view'" class="section-badge important">重要</span>
           </div>
           <el-collapse-transition>
-            <div v-show="sectionStates.communication" class="section-content">
+            <div v-if="sectionStates.communication" class="section-content">
               <el-row :gutter="20">
                 <el-col v-for="field in communicationFormFields" :key="field.prop" :span="getFieldSpan(field)">
                   <el-form-item
@@ -222,7 +223,7 @@
             <span v-if="scopedMode !== 'view'" class="section-badge">必填</span>
           </div>
           <el-collapse-transition>
-            <div v-show="sectionStates.detail" class="section-content">
+            <div v-if="sectionStates.detail" class="section-content">
               <el-row :gutter="20">
                 <el-col v-for="field in detailFormFields" :key="field.prop" :span="getFieldSpan(field)">
                   <el-form-item

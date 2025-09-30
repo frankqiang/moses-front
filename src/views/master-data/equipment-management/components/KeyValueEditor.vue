@@ -95,6 +95,8 @@
 </template>
 
 <script>
+import { debounce } from '@/utils'
+
 export default {
   name: 'KeyValueEditor',
   model: {
@@ -145,8 +147,16 @@ export default {
   },
   data() {
     return {
-      pairs: []
+      pairs: [],
+      // 防止自触发监听循环
+      _isEmitting: false,
+      // 防抖后的变更派发函数
+      _emitChangeDebounced: null
     }
+  },
+  created() {
+    // 150ms 防抖，避免高频击键导致父级频繁更新
+    this._emitChangeDebounced = debounce(this.emitChangeCore, 150)
   },
   computed: {
     // 获取当前值对象
@@ -163,10 +173,16 @@ export default {
   watch: {
     value: {
       handler(newVal) {
+        // 避免由本组件 emit 引起的循环触发
+        if (this._isEmitting) {
+          this._isEmitting = false
+          return
+        }
+        // 改为浅监听，减少重建频率
         this.initPairs(newVal)
       },
       immediate: true,
-      deep: true
+      deep: false
     }
   },
   methods: {
@@ -289,22 +305,30 @@ export default {
       return true
     },
 
-    // 发送变更事件
-    emitChange() {
-      // 验证所有键值对
+    // 发送变更事件（轻量：仅当前值与整体验证结果，避免高频全量重建）
+    emitChangeCore() {
+      // 只进行一次整体校验，行级输入时已做过基本检查
       let isValid = true
-      this.pairs.forEach((pair, index) => {
-        if (!this.validatePair(index)) {
+      for (let i = 0; i < this.pairs.length; i++) {
+        if (!this.validatePair(i)) {
           isValid = false
         }
-      })
+      }
 
-      // 发送当前值
+      // 标识由本组件发起的同步，避免外部 value 监听再次触发重建
+      this._isEmitting = true
       this.$emit('input', this.currentValue)
       this.$emit('change', this.currentValue)
-
-      // 发送验证状态
       this.$emit('validate', isValid)
+    },
+
+    // 防抖封装，供输入事件调用
+    emitChange() {
+      if (this._emitChangeDebounced) {
+        this._emitChangeDebounced()
+      } else {
+        this.emitChangeCore()
+      }
     },
 
     // 验证所有键值对

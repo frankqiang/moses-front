@@ -14,6 +14,7 @@
       :value="localQuery"
       :loading="loading"
       :visible-item-count="primaryFieldCount"
+      :debounce-time="500"
       @search="handleSearch"
       @reset="handleReset"
     />
@@ -69,8 +70,15 @@ export default {
   },
   computed: {
     orderedSearchItems() {
-      const primaryFields = SEARCH_FORM_CONFIG.filter((item) => item.priority === PRIMARY_PRIORITY)
-      const advancedFields = SEARCH_FORM_CONFIG.filter((item) => item.priority === ADVANCED_PRIORITY)
+      // 仅为少数关键字段开启改动即搜，其他字段需点击“查询”
+      const allowInstant = ['equipmentCode', 'status']
+      const withSearchOnChange = SEARCH_FORM_CONFIG.map(item => ({
+        ...item,
+        searchOnChange: allowInstant.includes(item.prop)
+      }))
+
+      const primaryFields = withSearchOnChange.filter((item) => item.priority === PRIMARY_PRIORITY)
+      const advancedFields = withSearchOnChange.filter((item) => item.priority === ADVANCED_PRIORITY)
       return [...primaryFields, ...advancedFields]
     },
     primaryFieldCount() {
