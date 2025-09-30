@@ -133,7 +133,8 @@ import {
   fetchProductOptions,
   createProcessTemplate,
   getProcessTemplateDetail,
-  updateProcessTemplateVersion
+  updateProcessTemplateVersion,
+  copyProcessTemplate
 } from '../api'
 
 const NUMBER_RANGE_COMPONENT = 'template-number-range'
@@ -182,7 +183,9 @@ export default {
         page: 1,
         limit: 30,
         totalPages: 1
-      }
+      },
+      availableVersions: [],
+      copySourceVersion: null
     }
   },
   computed: {
@@ -220,6 +223,9 @@ export default {
       return TEMPLATE_FORM_FIELDS.filter(field =>
         ['versionNumber', 'versionDescription'].includes(field.prop)
       )
+    },
+    copyVersionRequired() {
+      return this.formMode === 'copy'
     }
   },
   watch: {
@@ -264,7 +270,7 @@ export default {
         this.formModel = this.buildDefaultModel()
         return
       }
-      if (this.formMode === 'copy' && this.templateId && this.versionId) {
+      if (this.formMode === 'copy' && this.templateId) {
         await this.loadTemplateDetail({ copyMode: true })
         return
       }
@@ -310,6 +316,7 @@ export default {
       model.applicableWidthRange = data.applicableWidthRange || ''
       model.versionNumber = copyMode ? `${targetVersion.versionNumber || 'v1.0'}-copy` : targetVersion.versionNumber || ''
       model.versionDescription = targetVersion.versionDescription || ''
+      model.copyFromVersionId = targetVersion.id || this.versionId || ''
 
       this.formModel = model
       this.productOptions = (data.applicableProducts || []).map(product => ({
@@ -318,6 +325,8 @@ export default {
         productName: product.productName,
         lifecycleStatus: product.lifecycleStatus
       }))
+      this.availableVersions = data.versions || []
+      this.copySourceVersion = targetVersion
     },
     async fetchInitialProductOptions() {
       try {
@@ -408,7 +417,7 @@ export default {
       if (field.type === 'select') {
         return {
           ...common,
-          options: field.options,
+          options: field.options || this.getDynamicOptions(field.prop),
           filterable: true
         }
       }
@@ -449,6 +458,15 @@ export default {
       }
 
       return common
+    },
+    getDynamicOptions(prop) {
+      if (prop === 'copyFromVersionId' && Array.isArray(this.availableVersions) && this.availableVersions.length) {
+        return this.availableVersions.map(item => ({
+          label: `${item.versionNumber || '-'}（${item.status || '未知'}）`,
+          value: item.id
+        }))
+      }
+      return []
     },
     getFieldSpan(field) {
       if (field.colSpan) return field.colSpan
@@ -493,10 +511,20 @@ export default {
         let response
         if (this.formMode === 'update' && this.templateId && this.versionId) {
           response = await updateProcessTemplateVersion(this.templateId, this.versionId, payload)
+        } else if (this.formMode === 'copy' && this.templateId) {
+          response = await copyProcessTemplate(this.templateId, {
+            newTemplateCode: payload.templateCode,
+            newTemplateName: payload.templateName,
+            newVersionNumber: payload.versionNumber,
+            copyFromVersionId: payload.copyFromVersionId || this.copySourceVersion?.id || this.versionId
+          })
         } else {
           response = await createProcessTemplate(payload)
         }
-        this.$message.success(response.message || MESSAGE_FALLBACKS.createTemplate)
+        const message = this.formMode === 'copy'
+          ? response.message || MESSAGE_FALLBACKS.copyTemplate
+          : response.message || MESSAGE_FALLBACKS.createTemplate
+        this.$message.success(message)
         this.$emit('success', response.data)
         this.visibleProxy = false
       } catch (error) {

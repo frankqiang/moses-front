@@ -166,6 +166,26 @@ export const TEMPLATE_FORM_FIELDS = [
     maxlength: 2000,
     placeholder: '描述版本变更背景、核心参数调整等信息',
     clearable: true
+  },
+  {
+    type: 'select',
+    prop: 'copyFromVersionId',
+    label: '复制来源版本',
+    placeholder: '请选择要复制的版本',
+    clearable: true,
+    visibleOn: mode => mode === 'copy',
+    rules: [
+      {
+        validator: (_, value, callback, { mode }) => {
+          if (mode === 'copy' && !value) {
+            callback(new Error('请选择要复制的来源版本'))
+            return
+          }
+          callback()
+        },
+        trigger: 'change'
+      }
+    ]
   }
 ]
 

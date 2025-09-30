@@ -1,3 +1,16 @@
+import {
+  fetchProcessTemplateList,
+  deleteProcessTemplate,
+  submitProcessTemplateVersion,
+  approveProcessTemplateVersion,
+  rejectProcessTemplateVersion,
+  withdrawProcessTemplateVersion,
+  voidProcessTemplateVersion,
+  activateProcessTemplateVersion,
+  getProcessTemplateDetail,
+  getProcessTemplateUsage,
+  copyProcessTemplate
+} from './api'
 <!--
 文件名称：index.vue
 文件描述：工艺参数管理模块主页面，整合搜索、表格、表单、版本中心及曲线组件
@@ -77,6 +90,27 @@
       @close="handleCurveViewerClose"
     />
 
+    <TemplateUsageDialog
+      v-if="usageDialog.visible"
+      :visible.sync="usageDialog.visible"
+      :loading="usageDialog.loading"
+      :operation="usageDialog.operation"
+      :template="usageDialog.template"
+      :usage="usageDialog.usage"
+      @close="handleUsageDialogClose"
+    />
+
+    <DangerOperationConfirmDialog
+      v-if="dangerConfirm.visible"
+      :visible.sync="dangerConfirm.visible"
+      :operation="dangerConfirm.operation"
+      :template-name="dangerConfirm.template?.templateName"
+      :confirm-keyword="dangerConfirm.keyword"
+      :show-reason="true"
+      @confirm="handleDangerConfirm"
+      @cancel="handleDangerCancel"
+    />
+
     <!-- 全局错误提示 -->
     <el-alert
       v-if="globalError"
@@ -96,6 +130,8 @@ import TemplateTable from './components/TemplateTable.vue'
 import TemplateFormDrawer from './components/TemplateFormDrawer.vue'
 import VersionCenterDrawer from './components/VersionCenterDrawer.vue'
 import TemperatureCurveViewer from './components/TemperatureCurveViewer.vue'
+import TemplateUsageDialog from './components/TemplateUsageDialog.vue'
+import DangerOperationConfirmDialog from './components/DangerOperationConfirmDialog.vue'
 import {
   fetchProcessTemplateList,
   deleteProcessTemplate,
@@ -105,7 +141,8 @@ import {
   withdrawProcessTemplateVersion,
   voidProcessTemplateVersion,
   activateProcessTemplateVersion,
-  getProcessTemplateDetail
+  getProcessTemplateDetail,
+  getProcessTemplateUsage
 } from './api'
 import {
   DEFAULT_PAGINATION,
@@ -127,7 +164,9 @@ export default {
     TemplateTable,
     TemplateFormDrawer,
     VersionCenterDrawer,
-    TemperatureCurveViewer
+    TemperatureCurveViewer,
+    TemplateUsageDialog,
+    DangerOperationConfirmDialog
   },
   data() {
     return {
@@ -170,6 +209,21 @@ export default {
         segments: [],
         comparisonVersions: [],
         deviceCapability: {}
+      },
+      usageDialog: {
+        visible: false,
+        loading: false,
+        operation: 'delete',
+        template: null,
+        usage: null
+      },
+      dangerConfirm: {
+        visible: false,
+        operation: 'delete',
+        template: null,
+        keyword: '删除',
+        resolving: false,
+        payload: null
       }
     }
   },
@@ -352,7 +406,7 @@ export default {
           this.handleApprovalAction('activate', template, version)
           break
         case 'void':
-          this.handleApprovalAction('void', template, version)
+          this.handleVoidTemplateVersion(template, version)
           break
         case 'copy':
           this.handleCopyTemplate(template, version)
@@ -455,7 +509,10 @@ export default {
             response = await activateProcessTemplateVersion(templateId, versionId, payload)
             break
           case 'void':
-            response = await voidProcessTemplateVersion(templateId, versionId, payload)
+            this.openDangerConfirm('void', template, async() => {
+              await this.performVoidVersion(template, version)
+            }, { version })
+            response = null
             break
           default:
             break
@@ -492,27 +549,139 @@ export default {
 
     async handleDeleteTemplate(template) {
       if (!template?.id) return
-      const confirm = await this.$confirm('确认删除该工艺模板？此操作不可恢复。', '删除确认', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).catch(() => false)
+      this.openDangerConfirm('delete', template, async() => {
+        await this.performDelete(template)
+      })
+    },
 
-      if (!confirm) {
-        return
-      }
-
+    async performDelete(template) {
+      if (!template?.id) return
       this.loading.action = true
       try {
         const response = await deleteProcessTemplate(template.id)
+        this.logDangerOperation('delete', template.id)
         this.$message.success(response.message || MESSAGE_FALLBACKS.deleteTemplate)
         this.fetchTemplateList()
       } catch (error) {
-        console.error('[ProcessParameterManagement] handleDeleteTemplate failed', error)
-        this.$message.error(error?.message || '删除失败，请稍后重试')
+        console.error('[ProcessParameterManagement] performDelete failed', error)
+        if (error?.code === 'PTM_016' || error?.response?.data?.error?.code === 'PTM_016') {
+          await this.handleOperationBlocked('delete', template, error)
+        } else {
+          this.$message.error(error?.message || '删除失败，请稍后重试')
+        }
       } finally {
         this.loading.action = false
       }
+    },
+
+    async performVoidVersion(template, version) {
+      const templateId = template.id
+      const versionId = version.id
+      const payload = { currentStatus: version.status }
+      this.loading.action = true
+      try {
+        const response = await voidProcessTemplateVersion(templateId, versionId, payload)
+        this.logDangerOperation('void', templateId, versionId)
+        this.$message.success(response.message || MESSAGE_FALLBACKS.voidVersion)
+        this.fetchTemplateList()
+      } catch (error) {
+        console.error('[ProcessParameterManagement] performVoidVersion failed', error)
+        if (error?.code === 'PTM_016' || error?.response?.data?.error?.code === 'PTM_016') {
+          await this.handleOperationBlocked('void', template, error)
+        } else {
+          this.$message.error(error?.message || '作废失败，请稍后重试')
+        }
+      } finally {
+        this.loading.action = false
+      }
+    },
+
+    async handleOperationBlocked(operation, template, error) {
+      const { data } = error?.response || {}
+      const usage = data?.data || null
+      if (!template?.id) return
+      this.usageDialog = {
+        visible: true,
+        loading: true,
+        operation,
+        template,
+        usage: usage || null
+      }
+      try {
+        let usageData = usage
+        if (!usageData) {
+          const usageResponse = await getProcessTemplateUsage(template.id)
+          usageData = usageResponse.data
+        }
+        this.usageDialog = {
+          ...this.usageDialog,
+          usage: usageData?.usage || usageData,
+          loading: false
+        }
+      } catch (err) {
+        console.error('[ProcessParameterManagement] fetch usage failed', err)
+        this.$message.error(err?.message || '获取引用详情失败，请稍后重试')
+        this.usageDialog = {
+          ...this.usageDialog,
+          loading: false
+        }
+      }
+    },
+
+    openDangerConfirm(operation, template, onConfirm, extra = {}) {
+      this.dangerConfirm = {
+        ...this.dangerConfirm,
+        visible: true,
+        operation,
+        template,
+        keyword: operation === 'void' ? '作废' : '删除',
+        resolving: false,
+        payload: {
+          onConfirm,
+          extra
+        }
+      }
+    },
+
+    async handleDangerConfirm({ reason }) {
+      if (!this.dangerConfirm.payload?.onConfirm || this.dangerConfirm.resolving) {
+        return
+      }
+      this.dangerConfirm.resolving = true
+      try {
+        const context = {
+          reason,
+          template: this.dangerConfirm.template,
+          operation: this.dangerConfirm.operation,
+          extra: this.dangerConfirm.payload.extra
+        }
+        console.info('[ProcessParameterManagement] danger operation confirmed', context)
+        await this.dangerConfirm.payload.onConfirm()
+      } finally {
+        this.dangerConfirm.resolving = false
+        this.dangerConfirm.visible = false
+        this.dangerConfirm.payload = null
+      }
+    },
+
+    handleDangerCancel() {
+      this.dangerConfirm.visible = false
+      this.dangerConfirm.payload = null
+    },
+
+    handleUsageDialogClose() {
+      this.usageDialog.visible = false
+      this.usageDialog.loading = false
+    },
+
+    logDangerOperation(operation, templateId, versionId) {
+      const timestamp = new Date().toISOString()
+      console.info('[ProcessParameterManagement] operation executed', {
+        operation,
+        templateId,
+        versionId,
+        timestamp
+      })
     },
 
     async promptForReason(title) {
