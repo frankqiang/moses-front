@@ -478,7 +478,92 @@ export default {
       if (!this.currentEquipmentType || !DETAIL_FORM_FIELDS[this.currentEquipmentType]) {
         return []
       }
-      return DETAIL_FORM_FIELDS[this.currentEquipmentType]
+      // 基于类型的字段配置，按需增强 field.rules 以确保 el-form-item 层面的校验生效
+      const fields = DETAIL_FORM_FIELDS[this.currentEquipmentType].map(orig => ({ ...orig }))
+
+      // 退火炉：最大工作温度需大于50度
+      if (this.currentEquipmentType === EQUIPMENT_TYPES.ANNEALING_FURNACE) {
+        const idx = fields.findIndex(f => f.prop === 'detail.maxOperatingTemperatureC')
+        if (idx !== -1) {
+          const base = Array.isArray(fields[idx].rules) ? fields[idx].rules.slice() : []
+          base.push({
+            validator: (_, value, callback) => {
+              if (value === undefined || value === null || value === '') {
+                callback()
+                return
+              }
+              const numeric = Number(value)
+              if (isNaN(numeric) || numeric <= 50) {
+                callback(new Error('最大工作温度需大于50度'))
+                return
+              }
+              callback()
+            },
+            trigger: ['change', 'blur']
+          })
+          fields[idx].rules = base
+        }
+      }
+
+      // 行车与自动料车：最大速度需大于最小速度（双向校验）
+      if (this.currentEquipmentType === EQUIPMENT_TYPES.CRANE || this.currentEquipmentType === EQUIPMENT_TYPES.AUTOMATIC_CART) {
+        const maxIdx = fields.findIndex(f => f.prop === 'detail.maxSpeedMps')
+        const minIdx = fields.findIndex(f => f.prop === 'detail.minSpeedMps')
+
+        if (maxIdx !== -1) {
+          const base = Array.isArray(fields[maxIdx].rules) ? fields[maxIdx].rules.slice() : []
+          base.push({
+            validator: (_, value, callback) => {
+              const minVal = this.formData && this.formData.detail ? this.formData.detail.minSpeedMps : undefined
+              if (value === undefined || value === null || value === '') {
+                callback()
+                return
+              }
+              if (minVal === undefined || minVal === null || minVal === '') {
+                callback()
+                return
+              }
+              const maxNum = Number(value)
+              const minNum = Number(minVal)
+              if (isNaN(maxNum) || isNaN(minNum) || maxNum <= minNum) {
+                callback(new Error('最大速度需大于最小速度'))
+                return
+              }
+              callback()
+            },
+            trigger: ['change', 'blur']
+          })
+          fields[maxIdx].rules = base
+        }
+
+        if (minIdx !== -1) {
+          const base = Array.isArray(fields[minIdx].rules) ? fields[minIdx].rules.slice() : []
+          base.push({
+            validator: (_, value, callback) => {
+              const maxVal = this.formData && this.formData.detail ? this.formData.detail.maxSpeedMps : undefined
+              if (value === undefined || value === null || value === '') {
+                callback()
+                return
+              }
+              if (maxVal === undefined || maxVal === null || maxVal === '') {
+                callback()
+                return
+              }
+              const minNum = Number(value)
+              const maxNum = Number(maxVal)
+              if (isNaN(maxNum) || isNaN(minNum) || minNum >= maxNum) {
+                callback(new Error('最小速度需小于最大速度'))
+                return
+              }
+              callback()
+            },
+            trigger: ['change', 'blur']
+          })
+          fields[minIdx].rules = base
+        }
+      }
+
+      return fields
     },
 
     // 表单校验规则
@@ -499,6 +584,86 @@ export default {
             rules[field.prop] = field.rules
           }
         })
+      }
+
+      // 动态跨字段与类型校验
+      // 1) 退火炉：最大工作温度需大于50度
+      if (this.currentEquipmentType === EQUIPMENT_TYPES.ANNEALING_FURNACE) {
+        const tempProp = 'detail.maxOperatingTemperatureC'
+        const baseRules = rules[tempProp] ? [].concat(rules[tempProp]) : []
+        baseRules.push({
+          validator: (_, value, callback) => {
+            if (value === undefined || value === null || value === '') {
+              callback()
+              return
+            }
+            const numeric = Number(value)
+            if (isNaN(numeric) || numeric <= 50) {
+              callback(new Error('最大工作温度需大于50度'))
+              return
+            }
+            callback()
+          },
+          trigger: 'change'
+        })
+        rules[tempProp] = baseRules
+      }
+
+      // 2) 行车与自动料车：最大速度需大于最小速度
+      if (
+        this.currentEquipmentType === EQUIPMENT_TYPES.CRANE ||
+        this.currentEquipmentType === EQUIPMENT_TYPES.AUTOMATIC_CART
+      ) {
+        const maxProp = 'detail.maxSpeedMps'
+        const minProp = 'detail.minSpeedMps'
+
+        const maxBase = rules[maxProp] ? [].concat(rules[maxProp]) : []
+        maxBase.push({
+          validator: (_, value, callback) => {
+            const minVal = this.formData && this.formData.detail ? this.formData.detail.minSpeedMps : undefined
+            if (value === undefined || value === null || value === '') {
+              callback()
+              return
+            }
+            if (minVal === undefined || minVal === null || minVal === '') {
+              callback()
+              return
+            }
+            const maxNum = Number(value)
+            const minNum = Number(minVal)
+            if (isNaN(maxNum) || isNaN(minNum) || maxNum <= minNum) {
+              callback(new Error('最大速度需大于最小速度'))
+              return
+            }
+            callback()
+          },
+          trigger: 'change'
+        })
+        rules[maxProp] = maxBase
+
+        const minBase = rules[minProp] ? [].concat(rules[minProp]) : []
+        minBase.push({
+          validator: (_, value, callback) => {
+            const maxVal = this.formData && this.formData.detail ? this.formData.detail.maxSpeedMps : undefined
+            if (value === undefined || value === null || value === '') {
+              callback()
+              return
+            }
+            if (maxVal === undefined || maxVal === null || maxVal === '') {
+              callback()
+              return
+            }
+            const minNum = Number(value)
+            const maxNum = Number(maxVal)
+            if (isNaN(maxNum) || isNaN(minNum) || minNum >= maxNum) {
+              callback(new Error('最小速度需小于最大速度'))
+              return
+            }
+            callback()
+          },
+          trigger: 'change'
+        })
+        rules[minProp] = minBase
       }
 
       return rules
