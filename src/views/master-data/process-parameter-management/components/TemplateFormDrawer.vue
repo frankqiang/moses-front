@@ -35,11 +35,11 @@
       :sync-changes="true"
       @submit="handleSubmit"
     >
-      <template #default="{ form, mode, setFieldValue }">
+      <template #default="{ form, mode: slotMode, setFieldValue }">
         <section class="form-section">
           <header class="form-section__header">
             <h3 class="form-section__title">模板基础信息</h3>
-            <span v-if="mode !== 'view'" class="form-section__badge">必填</span>
+            <span v-if="slotMode !== 'view'" class="form-section__badge">必填</span>
           </header>
           <el-row :gutter="24">
             <el-col
@@ -50,7 +50,7 @@
               <component
                 :is="resolveFieldComponent(field)"
                 v-model="form[field.prop]"
-                v-bind="buildFieldProps(field, mode, setFieldValue)"
+                v-bind="buildFieldProps(field, slotMode, setFieldValue)"
               />
               <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
             </el-col>
@@ -60,7 +60,7 @@
         <section class="form-section">
           <header class="form-section__header">
             <h3 class="form-section__title">适用范围</h3>
-            <span v-if="mode !== 'view'" class="form-section__badge">必填</span>
+            <span v-if="slotMode !== 'view'" class="form-section__badge">必填</span>
           </header>
           <el-row :gutter="24">
             <el-col
@@ -71,7 +71,7 @@
               <component
                 :is="resolveFieldComponent(field)"
                 v-model="form[field.prop]"
-                v-bind="buildFieldProps(field, mode, setFieldValue)"
+                v-bind="buildFieldProps(field, slotMode, setFieldValue)"
                 @remote-search="handleProductSearch"
                 @scroll-bottom="handleProductLoadMore"
               />
@@ -93,7 +93,7 @@
               <component
                 :is="resolveFieldComponent(field)"
                 v-model="form[field.prop]"
-                v-bind="buildFieldProps(field, mode, setFieldValue)"
+                v-bind="buildFieldProps(field, slotMode, setFieldValue)"
               />
               <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
             </el-col>

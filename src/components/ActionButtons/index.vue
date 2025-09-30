@@ -421,15 +421,35 @@ export default {
 
     // 执行按钮动作
     executeButtonAction(button) {
-      if (typeof button.onClick === 'function') {
-        return button.onClick(button.data || this.row)
-      } else {
+      const runAction = () => {
+        if (typeof button.onClick === 'function') {
+          return button.onClick(button.data || this.row)
+        }
         this.$emit('click', {
           action: button.action,
           data: button.data || this.row,
-          row: this.row // 保持向后兼容
+          row: this.row
         })
+        return Promise.resolve()
       }
+
+      if (button.confirmText) {
+        return this.$confirm(button.confirmText, button.confirmTitle || '提示', {
+          confirmButtonText: button.confirmConfirmText || '确定',
+          cancelButtonText: button.confirmCancelText || '取消',
+          type: button.confirmType || 'warning'
+        })
+          .then(() => runAction())
+          .catch(() => {
+            this.setButtonLoading(button.action, false)
+            if (button.confirmCancelMessage) {
+              this.$message.info(button.confirmCancelMessage)
+            }
+            return Promise.resolve()
+          })
+      }
+
+      return runAction()
     },
 
     // 处理下拉菜单命令

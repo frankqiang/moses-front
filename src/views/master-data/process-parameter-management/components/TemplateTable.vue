@@ -573,13 +573,20 @@ export default {
      */
     handleActionClick(action, row) {
       // 发送操作事件给父组件，附带模板和版本信息
-      this.$emit('action', {
-        action: action.action,
+      const payload = {
+        action: action.action || action,
         template: row,
         version: row.latestVersion,
         templateId: row.id,
         versionId: row.latestVersion?.id
-      })
+      }
+
+      if (payload.action === 'viewDetail') {
+        this.$emit('view-detail', payload)
+        return
+      }
+
+      this.$emit('action', payload)
     },
 
     /**
