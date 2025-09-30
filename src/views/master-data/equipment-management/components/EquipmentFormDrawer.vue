@@ -33,15 +33,15 @@
       v-if="drawerVisible"
       ref="enhancedForm"
       class="equipment-form"
-      :data="formData"
+      :data.sync="formData"
       :mode="formMode"
       :loading="formLoading"
       :rules="formRules"
       :label-width="'140px'"
       :show-footer="false"
+      :sync-changes="true"
       :validate-on-data-change="false"
-      :merge-on-data-update="true"
-      @data-change="handleFormDataChange"
+      :clear-validate-on-data-update="true"
       @validation-change="handleValidationChange"
     >
       <template #default="{ form, mode: scopedMode, loading }">
@@ -610,25 +610,78 @@ export default {
 
     // 处理设备类型变更
     handleEquipmentTypeChange(value) {
-      this.currentEquipmentType = value
-      this.formData.equipmentType = value
-
-      // 重置详情字段
-      if (!this.formData.detail) {
-        this.$set(this.formData, 'detail', {})
+      if (this.currentEquipmentType === value) {
+        return
       }
 
-      DETAIL_FORM_FIELDS[this.currentEquipmentType]?.forEach(field => {
-        const key = this.getDetailFieldKey(field.prop)
-        const defaultValue = field.type === 'key-value-editor' ? {} : ''
-        if (this.formData.detail[key] === undefined) {
-          this.$set(this.formData.detail, key, defaultValue)
-        }
-      })
+      const hasOldTypeDetails = this.currentEquipmentType && this.formData.detail &&
+        Object.keys(this.formData.detail).some(k => {
+          const v = this.formData.detail[k]
+          return v !== '' && v !== null && v !== undefined && (typeof v !== 'object' || Object.keys(v).length > 0)
+        })
 
-      // 根据设备类型自动展开详情分组
-      if (value) {
-        this.sectionStates.detail = true
+      const proceed = () => {
+        // 完整备份当前 formData
+        const currentFormData = cloneDeep(this.formData)
+        const oldDetail = currentFormData.detail || {}
+
+        // 获取旧类型和新类型的详情字段配置
+        const oldDetailConfig = DETAIL_FORM_FIELDS[this.currentEquipmentType] || []
+        const newDetailConfig = DETAIL_FORM_FIELDS[value] || []
+
+        // 构建新的 detail 对象
+        const newDetail = {}
+        newDetailConfig.forEach(field => {
+          const key = this.getDetailFieldKey(field.prop)
+          const defaultValue = field.type === 'key-value-editor' ? {} : ''
+          const initialValue = this.formMode === 'update' ? oldDetail[key] : undefined
+          newDetail[key] = initialValue !== undefined ? cloneDeep(initialValue) : defaultValue
+        })
+
+        // 更新当前设备类型
+        this.currentEquipmentType = value
+
+        // 删除旧的 detail.* 根级属性
+        oldDetailConfig.forEach(field => {
+          delete currentFormData[field.prop]
+        })
+
+        // 更新 formData：保留所有现有字段，只替换 equipmentType 和 detail
+        currentFormData.equipmentType = value
+        currentFormData.detail = newDetail
+
+        // 添加新的 detail.* 字段到根级（用于表单渲染）
+        newDetailConfig.forEach(field => {
+          const key = this.getDetailFieldKey(field.prop)
+          currentFormData[field.prop] = newDetail[key]
+        })
+
+        // 使用更新后的对象替换 formData
+        this.formData = currentFormData
+
+        if (value) {
+          this.sectionStates.detail = true
+        }
+      }
+
+      if (hasOldTypeDetails && this.formMode !== 'view') {
+        this.$confirm(
+          '切换设备类型将清空当前已填写的设备详情数据，基础信息、通讯参数和维护计划将保留。是否继续？',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        ).then(() => {
+          proceed()
+        }).catch(() => {
+          this.$nextTick(() => {
+            this.formData.equipmentType = this.currentEquipmentType
+          })
+        })
+      } else {
+        proceed()
       }
     },
 
@@ -700,26 +753,6 @@ export default {
       this.$set(this.sectionStates, section, !this.sectionStates[section])
     },
 
-    // 处理表单数据变更
-    handleFormDataChange(data) {
-      // 仅合并根层简单字段，保持 detail 引用不变，防止已填详情被覆盖
-      const { detail: incomingDetail, ...rest } = data || {}
-      Object.keys(rest || {}).forEach(key => {
-        this.$set(this.formData, key, cloneDeep(rest[key]))
-      })
-      if (!this.formData.detail) {
-        this.$set(this.formData, 'detail', {})
-      }
-      // 仅在缺少键时补充，不覆盖已有值
-      if (incomingDetail && typeof incomingDetail === 'object') {
-        Object.keys(incomingDetail).forEach(k => {
-          if (this.formData.detail[k] === undefined) {
-            this.$set(this.formData.detail, k, cloneDeep(incomingDetail[k]))
-          }
-        })
-      }
-    },
-
     // 处理表单验证状态变更
     handleValidationChange(isValid) {
       this.isFormValid = isValid
@@ -728,6 +761,14 @@ export default {
     // 格式化提交数据
     formatSubmitData() {
       const data = cloneDeep(this.formData)
+
+      // 清理 detail.* 根级字段（这些字段仅用于表单渲染）
+      if (this.currentEquipmentType) {
+        const detailConfig = DETAIL_FORM_FIELDS[this.currentEquipmentType] || []
+        detailConfig.forEach(field => {
+          delete data[field.prop]
+        })
+      }
 
       // 清理空字段
       Object.keys(data).forEach(key => {
