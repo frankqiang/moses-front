@@ -14,7 +14,7 @@
     :wrapper-closable="false"
     @close="handleClose"
     @cancel="handleCancel"
-    @confirm="handleConfirm"
+    @confirm="queueSubmit"
   >
     <!-- 抽屉内容 -->
     <!-- 错误提示 -->
@@ -327,7 +327,7 @@
           type="primary"
           :loading="formLoading"
           :disabled="!isFormValid || formLoading"
-          @click="handleConfirm"
+          @click="queueSubmit"
         >
           {{ formMode === 'create' ? '创建设备' : '更新设备' }}
         </el-button>
@@ -507,19 +507,41 @@ export default {
   watch: {
     visible(newVal) {
       if (newVal) {
-        this.initializeForm()
+        if (this.formMode === 'create') {
+          this.initializeForm()
+        } else {
+          this.queueLoadDetail()
+        }
       } else {
         this.resetForm()
       }
     },
 
     equipmentId(newVal) {
-      if (newVal && this.visible) {
-        this.loadEquipmentDetail()
+      if (newVal && this.visible && this.formMode !== 'create') {
+        this.queueLoadDetail()
       }
     }
   },
   methods: {
+    // 合并详情加载，避免在同时设置 visible 与 equipmentId 时重复请求
+    queueLoadDetail() {
+      if (this._loadQueued) return
+      this._loadQueued = true
+      this.$nextTick(() => {
+        this._loadQueued = false
+        this.loadEquipmentDetail()
+      })
+    },
+    // 合并提交触发，防止双重触发导致重复请求（Drawer @confirm 与自定义按钮 @click）
+    queueSubmit() {
+      if (this._submitQueued) return
+      this._submitQueued = true
+      this.$nextTick(() => {
+        this._submitQueued = false
+        this.handleConfirm()
+      })
+    },
     // 判断是否为详情字段（detail.*）
     isDetailProp(prop) {
       return typeof prop === 'string' && prop.indexOf('detail.') === 0
@@ -810,9 +832,27 @@ export default {
         }
       })
 
-      // 确保必要字段
+      // 确保必要字段 & 从 communicationParams 映射顶层字段
       if (!data.communicationParams) {
         data.communicationParams = {}
+      }
+      if (!data.plcNodeId && data.communicationParams.plcNodeId) {
+        data.plcNodeId = data.communicationParams.plcNodeId
+      }
+      if (!data.controlSystemAddress && data.communicationParams.controlSystemAddress) {
+        data.controlSystemAddress = data.communicationParams.controlSystemAddress
+      }
+
+      // 详情组与顶层的 plcNodeId 双向兜底（退火炉 detail 需要 plcNodeId）
+      if (this.currentEquipmentType === 'annealing_furnace') {
+        if (data.plcNodeId) {
+          if (!data.detail) data.detail = {}
+          if (!data.detail.plcNodeId) {
+            data.detail.plcNodeId = data.plcNodeId
+          }
+        } else if (data.detail && data.detail.plcNodeId) {
+          data.plcNodeId = data.detail.plcNodeId
+        }
       }
 
       // 处理详情字段
