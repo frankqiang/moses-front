@@ -526,12 +526,13 @@ export default {
   methods: {
     // 合并详情加载，避免在同时设置 visible 与 equipmentId 时重复请求
     queueLoadDetail() {
-      if (this._loadQueued) return
-      this._loadQueued = true
-      this.$nextTick(() => {
-        this._loadQueued = false
+      if (this._loadTimer) {
+        clearTimeout(this._loadTimer)
+      }
+      this._loadTimer = setTimeout(() => {
+        this._loadTimer = null
         this.loadEquipmentDetail()
-      })
+      }, 0)
     },
     // 合并提交触发，防止双重触发导致重复请求（Drawer @confirm 与自定义按钮 @click）
     queueSubmit() {
@@ -604,6 +605,19 @@ export default {
           // 兼容后端返回的类型化详情字段 → 映射到 formData.detail
           const typedDetail = this.extractTypedDetail(this.formData)
           this.formData.detail = typedDetail || this.formData.detail || {}
+
+          // 使用脱敏值回填 PLC 节点（顶层与退火炉详情）
+          if (this.formData.plcNodeIdMasked) {
+            // 顶层回填
+            this.formData.plcNodeId = this.formData.plcNodeId || this.formData.plcNodeIdMasked
+            // 退火炉详情回填
+            if (this.currentEquipmentType === 'annealing_furnace') {
+              if (!this.formData.detail) this.formData.detail = {}
+              if (!this.formData.detail.plcNodeId) {
+                this.formData.detail.plcNodeId = this.formData.plcNodeIdMasked
+              }
+            }
+          }
 
           // 初始化详情字段
           this.initDetailFields()
