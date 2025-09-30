@@ -149,9 +149,9 @@ export default {
     return {
       pairs: [],
       // 防止自触发监听循环
-      _isEmitting: false,
+      isEmitting: false,
       // 防抖后的变更派发函数
-      _emitChangeDebounced: null
+      emitChangeDebounced: null
     }
   },
   computed: {
@@ -170,8 +170,8 @@ export default {
     value: {
       handler(newVal) {
         // 避免由本组件 emit 引起的循环触发
-        if (this._isEmitting) {
-          this._isEmitting = false
+        if (this.isEmitting) {
+          this.isEmitting = false
           return
         }
         // 改为浅监听，减少重建频率
@@ -183,7 +183,7 @@ export default {
   },
   created() {
     // 150ms 防抖，避免高频击键导致父级频繁更新
-    this._emitChangeDebounced = debounce(this.emitChangeCore, 150)
+    this.emitChangeDebounced = debounce(this.emitChangeCore, 150)
   },
   methods: {
     // 初始化键值对
@@ -316,7 +316,7 @@ export default {
       }
 
       // 标识由本组件发起的同步，避免外部 value 监听再次触发重建
-      this._isEmitting = true
+      this.isEmitting = true
       this.$emit('input', this.currentValue)
       this.$emit('change', this.currentValue)
       this.$emit('validate', isValid)
@@ -324,8 +324,8 @@ export default {
 
     // 防抖封装，供输入事件调用
     emitChange() {
-      if (this._emitChangeDebounced) {
-        this._emitChangeDebounced()
+      if (this.emitChangeDebounced) {
+        this.emitChangeDebounced()
       } else {
         this.emitChangeCore()
       }
