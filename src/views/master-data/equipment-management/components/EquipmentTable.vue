@@ -205,17 +205,48 @@ export default {
       }
     },
     detailSummary(row) {
-      if (!row || !row.detail) {
+      if (!row) {
         return ''
       }
-      const detailEntries = Object.entries(row.detail)
+
+      // 根据设备类型获取对应的详情字段
+      let detailData = null
+      switch (row.equipmentType) {
+        case 'annealing_furnace':
+          detailData = row.annealingFurnaceDetail
+          break
+        case 'crane':
+          detailData = row.craneDetail
+          break
+        case 'automatic_cart':
+          detailData = row.automaticCartDetail
+          break
+        case 'preparation_station':
+          detailData = row.preparationStationDetail
+          break
+        default:
+          // 兜底：尝试使用通用的detail字段
+          detailData = row.detail
+      }
+
+      if (!detailData || typeof detailData !== 'object') {
+        return ''
+      }
+
+      // 过滤掉id、equipmentId、createdAt、updatedAt等元数据字段
+      const metaFields = ['id', 'equipmentId', 'createdAt', 'updatedAt']
+      const detailEntries = Object.entries(detailData).filter(([key]) => !metaFields.includes(key))
+
       if (!detailEntries.length) {
         return ''
       }
+
+      // 取前3个关键字段显示
       const summaryParts = detailEntries.slice(0, 3).map(([key, value]) => {
         const label = EQUIPMENT_DETAIL_LABELS[key] || key
         return `${label}: ${value}`
       })
+
       return summaryParts.join(' | ')
     },
     handleToolbarAction(button, context) {
