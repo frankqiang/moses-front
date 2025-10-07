@@ -256,13 +256,7 @@ export default {
       this.listError = null
       try {
         const response = await fetchProcessTemplateList(query)
-        console.log('[ProcessParameterManagement] API Response:', response)
-        console.log('[ProcessParameterManagement] response.data:', response.data)
-
         const { templates = [], pagination = {}} = response.data || {}
-        console.log('[ProcessParameterManagement] templates:', templates)
-        console.log('[ProcessParameterManagement] pagination:', pagination)
-
         this.tableData = Array.isArray(templates) ? templates : []
         this.pagination = {
           page: pagination.page || query.page || 1,
@@ -275,14 +269,8 @@ export default {
           limit: this.pagination.limit
         }
         this.syncRouteQuery()
-
-        console.log('[ProcessParameterManagement] tableData:', this.tableData)
-        console.log('[ProcessParameterManagement] pagination:', this.pagination)
-        console.log('[ProcessParameterManagement] listError:', this.listError)
       } catch (error) {
         console.error('[ProcessParameterManagement] fetchTemplateList failed', error)
-        console.error('[ProcessParameterManagement] error.message:', error.message)
-        console.error('[ProcessParameterManagement] error stack:', error.stack)
         this.listError = (error && error.message) || ERROR_MESSAGES.fetchList
         this.globalError = this.listError
       } finally {
