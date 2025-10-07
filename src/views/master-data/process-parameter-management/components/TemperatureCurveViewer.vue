@@ -581,6 +581,8 @@ export default {
   padding: 20px;
   box-shadow: 0 6px 18px rgba(31, 45, 61, 0.06);
   min-height: 420px;
+}
+
 .temperature-curve-viewer__header {
   display: flex;
   justify-content: space-between;

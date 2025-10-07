@@ -1,16 +1,3 @@
-import {
-  fetchProcessTemplateList,
-  deleteProcessTemplate,
-  submitProcessTemplateVersion,
-  approveProcessTemplateVersion,
-  rejectProcessTemplateVersion,
-  withdrawProcessTemplateVersion,
-  voidProcessTemplateVersion,
-  activateProcessTemplateVersion,
-  getProcessTemplateDetail,
-  getProcessTemplateUsage,
-  copyProcessTemplate
-} from './api'
 <!--
 文件名称：index.vue
 文件描述：工艺参数管理模块主页面，整合搜索、表格、表单、版本中心及曲线组件
