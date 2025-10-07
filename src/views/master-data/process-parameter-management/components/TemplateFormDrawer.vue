@@ -19,99 +19,176 @@
       />
     </template>
 
-    <EnhancedForm
-      v-if="visibleProxy"
-      ref="enhancedForm"
-      class="template-form-drawer__form"
-      :data="formModel"
-      :rules="formRules"
-      :mode="formMode"
-      :loading="submitting"
-      label-width="160px"
-      :show-footer="false"
-      :clear-validate-on-data-update="true"
-      :disable-initial-validation="true"
-      :validate-on-data-change="false"
-      :sync-changes="true"
-      @submit="handleSubmit"
-    >
-      <template #default="{ form, mode: slotMode, setFieldValue }">
-        <section class="form-section">
-          <header class="form-section__header">
-            <h3 class="form-section__title">模板基础信息</h3>
-            <span v-if="slotMode !== 'view'" class="form-section__badge">必填</span>
-          </header>
-          <el-row :gutter="24">
-            <el-col
-              v-for="field in baseFields"
-              :key="field.prop"
-              :span="getFieldSpan(field)"
-            >
-              <component
-                :is="resolveFieldComponent(field)"
-                v-model="form[field.prop]"
-                v-bind="buildFieldProps(field, slotMode, setFieldValue)"
-              />
-              <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
-            </el-col>
-          </el-row>
-        </section>
+    <div v-if="visibleProxy" class="template-form-drawer__content">
+      <el-tabs v-model="activeTab" type="border-card" class="template-form-drawer__tabs">
+        <!-- 步骤1：模板基础信息 -->
+        <el-tab-pane label="步骤1：基础信息" name="basic">
+          <EnhancedForm
+            ref="basicForm"
+            class="template-form-drawer__form"
+            :data="formModel.basic"
+            :rules="basicFormRules"
+            :mode="formMode"
+            :loading="submitting"
+            label-width="160px"
+            :show-footer="false"
+            :clear-validate-on-data-update="true"
+            :disable-initial-validation="true"
+            :validate-on-data-change="false"
+            :sync-changes="true"
+          >
+            <template #default="{ form, mode: slotMode, setFieldValue }">
+              <section class="form-section">
+                <header class="form-section__header">
+                  <h3 class="form-section__title">模板基础信息</h3>
+                  <span v-if="slotMode !== 'view'" class="form-section__badge">必填</span>
+                </header>
+                <el-row :gutter="24">
+                  <el-col
+                    v-for="field in baseFields"
+                    :key="field.prop"
+                    :span="getFieldSpan(field)"
+                  >
+                    <el-form-item :label="field.label" :prop="field.prop">
+                      <component
+                        :is="resolveFieldComponent(field)"
+                        v-model="form[field.prop]"
+                        v-bind="buildFieldProps(field, slotMode, setFieldValue)"
+                      />
+                      <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </section>
 
-        <section class="form-section">
-          <header class="form-section__header">
-            <h3 class="form-section__title">适用范围</h3>
-            <span v-if="slotMode !== 'view'" class="form-section__badge">必填</span>
-          </header>
-          <el-row :gutter="24">
-            <el-col
-              v-for="field in scopeFields"
-              :key="field.prop"
-              :span="getFieldSpan(field)"
-            >
-              <component
-                :is="resolveFieldComponent(field)"
-                v-model="form[field.prop]"
-                v-bind="buildFieldProps(field, slotMode, setFieldValue)"
-                @remote-search="handleProductSearch"
-                @scroll-bottom="handleProductLoadMore"
-              />
-              <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
-            </el-col>
-          </el-row>
-        </section>
+              <section class="form-section">
+                <header class="form-section__header">
+                  <h3 class="form-section__title">适用范围</h3>
+                  <span class="form-section__badge form-section__badge--optional">选填</span>
+                </header>
+                <el-row :gutter="24">
+                  <el-col
+                    v-for="field in scopeFields"
+                    :key="field.prop"
+                    :span="getFieldSpan(field)"
+                  >
+                    <el-form-item :label="field.label" :prop="field.prop">
+                      <component
+                        :is="resolveFieldComponent(field)"
+                        v-model="form[field.prop]"
+                        v-bind="buildFieldProps(field, slotMode, setFieldValue)"
+                        @remote-search="handleProductSearch"
+                        @scroll-bottom="handleProductLoadMore"
+                      />
+                      <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </section>
 
-        <section class="form-section">
-          <header class="form-section__header">
-            <h3 class="form-section__title">版本信息</h3>
-          </header>
-          <el-row :gutter="24">
-            <el-col
-              v-for="field in versionFields"
-              :key="field.prop"
-              :span="getFieldSpan(field)"
-            >
-              <component
-                :is="resolveFieldComponent(field)"
-                v-model="form[field.prop]"
-                v-bind="buildFieldProps(field, slotMode, setFieldValue)"
-              />
-              <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
-            </el-col>
-          </el-row>
-        </section>
-      </template>
-    </EnhancedForm>
+              <section class="form-section">
+                <header class="form-section__header">
+                  <h3 class="form-section__title">版本信息</h3>
+                  <span v-if="slotMode !== 'view'" class="form-section__badge">必填</span>
+                </header>
+                <el-row :gutter="24">
+                  <el-col
+                    v-for="field in versionFields"
+                    :key="field.prop"
+                    :span="getFieldSpan(field)"
+                  >
+                    <el-form-item :label="field.label" :prop="field.prop">
+                      <component
+                        :is="resolveFieldComponent(field)"
+                        v-model="form[field.prop]"
+                        v-bind="buildFieldProps(field, slotMode, setFieldValue)"
+                      />
+                      <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </section>
+            </template>
+          </EnhancedForm>
+        </el-tab-pane>
+
+        <!-- 步骤2：温度曲线段配置 -->
+        <el-tab-pane label="步骤2：温度曲线段" name="segments">
+          <div class="tab-pane-content">
+            <SegmentEditor
+              v-if="activeTab === 'segments'"
+              ref="segmentEditor"
+              v-model="formModel.segments"
+              :disabled="formMode === 'view'"
+            />
+          </div>
+        </el-tab-pane>
+
+        <!-- 步骤3：保护气氛参数 -->
+        <el-tab-pane label="步骤3：保护气氛" name="atmosphere">
+          <div class="tab-pane-content">
+            <AtmosphereEditor
+              v-if="activeTab === 'atmosphere'"
+              ref="atmosphereEditor"
+              v-model="formModel.atmosphereSettings"
+              :disabled="formMode === 'view'"
+            />
+          </div>
+        </el-tab-pane>
+
+        <!-- 步骤4：循环风机参数 -->
+        <el-tab-pane label="步骤4：循环风机" name="fan">
+          <div class="tab-pane-content">
+            <FanEditor
+              v-if="activeTab === 'fan'"
+              ref="fanEditor"
+              v-model="formModel.fanSettings"
+              :segment-orders="segmentOrders"
+              :disabled="formMode === 'view'"
+            />
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+
+      <!-- 底部提示 -->
+      <div v-if="formMode !== 'view'" class="template-form-drawer__hint">
+        <el-alert
+          type="info"
+          :closable="false"
+          show-icon
+        >
+          <div slot="title">
+            <strong>配置提示：</strong>请依次完成四个步骤的配置。温度段、保护气氛、风机参数均至少需要配置 1 条记录。
+          </div>
+        </el-alert>
+      </div>
+    </div>
 
     <template #footer>
-      <div class="template-form-drawer__footer">
+      <div>
         <el-button :disabled="submitting" @click="handleCancel">
           {{ formMode === 'view' ? '关闭' : '取消' }}
         </el-button>
         <el-button
-          v-if="formMode !== 'view'"
+          v-if="formMode !== 'view' && activeTab !== 'basic'"
+          :disabled="submitting"
+          @click="handlePrevStep"
+        >
+          上一步
+        </el-button>
+        <el-button
+          v-if="formMode !== 'view' && activeTab !== 'fan'"
+          type="primary"
+          :disabled="submitting"
+          @click="handleNextStep"
+        >
+          下一步
+        </el-button>
+        <el-button
+          v-if="formMode !== 'view' && activeTab === 'fan'"
           type="primary"
           :loading="submitting"
-          @click="triggerSubmit"
+          @click="handleSubmit"
         >
           {{ submitButtonText }}
         </el-button>
@@ -123,6 +200,10 @@
 <script>
 import Drawer from '@/components/Drawer'
 import EnhancedForm from '@/components/EnhancedForm'
+import SegmentEditor from './SegmentEditor.vue'
+import AtmosphereEditor from './AtmosphereEditor.vue'
+import FanEditor from './FanEditor.vue'
+import TemplateNumberRange from './TemplateNumberRange.vue'
 import { cloneDeep } from 'lodash'
 import {
   TEMPLATE_FORM_FIELDS
@@ -143,7 +224,11 @@ export default {
   name: 'TemplateFormDrawer',
   components: {
     Drawer,
-    EnhancedForm
+    EnhancedForm,
+    SegmentEditor,
+    AtmosphereEditor,
+    FanEditor,
+    TemplateNumberRange
   },
   props: {
     visible: {
@@ -169,14 +254,31 @@ export default {
     }
   },
   data() {
+    // 初始化默认的基础信息模型
+    const defaultBasic = {}
+    TEMPLATE_FORM_FIELDS.forEach(field => {
+      if (Object.prototype.hasOwnProperty.call(field, 'defaultValue')) {
+        defaultBasic[field.prop] = field.defaultValue
+      } else {
+        defaultBasic[field.prop] = field.type === 'remote-select' ? [] : ''
+      }
+    })
+    defaultBasic.status = TEMPLATE_STATUS.DRAFT
+
     return {
       visibleProxy: false,
       formMode: 'create',
+      activeTab: 'basic',
       loading: false,
       submitting: false,
       errorMessage: '',
-      drawerWidth: '960px',
-      formModel: {},
+      drawerWidth: '1200px',
+      formModel: {
+        basic: defaultBasic,
+        segments: [],
+        atmosphereSettings: [],
+        fanSettings: []
+      },
       productOptions: [],
       productKeyword: '',
       productPagination: {
@@ -201,7 +303,7 @@ export default {
     submitButtonText() {
       return this.formMode === 'create' || this.formMode === 'copy' ? '创建模板' : '保存修改'
     },
-    formRules() {
+    basicFormRules() {
       return TEMPLATE_FORM_FIELDS.reduce((rules, field) => {
         if (field.rules) {
           rules[field.prop] = field.rules
@@ -224,8 +326,8 @@ export default {
         ['versionNumber', 'versionDescription'].includes(field.prop)
       )
     },
-    copyVersionRequired() {
-      return this.formMode === 'copy'
+    segmentOrders() {
+      return this.formModel.segments.map(seg => seg.segmentOrder)
     }
   },
   watch: {
@@ -255,6 +357,7 @@ export default {
     async initialize() {
       this.errorMessage = ''
       this.loading = true
+      this.activeTab = 'basic'
       try {
         await this.prepareFormModel()
         await this.fetchInitialProductOptions()
@@ -281,22 +384,28 @@ export default {
         }
       }
       if (Object.keys(this.initialData || {}).length) {
-        this.formModel = cloneDeep(this.initialData)
+        this.parseInitialData(this.initialData)
       } else {
         this.formModel = this.buildDefaultModel()
       }
     },
     buildDefaultModel() {
-      const model = {}
+      const basicModel = {}
       TEMPLATE_FORM_FIELDS.forEach(field => {
         if (Object.prototype.hasOwnProperty.call(field, 'defaultValue')) {
-          model[field.prop] = cloneDeep(field.defaultValue)
+          basicModel[field.prop] = cloneDeep(field.defaultValue)
         } else {
-          model[field.prop] = field.type === 'remote-select' ? [] : ''
+          basicModel[field.prop] = field.type === 'remote-select' ? [] : ''
         }
       })
-      model.status = TEMPLATE_STATUS.DRAFT
-      return model
+      basicModel.status = TEMPLATE_STATUS.DRAFT
+
+      return {
+        basic: basicModel,
+        segments: [],
+        atmosphereSettings: [],
+        fanSettings: []
+      }
     },
     async loadTemplateDetail({ copyMode = false } = {}) {
       const { data } = await getProcessTemplateDetail(this.templateId)
@@ -305,20 +414,30 @@ export default {
         ? (data.versions || []).find(item => item.id === this.versionId) || latestVersion
         : latestVersion
 
-      const model = this.buildDefaultModel()
-      model.templateCode = copyMode ? '' : data.templateCode
-      model.templateName = copyMode ? `${data.templateName || ''}-副本` : data.templateName
-      model.description = data.description || ''
-      model.status = data.status || TEMPLATE_STATUS.DRAFT
-      model.applicableProductIds = (data.applicableProducts || []).map(item => item.id)
-      model.applicableAlloyGrades = data.applicableAlloyGrades || ''
-      model.applicableThicknessRange = data.applicableThicknessRange || ''
-      model.applicableWidthRange = data.applicableWidthRange || ''
-      model.versionNumber = copyMode ? `${targetVersion.versionNumber || 'v1.0'}-copy` : targetVersion.versionNumber || ''
-      model.versionDescription = targetVersion.versionDescription || ''
-      model.copyFromVersionId = targetVersion.id || this.versionId || ''
+      const basicModel = {}
+      TEMPLATE_FORM_FIELDS.forEach(field => {
+        basicModel[field.prop] = field.type === 'remote-select' ? [] : ''
+      })
 
-      this.formModel = model
+      basicModel.templateCode = copyMode ? '' : data.templateCode
+      basicModel.templateName = copyMode ? `${data.templateName || ''}-副本` : data.templateName
+      basicModel.description = data.description || ''
+      basicModel.status = data.status || TEMPLATE_STATUS.DRAFT
+      basicModel.applicableProductIds = (data.applicableProducts || []).map(item => item.id)
+      basicModel.applicableAlloyGrades = data.applicableAlloyGrades || ''
+      basicModel.applicableThicknessRange = data.applicableThicknessRange || ''
+      basicModel.applicableWidthRange = data.applicableWidthRange || ''
+      basicModel.versionNumber = copyMode ? `${targetVersion.versionNumber || 'v1.0'}-copy` : targetVersion.versionNumber || ''
+      basicModel.versionDescription = targetVersion.versionDescription || ''
+      basicModel.copyFromVersionId = targetVersion.id || this.versionId || ''
+
+      this.formModel = {
+        basic: basicModel,
+        segments: targetVersion.segments || [],
+        atmosphereSettings: targetVersion.atmosphereSettings || [],
+        fanSettings: targetVersion.fanSettings || []
+      }
+
       this.productOptions = (data.applicableProducts || []).map(product => ({
         id: product.id,
         productCode: product.productCode,
@@ -327,6 +446,19 @@ export default {
       }))
       this.availableVersions = data.versions || []
       this.copySourceVersion = targetVersion
+    },
+    parseInitialData(data) {
+      const basicModel = {}
+      TEMPLATE_FORM_FIELDS.forEach(field => {
+        basicModel[field.prop] = data[field.prop] || (field.type === 'remote-select' ? [] : '')
+      })
+
+      this.formModel = {
+        basic: basicModel,
+        segments: data.segments || [],
+        atmosphereSettings: data.atmosphereSettings || [],
+        fanSettings: data.fanSettings || []
+      }
     },
     async fetchInitialProductOptions() {
       try {
@@ -475,17 +607,67 @@ export default {
       }
       return 12
     },
-    triggerSubmit() {
-      if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.handleSubmitClick()
+    handlePrevStep() {
+      const tabs = ['basic', 'segments', 'atmosphere', 'fan']
+      const currentIndex = tabs.indexOf(this.activeTab)
+      if (currentIndex > 0) {
+        this.activeTab = tabs[currentIndex - 1]
       }
     },
+    async handleNextStep() {
+      // 验证当前步骤
+      const valid = await this.validateCurrentStep()
+      if (!valid) {
+        return
+      }
+
+      const tabs = ['basic', 'segments', 'atmosphere', 'fan']
+      const currentIndex = tabs.indexOf(this.activeTab)
+      if (currentIndex < tabs.length - 1) {
+        this.activeTab = tabs[currentIndex + 1]
+      }
+    },
+    async validateCurrentStep() {
+      if (this.activeTab === 'basic') {
+        // 验证基础信息表单
+        if (this.$refs.basicForm) {
+          const valid = await this.$refs.basicForm.validate()
+          if (!valid) {
+            this.$message.warning('请完善基础信息必填项')
+            return false
+          }
+        }
+      } else if (this.activeTab === 'segments') {
+        // 等待下一个tick确保组件已渲染
+        await this.$nextTick()
+        if (this.$refs.segmentEditor && !this.$refs.segmentEditor.validate()) {
+          this.$message.warning('温度段配置有误，请检查')
+          return false
+        }
+      } else if (this.activeTab === 'atmosphere') {
+        await this.$nextTick()
+        if (this.$refs.atmosphereEditor && !this.$refs.atmosphereEditor.validate()) {
+          this.$message.warning('保护气氛配置有误，请检查')
+          return false
+        }
+      } else if (this.activeTab === 'fan') {
+        await this.$nextTick()
+        if (this.$refs.fanEditor && !this.$refs.fanEditor.validate()) {
+          this.$message.warning('风机参数配置有误，请检查')
+          return false
+        }
+      }
+      return true
+    },
     transformPayload(formData) {
-      const payload = { ...formData }
+      const payload = { ...formData.basic }
+
+      // 处理适用产品
       payload.applicableProductIds = Array.isArray(payload.applicableProductIds)
         ? payload.applicableProductIds.filter(Boolean)
         : []
 
+      // 处理合金牌号
       if (payload.applicableAlloyGrades) {
         payload.applicableAlloyGrades = payload.applicableAlloyGrades
           .split(',')
@@ -493,6 +675,7 @@ export default {
           .filter(Boolean)
       }
 
+      // 处理范围字段
       ['applicableThicknessRange', 'applicableWidthRange'].forEach(key => {
         if (payload[key] && typeof payload[key] === 'object') {
           const { start, end } = payload[key]
@@ -500,15 +683,70 @@ export default {
         }
       })
 
+      // 添加温度段、保护气氛、风机参数
+      payload.segments = formData.segments || []
+      payload.atmosphereSettings = formData.atmosphereSettings || []
+      payload.fanSettings = formData.fanSettings || []
+
       return payload
     },
-    async handleSubmit(formData) {
+    async handleSubmit() {
+      // 验证所有步骤 - 切换到各个tab以确保组件已创建
+      let allValid = true
+
+      // 验证基础信息
+      this.activeTab = 'basic'
+      await this.$nextTick()
+      if (this.$refs.basicForm) {
+        const basicValid = await this.$refs.basicForm.validate()
+        if (!basicValid) {
+          this.$message.error('基础信息填写有误，请检查')
+          allValid = false
+        }
+      }
+
+      // 验证温度段
+      if (allValid) {
+        this.activeTab = 'segments'
+        await this.$nextTick()
+        if (!this.$refs.segmentEditor || !this.$refs.segmentEditor.validate()) {
+          this.$message.error('温度段配置有误，请检查')
+          allValid = false
+        }
+      }
+
+      // 验证保护气氛
+      if (allValid) {
+        this.activeTab = 'atmosphere'
+        await this.$nextTick()
+        if (!this.$refs.atmosphereEditor || !this.$refs.atmosphereEditor.validate()) {
+          this.$message.error('保护气氛配置有误，请检查')
+          allValid = false
+        }
+      }
+
+      // 验证风机参数
+      if (allValid) {
+        this.activeTab = 'fan'
+        await this.$nextTick()
+        if (!this.$refs.fanEditor || !this.$refs.fanEditor.validate()) {
+          this.$message.error('风机参数配置有误，请检查')
+          allValid = false
+        }
+      }
+
+      if (!allValid) {
+        return
+      }
+
       if (this.submitting) return
       this.submitting = true
       this.errorMessage = ''
+
       try {
-        const payload = this.transformPayload(formData)
+        const payload = this.transformPayload(this.formModel)
         let response
+
         if (this.formMode === 'update' && this.templateId && this.versionId) {
           response = await updateProcessTemplateVersion(this.templateId, this.versionId, payload)
         } else if (this.formMode === 'copy' && this.templateId) {
@@ -521,6 +759,7 @@ export default {
         } else {
           response = await createProcessTemplate(payload)
         }
+
         const message = this.formMode === 'copy'
           ? response.message || MESSAGE_FALLBACKS.copyTemplate
           : response.message || MESSAGE_FALLBACKS.createTemplate
@@ -546,6 +785,7 @@ export default {
     },
     resetState() {
       this.formModel = this.buildDefaultModel()
+      this.activeTab = 'basic'
       this.loading = false
       this.submitting = false
       this.errorMessage = ''
@@ -565,9 +805,50 @@ export default {
   min-height: 100%;
 }
 
-.template-form-drawer__form {
+.template-form-drawer__content {
   padding: 0 20px 24px;
   background: #f7f8fa;
+}
+
+.template-form-drawer__tabs {
+  background: #fff;
+  border: none;
+  box-shadow: 0 6px 20px rgba(31, 45, 61, 0.06);
+}
+
+.template-form-drawer__tabs >>> .el-tabs__header {
+  background: #fafbfc;
+  border-bottom: 2px solid #e4e7ed;
+  margin: 0;
+}
+
+.template-form-drawer__tabs >>> .el-tabs__item {
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0 30px;
+  height: 50px;
+  line-height: 50px;
+}
+
+.template-form-drawer__tabs >>> .el-tabs__item.is-active {
+  color: #409eff;
+  font-weight: 600;
+}
+
+.template-form-drawer__tabs >>> .el-tabs__content {
+  padding: 20px;
+  min-height: 400px;
+}
+
+.template-form-drawer__form {
+  background: transparent;
+}
+
+.tab-pane-content {
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  min-height: 400px;
 }
 
 .form-section {
@@ -601,6 +882,11 @@ export default {
   background: #fdecea;
 }
 
+.form-section__badge--optional {
+  color: #909399;
+  background: #f4f4f5;
+}
+
 .field-hint {
   display: block;
   margin-top: 4px;
@@ -608,37 +894,37 @@ export default {
   font-size: 12px;
 }
 
-.template-form-drawer__footer {
-  text-align: right;
-  padding: 12px 24px 8px;
-  background: #fff;
-  border-top: 1px solid #ebeef5;
+.template-form-drawer__hint {
+  margin-top: 16px;
 }
 
-.template-form-drawer__product-popper ::v-deep .el-select-dropdown__item {
+.template-form-drawer__product-popper >>> .el-select-dropdown__item {
   display: flex;
   flex-direction: column;
   padding: 6px 12px;
 }
 
-.template-form-drawer__product-popper ::v-deep .el-select-dropdown__item .product-code {
+.template-form-drawer__product-popper >>> .el-select-dropdown__item .product-code {
   font-weight: 600;
   color: #1f2d3d;
 }
 
-.template-form-drawer__product-popper ::v-deep .el-select-dropdown__item .product-name {
+.template-form-drawer__product-popper >>> .el-select-dropdown__item .product-name {
   font-size: 12px;
   color: #909399;
 }
 
 @media (max-width: 1440px) {
-  .template-form-drawer__form {
+  .template-form-drawer__content {
     padding: 0 16px 20px;
   }
 
   .form-section {
     padding: 18px 20px;
   }
+
+  .tab-pane-content {
+    padding: 16px;
+  }
 }
 </style>
-

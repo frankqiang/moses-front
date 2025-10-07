@@ -29,6 +29,7 @@
       @selection-change="handleSelectionChange"
       @pagination-change="handlePaginationChange"
       @sort-change="handleSortChange"
+      @toolbar-action="handleToolbarAction"
       @action="handleTableAction"
       @view-detail="handleViewDetail"
       @retry="fetchTemplateList"
@@ -348,6 +349,13 @@ export default {
         templateId: '',
         versionId: '',
         initialData: {}
+      }
+    },
+
+    handleToolbarAction(action) {
+      // 处理工具栏按钮点击
+      if (action === 'create') {
+        this.handleCreateTemplate()
       }
     },
 
