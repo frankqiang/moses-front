@@ -13,154 +13,137 @@
     @close="handleDrawerClose"
   >
     <!-- 表单内容 -->
-    <enhanced-form
-      ref="enhancedForm"
-      :data="formData"
-      :mode="innerMode"
+    <el-form
+      ref="form"
+      :model="formData"
       :rules="formRules"
       label-width="120px"
-      :show-footer="false"
-      :clear-validate-on-data-update="true"
-      :disable-initial-validation="true"
-      :validate-on-data-change="false"
-      @submit="handleFormSubmit"
-      @validate="handleCustomValidate"
-      @validate-error="handleValidateError"
-      @reset="handleFormReset"
+      size="small"
+      :disabled="innerMode === 'view'"
     >
-      <!-- 表单内容 -->
-      <template v-slot="{ form, mode: formMode }">
-        <!-- 一、基础信息 -->
-        <div class="form-section">
-          <div class="section-title">一、基础信息</div>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="工序代码" prop="code">
-                <el-input
-                  v-model="form.code"
-                  placeholder="请输入工序代码"
-                  maxlength="30"
-                  show-word-limit
-                  :disabled="formMode === 'view' || formMode === 'update'"
-                  @blur="handleCodeBlur"
+      <!-- 一、基础信息 -->
+      <div class="form-section">
+        <div class="section-title">一、基础信息</div>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="工序代码" prop="code">
+              <el-input
+                v-model="formData.code"
+                placeholder="请输入工序代码"
+                maxlength="30"
+                show-word-limit
+                :disabled="innerMode === 'update'"
+                @blur="handleCodeBlur"
+              />
+              <div class="field-hint">工序代码必须以大写字母开头，只能包含大写字母、数字和下划线</div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="工序名称" prop="name">
+              <el-input
+                v-model="formData.name"
+                placeholder="请输入工序名称"
+                maxlength="50"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="工序类型" prop="type">
+              <el-select
+                v-model="formData.type"
+                placeholder="请选择工序类型"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="option in operationTypeOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
                 />
-                <div class="field-hint">工序代码必须以大写字母开头，只能包含大写字母、数字和下划线</div>
-              </el-form-item>
-            </el-col>
-
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="工序名称" prop="name">
-                <el-input
-                  v-model="form.name"
-                  placeholder="请输入工序名称"
-                  maxlength="50"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="报告点" prop="reportingPoint">
+              <el-select
+                v-model="formData.reportingPoint"
+                placeholder="请选择报告点"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="option in reportingPointOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
                 />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="工序类型" prop="type">
-                <el-select
-                  v-model="form.type"
-                  placeholder="请选择工序类型"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="状态" prop="status">
+              <el-radio-group v-model="formData.status">
+                <el-radio
+                  v-for="option in operationStatusOptions"
+                  :key="option.value"
+                  :label="option.value"
                 >
-                  <el-option
-                    v-for="option in operationTypeOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
+                  {{ option.label }}
+                </el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
 
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="报告点" prop="reportingPoint">
-                <el-select
-                  v-model="form.reportingPoint"
-                  placeholder="请选择报告点"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                >
-                  <el-option
-                    v-for="option in reportingPointOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="状态" prop="status">
-                <el-radio-group v-model="form.status" :disabled="formMode === 'view'">
-                  <el-radio
-                    v-for="option in operationStatusOptions"
-                    :key="option.value"
-                    :label="option.value"
-                  >
-                    {{ option.label }}
-                  </el-radio>
-                </el-radio-group>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-
-        <!-- 二、详细信息 -->
-        <div class="form-section">
-          <div class="section-title">二、详细信息</div>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="描述" prop="description">
-                <el-input
-                  v-model="form.description"
-                  type="textarea"
-                  placeholder="请输入工序描述"
-                  :rows="3"
-                  maxlength="200"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
+      <!-- 二、详细信息 -->
+      <div class="form-section">
+        <div class="section-title">二、详细信息</div>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="描述" prop="description">
+              <el-input
+                v-model="formData.description"
+                type="textarea"
+                placeholder="请输入工序描述"
+                :rows="3"
+                maxlength="200"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="关联资源类型" prop="associatedResourceType">
+              <el-select
+                v-model="formData.associatedResourceType"
+                multiple
+                placeholder="请选择关联资源类型"
+                style="width: 100%"
+                collapse-tags
+              >
+                <el-option
+                  v-for="option in resourceTypeOptions"
+                  :key="option"
+                  :label="option"
+                  :value="option"
                 />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="关联资源类型" prop="associatedResourceType">
-                <el-select
-                  v-model="form.associatedResourceType"
-                  multiple
-                  placeholder="请选择关联资源类型"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  collapse-tags
-                >
-                  <el-option
-                    v-for="option in resourceTypeOptions"
-                    :key="option"
-                    :label="option"
-                    :value="option"
-                  />
-                </el-select>
-                <div class="field-hint">可选择多个关联资源类型，为空表示不限制资源类型</div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-      </template>
-    </enhanced-form>
+              </el-select>
+              <div class="field-hint">可选择多个关联资源类型，为空表示不限制资源类型</div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+    </el-form>
 
     <!-- 抽屉底部按钮 -->
     <template #footer>
@@ -188,7 +171,6 @@
 
 <script>
 import BaseDrawer from '@/components/Drawer'
-import EnhancedForm from '@/components/EnhancedForm'
 import { debounce } from '@/utils'
 import {
   createOperation,
@@ -204,8 +186,7 @@ import {
 export default {
   name: 'OperationFormDrawer',
   components: {
-    BaseDrawer,
-    EnhancedForm
+    BaseDrawer
   },
   props: {
     // 抽屉可见性
@@ -354,7 +335,10 @@ export default {
         this.formData = { ...this.operationData }
       }
 
-      // 由于组件已配置自动清除验证，无需手动处理
+      // 清除验证
+      this.$nextTick(() => {
+        this.$refs.form && this.$refs.form.clearValidate()
+      })
     },
 
     // 抽屉关闭处理
@@ -385,18 +369,24 @@ export default {
 
     // 提交按钮处理
     handleSubmit() {
-      // 触发 EnhancedForm 的内置提交机制
-      if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.handleSubmitClick()
-      }
+      this.$refs.form.validate((valid) => {
+        if (!valid) {
+          this.$message.warning('请检查表单填写是否正确')
+          return
+        }
+        this.handleFormSubmit(this.formData, false)
+      })
     },
 
     // 保存并继续按钮处理
     handleSubmitAndContinue() {
-      // 触发 EnhancedForm 的内置保存并继续机制
-      if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.handleContinueClick()
-      }
+      this.$refs.form.validate((valid) => {
+        if (!valid) {
+          this.$message.warning('请检查表单填写是否正确')
+          return
+        }
+        this.handleFormSubmit(this.formData, true)
+      })
     },
 
     // 业务逻辑：实际的数据提交处理

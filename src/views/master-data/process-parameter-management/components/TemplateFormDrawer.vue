@@ -23,93 +23,86 @@
       <el-tabs v-model="activeTab" type="border-card" class="template-form-drawer__tabs">
         <!-- 步骤1：模板基础信息 -->
         <el-tab-pane label="步骤1：基础信息" name="basic">
-          <EnhancedForm
+          <el-form
             ref="basicForm"
             class="template-form-drawer__form"
-            :data="formModel.basic"
+            :model="formModel.basic"
             :rules="basicFormRules"
-            :mode="formMode"
-            :loading="submitting"
             label-width="160px"
-            :show-footer="false"
-            :clear-validate-on-data-update="true"
-            :disable-initial-validation="true"
-            :validate-on-data-change="false"
-            :sync-changes="true"
+            size="small"
+            :disabled="formMode === 'view'"
           >
-            <template #default="{ form, mode: slotMode, setFieldValue }">
-              <section class="form-section">
-                <header class="form-section__header">
-                  <h3 class="form-section__title">模板基础信息</h3>
-                  <span v-if="slotMode !== 'view'" class="form-section__badge">必填</span>
-                </header>
-                <el-row :gutter="24">
-                  <el-col
-                    v-for="field in baseFields"
-                    :key="field.prop"
-                    :span="getFieldSpan(field)"
-                  >
-                    <el-form-item :label="field.label" :prop="field.prop">
-                      <component
-                        :is="resolveFieldComponent(field)"
-                        v-model="form[field.prop]"
-                        v-bind="buildFieldProps(field, slotMode, setFieldValue)"
-                      />
-                      <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-              </section>
+            <section class="form-section">
+              <header class="form-section__header">
+                <h3 class="form-section__title">模板基础信息</h3>
+                <span v-if="formMode !== 'view'" class="form-section__badge">必填</span>
+              </header>
+              <el-row :gutter="24">
+                <el-col
+                  v-for="field in baseFields"
+                  :key="field.prop"
+                  :span="getFieldSpan(field)"
+                >
+                  <el-form-item :label="field.label" :prop="field.prop">
+                    <component
+                      :is="resolveFieldComponent(field)"
+                      v-model="formModel.basic[field.prop]"
+                      v-bind="buildFieldProps(field, formMode)"
+                    />
+                    <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </section>
 
-              <section class="form-section">
-                <header class="form-section__header">
-                  <h3 class="form-section__title">适用范围</h3>
-                  <span class="form-section__badge form-section__badge--optional">选填</span>
-                </header>
-                <el-row :gutter="24">
-                  <el-col
-                    v-for="field in scopeFields"
-                    :key="field.prop"
-                    :span="getFieldSpan(field)"
-                  >
-                    <el-form-item :label="field.label" :prop="field.prop">
-                      <component
-                        :is="resolveFieldComponent(field)"
-                        v-model="form[field.prop]"
-                        v-bind="buildFieldProps(field, slotMode, setFieldValue)"
-                        @remote-search="handleProductSearch"
-                        @scroll-bottom="handleProductLoadMore"
-                      />
-                      <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-              </section>
+            <section class="form-section">
+              <header class="form-section__header">
+                <h3 class="form-section__title">适用范围</h3>
+                <span class="form-section__badge form-section__badge--optional">选填</span>
+              </header>
+              <el-row :gutter="24">
+                <el-col
+                  v-for="field in scopeFields"
+                  :key="field.prop"
+                  :span="getFieldSpan(field)"
+                >
+                  <el-form-item :label="field.label" :prop="field.prop">
+                    <component
+                      :is="resolveFieldComponent(field)"
+                      v-model="formModel.basic[field.prop]"
+                      v-bind="buildFieldProps(field, formMode)"
+                      @remote-search="handleProductSearch"
+                      @scroll-bottom="handleProductLoadMore"
+                    />
+                    <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </section>
 
-              <section class="form-section">
-                <header class="form-section__header">
-                  <h3 class="form-section__title">版本信息</h3>
-                  <span v-if="slotMode !== 'view'" class="form-section__badge">必填</span>
-                </header>
-                <el-row :gutter="24">
-                  <el-col
-                    v-for="field in versionFields"
-                    :key="field.prop"
-                    :span="getFieldSpan(field)"
-                  >
-                    <el-form-item :label="field.label" :prop="field.prop">
-                      <component
-                        :is="resolveFieldComponent(field)"
-                        v-model="form[field.prop]"
-                        v-bind="buildFieldProps(field, slotMode, setFieldValue)"
-                      />
-                      <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-              </section>
-            </template>
-          </EnhancedForm>
+            <section class="form-section">
+              <header class="form-section__header">
+                <h3 class="form-section__title">版本信息</h3>
+                <span v-if="formMode !== 'view'" class="form-section__badge">必填</span>
+              </header>
+              <el-row :gutter="24">
+                <el-col
+                  v-for="field in versionFields"
+                  :key="field.prop"
+                  :span="getFieldSpan(field)"
+                >
+                  <el-form-item :label="field.label" :prop="field.prop">
+                    <component
+                      :is="resolveFieldComponent(field)"
+                      v-model="formModel.basic[field.prop]"
+                      v-bind="buildFieldProps(field, formMode)"
+                    />
+                    <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </section>
+          </el-form>
         </el-tab-pane>
 
         <!-- 步骤2：温度曲线段配置 -->
@@ -199,7 +192,6 @@
 
 <script>
 import Drawer from '@/components/Drawer'
-import EnhancedForm from '@/components/EnhancedForm'
 import SegmentEditor from './SegmentEditor.vue'
 import AtmosphereEditor from './AtmosphereEditor.vue'
 import FanEditor from './FanEditor.vue'
@@ -224,7 +216,6 @@ export default {
   name: 'TemplateFormDrawer',
   components: {
     Drawer,
-    EnhancedForm,
     SegmentEditor,
     AtmosphereEditor,
     FanEditor,
@@ -518,7 +509,7 @@ export default {
       }
       return typeMap[field.type] || 'el-input'
     },
-    buildFieldProps(field, mode, setFieldValue) {
+    buildFieldProps(field, mode) {
       const disabled = (field.disabledOnEdit && mode === 'update') || mode === 'view' || this.submitting
       const common = {
         placeholder: field.placeholder,
@@ -541,7 +532,7 @@ export default {
           maxlength: field.maxLength || field.maxlength
         }
         if (field.formatter) {
-          props.formatter = value => field.formatter(value, setFieldValue)
+          props.formatter = value => field.formatter(value)
         }
         return props
       }
@@ -627,37 +618,54 @@ export default {
         this.activeTab = tabs[currentIndex + 1]
       }
     },
-    async validateCurrentStep() {
-      if (this.activeTab === 'basic') {
-        // 验证基础信息表单
-        if (this.$refs.basicForm) {
-          const valid = await this.$refs.basicForm.validate()
-          if (!valid) {
-            this.$message.warning('请完善基础信息必填项')
-            return false
+    validateCurrentStep() {
+      return new Promise((resolve) => {
+        if (this.activeTab === 'basic') {
+          // 验证基础信息表单
+          if (this.$refs.basicForm) {
+            this.$refs.basicForm.validate((valid) => {
+              if (!valid) {
+                this.$message.warning('请完善基础信息必填项')
+                resolve(false)
+              } else {
+                resolve(true)
+              }
+            })
+          } else {
+            resolve(true)
           }
+        } else if (this.activeTab === 'segments') {
+          // 等待下一个tick确保组件已渲染
+          this.$nextTick(() => {
+            if (this.$refs.segmentEditor && !this.$refs.segmentEditor.validate()) {
+              this.$message.warning('温度段配置有误，请检查')
+              resolve(false)
+            } else {
+              resolve(true)
+            }
+          })
+        } else if (this.activeTab === 'atmosphere') {
+          this.$nextTick(() => {
+            if (this.$refs.atmosphereEditor && !this.$refs.atmosphereEditor.validate()) {
+              this.$message.warning('保护气氛配置有误，请检查')
+              resolve(false)
+            } else {
+              resolve(true)
+            }
+          })
+        } else if (this.activeTab === 'fan') {
+          this.$nextTick(() => {
+            if (this.$refs.fanEditor && !this.$refs.fanEditor.validate()) {
+              this.$message.warning('风机参数配置有误，请检查')
+              resolve(false)
+            } else {
+              resolve(true)
+            }
+          })
+        } else {
+          resolve(true)
         }
-      } else if (this.activeTab === 'segments') {
-        // 等待下一个tick确保组件已渲染
-        await this.$nextTick()
-        if (this.$refs.segmentEditor && !this.$refs.segmentEditor.validate()) {
-          this.$message.warning('温度段配置有误，请检查')
-          return false
-        }
-      } else if (this.activeTab === 'atmosphere') {
-        await this.$nextTick()
-        if (this.$refs.atmosphereEditor && !this.$refs.atmosphereEditor.validate()) {
-          this.$message.warning('保护气氛配置有误，请检查')
-          return false
-        }
-      } else if (this.activeTab === 'fan') {
-        await this.$nextTick()
-        if (this.$refs.fanEditor && !this.$refs.fanEditor.validate()) {
-          this.$message.warning('风机参数配置有误，请检查')
-          return false
-        }
-      }
-      return true
+      })
     },
     transformPayload(formData) {
       const payload = { ...formData.basic }
@@ -691,54 +699,50 @@ export default {
       return payload
     },
     async handleSubmit() {
-      // 验证所有步骤 - 切换到各个tab以确保组件已创建
-      let allValid = true
-
       // 验证基础信息
       this.activeTab = 'basic'
       await this.$nextTick()
-      if (this.$refs.basicForm) {
-        const basicValid = await this.$refs.basicForm.validate()
-        if (!basicValid) {
-          this.$message.error('基础信息填写有误，请检查')
-          allValid = false
+
+      const basicValid = await new Promise((resolve) => {
+        if (!this.$refs.basicForm) {
+          resolve(true)
+          return
         }
-      }
+        this.$refs.basicForm.validate((valid) => {
+          if (!valid) {
+            this.$message.error('基础信息填写有误，请检查')
+          }
+          resolve(valid)
+        })
+      })
+
+      if (!basicValid) return
 
       // 验证温度段
-      if (allValid) {
-        this.activeTab = 'segments'
-        await this.$nextTick()
-        if (!this.$refs.segmentEditor || !this.$refs.segmentEditor.validate()) {
-          this.$message.error('温度段配置有误，请检查')
-          allValid = false
-        }
-      }
-
-      // 验证保护气氛
-      if (allValid) {
-        this.activeTab = 'atmosphere'
-        await this.$nextTick()
-        if (!this.$refs.atmosphereEditor || !this.$refs.atmosphereEditor.validate()) {
-          this.$message.error('保护气氛配置有误，请检查')
-          allValid = false
-        }
-      }
-
-      // 验证风机参数
-      if (allValid) {
-        this.activeTab = 'fan'
-        await this.$nextTick()
-        if (!this.$refs.fanEditor || !this.$refs.fanEditor.validate()) {
-          this.$message.error('风机参数配置有误，请检查')
-          allValid = false
-        }
-      }
-
-      if (!allValid) {
+      this.activeTab = 'segments'
+      await this.$nextTick()
+      if (!this.$refs.segmentEditor || !this.$refs.segmentEditor.validate()) {
+        this.$message.error('温度段配置有误，请检查')
         return
       }
 
+      // 验证保护气氛
+      this.activeTab = 'atmosphere'
+      await this.$nextTick()
+      if (!this.$refs.atmosphereEditor || !this.$refs.atmosphereEditor.validate()) {
+        this.$message.error('保护气氛配置有误，请检查')
+        return
+      }
+
+      // 验证风机参数
+      this.activeTab = 'fan'
+      await this.$nextTick()
+      if (!this.$refs.fanEditor || !this.$refs.fanEditor.validate()) {
+        this.$message.error('风机参数配置有误，请检查')
+        return
+      }
+
+      // 所有验证通过，开始提交
       if (this.submitting) return
       this.submitting = true
       this.errorMessage = ''

@@ -10,124 +10,108 @@
     <el-row :gutter="20" class="routing-form-container">
       <!-- Left Panel -->
       <el-col :span="18">
-        <!--
-          启用sync-changes确保基础表单数据与步骤编辑操作保持同步
-          解决在添加、移动、删除工序步骤时基础信息被意外清空的问题
-          @since 2024-12-19 - 修复数据一致性bug
-        -->
-        <enhanced-form
+        <el-form
           ref="routingForm"
-          :data.sync="formData"
+          :model="formData"
           :rules="formRules"
-          :mode="mode"
           label-width="110px"
-          :show-footer="false"
-          :clear-validate-on-data-update="true"
-          :disable-initial-validation="true"
-          :validate-on-data-change="false"
-          :sync-changes="true"
+          size="small"
+          :disabled="mode === 'view'"
         >
-          <template #default="{ form, mode: formMode }">
-            <div class="form-section">
-              <div class="section-title">一、路线基本信息</div>
-              <el-row :gutter="20">
-                <el-col :span="8">
-                  <el-form-item label="路线代码" prop="code">
-                    <el-input
-                      v-model="form.code"
-                      placeholder="请输入路线代码"
-                      maxlength="30"
-                      show-word-limit
-                      :disabled="formMode !== 'create'"
-                      @blur="debouncedHandleCodeBlur"
+          <div class="form-section">
+            <div class="section-title">一、路线基本信息</div>
+            <el-row :gutter="20">
+              <el-col :span="8">
+                <el-form-item label="路线代码" prop="code">
+                  <el-input
+                    v-model="formData.code"
+                    placeholder="请输入路线代码"
+                    maxlength="30"
+                    show-word-limit
+                    :disabled="mode !== 'create'"
+                    @blur="debouncedHandleCodeBlur"
+                  />
+                  <i v-if="checkingCode" class="el-icon-loading input-suffix" />
+                  <div class="field-hint">路线代码必须唯一，建议使用大写字母、数字和下划线</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="路线名称" prop="name">
+                  <el-input
+                    v-model="formData.name"
+                    placeholder="请输入路线名称"
+                    maxlength="50"
+                    show-word-limit
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="版本" prop="version">
+                  <el-input v-model="formData.version" disabled />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="8">
+                <el-form-item label="路线类型" prop="type">
+                  <el-select
+                    v-model="formData.type"
+                    placeholder="请选择路线类型"
+                    style="width: 100%"
+                    @change="handleTypeChange"
+                  >
+                    <el-option
+                      v-for="item in routingTypeOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
                     />
-                    <i v-if="checkingCode" class="el-icon-loading input-suffix" />
-                    <div class="field-hint">路线代码必须唯一，建议使用大写字母、数字和下划线</div>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="路线名称" prop="name">
-                    <el-input
-                      v-model="form.name"
-                      placeholder="请输入路线名称"
-                      maxlength="50"
-                      show-word-limit
-                      :disabled="formMode === 'view'"
+                  </el-select>
+                  <div class="field-hint">{{ getTypeDescription(formData.type) }}</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="适用产品" prop="applicableProducts">
+                  <el-select
+                    v-model="formData.applicableProducts"
+                    multiple
+                    filterable
+                    remote
+                    reserve-keyword
+                    collapse-tags
+                    placeholder="请输入产品代码或名称进行搜索"
+                    style="width: 100%;"
+                    :remote-method="debouncedRemoteSearchProducts"
+                    :loading="productLoading"
+                    no-data-text="请输入关键词搜索产品"
+                    loading-text="搜索中..."
+                  >
+                    <el-option
+                      v-for="item in productOptions"
+                      :key="item.id"
+                      :label="item.code + (item.name ? ' ' + item.name : '') + (item.lifecycleStatus === 'discontinued' ? ' (已停产)' : '')"
+                      :value="item.code"
+                      :disabled="item.lifecycleStatus === 'discontinued'"
+                      :class="{ 'discontinued-product': item.lifecycleStatus === 'discontinued' }"
                     />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="版本" prop="version">
-                    <el-input v-model="form.version" disabled />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              <el-row :gutter="20">
-
-                <el-col :span="8">
-                  <el-form-item label="路线类型" prop="type">
-                    <el-select
-                      v-model="form.type"
-                      placeholder="请选择路线类型"
-                      style="width: 100%"
-                      :disabled="formMode === 'view'"
-                      @change="handleTypeChange"
-                    >
-                      <el-option
-                        v-for="item in routingTypeOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                      />
-                    </el-select>
-                    <div class="field-hint">{{ getTypeDescription(form.type) }}</div>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="适用产品" prop="applicableProducts">
-                    <el-select
-                      v-model="form.applicableProducts"
-                      multiple
-                      filterable
-                      remote
-                      reserve-keyword
-                      collapse-tags
-                      placeholder="请输入产品代码或名称进行搜索"
-                      style="width: 100%;"
-                      :disabled="formMode === 'view'"
-                      :remote-method="debouncedRemoteSearchProducts"
-                      :loading="productLoading"
-                      no-data-text="请输入关键词搜索产品"
-                      loading-text="搜索中..."
-                    >
-                      <el-option
-                        v-for="item in productOptions"
-                        :key="item.id"
-                        :label="item.code + (item.name ? ' ' + item.name : '') + (item.lifecycleStatus === 'discontinued' ? ' (已停产)' : '')"
-                        :value="item.code"
-                        :disabled="item.lifecycleStatus === 'discontinued'"
-                        :class="{ 'discontinued-product': item.lifecycleStatus === 'discontinued' }"
-                      />
-                    </el-select>
-                    <div class="field-hint">输入产品代码或名称进行搜索，支持模糊匹配</div>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="状态" prop="status">
-                    <StatusTag
-                      v-if="form.status"
-                      :status="form.status"
-                      :text-map="statusTextMap"
-                      :type-map="statusTypeMap"
-                    />
-                    <span v-else>-</span>
-                  </el-form-item>
-                </el-col>
-              </el-row>
-
-            </div>
-          </template>
-        </enhanced-form>
+                  </el-select>
+                  <div class="field-hint">输入产品代码或名称进行搜索，支持模糊匹配</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="状态" prop="status">
+                  <StatusTag
+                    v-if="formData.status"
+                    :status="formData.status"
+                    :text-map="statusTextMap"
+                    :type-map="statusTypeMap"
+                  />
+                  <span v-else>-</span>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+        </el-form>
 
         <div class="form-section">
           <routing-steps-editor
@@ -173,7 +157,6 @@
 
 <script>
 import BaseDrawer from '@/components/Drawer'
-import EnhancedForm from '@/components/EnhancedForm'
 import StatusTag from '@/components/StatusTag'
 import RoutingStepsEditor from './RoutingStepsEditor.vue'
 import StepDetailsForm from './StepDetailsForm.vue'
@@ -188,7 +171,6 @@ export default {
   name: 'RoutingFormDrawer',
   components: {
     BaseDrawer,
-    EnhancedForm,
     StatusTag,
     RoutingStepsEditor,
     StepDetailsForm,
@@ -468,14 +450,19 @@ export default {
     },
     // --- Form Submission ---
     async handleSubmit(andContinue = false) {
-      try {
-        await this.$refs.routingForm.validate()
+      // 验证表单
+      this.$refs.routingForm.validate(async(valid) => {
+        if (!valid) {
+          this.$message.warning('请检查表单填写是否正确')
+          return
+        }
 
         if (!this.formData.steps || this.formData.steps.length === 0) {
           this.$message.warning('请至少添加一个工序步骤')
           return
         }
         if (!this.formData.applicableProducts || this.formData.applicableProducts.length === 0) {
+          this.$message.warning('请选择适用产品')
           return
         }
 
@@ -496,36 +483,40 @@ export default {
           }
         }
 
-        this.loading = true
-        const apiCall = this.mode === 'create' ? createRouting : updateRouting
-        const response = await apiCall(this.formData)
+        try {
+          this.loading = true
+          const apiCall = this.mode === 'create' ? createRouting : updateRouting
+          const response = await apiCall(this.formData)
 
-        this.$message.success(response.message || '操作成功')
+          this.$message.success(response.message || '操作成功')
 
-        this.$emit('success', { mode: this.mode, data: this.formData, continueEdit: andContinue })
+          this.$emit('success', { mode: this.mode, data: this.formData, continueEdit: andContinue })
 
-        if (andContinue) {
-          // 保存并继续 - 重置表单但不关闭抽屉
-          this.handleReset()
-        } else {
-          // 普通保存 - 关闭抽屉
-          this.drawerVisible = false
+          if (andContinue) {
+            // 保存并继续 - 重置表单但不关闭抽屉
+            this.handleReset()
+          } else {
+            // 普通保存 - 关闭抽屉
+            this.drawerVisible = false
+          }
+        } catch (error) {
+          const errorMessage = error.response?.data?.message || error.message || '操作失败，请稍后重试'
+          this.$message.error(errorMessage)
+        } finally {
+          this.loading = false
         }
-      } catch (error) {
-        const errorMessage = error.response?.data?.message || error.message || '操作失败，请稍后重试'
-        this.$message.error(errorMessage)
-        return // 确保API失败时不继续执行
-      } finally {
-        this.loading = false
-      }
+      })
     },
     handleCancel() {
       this.drawerVisible = false
     },
     handleReset() {
-      // 点击重置按钮时重置表单数据，自动清除校验提示（最佳实践）
+      // 点击重置按钮时重置表单数据，清除校验提示
       this.formData = this.initFormData()
       this.selectedStep = null
+      this.$nextTick(() => {
+        this.$refs.routingForm && this.$refs.routingForm.clearValidate()
+      })
     },
     /**
      * 确认流程逻辑重置操作
