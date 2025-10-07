@@ -256,17 +256,17 @@ export default {
       this.listError = ''
       try {
         const response = await fetchProcessTemplateList(query)
-        const { templates, pagination } = response.data
+        const { templates = [], pagination = {}} = response.data || {}
         this.tableData = Array.isArray(templates) ? templates : []
         this.pagination = {
-          page: pagination.page,
-          limit: pagination.limit,
-          total: pagination.totalResults
+          page: pagination.page || query.page || 1,
+          limit: pagination.limit || query.limit || 10,
+          total: pagination.totalResults || 0
         }
         this.currentQuery = {
           ...query,
-          page: pagination.page,
-          limit: pagination.limit
+          page: this.pagination.page,
+          limit: this.pagination.limit
         }
         this.syncRouteQuery()
       } catch (error) {
@@ -705,7 +705,7 @@ export default {
 <style lang="scss" scoped>
 .process-parameter-management {
   position: relative;
-  padding: 2px;
+  padding: 20px;
 
   &__global-error {
     margin-top: 16px;
