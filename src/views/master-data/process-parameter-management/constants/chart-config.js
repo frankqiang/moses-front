@@ -4,9 +4,13 @@
  * 创建日期：2025-09-29
  * 修改记录：
  *   - 2025-09-29: 初始创建，提供TASK002 P0阶段图表配置
+ *   - 2025-09-30: 重新导出SEGMENT_COLOR_MAP供TemperatureCurveViewer使用
  */
 
 import { SEGMENT_TYPES, SEGMENT_COLOR_MAP } from './process-parameter-management'
+
+// 重新导出SEGMENT_COLOR_MAP供其他组件使用
+export { SEGMENT_COLOR_MAP }
 
 export const TEMPERATURE_CHART_CONFIG = {
   grid: {
