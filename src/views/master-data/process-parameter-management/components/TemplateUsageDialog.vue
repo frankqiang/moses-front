@@ -29,13 +29,13 @@
 
         <section class="template-usage-dialog__section">
           <header class="template-usage-dialog__section-header">
-          <div class="template-usage-dialog__section-title">
-            <h3>{{ (template && template.templateName) || '未命名模板' }}</h3>
-            <span class="template-usage-dialog__code">{{ template && template.templateCode }}</span>
-          </div>
-          <StatusTag
-            v-if="template && template.status"
-            :status="template.status"
+            <div class="template-usage-dialog__section-title">
+              <h3>{{ (template && template.templateName) || '未命名模板' }}</h3>
+              <span class="template-usage-dialog__code">{{ template && template.templateCode }}</span>
+            </div>
+            <StatusTag
+              v-if="template && template.status"
+              :status="template.status"
               :text-map="templateStatusConfig.textMap"
               :type-map="templateStatusConfig.typeMap"
               size="mini"

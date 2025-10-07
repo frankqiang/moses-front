@@ -128,10 +128,10 @@
           <div class="version-overview-header">
             <div class="version-overview-header__title">
               <h3 class="version-overview-header__name">
-                {{ selectedVersion?.versionNumber || '未选择版本' }}
+                {{ (selectedVersion && selectedVersion.versionNumber) || '未选择版本' }}
               </h3>
               <StatusTag
-                v-if="selectedVersion?.status"
+                v-if="selectedVersion && selectedVersion.status"
                 :status="selectedVersion.status"
                 :text-map="versionStatusConfig.textMap"
                 :type-map="versionStatusConfig.typeMap"
@@ -156,25 +156,25 @@
               </el-button>
             </div>
             <p class="version-overview-header__description">
-              {{ selectedVersion?.versionDescription || '尚未填写版本说明' }}
+              {{ (selectedVersion && selectedVersion.versionDescription) || '尚未填写版本说明' }}
             </p>
 
             <div class="version-overview-header__meta">
               <div class="version-meta-item">
                 <span class="version-meta-item__label">创建时间</span>
-                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.createdAt) }}</span>
+                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion && selectedVersion.createdAt) }}</span>
               </div>
               <div class="version-meta-item">
                 <span class="version-meta-item__label">最后更新时间</span>
-                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.updatedAt) }}</span>
+                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion && selectedVersion.updatedAt) }}</span>
               </div>
               <div class="version-meta-item">
                 <span class="version-meta-item__label">生效时间</span>
-                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.effectiveDate) }}</span>
+                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion && selectedVersion.effectiveDate) }}</span>
               </div>
               <div class="version-meta-item">
                 <span class="version-meta-item__label">失效时间</span>
-                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion?.expiryDate) }}</span>
+                <span class="version-meta-item__value">{{ formatDateTime(selectedVersion && selectedVersion.expiryDate) }}</span>
               </div>
             </div>
           </div>
@@ -210,7 +210,7 @@
                   {{ (templateDetail.applicableProducts || []).length || 0 }}
                 </el-descriptions-item>
                 <el-descriptions-item label="最新版本">
-                  {{ templateDetail.latestVersion?.versionNumber || '-' }}
+                  {{ (templateDetail.latestVersion && templateDetail.latestVersion.versionNumber) || '-' }}
                 </el-descriptions-item>
               </el-descriptions>
               <el-empty v-else description="请选择版本" />
@@ -553,7 +553,7 @@ export default {
 
         this.templateDetail = detailResponse.data || null
 
-        const latestVersion = detailResponse.data?.latestVersion
+        const latestVersion = detailResponse.data && detailResponse.data.latestVersion
         if (latestVersion) {
           this.ensureVersionInList(latestVersion)
         }
@@ -562,7 +562,7 @@ export default {
         this.prepareCurveComparison()
       } catch (error) {
         console.error('[VersionCenterDrawer] initialize failed', error)
-        this.errorMessage = error?.message || '加载工艺模板版本信息失败，请稍后重试'
+        this.errorMessage = (error && error.message) || '加载工艺模板版本信息失败，请稍后重试'
       } finally {
         this.loading = false
       }
@@ -586,11 +586,13 @@ export default {
           status: this.versionStatusFilter !== 'ALL' ? this.versionStatusFilter : undefined
         })
 
-        const list = response.data?.versions?.list || []
+        const versions = response.data && response.data.versions
+        const list = (versions && versions.list) || []
+        const pagination = versions && versions.pagination
         this.versionPagination = {
-          page: response.data?.versions?.pagination?.page || this.versionPagination.page,
-          limit: response.data?.versions?.pagination?.limit || this.versionPagination.limit,
-          totalResults: response.data?.versions?.pagination?.totalResults || list.length
+          page: (pagination && pagination.page) || this.versionPagination.page,
+          limit: (pagination && pagination.limit) || this.versionPagination.limit,
+          totalResults: (pagination && pagination.totalResults) || list.length
         }
 
         if (reset) {
@@ -603,7 +605,7 @@ export default {
       } catch (error) {
         console.error('[VersionCenterDrawer] fetchVersionList failed', error)
         if (!this.errorMessage) {
-          this.errorMessage = error?.message || '获取版本列表失败，请稍后重试'
+          this.errorMessage = (error && error.message) || '获取版本列表失败，请稍后重试'
         }
         return null
       } finally {
@@ -626,12 +628,12 @@ export default {
     mergeVersionList(existing, incoming) {
       const map = new Map()
       existing.forEach(item => {
-        if (item?.id) {
+        if (item && item.id) {
           map.set(item.id, item)
         }
       })
       incoming.forEach(item => {
-        if (item?.id) {
+        if (item && item.id) {
           map.set(item.id, item)
         }
       })
@@ -648,13 +650,13 @@ export default {
         return
       }
 
-      const latestVersionId = this.templateDetail?.latestVersion?.id
+      const latestVersionId = this.templateDetail && this.templateDetail.latestVersion && this.templateDetail.latestVersion.id
       if (latestVersionId && this.versionList.some(item => item.id === latestVersionId)) {
         this.selectedVersionId = latestVersionId
         return
       }
 
-      this.selectedVersionId = this.versionList[0]?.id || ''
+      this.selectedVersionId = (this.versionList[0] && this.versionList[0].id) || ''
     },
 
     handleVersionSelect(versionId) {
@@ -735,7 +737,7 @@ export default {
         })
       } catch (error) {
         console.error('[VersionCenterDrawer] handleParametersSave failed', error)
-        const message = error?.message || '保存参数失败，请稍后重试'
+        const message = (error && error.message) || '保存参数失败，请稍后重试'
         this.errorMessage = message
         this.$message.error(message)
       } finally {
@@ -775,7 +777,7 @@ export default {
 
       this.curveComparisonVersions = comparison
 
-      const capability = this.templateDetail?.latestVersion?.deviceCapability || {}
+      const capability = (this.templateDetail && this.templateDetail.latestVersion && this.templateDetail.latestVersion.deviceCapability) || {}
       this.curveDeviceCapability = {
         min: capability.minTemperature ?? 0,
         max: capability.maxTemperature ?? 1200
@@ -785,7 +787,7 @@ export default {
     },
 
     popCurveWarningIfNeeded() {
-      const segments = this.selectedVersion?.segments || []
+      const segments = (this.selectedVersion && this.selectedVersion.segments) || []
       if (!segments.length) {
         return
       }
@@ -870,7 +872,7 @@ export default {
       )
 
       if (this.templateDetail) {
-        if (this.templateDetail.latestVersion?.id === updatedVersion.id) {
+        if (this.templateDetail.latestVersion && this.templateDetail.latestVersion.id === updatedVersion.id) {
           this.templateDetail = {
             ...this.templateDetail,
             latestVersion: { ...updatedVersion }
@@ -967,7 +969,7 @@ export default {
         })
       } catch (error) {
         console.error(`[VersionCenterDrawer] ${action} failed`, error)
-        const message = error?.message || '操作失败，请稍后重试'
+        const message = (error && error.message) || '操作失败，请稍后重试'
         this.errorMessage = message
         this.$message.error(message)
       } finally {

@@ -91,7 +91,7 @@
       v-if="dangerConfirm.visible"
       :visible.sync="dangerConfirm.visible"
       :operation="dangerConfirm.operation"
-      :template-name="dangerConfirm.template?.templateName"
+      :template-name="dangerConfirm.template && dangerConfirm.template.templateName"
       :confirm-keyword="dangerConfirm.keyword"
       :show-reason="true"
       @confirm="handleDangerConfirm"
@@ -280,7 +280,7 @@ export default {
         this.syncRouteQuery()
       } catch (error) {
         console.error('[ProcessParameterManagement] fetchTemplateList failed', error)
-        this.listError = error?.message || ERROR_MESSAGES.fetchList
+        this.listError = (error && error.message) || ERROR_MESSAGES.fetchList
         this.globalError = this.listError
       } finally {
         this.loading.list = false
@@ -411,7 +411,7 @@ export default {
         visible: true,
         mode: 'update',
         templateId: template.id,
-        versionId: template.latestVersion?.id || '',
+        versionId: (template.latestVersion && template.latestVersion.id) || '',
         initialData: template
       }
     },
@@ -421,7 +421,7 @@ export default {
         visible: true,
         mode: 'copy',
         templateId: template.id,
-        versionId: template.latestVersion?.id || '',
+        versionId: (template.latestVersion && template.latestVersion.id) || '',
         initialData: template
       }
     },
@@ -511,38 +511,38 @@ export default {
         }
       } catch (error) {
         console.error('[ProcessParameterManagement] handleApprovalAction failed', error)
-        this.$message.error(error?.message || '操作失败，请稍后重试')
+        this.$message.error((error && error.message) || '操作失败，请稍后重试')
       } finally {
         this.loading.action = false
       }
     },
 
     async handleCopyTemplate(template) {
-      if (!template?.id) return
+      if (!template || !template.id) return
       try {
         const detail = await getProcessTemplateDetail(template.id)
         this.formDrawer = {
           visible: true,
           mode: 'copy',
           templateId: template.id,
-          versionId: detail.data?.latestVersion?.id || '',
+          versionId: (detail.data && detail.data.latestVersion && detail.data.latestVersion.id) || '',
           initialData: detail.data || {}
         }
       } catch (error) {
         console.error('[ProcessParameterManagement] handleCopyTemplate failed', error)
-        this.$message.error(error?.message || '获取模板详情失败')
+        this.$message.error((error && error.message) || '获取模板详情失败')
       }
     },
 
     async handleDeleteTemplate(template) {
-      if (!template?.id) return
+      if (!template || !template.id) return
       this.openDangerConfirm('delete', template, async() => {
         await this.performDelete(template)
       })
     },
 
     async performDelete(template) {
-      if (!template?.id) return
+      if (!template || !template.id) return
       this.loading.action = true
       try {
         const response = await deleteProcessTemplate(template.id)
@@ -551,10 +551,10 @@ export default {
         this.fetchTemplateList()
       } catch (error) {
         console.error('[ProcessParameterManagement] performDelete failed', error)
-        if (error?.code === 'PTM_016' || error?.response?.data?.error?.code === 'PTM_016') {
+        if ((error && error.code === 'PTM_016') || (error && error.response && error.response.data && error.response.data.error && error.response.data.error.code === 'PTM_016')) {
           await this.handleOperationBlocked('delete', template, error)
         } else {
-          this.$message.error(error?.message || '删除失败，请稍后重试')
+          this.$message.error((error && error.message) || '删除失败，请稍后重试')
         }
       } finally {
         this.loading.action = false
@@ -573,10 +573,10 @@ export default {
         this.fetchTemplateList()
       } catch (error) {
         console.error('[ProcessParameterManagement] performVoidVersion failed', error)
-        if (error?.code === 'PTM_016' || error?.response?.data?.error?.code === 'PTM_016') {
+        if ((error && error.code === 'PTM_016') || (error && error.response && error.response.data && error.response.data.error && error.response.data.error.code === 'PTM_016')) {
           await this.handleOperationBlocked('void', template, error)
         } else {
-          this.$message.error(error?.message || '作废失败，请稍后重试')
+          this.$message.error((error && error.message) || '作废失败，请稍后重试')
         }
       } finally {
         this.loading.action = false
@@ -584,9 +584,10 @@ export default {
     },
 
     async handleOperationBlocked(operation, template, error) {
-      const { data } = error?.response || {}
-      const usage = data?.data || null
-      if (!template?.id) return
+      const response = error && error.response
+      const data = response && response.data
+      const usage = (data && data.data) || null
+      if (!template || !template.id) return
       this.usageDialog = {
         visible: true,
         loading: true,
@@ -602,12 +603,12 @@ export default {
         }
         this.usageDialog = {
           ...this.usageDialog,
-          usage: usageData?.usage || usageData,
+          usage: (usageData && usageData.usage) || usageData,
           loading: false
         }
       } catch (err) {
         console.error('[ProcessParameterManagement] fetch usage failed', err)
-        this.$message.error(err?.message || '获取引用详情失败，请稍后重试')
+        this.$message.error((err && err.message) || '获取引用详情失败，请稍后重试')
         this.usageDialog = {
           ...this.usageDialog,
           loading: false
@@ -631,7 +632,7 @@ export default {
     },
 
     async handleDangerConfirm({ reason }) {
-      if (!this.dangerConfirm.payload?.onConfirm || this.dangerConfirm.resolving) {
+      if (!(this.dangerConfirm.payload && this.dangerConfirm.payload.onConfirm) || this.dangerConfirm.resolving) {
         return
       }
       this.dangerConfirm.resolving = true
@@ -688,7 +689,7 @@ export default {
         }
       }).catch(() => null)
 
-      return input?.value?.trim() || ''
+      return (input && input.value && input.value.trim()) || ''
     },
 
     async handleExport(params) {
@@ -697,7 +698,7 @@ export default {
         this.$message.success('导出任务已提交，稍后请在消息中心查看结果')
       } catch (error) {
         console.error('[ProcessParameterManagement] handleExport failed', error)
-        this.$message.error(error?.message || '导出失败，请稍后重试')
+        this.$message.error((error && error.message) || '导出失败，请稍后重试')
       }
     },
 
@@ -707,7 +708,7 @@ export default {
     },
 
     handleColumnSettings() {
-      if (this.$refs.templateTable?.$refs.tableToolbar?.openColumnSettings) {
+      if (this.$refs.templateTable && this.$refs.templateTable.$refs.tableToolbar && this.$refs.templateTable.$refs.tableToolbar.openColumnSettings) {
         this.$refs.templateTable.$refs.tableToolbar.openColumnSettings()
       }
     },
