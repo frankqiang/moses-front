@@ -366,6 +366,9 @@ export default {
      * 获取操作按钮配置
      */
     getActionButtons(row) {
+      if (!row) {
+        return []
+      }
       const buttons = []
       const template = row
       const latestVersion = row.latestVersion
