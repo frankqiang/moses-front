@@ -14,9 +14,6 @@
       :loading="loading.list"
       :initial-params="initialSearchParams"
       @search="handleSearch"
-      @refresh="handleRefresh"
-      @create="handleCreateTemplate"
-      @column-settings="handleColumnSettings"
     />
 
     <!-- 模板列表 -->
@@ -686,11 +683,6 @@ export default {
       return (input && input.value && input.value.trim()) || ''
     },
 
-    handleColumnSettings() {
-      if (this.$refs.templateTable && this.$refs.templateTable.$refs.tableToolbar && this.$refs.templateTable.$refs.tableToolbar.openColumnSettings) {
-        this.$refs.templateTable.$refs.tableToolbar.openColumnSettings()
-      }
-    },
     handleVersionActionSuccess() {
       this.fetchTemplateList()
     },
@@ -713,7 +705,7 @@ export default {
 <style lang="scss" scoped>
 .process-parameter-management {
   position: relative;
-  padding: 24px;
+  padding: 2px;
 
   &__global-error {
     margin-top: 16px;

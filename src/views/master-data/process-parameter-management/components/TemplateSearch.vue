@@ -19,48 +19,11 @@
       @reset="handleReset"
       @change="handleSearchChange"
     />
-
-    <!-- 工具栏 - 集成TableToolbar -->
-    <TableToolbar
-      :loading="loading"
-      :enable-refresh="true"
-      :enable-export="false"
-      :enable-column-settings="true"
-      :enable-batch-action="false"
-      @create="handleCreate"
-      @refresh="handleRefresh"
-      @column-settings="handleColumnSettings"
-    >
-      <!-- 自定义工具栏左侧内容 -->
-      <template #left>
-        <el-button
-          type="primary"
-          icon="el-icon-plus"
-          :loading="loading"
-          @click="handleCreate"
-        >
-          新建模板
-        </el-button>
-      </template>
-
-      <!-- 自定义工具栏右侧内容 -->
-      <template #right>
-        <el-tooltip content="搜索条件会自动同步到URL，方便分享链接" placement="top">
-          <el-button
-            icon="el-icon-link"
-            circle
-            size="small"
-            @click="copyCurrentUrl"
-          />
-        </el-tooltip>
-      </template>
-    </TableToolbar>
   </div>
 </template>
 
 <script>
 import SearchForm from '@/components/SearchForm'
-import TableToolbar from '@/components/TableToolbar'
 import { SEARCH_FORM_CONFIG, DEFAULT_PAGINATION, DEFAULT_SORT } from '../constants'
 import { fetchProductOptions } from '../api'
 import { debounce } from '@/utils'
@@ -68,8 +31,7 @@ import { debounce } from '@/utils'
 export default {
   name: 'TemplateSearch',
   components: {
-    SearchForm,
-    TableToolbar
+    SearchForm
   },
   props: {
     // 控制组件loading状态
@@ -334,47 +296,6 @@ export default {
       }
 
       this.searchParams = syncedParams
-    },
-
-    /**
-     * 复制当前页面URL到剪贴板
-     */
-    async copyCurrentUrl() {
-      try {
-        const url = window.location.href
-        await navigator.clipboard.writeText(url)
-        this.$message.success('链接已复制到剪贴板，可以分享给其他人')
-      } catch (error) {
-        // 降级处理：手动选择
-        const input = document.createElement('input')
-        input.value = window.location.href
-        document.body.appendChild(input)
-        input.select()
-        document.execCommand('copy')
-        document.body.removeChild(input)
-        this.$message.success('链接已复制到剪贴板')
-      }
-    },
-
-    /**
-     * 处理刷新操作
-     */
-    handleRefresh() {
-      this.$emit('refresh')
-    },
-
-    /**
-     * 处理创建操作
-     */
-    handleCreate() {
-      this.$emit('create')
-    },
-
-    /**
-     * 处理列设置操作
-     */
-    handleColumnSettings() {
-      this.$emit('column-settings')
     },
 
     /**
