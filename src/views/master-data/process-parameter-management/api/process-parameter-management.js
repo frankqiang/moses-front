@@ -9,8 +9,8 @@
 import service, { ApiError } from '@/utils/request'
 import { formatQueryParams } from '@/utils'
 
-const BASE_URL = '/v1/mdm/process-templates'
-const PRODUCT_URL = '/v1/mdm/aluminum-foil-products'
+const BASE_URL = '/mdm/process-templates'
+const PRODUCT_URL = '/mdm/aluminum-foil-products'
 
 function assertTemplateId(templateId) {
   if (!templateId) {
