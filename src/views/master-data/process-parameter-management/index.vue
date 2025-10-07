@@ -27,7 +27,6 @@
       :loading="loading.list"
       :load-error="listError"
       :pagination="pagination"
-      :visible-columns="visibleColumns"
       :export-api="exportProcessTemplates"
       :export-params="currentQuery"
       :toolbar-buttons="toolbarButtons"
