@@ -24,12 +24,11 @@
     <TableToolbar
       :loading="loading"
       :enable-refresh="true"
-      :enable-export="true"
+      :enable-export="false"
       :enable-column-settings="true"
       :enable-batch-action="false"
       @create="handleCreate"
       @refresh="handleRefresh"
-      @export="handleExport"
       @column-settings="handleColumnSettings"
     >
       <!-- 自定义工具栏左侧内容 -->
@@ -86,8 +85,8 @@ export default {
   },
   data() {
     return {
-      // 搜索表单配置（处理远程数据）
-      searchFormConfig: this.processSearchFormConfig(SEARCH_FORM_CONFIG),
+      // 搜索表单配置（深拷贝以便动态修改options）
+      searchFormConfig: JSON.parse(JSON.stringify(SEARCH_FORM_CONFIG)),
       // 搜索参数
       searchParams: {
         keyword: '',
@@ -105,7 +104,9 @@ export default {
         updatedAtTo: '',
         sortBy: DEFAULT_SORT,
         ...DEFAULT_PAGINATION
-      }
+      },
+      // 产品选项列表
+      productOptions: []
     }
   },
   watch: {
@@ -133,12 +134,15 @@ export default {
       deep: true
     }
   },
-  created() {
+  async created() {
     // 创建防抖搜索函数
     this.debouncedSearch = debounce(this.executeSearch, 300)
 
     // 标记是否应该从路由同步（避免初始化时的循环）
     this.shouldSyncFromRoute = false
+
+    // 加载产品选项
+    await this.loadProductOptions()
 
     // 在下一个tick后启用路由同步
     this.$nextTick(() => {
@@ -147,35 +151,25 @@ export default {
   },
   methods: {
     /**
-     * 处理搜索表单配置，注入远程数据处理方法
+     * 加载产品选项列表
      */
-    processSearchFormConfig(config) {
-      return config.map(item => {
-        if (item.type === 'remote-select' && item.remoteConfig?.action === 'fetchProductOptions') {
-          return {
-            ...item,
-            remoteMethod: this.fetchProductOptions
-          }
-        }
-        return item
-      })
-    },
-
-    /**
-     * 获取适用产品选项（远程数据）
-     */
-    async fetchProductOptions(keyword = '') {
+    async loadProductOptions() {
       try {
-        const response = await fetchProductOptions({ keyword, limit: 50 })
-        return response.data.options.map(product => ({
+        const response = await fetchProductOptions({ keyword: '', limit: 100 })
+        this.productOptions = response.data.options.map(product => ({
           value: product.id,
           label: `${product.productCode} - ${product.productName}`,
-          disabled: product.lifecycleStatus !== '在产'
+          disabled: product.lifecycleStatus !== '量产'
         }))
+
+        // 更新searchFormConfig中的产品选项
+        const productField = this.searchFormConfig.find(item => item.prop === 'applicableProductIds')
+        if (productField) {
+          productField.options = this.productOptions
+        }
       } catch (error) {
-        console.error('获取产品选项失败:', error)
-        this.$message.warning('获取产品选项失败，请稍后重试')
-        return []
+        console.error('加载产品选项失败:', error)
+        this.$message.warning('加载产品选项失败，请稍后重试')
       }
     },
 
@@ -374,15 +368,6 @@ export default {
      */
     handleCreate() {
       this.$emit('create')
-    },
-
-    /**
-     * 处理导出操作
-     */
-    handleExport() {
-      // 传递当前搜索条件用于导出
-      const exportParams = this.formatSearchParams(this.searchParams)
-      this.$emit('export', exportParams)
     },
 
     /**

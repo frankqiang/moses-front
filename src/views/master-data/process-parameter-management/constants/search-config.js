@@ -43,19 +43,17 @@ export const SEARCH_FORM_CONFIG = [
     priority: 'primary'
   },
   {
-    type: 'remote-select',
+    type: 'select',
     prop: 'applicableProductIds',
     label: '适用产品',
     placeholder: '搜索并选择适用产品',
     multiple: true,
     collapseTags: true,
     clearable: true,
-    remoteConfig: {
-      action: 'fetchProductOptions',
-      valueField: 'id',
-      labelField: 'productName',
-      extraFields: ['productCode', 'lifecycleStatus']
-    },
+    filterable: true,
+    remote: true,
+    reserveKeyword: true,
+    options: [], // 动态加载的产品选项
     priority: 'primary'
   },
   {
