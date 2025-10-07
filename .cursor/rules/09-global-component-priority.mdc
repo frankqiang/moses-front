@@ -21,13 +21,13 @@ alwaysApply: true
   - 支持10万+条数据的虚拟滚动
   - 完整的错误边界保护
   - 自动防抖处理
-- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第56-133行
+- **参考实现**：[ProductTable.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductTable.vue) 第37-57行
 
 #### [TableToolbar](mdc:src/components/TableToolbar/index.vue) - 表格工具栏组件
 - **功能**：完整的表格操作工具栏，集成所有表格相关操作
 - **包含功能**：搜索、刷新、导入导出、列设置、批量操作、状态切换
 - **使用场景**：所有需要表格操作的页面
-- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第13-53行
+- **参考实现**：[ProductTable.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductTable.vue) 第3-35行
 
 ### 📝 表单相关组件
 
@@ -39,22 +39,29 @@ alwaysApply: true
   - 动态组件渲染
   - 支持插槽自定义
 - **使用场景**：所有搜索功能
-- **参考实现**：[SearchForm.vue](mdc:src/views/master-data/process-management/operations/components/SearchForm.vue)
-
-#### [EnhancedForm](mdc:src/components/EnhancedForm/index.vue) - 增强表单组件
-- **功能**：专注表单数据处理和验证的增强组件
-- **核心特性**：
-  - 支持创建、更新、查看三种模式
-  - 防抖保护、智能按钮状态
-  - 键盘快捷键支持
-  - 变更检测和自动保存
-- **使用场景**：所有复杂表单场景
-- **参考实现**：[OperationFormDrawer.vue](mdc:src/views/master-data/process-management/operations/components/OperationFormDrawer.vue) 第16-163行
+- **参考实现**：[ProductSearch.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductSearch.vue)
 
 #### [Drawer](mdc:src/components/Drawer/index.vue) - 抽屉组件（BaseDrawer）
 - **功能**：集成抽屉的容器组件，支持表单、详情等内容
 - **使用场景**：侧边栏表单操作、详情查看
-- **参考实现**：[OperationFormDrawer.vue](mdc:src/views/master-data/process-management/operations/components/OperationFormDrawer.vue) 第7-14行
+- **参考实现**：[ProductFormDrawer.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductFormDrawer.vue)
+
+#### ⚠️ **表单处理推荐：直接使用 el-form**
+- **推荐方案**：对于标准的 CRUD 表单，**直接使用 Element UI 的 `el-form`**
+- **性能优势**：
+  - 无深度监听开销，输入响应快 10-20 倍
+  - 无深度克隆，内存占用显著降低
+  - 代码简洁，易于理解和维护
+- **使用场景**：所有表单场景（创建、更新、查看）
+- **参考实现**：[ProductFormDrawer.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductFormDrawer.vue)
+
+#### ❌ **已废弃：EnhancedForm**
+- **废弃原因**：存在严重性能问题
+  - 深度监听导致每次输入都遍历整个表单对象
+  - 频繁的 `cloneDeep` 操作消耗大量 CPU 和内存
+  - 会导致页面卡顿，影响用户体验
+- **替代方案**：直接使用 `el-form`
+- **迁移指南**：将 `<enhanced-form>` 改为 `<el-form>`，移除插槽语法，直接绑定 `formData`
 
 ### 🎛 操作相关组件
 
@@ -66,7 +73,7 @@ alwaysApply: true
   - 无障碍访问支持
   - 支持文本模式和普通模式
 - **使用场景**：表格操作列、表单操作、批量操作
-- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第42-46行和第117-123行
+- **参考实现**：[ProductTable.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductTable.vue) 第25行和第95-105行
 
 #### [ExportButton](mdc:src/components/ExportButton/index.vue) - 导出按钮组件
 - **功能**：通用表格数据导出组件，支持Excel导出
@@ -89,12 +96,12 @@ alwaysApply: true
 #### [StatusTag](mdc:src/components/StatusTag/index.vue) - 状态标签组件
 - **功能**：标准化的状态显示标签，支持自定义映射
 - **使用场景**：状态字段展示
-- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第80-86行
+- **参考实现**：[ProductTable.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductTable.vue) 第73-80行
 
 #### [OverflowTagsPopover](mdc:src/components/OverflowTagsPopover/index.vue) - 溢出标签组件
 - **功能**：标签数量过多时的溢出处理，支持弹窗展示全部标签
 - **使用场景**：标签列表展示、关联资源类型展示
-- **参考实现**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue) 第99-113行
+- **参考实现**：[ProductTable.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductTable.vue) 第84-94行
 
 ### 🔧 通用功能组件
 
@@ -167,7 +174,7 @@ alwaysApply: true
 ### 不得重复实现
 
 1. **表格功能**：不得使用原生 `el-table` 重复实现已有的表格功能
-2. **表单功能**：不得重复实现搜索表单、增强表单的功能
+2. **表单功能**：不得重复实现搜索表单的功能
 3. **操作按钮**：不得重复实现操作按钮组的功能
 4. **分页功能**：不得重复实现分页组件的功能
 5. **导入导出**：不得重复实现导入导出功能
@@ -187,7 +194,6 @@ alwaysApply: true
 src/components/
 ├── BaseTable/              # 表格组件（替代el-table）
 ├── SearchForm/             # 搜索表单
-├── EnhancedForm/           # 增强表单
 ├── ActionButtons/          # 操作按钮组
 ├── TableToolbar/           # 表格工具栏
 ├── StatusTag/              # 状态标签
@@ -200,22 +206,24 @@ src/components/
 ├── BatchAction/            # 批量操作
 ├── ColumnSettings/         # 列设置
 └── ErrorHandler/           # 错误处理
+
+注意：EnhancedForm 已废弃，请使用 el-form
 ```
 
 ### 2. 功能关键词搜索
 - 表格 → BaseTable（完全替代 el-table）
 - 搜索 → SearchForm
-- 表单 → EnhancedForm + Drawer 组合
+- 表单 → el-form + Drawer 组合（**推荐**）
 - 按钮 → ActionButtons、ExportButton、ImportButton、RefreshButton
 - 工具栏 → TableToolbar（集成所有表格操作）
 - 状态 → StatusTag
 - 标签溢出 → OverflowTagsPopover
 
 ### 3. 组件组合模式（推荐）
-基于 [operations 模块](mdc:src/views/master-data/process-management/operations) 的最佳实践：
+基于 [铝箔产品管理模块](mdc:src/views/master-data/aluminum-foil-product-management) 的最佳实践：
 - **表格页面**：TableToolbar + BaseTable
 - **搜索功能**：SearchForm（配置驱动）
-- **表单抽屉**：Drawer + EnhancedForm
+- **表单抽屉**：Drawer + el-form（**高性能方案**）
 - **操作按钮**：ActionButtons（支持预设和自定义）
 - **状态显示**：StatusTag（自定义映射）
 - **标签展示**：OverflowTagsPopover（数量过多时）
@@ -240,23 +248,23 @@ src/components/
 ## 🎨 设计风格一致性要求
 
 ### 📋 参考标准模块
-所有后续模块开发**必须严格按照 `process-management/operations` 模块的设计风格和架构模式**，确保整个项目的一致性和可维护性。该模块是全局组件使用的最佳实践典范。
+所有后续模块开发**必须严格按照 `aluminum-foil-product-management` 模块的设计风格和架构模式**，确保整个项目的一致性和可维护性。该模块是全局组件使用的最佳实践典范。
 
 ### 🏗️ 模块架构标准
-参考 [operations模块](mdc:src/views/master-data/process-management/operations) 的完整架构：
+参考 [铝箔产品管理模块](mdc:src/views/master-data/aluminum-foil-product-management) 的完整架构：
 
 ```
-operations/
+aluminum-foil-product-management/
 ├── api/                    # API接口层
 │   ├── index.js           # 统一导出入口
-│   └── module-name.js     # 具体API实现
+│   └── aluminum-foil-product-management.js # 具体API实现
 ├── components/            # 组件层
-│   ├── OperationTable.vue    # 表格组件（使用BaseTable+TableToolbar）
-│   ├── SearchForm.vue        # 搜索组件（使用SearchForm）
-│   └── OperationFormDrawer.vue # 表单抽屉（使用Drawer+EnhancedForm）
+│   ├── ProductTable.vue      # 表格组件（使用BaseTable+TableToolbar）
+│   ├── ProductSearch.vue     # 搜索组件（使用SearchForm）
+│   └── ProductFormDrawer.vue # 表单抽屉（使用Drawer+el-form）
 ├── constants/             # 常量配置层
 │   ├── index.js          # 统一导出入口
-│   ├── module-name.js    # 基础常量
+│   ├── aluminum-foil-product-management.js # 基础常量
 │   ├── table-config.js   # 表格配置
 │   ├── form-config.js    # 表单配置
 │   ├── api-config.js     # API配置
@@ -272,13 +280,13 @@ operations/
 ### 📝 文件命名规范
 
 #### 组件命名
-- **主表格组件**：`{Module}Table.vue`（如：`UserTable.vue`）
-- **搜索组件**：`{Module}Search.vue` 或 `SearchForm.vue`
-- **表单抽屉**：`{Module}FormDrawer.vue`
+- **主表格组件**：`{Module}Table.vue`（如：`ProductTable.vue`）
+- **搜索组件**：`{Module}Search.vue`（如：`ProductSearch.vue`）
+- **表单抽屉**：`{Module}FormDrawer.vue`（如：`ProductFormDrawer.vue`）
 - **对话框组件**：`{Function}Dialog.vue`（如：`ResetPasswordDialog.vue`）
 
 #### 常量文件命名
-- **基础常量**：`{module-name}.js`（如：`user-management.js`）
+- **基础常量**：`{module-name}.js`（如：`aluminum-foil-product-management.js`）
 - **表格配置**：`table-config.js`
 - **表单配置**：`form-config.js`
 - **API配置**：`api-config.js`
@@ -291,7 +299,7 @@ operations/
 ### 📁 常量配置标准
 
 #### constants/index.js 统一导出
-参考 [operations/constants/index.js](mdc:src/views/master-data/process-management/operations/constants/index.js)：
+参考 [铝箔产品管理/constants/index.js](mdc:src/views/master-data/aluminum-foil-product-management/constants/index.js)：
 - 基础常量（状态、枚举等）
 - 表格配置 (table-config.js)
 - 表单配置 (form-config.js)
@@ -299,7 +307,7 @@ operations/
 - 消息配置 (messages-config.js)
 
 #### 表格配置标准
-参考 [operations/constants/table-config.js](mdc:src/views/master-data/process-management/operations/constants/table-config.js)：
+参考 [铝箔产品管理/constants/table-config.js](mdc:src/views/master-data/aluminum-foil-product-management/constants/table-config.js)：
 - TABLE_COLUMNS：列配置（prop、label、sortable、slotName等）
 - STATUS_CONFIG：状态配置（typeMap、textMap）
 
@@ -314,9 +322,9 @@ operations/
 ### 🌟 最佳实践参考
 
 #### 完整示例文件
-- **主页面**：[operations/index.vue](mdc:src/views/master-data/process-management/operations/index.vue)
-- **表格组件**：[OperationTable.vue](mdc:src/views/master-data/process-management/operations/components/OperationTable.vue)
-- **搜索组件**：[SearchForm.vue](mdc:src/views/master-data/process-management/operations/components/SearchForm.vue)
-- **表单抽屉**：[OperationFormDrawer.vue](mdc:src/views/master-data/process-management/operations/components/OperationFormDrawer.vue)
+- **主页面**：[index.vue](mdc:src/views/master-data/aluminum-foil-product-management/index.vue)
+- **表格组件**：[ProductTable.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductTable.vue)
+- **搜索组件**：[ProductSearch.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductSearch.vue)
+- **表单抽屉**：[ProductFormDrawer.vue](mdc:src/views/master-data/aluminum-foil-product-management/components/ProductFormDrawer.vue)
 
-通过严格遵循operations模块的设计风格和全局组件使用模式，确保整个项目的架构一致性、代码可维护性和团队开发效率。
+通过严格遵循铝箔产品管理模块的设计风格和全局组件使用模式，确保整个项目的架构一致性、代码可维护性和团队开发效率。

@@ -320,21 +320,28 @@ export const FORM_CONFIG = [
 // 表单验证规则配置
 export const FORM_CONFIGS = {
   create: {
-    code: [
+    productCode: [
       { required: true, message: '请填写产品编码', trigger: 'blur' },
       { min: 2, max: 50, message: '产品编码长度为2-50个字符', trigger: 'blur' },
       {
-        pattern: /^[A-Za-z][A-Za-z0-9_-]*$/,
-        message: '产品编码必须以字母开头，只能包含字母、数字、下划线和横线',
+        pattern: /^AF-[A-Z0-9]+-[A-Z0-9]+-[0-9]*\.?[0-9]+[xX][0-9]*\.?[0-9]+$/,
+        message: '产品编码格式应为：AF-合金-硬度-厚度x宽度',
         trigger: 'blur'
       }
     ],
-    name: [
+    productName: [
       { required: true, message: '请填写产品名称', trigger: 'blur' },
-      { min: 2, max: 100, message: '产品名称长度为2-100个字符', trigger: 'blur' }
+      { min: 1, max: 200, message: '产品名称长度为1-200个字符', trigger: 'blur' }
     ],
-    series: [
-      { required: true, message: '请选择产品系列', trigger: 'change' }
+    rawMaterialType: [
+      { required: true, message: '请填写原材料类型', trigger: 'blur' },
+      { min: 1, max: 100, message: '原材料类型长度为1-100个字符', trigger: 'blur' }
+    ],
+    alloyGrade: [
+      { required: true, message: '请填写合金牌号', trigger: 'blur' }
+    ],
+    temper: [
+      { required: true, message: '请填写状态/硬度', trigger: 'blur' }
     ],
     lifecycleStatus: [
       { required: true, message: '请选择生命周期状态', trigger: 'change' }
@@ -351,8 +358,8 @@ export const FORM_CONFIGS = {
             callback(new Error('厚度必须大于0'))
             return
           }
-          if (value > 1000) {
-            callback(new Error('厚度不能超过1000μm'))
+          if (value > 100) {
+            callback(new Error('厚度不能超过100mm'))
             return
           }
           callback()
@@ -393,8 +400,8 @@ export const FORM_CONFIGS = {
             callback(new Error('单位重量必须大于0'))
             return
           }
-          if (value > 1000) {
-            callback(new Error('单位重量不能超过1000g/m²'))
+          if (value > 10000) {
+            callback(new Error('单位重量不能超过10000kg'))
             return
           }
           callback()
@@ -402,19 +409,29 @@ export const FORM_CONFIGS = {
         trigger: 'change'
       }
     ],
-    processTemplates: [],
-    qualityStandards: [],
-    remarks: [
-      { max: 500, message: '备注不能超过500个字符', trigger: 'blur' }
+    unitWeightType: [
+      { required: true, message: '请选择单位重量类型', trigger: 'change' }
+    ],
+    processTemplateIds: [],
+    qualityStandardId: [],
+    description: [
+      { max: 500, message: '产品描述不能超过500个字符', trigger: 'blur' }
     ]
   },
   update: {
-    name: [
+    productName: [
       { required: true, message: '请填写产品名称', trigger: 'blur' },
-      { min: 2, max: 100, message: '产品名称长度为2-100个字符', trigger: 'blur' }
+      { min: 1, max: 200, message: '产品名称长度为1-200个字符', trigger: 'blur' }
     ],
-    series: [
-      { required: true, message: '请选择产品系列', trigger: 'change' }
+    rawMaterialType: [
+      { required: true, message: '请填写原材料类型', trigger: 'blur' },
+      { min: 1, max: 100, message: '原材料类型长度为1-100个字符', trigger: 'blur' }
+    ],
+    alloyGrade: [
+      { required: true, message: '请填写合金牌号', trigger: 'blur' }
+    ],
+    temper: [
+      { required: true, message: '请填写状态/硬度', trigger: 'blur' }
     ],
     lifecycleStatus: [
       { required: true, message: '请选择生命周期状态', trigger: 'change' }
@@ -431,8 +448,8 @@ export const FORM_CONFIGS = {
             callback(new Error('厚度必须大于0'))
             return
           }
-          if (value > 1000) {
-            callback(new Error('厚度不能超过1000μm'))
+          if (value > 100) {
+            callback(new Error('厚度不能超过100mm'))
             return
           }
           callback()
@@ -473,8 +490,8 @@ export const FORM_CONFIGS = {
             callback(new Error('单位重量必须大于0'))
             return
           }
-          if (value > 1000) {
-            callback(new Error('单位重量不能超过1000g/m²'))
+          if (value > 10000) {
+            callback(new Error('单位重量不能超过10000kg'))
             return
           }
           callback()
@@ -482,10 +499,13 @@ export const FORM_CONFIGS = {
         trigger: 'change'
       }
     ],
-    processTemplates: [],
-    qualityStandards: [],
-    remarks: [
-      { max: 500, message: '备注不能超过500个字符', trigger: 'blur' }
+    unitWeightType: [
+      { required: true, message: '请选择单位重量类型', trigger: 'change' }
+    ],
+    processTemplateIds: [],
+    qualityStandardId: [],
+    description: [
+      { max: 500, message: '产品描述不能超过500个字符', trigger: 'blur' }
     ]
   },
   view: {}

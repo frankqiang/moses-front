@@ -193,7 +193,7 @@ export function createProduct(productData) {
 export function updateProduct(productId, productData) {
   return request({
     url: `${BASE_URL}/${productId}`,
-    method: 'put',
+    method: 'patch',
     data: productData
   })
 }

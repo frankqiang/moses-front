@@ -44,8 +44,9 @@
     <product-form-drawer
       :visible.sync="formDrawerVisible"
       :mode="formMode"
-      :product-data="currentProduct"
-      @success="handleFormSuccess"
+      :product-id="currentProductId"
+      @created="handleFormSuccess"
+      @updated="handleFormSuccess"
       @close="handleFormClose"
     />
   </div>
@@ -56,10 +57,7 @@ import ProductSearch from './components/ProductSearch.vue'
 import ProductTable from './components/ProductTable.vue'
 import ProductFormDrawer from './components/ProductFormDrawer.vue'
 import { debounce } from '@/utils'
-import {
-  fetchFoilProductList,
-  getFoilProductDetail
-} from './api'
+import { fetchFoilProductList } from './api'
 import {
   DEFAULT_PAGINATION,
   DEFAULT_SORT
@@ -95,8 +93,8 @@ export default {
       formDrawerVisible: false,
       // 表单模式：create-新增, update-编辑, view-查看
       formMode: 'create',
-      // 当前操作的产品数据
-      currentProduct: null,
+      // 当前操作的产品ID
+      currentProductId: null,
       // 选中的行数据
       selectedRows: [],
       // 全局loading实例
@@ -296,43 +294,25 @@ export default {
     /**
      * 处理查看详情
      */
-    async handleView(product) {
+    handleView(product) {
       // 埋点统计
       this.trackEvent('view-product', { productId: product.id })
 
-      this.loading = true
-      try {
-        const response = await getFoilProductDetail(product.id)
-        this.currentProduct = response.data
-        this.formMode = 'view'
-        this.formDrawerVisible = true
-      } catch (error) {
-        console.error('获取产品详情失败:', error)
-        this.$message.error(error.message || '获取产品详情失败')
-      } finally {
-        this.loading = false
-      }
+      this.currentProductId = product.id
+      this.formMode = 'view'
+      this.formDrawerVisible = true
     },
 
     /**
      * 处理编辑
      */
-    async handleEdit(product) {
+    handleEdit(product) {
       // 埋点统计
       this.trackEvent('edit-product', { productId: product.id })
 
-      this.loading = true
-      try {
-        const response = await getFoilProductDetail(product.id)
-        this.currentProduct = response.data
-        this.formMode = 'update'
-        this.formDrawerVisible = true
-      } catch (error) {
-        console.error('获取产品详情失败:', error)
-        this.$message.error(error.message || '获取产品详情失败')
-      } finally {
-        this.loading = false
-      }
+      this.currentProductId = product.id
+      this.formMode = 'update'
+      this.formDrawerVisible = true
     },
 
     /**
@@ -342,7 +322,7 @@ export default {
       // 埋点统计
       this.trackEvent('create-product')
 
-      this.currentProduct = null
+      this.currentProductId = null
       this.formMode = 'create'
       this.formDrawerVisible = true
     },
@@ -360,7 +340,7 @@ export default {
      */
     handleFormClose() {
       this.formDrawerVisible = false
-      this.currentProduct = null
+      this.currentProductId = null
     },
 
     /**

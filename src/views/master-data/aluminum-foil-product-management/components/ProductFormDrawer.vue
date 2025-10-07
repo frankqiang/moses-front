@@ -13,225 +13,237 @@
     @close="handleDrawerClose"
   >
     <!-- 表单内容 -->
-    <enhanced-form
-      ref="enhancedForm"
-      :data="formData"
-      :mode="innerMode"
+    <el-form
+      ref="form"
+      :model="formData"
       :rules="formRules"
       label-width="140px"
-      :show-footer="false"
-      :clear-validate-on-data-update="true"
-      :disable-initial-validation="true"
-      :validate-on-data-change="false"
-      @submit="handleFormSubmit"
-      @validate="handleCustomValidate"
-      @validate-error="handleValidateError"
-      @reset="handleFormReset"
+      size="small"
+      :disabled="innerMode === 'view'"
     >
-      <!-- 表单内容 -->
-      <template v-slot="{ form, mode: formMode }">
-        <!-- 一、基础信息 -->
-        <div class="form-section">
-          <div class="section-title">一、基础信息</div>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="产品编码" prop="code">
-                <el-input
-                  v-model="form.code"
-                  placeholder="请输入产品编码"
-                  maxlength="50"
-                  show-word-limit
-                  :disabled="formMode === 'view' || formMode === 'update'"
-                  @blur="handleCodeBlur"
-                />
-                <div class="field-hint">产品编码创建后不可修改，建议使用规范命名</div>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="产品名称" prop="name">
-                <el-input
-                  v-model="form.name"
-                  placeholder="请输入产品名称"
-                  maxlength="100"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
+      <!-- 一、基础信息 -->
+      <div class="form-section">
+        <div class="section-title">一、基础信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="产品编码" prop="productCode">
+              <el-input
+                v-model="formData.productCode"
+                placeholder="如：AF-1100-H18-0.006x1200"
+                maxlength="50"
+                show-word-limit
+                :disabled="innerMode === 'view' || innerMode === 'update'"
+                @blur="handleCodeBlur"
+              />
+              <div class="field-hint">产品编码创建后不可修改，格式：AF-合金-硬度-厚度x宽度</div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="产品名称" prop="productName">
+              <el-input
+                v-model="formData.productName"
+                placeholder="请输入产品名称"
+                maxlength="200"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="产品系列" prop="series">
-                <el-select
-                  v-model="form.series"
-                  placeholder="请选择产品系列"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  filterable
-                  allow-create
-                  default-first-option
-                >
-                  <el-option
-                    v-for="option in productSeriesOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="生命周期状态" prop="lifecycleStatus">
-                <el-select
-                  v-model="form.lifecycleStatus"
-                  placeholder="请选择生命周期状态"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                >
-                  <el-option
-                    v-for="option in lifecycleStatusOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-
-        <!-- 二、规格参数 -->
-        <div class="form-section">
-          <div class="section-title">二、规格参数</div>
-          <el-row :gutter="20">
-            <el-col :span="8">
-              <el-form-item label="厚度 (μm)" prop="thickness">
-                <el-input-number
-                  v-model="form.thickness"
-                  placeholder="请输入厚度"
-                  :min="0.1"
-                  :max="1000"
-                  :precision="2"
-                  :step="0.1"
-                  controls-position="right"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="原材料类型" prop="rawMaterialType">
+              <el-input
+                v-model="formData.rawMaterialType"
+                placeholder="请输入原材料类型"
+                maxlength="100"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="生命周期状态" prop="lifecycleStatus">
+              <el-select
+                v-model="formData.lifecycleStatus"
+                placeholder="请选择生命周期状态"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="option in lifecycleStatusOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
                 />
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
-              <el-form-item label="宽度 (mm)" prop="width">
-                <el-input-number
-                  v-model="form.width"
-                  placeholder="请输入宽度"
-                  :min="1"
-                  :max="10000"
-                  :precision="1"
-                  :step="1"
-                  controls-position="right"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
-              <el-form-item label="单位重量 (g/m²)" prop="unitWeight">
-                <el-input-number
-                  v-model="form.unitWeight"
-                  placeholder="请输入单位重量"
-                  :min="0.01"
-                  :max="1000"
-                  :precision="3"
-                  :step="0.001"
-                  controls-position="right"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-        <!-- 三、工艺配置 -->
-        <div class="form-section">
-          <div class="section-title">三、工艺配置</div>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="工艺模板" prop="processTemplates">
-                <el-select
-                  v-model="form.processTemplates"
-                  placeholder="请选择工艺模板"
-                  style="width: 100%"
-                  multiple
-                  filterable
-                  :disabled="formMode === 'view'"
-                  collapse-tags
-                  :collapse-tags-tooltip="true"
-                >
-                  <el-option
-                    v-for="template in processTemplateOptions"
-                    :key="template.value"
-                    :label="template.label"
-                    :value="template.value"
-                  />
-                </el-select>
-                <div class="field-hint">可选择多个工艺模板，用于生产指导</div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="合金牌号" prop="alloyGrade">
+              <el-input
+                v-model="formData.alloyGrade"
+                placeholder="请输入合金牌号"
+                maxlength="50"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="状态/硬度" prop="temper">
+              <el-input
+                v-model="formData.temper"
+                placeholder="请输入状态或硬度"
+                maxlength="50"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
 
-        <!-- 四、质量标准 -->
-        <div class="form-section">
-          <div class="section-title">四、质量标准</div>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="质量标准" prop="qualityStandards">
-                <el-select
-                  v-model="form.qualityStandards"
-                  placeholder="请选择质量标准"
-                  style="width: 100%"
-                  multiple
-                  filterable
-                  :disabled="formMode === 'view'"
-                  collapse-tags
-                  :collapse-tags-tooltip="true"
-                >
-                  <el-option
-                    v-for="standard in qualityStandardOptions"
-                    :key="standard.value"
-                    :label="standard.label"
-                    :value="standard.value"
-                  />
-                </el-select>
-                <div class="field-hint">选择适用的质量检验标准</div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
+      <!-- 二、规格参数 -->
+      <div class="form-section">
+        <div class="section-title">二、规格参数</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="厚度 (mm)" prop="thickness">
+              <el-input-number
+                v-model="formData.thickness"
+                placeholder="请输入厚度"
+                :min="0.001"
+                :max="100"
+                :precision="6"
+                :step="0.001"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="宽度 (mm)" prop="width">
+              <el-input-number
+                v-model="formData.width"
+                placeholder="请输入宽度"
+                :min="1"
+                :max="10000"
+                :precision="3"
+                :step="1"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-        <!-- 五、备注信息 -->
-        <div class="form-section">
-          <div class="section-title">五、备注信息</div>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="备注" prop="remarks">
-                <el-input
-                  v-model="form.remarks"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="请输入备注信息（选填）"
-                  maxlength="500"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="单位重量" prop="unitWeight">
+              <el-input-number
+                v-model="formData.unitWeight"
+                placeholder="请输入单位重量"
+                :min="0.001"
+                :max="10000"
+                :precision="6"
+                :step="0.1"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="单位重量类型" prop="unitWeightType">
+              <el-select
+                v-model="formData.unitWeightType"
+                placeholder="请选择单位重量类型"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="option in unitWeightTypeOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
                 />
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-      </template>
-    </enhanced-form>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 三、工艺配置 -->
+      <div class="form-section">
+        <div class="section-title">三、工艺配置</div>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="工艺模板" prop="processTemplateIds">
+              <el-select
+                v-model="formData.processTemplateIds"
+                placeholder="请选择工艺模板"
+                style="width: 100%"
+                multiple
+                filterable
+                collapse-tags
+                :collapse-tags-tooltip="true"
+              >
+                <el-option
+                  v-for="template in processTemplateOptions"
+                  :key="template.value"
+                  :label="template.label"
+                  :value="template.value"
+                />
+              </el-select>
+              <div class="field-hint">可选择多个工艺模板，用于生产指导</div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 四、质量标准 -->
+      <div class="form-section">
+        <div class="section-title">四、质量标准</div>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="质量标准" prop="qualityStandardId">
+              <el-select
+                v-model="formData.qualityStandardId"
+                placeholder="请选择质量标准"
+                style="width: 100%"
+                filterable
+                clearable
+              >
+                <el-option
+                  v-for="standard in qualityStandardOptions"
+                  :key="standard.value"
+                  :label="standard.label"
+                  :value="standard.value"
+                />
+              </el-select>
+              <div class="field-hint">选择适用的质量检验标准</div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 五、产品描述 -->
+      <div class="form-section">
+        <div class="section-title">五、产品描述</div>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="产品描述" prop="description">
+              <el-input
+                v-model="formData.description"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入产品描述（选填，最多500字）"
+                maxlength="500"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+    </el-form>
 
     <!-- 抽屉底部按钮 -->
     <template #footer>
@@ -250,11 +262,10 @@
 
 <script>
 import BaseDrawer from '@/components/Drawer'
-import EnhancedForm from '@/components/EnhancedForm'
 import {
   FORM_CONFIGS,
-  PRODUCT_SERIES_OPTIONS,
   LIFECYCLE_STATUS_OPTIONS,
+  UNIT_WEIGHT_TYPE_OPTIONS,
   PROCESS_TEMPLATE_OPTIONS,
   QUALITY_STANDARD_OPTIONS
 } from '../constants'
@@ -263,8 +274,7 @@ import { createProduct, updateProduct, getProductDetail } from '../api'
 export default {
   name: 'ProductFormDrawer',
   components: {
-    BaseDrawer,
-    EnhancedForm
+    BaseDrawer
   },
   model: {
     prop: 'visible',
@@ -289,10 +299,24 @@ export default {
     return {
       drawerVisible: false,
       innerMode: 'create',
-      formData: {},
+      formData: {
+        productCode: '',
+        productName: '',
+        rawMaterialType: '',
+        alloyGrade: '',
+        temper: '',
+        thickness: null,
+        width: null,
+        unitWeight: null,
+        unitWeightType: 'kg/卷',
+        processTemplateIds: [],
+        qualityStandardId: null,
+        lifecycleStatus: '试产',
+        description: ''
+      },
       submitLoading: false,
-      productSeriesOptions: PRODUCT_SERIES_OPTIONS,
       lifecycleStatusOptions: LIFECYCLE_STATUS_OPTIONS,
+      unitWeightTypeOptions: UNIT_WEIGHT_TYPE_OPTIONS,
       processTemplateOptions: PROCESS_TEMPLATE_OPTIONS,
       qualityStandardOptions: QUALITY_STANDARD_OPTIONS
     }
@@ -316,7 +340,9 @@ export default {
         this.drawerVisible = val
         if (val) {
           this.innerMode = this.mode
-          this.initializeForm()
+          this.$nextTick(() => {
+            this.initializeForm()
+          })
         }
       },
       immediate: true
@@ -337,6 +363,9 @@ export default {
           const response = await getProductDetail(this.productId)
           this.formData = this.transformApiDataToForm(response.data)
         }
+        // 清除验证
+        await this.$nextTick()
+        this.$refs.form && this.$refs.form.clearValidate()
       } catch (error) {
         console.error('初始化表单数据失败:', error)
         this.$message.error('获取产品详情失败')
@@ -349,16 +378,19 @@ export default {
      */
     getDefaultFormData() {
       return {
-        code: '',
-        name: '',
-        series: '',
-        lifecycleStatus: 'trial_production',
+        productCode: '',
+        productName: '',
+        rawMaterialType: '',
+        alloyGrade: '',
+        temper: '',
         thickness: null,
         width: null,
         unitWeight: null,
-        processTemplates: [],
-        qualityStandards: [],
-        remarks: ''
+        unitWeightType: 'kg/卷',
+        processTemplateIds: [],
+        qualityStandardId: null,
+        lifecycleStatus: '试产',
+        description: ''
       }
     },
 
@@ -367,16 +399,19 @@ export default {
      */
     transformApiDataToForm(apiData) {
       return {
-        code: apiData.code || '',
-        name: apiData.name || '',
-        series: apiData.series || '',
-        lifecycleStatus: apiData.lifecycleStatus || 'trial_production',
-        thickness: apiData.specifications?.thickness || null,
-        width: apiData.specifications?.width || null,
-        unitWeight: apiData.specifications?.unitWeight || null,
-        processTemplates: apiData.processTemplates || [],
-        qualityStandards: apiData.qualityStandards || [],
-        remarks: apiData.remarks || ''
+        productCode: apiData.productCode || '',
+        productName: apiData.productName || '',
+        rawMaterialType: apiData.rawMaterialType || '',
+        alloyGrade: apiData.alloyGrade || '',
+        temper: apiData.temper || '',
+        thickness: apiData.thickness || null,
+        width: apiData.width || null,
+        unitWeight: apiData.unitWeight || null,
+        unitWeightType: apiData.unitWeightType || 'kg/卷',
+        processTemplateIds: apiData.processTemplateIds || [],
+        qualityStandardId: apiData.qualityStandardId || null,
+        lifecycleStatus: apiData.lifecycleStatus || '试产',
+        description: apiData.description || ''
       }
     },
 
@@ -384,30 +419,37 @@ export default {
      * 将表单数据转换为API数据
      */
     transformFormDataToApi(formData) {
-      return {
-        code: formData.code,
-        name: formData.name,
-        series: formData.series,
+      const apiData = {
+        productCode: formData.productCode,
+        productName: formData.productName,
+        rawMaterialType: formData.rawMaterialType,
+        alloyGrade: formData.alloyGrade,
+        temper: formData.temper,
+        thickness: formData.thickness,
+        width: formData.width,
+        unitWeight: formData.unitWeight,
+        unitWeightType: formData.unitWeightType,
+        processTemplateIds: formData.processTemplateIds,
         lifecycleStatus: formData.lifecycleStatus,
-        specifications: {
-          thickness: formData.thickness,
-          width: formData.width,
-          unitWeight: formData.unitWeight
-        },
-        processTemplates: formData.processTemplates,
-        qualityStandards: formData.qualityStandards,
-        remarks: formData.remarks
+        description: formData.description
       }
+
+      // 创建模式才传递 qualityStandardId
+      if (this.innerMode === 'create') {
+        apiData.qualityStandardId = formData.qualityStandardId
+      }
+
+      return apiData
     },
 
     /**
      * 产品编码失焦处理
      */
     handleCodeBlur() {
-      // 可以在这里添加编码格式验证或重复性检查
-      const code = this.formData.code
-      if (code && !/^[A-Z][A-Z0-9_]*$/.test(code)) {
-        this.$message.warning('建议产品编码使用大写字母开头，包含大写字母、数字和下划线')
+      // 编码格式验证：AF-合金-硬度-厚度x宽度
+      const code = this.formData.productCode
+      if (code && !/^AF-[A-Z0-9]+-[A-Z0-9]+-[0-9]*\.?[0-9]+[xX][0-9]*\.?[0-9]+$/.test(code)) {
+        this.$message.warning('产品编码格式应为：AF-合金-硬度-厚度x宽度，如：AF-1100-H18-0.006x1200')
       }
     },
 
@@ -437,15 +479,14 @@ export default {
     /**
      * 提交表单
      */
-    async handleSubmit() {
-      try {
-        const valid = await this.$refs.enhancedForm.validate()
-        if (!valid) return
-
-        await this.handleFormSubmit(this.formData)
-      } catch (error) {
-        console.error('表单提交失败:', error)
-      }
+    handleSubmit() {
+      this.$refs.form.validate((valid) => {
+        if (!valid) {
+          this.$message.warning('请检查表单填写是否正确')
+          return
+        }
+        this.handleFormSubmit(this.formData)
+      })
     },
 
     /**
@@ -453,6 +494,7 @@ export default {
      */
     async handleFormSubmit(formData) {
       this.submitLoading = true
+
       try {
         const apiData = this.transformFormDataToApi(formData)
         let response
@@ -470,33 +512,11 @@ export default {
         this.drawerVisible = false
       } catch (error) {
         console.error('提交失败:', error)
-        const errorMessage = error.response?.data?.error?.message || '操作失败'
+        const errorMessage = error.response?.data?.error?.message || error.message || '操作失败'
         this.$message.error(errorMessage)
       } finally {
         this.submitLoading = false
       }
-    },
-
-    /**
-     * 自定义验证处理
-     */
-    handleCustomValidate(isValid, invalidFields) {
-      this.$emit('validate', isValid, invalidFields)
-    },
-
-    /**
-     * 验证错误处理
-     */
-    handleValidateError(errors) {
-      console.warn('表单验证错误:', errors)
-    },
-
-    /**
-     * 表单重置处理
-     */
-    handleFormReset() {
-      this.formData = this.getDefaultFormData()
-      this.$emit('reset')
     }
   }
 }
