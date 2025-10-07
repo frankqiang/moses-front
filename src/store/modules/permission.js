@@ -178,6 +178,16 @@ export const asyncRoutes = [
           icon: 'el-icon-cpu'
           // 开发阶段：移除 roles 限制
         }
+      },
+      {
+        path: 'process-parameter-management',
+        name: 'ProcessParameterManagement',
+        component: () => import('@/views/master-data/process-parameter-management/index'),
+        meta: {
+          title: '工艺参数管理',
+          icon: 'el-icon-setting'
+          // 开发阶段：移除 roles 限制
+        }
       }
       // 可以继续添加其他主数据管理路由...
     ]
