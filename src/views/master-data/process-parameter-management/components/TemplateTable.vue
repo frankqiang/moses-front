@@ -517,6 +517,7 @@ export default {
      * 判断是否可以提交审批
      */
     canSubmitApproval(latestVersion) {
+      if (!latestVersion) return false
       return ['草稿', '驳回'].includes(latestVersion.status)
     },
 
@@ -524,6 +525,7 @@ export default {
      * 判断是否可以审批通过
      */
     canApprove(latestVersion) {
+      if (!latestVersion) return false
       return latestVersion.status === '待审批'
     },
 
@@ -531,6 +533,7 @@ export default {
      * 判断是否可以审批驳回
      */
     canReject(latestVersion) {
+      if (!latestVersion) return false
       return latestVersion.status === '待审批'
     },
 
@@ -538,6 +541,7 @@ export default {
      * 判断是否可以撤回审批
      */
     canWithdraw(latestVersion) {
+      if (!latestVersion) return false
       return latestVersion.status === '待审批'
     },
 
@@ -545,6 +549,7 @@ export default {
      * 判断是否可以快速生效
      */
     canActivate(latestVersion) {
+      if (!latestVersion) return false
       return ['草稿', '驳回'].includes(latestVersion.status)
     },
 
@@ -552,6 +557,7 @@ export default {
      * 判断是否可以作废
      */
     canVoid(latestVersion) {
+      if (!latestVersion) return false
       return ['待审批', '生效'].includes(latestVersion.status)
     },
 

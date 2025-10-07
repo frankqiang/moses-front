@@ -82,16 +82,16 @@ export const TABLE_COLUMNS = [
   },
   {
     columnId: 'latestVersionNumber',
-    prop: 'latestVersion.versionNumber',
+    prop: 'latestVersionNumber',
     label: '最新版本号',
     minWidth: 140,
     sortable: true,
     align: 'center',
-    formatter: row => row?.latestVersion?.versionNumber || '-'
+    formatter: row => (row.latestVersion && row.latestVersion.versionNumber) || '-'
   },
   {
     columnId: 'latestVersionStatus',
-    prop: 'latestVersion.status',
+    prop: 'latestVersionStatus',
     label: '版本状态',
     minWidth: 120,
     sortable: true,
@@ -104,13 +104,13 @@ export const TABLE_COLUMNS = [
   },
   {
     columnId: 'effectiveDate',
-    prop: 'latestVersion.effectiveDate',
+    prop: 'effectiveDate',
     label: '生效时间',
     minWidth: 180,
     align: 'center',
     type: 'datetime',
     format: '{y}-{m}-{d} {h}:{i}',
-    formatter: row => row?.latestVersion?.effectiveDate
+    formatter: row => (row.latestVersion && row.latestVersion.effectiveDate) || null
   },
   {
     columnId: 'updatedAt',
@@ -132,7 +132,7 @@ export const TABLE_COLUMNS = [
   },
   {
     columnId: 'segmentSummary',
-    prop: 'latestVersion.segments',
+    prop: 'segmentSummary',
     label: '温度段概览',
     minWidth: 220,
     align: 'left',
