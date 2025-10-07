@@ -19,10 +19,7 @@
       :default-visible-columns="visibleColumns"
       :enable-batch-actions="enableBatchActions"
       :selected-rows="selectedRows"
-      :enable-export="true"
-      :export-api="exportApi"
-      :export-params="exportParams"
-      :export-filename="exportFilename"
+      :enable-export="false"
       :enable-refresh="true"
       :refresh-feedback-mode="'all'"
       @refresh="handleRefresh"
@@ -31,8 +28,6 @@
       @batch-enable="handleBatchEnable"
       @batch-disable="handleBatchDisable"
       @custom-action="handleCustomBatchAction"
-      @export-success="handleExportSuccess"
-      @export-error="handleExportError"
       @column-settings="handleColumnSettings"
     >
       <template #toolbar-left>
