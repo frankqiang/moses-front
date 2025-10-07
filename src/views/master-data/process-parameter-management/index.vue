@@ -257,7 +257,15 @@ export default {
       try {
         const response = await fetchProcessTemplateList(query)
         const { templates = [], pagination = {}} = response.data || {}
-        this.tableData = Array.isArray(templates) ? templates : []
+        // 过滤并标准化数据：确保每条数据都是有效对象且有latestVersion字段
+        const validTemplates = (Array.isArray(templates) ? templates : [])
+          .filter(item => item && typeof item === 'object' && item.id)
+          .map(item => ({
+            ...item,
+            latestVersion: item.latestVersion || null
+          }))
+        console.log('[Index] Processed templates:', validTemplates.length, validTemplates)
+        this.tableData = validTemplates
         this.pagination = {
           page: pagination.page || query.page || 1,
           limit: pagination.limit || query.limit || 10,

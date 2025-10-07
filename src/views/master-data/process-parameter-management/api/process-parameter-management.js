@@ -97,10 +97,13 @@ export async function fetchProcessTemplateList(params = {}) {
   }
 
   // 标准化数据：确保每个模板都有latestVersion字段（即使是null）
-  const templates = rawTemplates.map(template => ({
-    ...template,
-    latestVersion: template.latestVersion || null
-  }))
+  const templates = rawTemplates.map(template => {
+    console.log('[API] Processing template:', template.templateCode, 'latestVersion:', template.latestVersion)
+    return {
+      ...template,
+      latestVersion: template.latestVersion || null
+    }
+  })
 
   return {
     data: {
