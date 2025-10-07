@@ -21,7 +21,7 @@
       ref="templateTable"
       :data="tableData"
       :loading="loading.list"
-      :load-error="listError"
+      :load-error="listError || null"
       :pagination="pagination"
       :toolbar-buttons="toolbarButtons"
       @refresh="handleRefresh"
@@ -152,7 +152,7 @@ export default {
       currentQuery: { ...DEFAULT_QUERY },
       pagination: { ...DEFAULT_PAGINATION, total: 0 },
       tableData: [],
-      listError: '',
+      listError: null,
       globalError: '',
       loading: {
         list: false,
@@ -253,7 +253,7 @@ export default {
         ...customQuery
       }
       this.loading.list = true
-      this.listError = ''
+      this.listError = null
       try {
         const response = await fetchProcessTemplateList(query)
         console.log('[ProcessParameterManagement] API Response:', response)
