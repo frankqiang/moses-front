@@ -138,10 +138,10 @@
             <span class="segment-temp">{{ segment.targetTemperature }}°C</span>
           </div>
           <div
-            v-if="row.latestVersion.segments.length > maxVisibleSegments"
+            v-if="row.latestVersion && row.latestVersion.segments && row.latestVersion.segments.length > maxVisibleSegments"
             class="segment-more"
           >
-            +{{ row.latestVersion.segments.length - maxVisibleSegments }}
+            +{{ row.latestVersion && row.latestVersion.segments ? row.latestVersion.segments.length - maxVisibleSegments : 0 }}
           </div>
         </div>
         <span v-else class="empty-text">-</span>

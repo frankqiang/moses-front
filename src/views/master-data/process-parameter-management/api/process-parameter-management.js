@@ -84,18 +84,24 @@ export async function fetchProcessTemplateList(params = {}) {
   })
 
   const { data, message, meta } = response
-  
+
   // 适配后端实际返回结构（与接口文档不一致）
   // 实际返回：data.templates 和 data.pagination
   // 文档描述：data.results 和 data.page/limit 等直接在 data 下
-  const templates = data?.templates || data?.results || []
+  const rawTemplates = data?.templates || data?.results || []
   const pagination = data?.pagination || {
     page: data?.page ?? params.page ?? 1,
     limit: data?.limit ?? params.limit ?? 10,
     totalPages: data?.totalPages ?? 0,
     totalResults: data?.totalResults ?? 0
   }
-  
+
+  // 标准化数据：确保每个模板都有latestVersion字段（即使是null）
+  const templates = rawTemplates.map(template => ({
+    ...template,
+    latestVersion: template.latestVersion || null
+  }))
+
   return {
     data: {
       templates,
