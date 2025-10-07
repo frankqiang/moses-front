@@ -16,7 +16,6 @@
       @search="handleSearch"
       @refresh="handleRefresh"
       @create="handleCreateTemplate"
-      @export="handleExport"
       @column-settings="handleColumnSettings"
     />
 
@@ -27,8 +26,6 @@
       :loading="loading.list"
       :load-error="listError"
       :pagination="pagination"
-      :export-api="exportProcessTemplates"
-      :export-params="currentQuery"
       :toolbar-buttons="toolbarButtons"
       @refresh="handleRefresh"
       @create="handleCreateTemplate"
@@ -38,8 +35,6 @@
       @action="handleTableAction"
       @view-detail="handleViewDetail"
       @retry="fetchTemplateList"
-      @export-success="handleExportSuccess"
-      @export-error="handleExportError"
     />
 
     <!-- 模板表单抽屉 -->
@@ -689,21 +684,6 @@ export default {
       }).catch(() => null)
 
       return (input && input.value && input.value.trim()) || ''
-    },
-
-    async handleExport(params) {
-      try {
-        await this.triggerExport(params)
-        this.$message.success('导出任务已提交，稍后请在消息中心查看结果')
-      } catch (error) {
-        console.error('[ProcessParameterManagement] handleExport failed', error)
-        this.$message.error((error && error.message) || '导出失败，请稍后重试')
-      }
-    },
-
-    triggerExport(params) {
-      console.info('导出参数', params)
-      return Promise.resolve()
     },
 
     handleColumnSettings() {
