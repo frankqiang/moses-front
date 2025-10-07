@@ -12,8 +12,8 @@
     <!-- 搜索表单 - 使用SearchForm全局组件配置驱动 -->
     <SearchForm
       ref="searchForm"
-      :config="searchFormConfig"
-      :model="searchParams"
+      :items="searchFormConfig"
+      :value="searchParams"
       :loading="loading"
       @search="handleSearch"
       @reset="handleReset"
