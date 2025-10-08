@@ -78,7 +78,7 @@
             <el-empty
               v-if="!versionList.length && !versionsLoading"
               description="暂无版本"
-              image-size="120"
+              :image-size="120"
             />
 
             <el-skeleton
@@ -247,7 +247,7 @@
               <el-empty
                 v-else
                 description="暂无审批记录"
-                image-size="140"
+                :image-size="140"
               />
             </el-tab-pane>
 
@@ -260,7 +260,7 @@
               <el-empty
                 v-else
                 description="请选择需要对比的版本"
-                image-size="160"
+                :image-size="160"
               />
             </el-tab-pane>
 
@@ -279,7 +279,7 @@
               <el-empty
                 v-else
                 description="请选择需要查看的版本"
-                image-size="160"
+                :image-size="160"
               />
             </el-tab-pane>
           </el-tabs>
@@ -349,7 +349,8 @@ import {
 import {
   TEMPLATE_STATUS_CONFIG,
   VERSION_STATUS_CONFIG,
-  VERSION_STATUS
+  VERSION_STATUS,
+  VERSION_STATUS_OPTIONS
 } from '../constants/process-parameter-management'
 
 const DEFAULT_VERSION_SORT = 'createdAt:desc'
@@ -381,7 +382,7 @@ export default {
   data() {
     return {
       internalVisible: false,
-      drawerWidth: '1080px',
+      drawerWidth: '1500px',
       loading: false,
       versionsLoading: false,
       errorMessage: '',
@@ -418,6 +419,9 @@ export default {
     },
     versionStatusConfig() {
       return VERSION_STATUS_CONFIG
+    },
+    versionStatusOptions() {
+      return VERSION_STATUS_OPTIONS
     },
     selectedVersion() {
       if (!this.selectedVersionId) {
