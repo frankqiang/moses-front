@@ -372,8 +372,7 @@ export default {
         action: 'viewDetail',
         text: '查看详情',
         icon: 'el-icon-view',
-        type: 'text',
-        tooltip: '查看工艺模板详细信息'
+        type: 'text'
       })
 
       // 编辑模板 - 草稿/驳回状态可编辑
@@ -382,8 +381,7 @@ export default {
           action: 'editTemplate',
           text: '编辑模板',
           icon: 'el-icon-edit',
-          type: 'text',
-          tooltip: '编辑模板基础信息'
+          type: 'text'
         })
       }
 
@@ -393,8 +391,7 @@ export default {
           action: 'createVersion',
           text: '新建版本',
           icon: 'el-icon-plus',
-          type: 'text',
-          tooltip: '基于当前模板创建新版本'
+          type: 'text'
         })
       }
 
@@ -406,8 +403,7 @@ export default {
             action: 'submitApproval',
             text: '提交审批',
             icon: 'el-icon-s-promotion',
-            type: 'text',
-            tooltip: '提交版本至审批流程'
+            type: 'text'
           })
         }
 
@@ -417,8 +413,7 @@ export default {
             action: 'approve',
             text: '审批通过',
             icon: 'el-icon-check',
-            type: 'text',
-            tooltip: '审批通过该版本'
+            type: 'text'
           })
         }
 
@@ -428,8 +423,7 @@ export default {
             action: 'reject',
             text: '审批驳回',
             icon: 'el-icon-close',
-            type: 'text',
-            tooltip: '驳回该版本审批'
+            type: 'text'
           })
         }
 
@@ -439,8 +433,7 @@ export default {
             action: 'withdraw',
             text: '撤回审批',
             icon: 'el-icon-refresh-left',
-            type: 'text',
-            tooltip: '撤回版本审批'
+            type: 'text'
           })
         }
 
@@ -451,7 +444,6 @@ export default {
             text: '快速生效',
             icon: 'el-icon-success',
             type: 'text',
-            tooltip: '跳过审批直接生效',
             confirmText: '确认快速生效该版本吗？'
           })
         }
@@ -463,7 +455,6 @@ export default {
             text: '作废版本',
             icon: 'el-icon-delete',
             type: 'text',
-            tooltip: '作废该版本',
             confirmText: '确认作废该版本吗？此操作不可恢复'
           })
         }
@@ -474,8 +465,7 @@ export default {
         action: 'copy',
         text: '复制模板',
         icon: 'el-icon-document-copy',
-        type: 'text',
-        tooltip: '复制模板创建新模板'
+        type: 'text'
       })
 
       // 删除模板 - 非生效状态可删除
@@ -485,7 +475,6 @@ export default {
           text: '删除',
           icon: 'el-icon-delete',
           type: 'text',
-          tooltip: '删除工艺模板',
           confirmText: '确认删除该模板吗？此操作不可恢复',
           danger: true
         })
