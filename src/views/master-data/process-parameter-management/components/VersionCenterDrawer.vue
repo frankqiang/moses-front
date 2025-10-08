@@ -268,13 +268,15 @@
 
             <el-tab-pane label="参数配置" name="parameters">
               <VersionParametersPanel
-                v-if="selectedVersion"
+                v-if="selectedVersion && activeTab === 'parameters'"
+                :key="selectedVersion.id"
                 :template-id="templateId"
                 :version="selectedVersion"
                 :editable="isVersionEditable(selectedVersion)"
                 :saving="saving"
                 :comparison-versions="curveComparisonVersions"
                 :device-capability="curveDeviceCapability"
+                :force-refresh-key="selectedVersionId"
                 @save="handleParametersSave"
                 @change="handleParametersChange"
               />
@@ -429,7 +431,7 @@ export default {
       if (!this.selectedVersionId) {
         return null
       }
-      return this.versionList.find(item => item.id === this.selectedVersionId) || null
+      return this.versionList.find(item => item && item.id === this.selectedVersionId) || null
     },
     formattedApprovalRecords() {
       if (!this.selectedVersion || !this.selectedVersion.approvalRecords) {
@@ -538,6 +540,26 @@ export default {
       if (this.internalVisible && val && val !== oldVal) {
         this.initialize()
       }
+    },
+    versionList(newList) {
+      if (!Array.isArray(newList)) {
+        return
+      }
+      if (!this.selectedVersionId && newList.length) {
+        this.selectedVersionId = newList[0].id || ''
+        return
+      }
+      if (this.selectedVersionId && !newList.some(item => item && item.id === this.selectedVersionId)) {
+        this.selectedVersionId = newList[0] ? newList[0].id : ''
+      }
+    },
+    selectedVersionId(newVal, oldVal) {
+      if (newVal && newVal !== oldVal) {
+        const selected = this.versionList.find(item => item && item.id === newVal)
+        if (selected) {
+          this.prepareCurveComparison()
+        }
+      }
     }
   },
   methods: {
@@ -607,6 +629,13 @@ export default {
           this.versionList = this.mergeVersionList(this.versionList, list)
         }
 
+        const latestVersionFromDetail = this.templateDetail && this.templateDetail.latestVersion
+        if (latestVersionFromDetail) {
+          const latestFromList = list.find(item => item && item.id === latestVersionFromDetail.id)
+          const enrichedLatest = latestFromList ? { ...latestFromList } : { ...latestVersionFromDetail }
+          this.ensureVersionInList(enrichedLatest)
+        }
+
         return response
       } catch (error) {
         console.error('[VersionCenterDrawer] fetchVersionList failed', error)
@@ -651,13 +680,13 @@ export default {
     },
 
     resolveDefaultSelection() {
-      if (this.defaultVersionId && this.versionList.some(item => item.id === this.defaultVersionId)) {
+      if (this.defaultVersionId) {
         this.selectedVersionId = this.defaultVersionId
         return
       }
 
       const latestVersionId = this.templateDetail && this.templateDetail.latestVersion && this.templateDetail.latestVersion.id
-      if (latestVersionId && this.versionList.some(item => item.id === latestVersionId)) {
+      if (latestVersionId) {
         this.selectedVersionId = latestVersionId
         return
       }

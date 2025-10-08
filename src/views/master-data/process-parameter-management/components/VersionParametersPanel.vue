@@ -17,9 +17,11 @@
       class="version-parameters-panel__readonly-tip"
     />
 
-    <el-tabs v-model="activeTab" type="card">
+    <el-tabs v-model="activeTab" type="card" @tab-click="handleTabClick">
       <el-tab-pane label="温度段配置" name="segments">
         <TemperatureCurveViewer
+          v-if="activeTab === 'segments'"
+          ref="curveViewer"
           class="version-parameters-panel__curve"
           :segments="segmentList"
           :comparison-versions="comparisonVersions"
@@ -57,140 +59,150 @@
           </header>
 
           <div class="segment-table-wrapper">
-            <draggable
-              v-model="segmentList"
-              :item-key="segmentDragKey"
-              handle=".drag-handle"
-              ghost-class="segment-row--ghost"
-              :disabled="!editable"
-              @end="handleSegmentDragEnd"
+            <el-empty
+              v-if="segmentList.length === 0"
+              :description="getEmptyDescription()"
+              :image-size="120"
+            />
+            <el-table
+              v-else
+              :data="segmentList"
+              border
+              class="segment-table"
             >
-              <template #item="{ element, index }">
-                <el-table
-                  :key="segmentDragKey(element, index)"
-                  :data="[element]"
-                  border
-                  class="segment-table-row"
-                >
-                  <el-table-column width="46">
-                    <template #default>
-                      <span
-                        v-if="editable"
-                        class="drag-handle"
-                        title="拖拽调整段顺序"
-                      >
-                        <i class="el-icon-rank" />
-                      </span>
-                      <span v-else class="drag-placeholder" />
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="segmentOrder" label="段序号" width="90">
-                    <template #default="{ row }">
-                      <el-input-number
-                        v-model="row.segmentOrder"
-                        :min="1"
-                        :max="1000"
-                        size="mini"
-                        :disabled="!editable"
-                        @change="() => normalizeSegmentOrder(index)"
-                      />
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="segmentType" label="段类型" width="120">
-                    <template #default="{ row }">
-                      <el-select
-                        v-model="row.segmentType"
-                        placeholder="选择类型"
-                        size="mini"
-                        :disabled="!editable"
-                        @change="emitChange"
-                      >
-                        <el-option
-                          v-for="option in segmentTypeOptions"
-                          :key="option.value"
-                          :label="option.label"
-                          :value="option.value"
-                        />
-                      </el-select>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="targetTemperature" label="目标温度 (°C)" width="140">
-                    <template #default="{ row }">
-                      <el-input-number
-                        v-model="row.targetTemperature"
-                        :min="-100"
-                        :max="1500"
-                        :step="1"
-                        size="mini"
-                        :disabled="!editable"
-                        @change="emitChange"
-                      />
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="duration" label="持续时间 (分钟)" width="150">
-                    <template #default="{ row }">
-                      <el-input-number
-                        v-model="row.duration"
-                        :min="1"
-                        :max="10080"
-                        :step="1"
-                        size="mini"
-                        :disabled="!editable"
-                        @change="emitChange"
-                      />
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="heatingRate" label="升温速率 (°C/h)" width="150">
-                    <template #default="{ row }">
-                      <el-input-number
-                        v-model="row.heatingRate"
-                        :min="0.1"
-                        :max="500"
-                        :step="0.1"
-                        size="mini"
-                        :precision="1"
-                        :disabled="!editable"
-                        @change="emitChange"
-                      />
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="coolingRate" label="降温速率 (°C/h)" width="150">
-                    <template #default="{ row }">
-                      <el-input-number
-                        v-model="row.coolingRate"
-                        :min="0.1"
-                        :max="500"
-                        :step="0.1"
-                        size="mini"
-                        :precision="1"
-                        :disabled="!editable"
-                        @change="emitChange"
-                      />
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="description" label="段说明">
-                    <template #default="{ row }">
-                      <el-input
-                        v-model="row.description"
-                        :disabled="!editable"
-                        size="mini"
-                        placeholder="请输入段说明"
-                        maxlength="200"
-                        show-word-limit
-                        @input="emitChange"
-                      />
-                    </template>
-                  </el-table-column>
-                  <el-table-column v-if="editable" label="操作" width="100" fixed="right">
-                    <template #default>
-                      <el-button type="text" size="mini" @click="handleSegmentRemove(index)">
-                        删除
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </template>
-            </draggable>
+              <el-table-column prop="segmentOrder" label="段序号" width="90">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.segmentOrder"
+                    :min="1"
+                    :max="1000"
+                    size="mini"
+                    controls-position="right"
+                    :disabled="!editable"
+                    @change="() => normalizeSegmentOrder(index)"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column prop="segmentType" label="段类型" width="120">
+                <template #default="{ row }">
+                  <el-select
+                    v-model="row.segmentType"
+                    placeholder="选择类型"
+                    size="mini"
+                    :disabled="!editable"
+                    @change="emitChange"
+                  >
+                    <el-option
+                      v-for="option in segmentTypeOptions"
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column prop="targetTemperature" label="目标温度 (°C)" width="140">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.targetTemperature"
+                    :min="-100"
+                    :max="1500"
+                    :step="1"
+                    size="mini"
+                    controls-position="right"
+                    :disabled="!editable"
+                    @change="emitChange"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column prop="duration" label="持续时间 (分钟)" width="150">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.duration"
+                    :min="1"
+                    :max="10080"
+                    :step="1"
+                    size="mini"
+                    controls-position="right"
+                    :disabled="!editable"
+                    @change="emitChange"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column prop="heatingRate" label="升温速率 (°C/h)" width="150">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.heatingRate"
+                    :min="0.1"
+                    :max="500"
+                    :step="0.1"
+                    size="mini"
+                    :precision="1"
+                    controls-position="right"
+                    :disabled="!editable"
+                    @change="emitChange"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column prop="coolingRate" label="降温速率 (°C/h)" width="150">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.coolingRate"
+                    :min="0.1"
+                    :max="500"
+                    :step="0.1"
+                    size="mini"
+                    :precision="1"
+                    controls-position="right"
+                    :disabled="!editable"
+                    @change="emitChange"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column prop="description" label="段说明">
+                <template #default="{ row }">
+                  <el-input
+                    v-model="row.description"
+                    :disabled="!editable"
+                    size="mini"
+                    placeholder="请输入段说明"
+                    maxlength="200"
+                    show-word-limit
+                    @input="emitChange"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column v-if="editable" label="操作" width="200" fixed="right">
+                <template #default="{ $index }">
+                  <el-button
+                    type="text"
+                    size="mini"
+                    icon="el-icon-top"
+                    :disabled="$index === 0"
+                    @click="handleSegmentMoveUp($index)"
+                  >
+                    上移
+                  </el-button>
+                  <el-button
+                    type="text"
+                    size="mini"
+                    icon="el-icon-bottom"
+                    :disabled="$index === segmentList.length - 1"
+                    @click="handleSegmentMoveDown($index)"
+                  >
+                    下移
+                  </el-button>
+                  <el-button
+                    type="text"
+                    size="mini"
+                    style="color: #f56c6c;"
+                    @click="handleSegmentRemove($index)"
+                  >
+                    删除
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
           </div>
         </section>
       </el-tab-pane>
@@ -248,6 +260,7 @@
                     :step="0.1"
                     :precision="1"
                     size="mini"
+                    controls-position="right"
                     :disabled="!editable"
                     @change="emitChange"
                   />
@@ -263,6 +276,7 @@
                       :step="0.1"
                       :precision="1"
                       size="mini"
+                      controls-position="right"
                       :disabled="!editable"
                       @change="emitChange"
                     />
@@ -274,6 +288,7 @@
                       :step="0.1"
                       :precision="1"
                       size="mini"
+                      controls-position="right"
                       :disabled="!editable"
                       @change="emitChange"
                     />
@@ -288,6 +303,7 @@
                     :max="100000"
                     :step="1"
                     size="mini"
+                    controls-position="right"
                     :disabled="!editable"
                     @change="emitChange"
                   />
@@ -302,6 +318,7 @@
                       :max="100000"
                       :step="1"
                       size="mini"
+                      controls-position="right"
                       :disabled="!editable"
                       @change="emitChange"
                     />
@@ -312,6 +329,7 @@
                       :max="100000"
                       :step="1"
                       size="mini"
+                      controls-position="right"
                       :disabled="!editable"
                       @change="emitChange"
                     />
@@ -387,6 +405,7 @@
                     :step="0.1"
                     :precision="1"
                     size="mini"
+                    controls-position="right"
                     :disabled="!editable"
                     @change="emitChange"
                   />
@@ -402,6 +421,7 @@
                       :step="0.1"
                       :precision="1"
                       size="mini"
+                      controls-position="right"
                       :disabled="!editable"
                       @change="emitChange"
                     />
@@ -413,6 +433,7 @@
                       :step="0.1"
                       :precision="1"
                       size="mini"
+                      controls-position="right"
                       :disabled="!editable"
                       @change="emitChange"
                     />
@@ -445,6 +466,7 @@
                     :max="1000"
                     :step="1"
                     size="mini"
+                    controls-position="right"
                     :disabled="!editable"
                     @change="emitChange"
                   />
@@ -487,7 +509,6 @@
 
 <script>
 import { cloneDeep } from 'lodash'
-import draggable from 'vuedraggable'
 import {
   SEGMENT_TYPE_OPTIONS,
   ATMOSPHERE_TYPE_OPTIONS,
@@ -520,7 +541,6 @@ const DEFAULT_FAN = () => ({
 export default {
   name: 'VersionParametersPanel',
   components: {
-    draggable,
     TemperatureCurveViewer
   },
   props: {
@@ -547,6 +567,10 @@ export default {
     deviceCapability: {
       type: Object,
       default: () => ({})
+    },
+    forceRefreshKey: {
+      type: [String, Number],
+      default: ''
     }
   },
   data() {
@@ -574,9 +598,22 @@ export default {
       handler(newVersion) {
         this.initializeParameters(newVersion)
       }
+    },
+    forceRefreshKey() {
+      this.initializeParameters(this.version)
     }
   },
   methods: {
+    handleTabClick() {
+      // Tab 切换时的处理（v-if 已确保图表正确渲染）
+    },
+
+    getEmptyDescription() {
+      return this.editable
+        ? '暂无温度段配置，点击右上角"新增段"或"应用推荐模板"按钮添加'
+        : '暂无温度段配置'
+    },
+
     initializeParameters(version) {
       const segments = cloneDeep(version?.segments || [])
       const atmosphere = cloneDeep(version?.atmosphereSettings || [])
@@ -587,6 +624,15 @@ export default {
         .sort((a, b) => (a.segmentOrder || 0) - (b.segmentOrder || 0))
       this.atmosphereList = atmosphere.map(item => ({ ...item }))
       this.fanList = fans.map(item => ({ ...item }))
+
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('[VersionParametersPanel] segmentList initialized', {
+          versionId: version && version.id,
+          segmentCount: this.segmentList.length,
+          atmosphereCount: this.atmosphereList.length,
+          fanCount: this.fanList.length
+        })
+      }
     },
 
     emitChange() {
@@ -630,6 +676,24 @@ export default {
       this.emitChange()
     },
 
+    handleSegmentMoveUp(index) {
+      if (index === 0) return
+      const temp = this.segmentList[index]
+      this.$set(this.segmentList, index, this.segmentList[index - 1])
+      this.$set(this.segmentList, index - 1, temp)
+      this.renumberSegments()
+      this.emitChange()
+    },
+
+    handleSegmentMoveDown(index) {
+      if (index === this.segmentList.length - 1) return
+      const temp = this.segmentList[index]
+      this.$set(this.segmentList, index, this.segmentList[index + 1])
+      this.$set(this.segmentList, index + 1, temp)
+      this.renumberSegments()
+      this.emitChange()
+    },
+
     handleSegmentRemove(index) {
       this.segmentList.splice(index, 1)
       this.renumberSegments()
@@ -651,11 +715,6 @@ export default {
         ...segment,
         segmentOrder: idx + 1
       }))
-    },
-
-    handleSegmentDragEnd() {
-      this.renumberSegments()
-      this.emitChange()
     },
 
     handleAddAtmosphere() {
@@ -729,103 +788,75 @@ export default {
           errors.push(`${context}：升温段必须填写升温速率`)
         }
         if ((segment.segmentType === '降温' || segment.segmentType === '快速冷却') && !segment.coolingRate) {
-          errors.push(`${context}：降温/快速冷却段必须填写降温速率`)
+          errors.push(`${context}：降温段必须填写降温速率`)
         }
       })
 
-      this.atmosphereList.forEach((atm, index) => {
-        const context = `保护气氛#${index + 1}`
-        if (!atm.atmosphereType) {
-          errors.push(`${context}：请选择气氛类型`)
-        }
-        if (atm.flowRate === null || atm.flowRate === undefined) {
-          errors.push(`${context}：请输入流量设定值`)
-        }
-        if (atm.flowRateMin && atm.flowRateMax && Number(atm.flowRateMin) > Number(atm.flowRateMax)) {
-          errors.push(`${context}：流量下限不能大于上限`)
-        }
-        if (atm.pressureMin && atm.pressureMax && Number(atm.pressureMin) > Number(atm.pressureMax)) {
-          errors.push(`${context}：压力下限不能大于上限`)
-        }
-        if (atm.atmosphereType && atm.atmosphereType.includes('氢') && atm.supportsHydrogen !== true) {
-          errors.push(`${context}：氢气相关气氛必须勾选“支持氢气”`)
-        }
-      })
+      if (!this.atmosphereList.length) {
+        errors.push('请至少配置一个保护气氛参数')
+      }
 
-      this.fanList.forEach((fan, index) => {
-        const context = `循环风机#${index + 1}`
-        if (fan.frequency === null || fan.frequency === undefined) {
-          errors.push(`${context}：请输入频率设定值`)
-        }
-        if (fan.frequencyMin && fan.frequencyMax && Number(fan.frequencyMin) > Number(fan.frequencyMax)) {
-          errors.push(`${context}：频率下限不能大于上限`)
-        }
-      })
+      if (!this.fanList.length) {
+        errors.push('请至少配置一个循环风机参数')
+      }
 
       return errors
     },
 
-    segmentDragKey(segment, index) {
-      return segment?.id || `segment-${index}`
-    },
-
     handleApplyRecommendations() {
-      this.segmentList = cloneDeep(DEFAULT_SEGMENT_TEMPLATE)
-      this.renumberSegments()
+      const recommendedSegments = cloneDeep(DEFAULT_SEGMENT_TEMPLATE)
+      this.segmentList = recommendedSegments.map((segment, index) => ({
+        ...segment,
+        segmentOrder: index + 1
+      }))
       this.emitChange()
-      this.$message.success('已应用温度段推荐模板')
     }
   }
 }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .version-parameters-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.version-parameters-panel__curve {
-  margin-bottom: 16px;
+  height: 100%;
 }
 
 .version-parameters-panel__readonly-tip {
-  margin-bottom: 8px;
+  margin-bottom: 15px;
+}
+
+.version-parameters-panel__footer {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .parameter-section {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 4px 18px rgba(31, 45, 61, 0.06);
+  margin-bottom: 15px;
 }
 
 .parameter-section__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .parameter-section__title {
-  margin: 0;
+  margin-bottom: 5px;
   font-size: 16px;
-  font-weight: 600;
-  color: #1f2d3d;
+  font-weight: bold;
 }
 
 .parameter-section__subtitle {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #909399;
+  font-size: 14px;
+  color: #606266;
 }
 
 .parameter-section__actions {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .segment-table-wrapper,
@@ -833,21 +864,7 @@ export default {
   width: 100%;
 }
 
-.inline-range {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  &__separator {
-    font-size: 12px;
-    color: #909399;
-  }
-}
-
-.version-parameters-panel__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+.segment-table {
+  width: 100%;
 }
 </style>
-

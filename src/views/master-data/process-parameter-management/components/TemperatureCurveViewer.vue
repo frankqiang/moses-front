@@ -317,13 +317,14 @@ export default {
   },
   mounted() {
     this.initChart()
+    this.renderChart()
+
     this.resizeHandler = debounce(() => {
       if (this.chartInstance) {
         this.chartInstance.resize()
       }
     }, 200)
     window.addEventListener('resize', this.resizeHandler)
-    this.renderChart()
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.resizeHandler)
@@ -338,6 +339,14 @@ export default {
         return
       }
       this.chartInstance = echarts.init(this.$refs.chartRef)
+    },
+
+    forceResize() {
+      if (this.chartInstance) {
+        this.$nextTick(() => {
+          this.chartInstance.resize()
+        })
+      }
     },
 
     buildSeriesData(segmentList, color) {
