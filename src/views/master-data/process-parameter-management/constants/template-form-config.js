@@ -156,7 +156,8 @@ export const TEMPLATE_FORM_FIELDS = [
         message: '版本号格式如 v1 或 v1.0',
         trigger: 'blur'
       }
-    ]
+    ],
+    disabledOnEdit: true
   },
   {
     type: 'textarea',

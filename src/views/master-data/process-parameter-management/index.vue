@@ -39,8 +39,8 @@
 
     <!-- 模板表单抽屉 -->
     <TemplateFormDrawer
-      :key="`${formDrawer.templateId || 'new'}-${formDrawer.mode}-${formDrawer.versionId || ''}`"
       v-if="formDrawer.visible"
+      :key="`${formDrawer.templateId || 'new'}-${formDrawer.mode}-${formDrawer.versionId || ''}`"
       :visible.sync="formDrawer.visible"
       :mode="formDrawer.mode"
       :template-id="formDrawer.templateId"
@@ -372,7 +372,7 @@ export default {
     },
 
     handleFormSuccess() {
-      this.$message.success(MESSAGE_FALLBACKS.createTemplate)
+      // 消息提示已在 TemplateFormDrawer 组件中处理（使用后端返回的 message）
       this.formDrawer.visible = false
       this.fetchTemplateList()
     },

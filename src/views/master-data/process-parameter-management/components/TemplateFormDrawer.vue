@@ -758,39 +758,85 @@ export default {
     transformPayload(formData) {
       const payload = { ...formData.basic }
 
-      // 创建模板时，移除不需要的字段
-      if (this.formMode === 'create') {
-        delete payload.status
-        delete payload.copyFromVersionId
+      // 移除不需要的字段（创建和更新时都需要移除）
+      delete payload.status
+      delete payload.copyFromVersionId
+
+      // 更新模式下，不允许修改 templateCode 和 versionNumber
+      if (this.formMode === 'update') {
+        delete payload.templateCode
+        delete payload.versionNumber
       }
 
-      // 处理适用产品
-      payload.applicableProductIds = Array.isArray(payload.applicableProductIds)
-        ? payload.applicableProductIds.filter(Boolean)
-        : []
+      // 处理适用产品 - 接口要求: string[] (UUID列表)
+      if (Array.isArray(payload.applicableProductIds)) {
+        payload.applicableProductIds = payload.applicableProductIds.filter(Boolean)
+      } else {
+        payload.applicableProductIds = []
+      }
 
-      // 处理合金牌号
+      // 处理合金牌号 - 接口要求: string[] (每项最大50字符)
       if (payload.applicableAlloyGrades) {
-        payload.applicableAlloyGrades = payload.applicableAlloyGrades
-          .split(',')
-          .map(item => item.trim())
-          .filter(Boolean)
+        if (typeof payload.applicableAlloyGrades === 'string') {
+          // 如果是字符串，按逗号分割转为数组
+          const grades = payload.applicableAlloyGrades
+            .split(',')
+            .map(item => item.trim())
+            .filter(Boolean)
+          payload.applicableAlloyGrades = grades.length > 0 ? grades : undefined
+        } else if (Array.isArray(payload.applicableAlloyGrades)) {
+          // 如果已经是数组，确保非空
+          const grades = payload.applicableAlloyGrades.filter(Boolean)
+          payload.applicableAlloyGrades = grades.length > 0 ? grades : undefined
+        } else {
+          // 其他情况，删除该字段
+          delete payload.applicableAlloyGrades
+        }
+      } else {
+        // 空值时删除该字段
+        delete payload.applicableAlloyGrades
       }
 
-      // 处理范围字段
+      // 处理范围字段 - 接口要求: string (min-max 格式)
       ['applicableThicknessRange', 'applicableWidthRange'].forEach(key => {
-        if (payload[key] && typeof payload[key] === 'object') {
-          const { start, end } = payload[key]
-          payload[key] = start || end ? `${start || ''}-${end || ''}` : ''
+        if (payload[key]) {
+          if (typeof payload[key] === 'object') {
+            const { start, end } = payload[key]
+            if (start || end) {
+              payload[key] = `${start || ''}-${end || ''}`
+            } else {
+              delete payload[key]
+            }
+          } else if (typeof payload[key] === 'string' && !payload[key].trim()) {
+            delete payload[key]
+          }
+        } else {
+          delete payload[key]
         }
       })
 
-      // 添加温度段、保护气氛、风机参数
-      payload.segments = formData.segments || []
-      payload.atmosphereSettings = formData.atmosphereSettings || []
-      payload.fanSettings = formData.fanSettings || []
+      // 清理温度段配置 - 移除数据库字段
+      payload.segments = this.cleanDatabaseFields(formData.segments || [])
+
+      // 清理保护气氛配置 - 移除数据库字段
+      payload.atmosphereSettings = this.cleanDatabaseFields(formData.atmosphereSettings || [])
+
+      // 清理风机参数配置 - 移除数据库字段
+      payload.fanSettings = this.cleanDatabaseFields(formData.fanSettings || [])
 
       return payload
+    },
+    cleanDatabaseFields(items) {
+      // 移除数据库相关字段，只保留业务字段
+      const fieldsToRemove = ['id', 'versionId', 'isDeleted', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
+
+      return items.map(item => {
+        const cleanItem = { ...item }
+        fieldsToRemove.forEach(field => {
+          delete cleanItem[field]
+        })
+        return cleanItem
+      })
     },
     async handleSubmit() {
       // 验证基础信息
@@ -858,9 +904,15 @@ export default {
           response = await createProcessTemplate(payload)
         }
 
-        const message = this.formMode === 'copy'
-          ? response.message || MESSAGE_FALLBACKS.copyTemplate
-          : response.message || MESSAGE_FALLBACKS.createTemplate
+        // 优先使用后端返回的消息，不同模式使用不同的备用消息
+        let message
+        if (this.formMode === 'update') {
+          message = response.message || MESSAGE_FALLBACKS.updateTemplate
+        } else if (this.formMode === 'copy') {
+          message = response.message || MESSAGE_FALLBACKS.copyTemplate
+        } else {
+          message = response.message || MESSAGE_FALLBACKS.createTemplate
+        }
         this.$message.success(message)
         this.$emit('success', response.data)
         this.visibleProxy = false
