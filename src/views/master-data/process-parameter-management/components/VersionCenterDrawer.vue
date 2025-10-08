@@ -104,21 +104,23 @@
               :class="{ 'is-active': version.id === selectedVersionId }"
               @click="handleVersionSelect(version.id)"
             >
-              <div class="version-item__row">
-                <span class="version-item__title">{{ version.versionNumber }}</span>
-                <StatusTag
-                  v-if="version.status"
-                  :status="version.status"
-                  :text-map="versionStatusConfig.textMap"
-                  :type-map="versionStatusConfig.typeMap"
-                  size="mini"
-                />
+              <div class="version-item__header">
+                <div class="version-item__row">
+                  <span class="version-item__title">{{ version.versionNumber }}</span>
+                  <StatusTag
+                    v-if="version.status"
+                    :status="version.status"
+                    :text-map="versionStatusConfig.textMap"
+                    :type-map="versionStatusConfig.typeMap"
+                    size="mini"
+                  />
+                </div>
+                <div v-if="version.isLatestVersion" class="version-item__badge">
+                  最新版本
+                </div>
               </div>
               <div class="version-item__meta">
                 <span>{{ formatVersionMeta(version) }}</span>
-              </div>
-              <div v-if="version.isLatestVersion" class="version-item__badge">
-                最新版本
               </div>
             </div>
           </el-scrollbar>
@@ -1100,18 +1102,27 @@ export default {
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.18);
 }
 
-.version-item__row {
+.version-item__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+.version-item__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .version-item__title {
   font-weight: 600;
   font-size: 14px;
   color: #1f2d3d;
+  flex-shrink: 0;
 }
 
 .version-item__meta {
@@ -1121,11 +1132,13 @@ export default {
 }
 
 .version-item__badge {
-  position: absolute;
-  top: 10px;
-  right: 12px;
+  flex-shrink: 0;
   font-size: 12px;
   color: #409eff;
+  padding: 2px 8px;
+  background: #ecf5ff;
+  border-radius: 10px;
+  white-space: nowrap;
 }
 
 .version-item--skeleton {
@@ -1227,7 +1240,9 @@ export default {
 
 .version-overview-header__actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
