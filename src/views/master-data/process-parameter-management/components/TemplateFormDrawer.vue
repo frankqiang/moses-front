@@ -239,8 +239,7 @@ import {
   fetchProductOptions,
   createProcessTemplate,
   getProcessTemplateDetail,
-  updateProcessTemplateVersion,
-  copyProcessTemplate
+  updateProcessTemplateVersion
 } from '../api'
 
 const NUMBER_RANGE_COMPONENT = 'template-number-range'
@@ -262,7 +261,7 @@ export default {
     mode: {
       type: String,
       default: 'create',
-      validator: value => ['create', 'update', 'view', 'copy'].includes(value)
+      validator: value => ['create', 'update', 'view'].includes(value)
     },
     templateId: {
       type: String,
@@ -310,8 +309,7 @@ export default {
         limit: 30,
         totalPages: 1
       },
-      availableVersions: [],
-      copySourceVersion: null
+      availableVersions: []
     }
   },
   computed: {
@@ -319,13 +317,12 @@ export default {
       const titles = {
         create: '新建工艺模板',
         update: '编辑工艺模板',
-        view: '查看工艺模板',
-        copy: '复制工艺模板'
+        view: '查看工艺模板'
       }
       return titles[this.formMode] || '工艺模板'
     },
     submitButtonText() {
-      return this.formMode === 'create' || this.formMode === 'copy' ? '创建模板' : '保存修改'
+      return this.formMode === 'create' ? '创建模板' : '保存修改'
     },
     basicFormRules() {
       return TEMPLATE_FORM_FIELDS.reduce((rules, field) => {
@@ -371,7 +368,7 @@ export default {
     initialData: {
       handler(val) {
         if (val && Object.keys(val).length) {
-          this.parseInitialData(val, { copyMode: this.formMode === 'copy' })
+          this.parseInitialData(val)
         }
       },
       deep: false
@@ -396,10 +393,10 @@ export default {
       this.activeTab = 'basic'
       try {
         await this.prepareFormModel()
-        // 二次兜底：initialData 异步注入的场景（保持复制模式下的字段处理）
+        // 二次兜底：initialData 异步注入的场景
         if (!this.formModel || !this.formModel.basic || !this.formModel.basic.templateCode) {
           if (Object.keys(this.initialData || {}).length) {
-            this.parseInitialData(this.initialData, { copyMode: this.formMode === 'copy' })
+            this.parseInitialData(this.initialData)
           }
         }
         await this.fetchInitialProductOptions()
@@ -418,14 +415,10 @@ export default {
 
       // 优先使用父组件传入的 initialData（避免重复请求）
       if (Object.keys(this.initialData || {}).length) {
-        this.parseInitialData(this.initialData, { copyMode: this.formMode === 'copy' })
+        this.parseInitialData(this.initialData)
         return
       }
 
-      if (this.formMode === 'copy' && this.templateId) {
-        await this.loadTemplateDetail({ copyMode: true })
-        return
-      }
       if ((this.formMode === 'update' || this.formMode === 'view') && this.templateId) {
         await this.loadTemplateDetail()
         return
@@ -451,35 +444,31 @@ export default {
         fanSettings: []
       }
     },
-    async loadTemplateDetail({ copyMode = false } = {}) {
+    async loadTemplateDetail() {
       const { data } = await getProcessTemplateDetail(this.templateId)
       const latestVersion = data.latestVersion || {}
-      const targetVersion = copyMode
-        ? (data.versions || []).find(item => item.id === this.versionId) || latestVersion
-        : latestVersion
 
       const basicModel = {}
       TEMPLATE_FORM_FIELDS.forEach(field => {
         basicModel[field.prop] = field.type === 'remote-select' ? [] : ''
       })
 
-      basicModel.templateCode = copyMode ? '' : data.templateCode
-      basicModel.templateName = copyMode ? `${data.templateName || ''}-副本` : data.templateName
+      basicModel.templateCode = data.templateCode
+      basicModel.templateName = data.templateName
       basicModel.description = data.description || ''
       basicModel.status = data.status || TEMPLATE_STATUS.DRAFT
       basicModel.applicableProductIds = data.applicableProductIds || (data.applicableProducts || []).map(item => item.id)
       basicModel.applicableAlloyGrades = data.applicableAlloyGrades || ''
       basicModel.applicableThicknessRange = data.applicableThicknessRange || ''
       basicModel.applicableWidthRange = data.applicableWidthRange || ''
-      basicModel.versionNumber = copyMode ? `${targetVersion.versionNumber || 'v1.0'}-copy` : targetVersion.versionNumber || ''
-      basicModel.versionDescription = targetVersion.versionDescription || ''
-      basicModel.copyFromVersionId = targetVersion.id || this.versionId || ''
+      basicModel.versionNumber = latestVersion.versionNumber || ''
+      basicModel.versionDescription = latestVersion.versionDescription || ''
 
       this.formModel = {
         basic: basicModel,
-        segments: targetVersion.segments || [],
-        atmosphereSettings: targetVersion.atmosphereSettings || [],
-        fanSettings: targetVersion.fanSettings || []
+        segments: latestVersion.segments || [],
+        atmosphereSettings: latestVersion.atmosphereSettings || [],
+        fanSettings: latestVersion.fanSettings || []
       }
 
       this.productOptions = (data.applicableProducts || []).map(product => ({
@@ -489,9 +478,8 @@ export default {
         lifecycleStatus: product.lifecycleStatus
       }))
       this.availableVersions = data.versions || []
-      this.copySourceVersion = targetVersion
     },
-    parseInitialData(data, { copyMode = false } = {}) {
+    parseInitialData(data) {
       // data 为模板详情的完整数据结构
       const latestVersion = data.latestVersion || {}
 
@@ -504,8 +492,8 @@ export default {
         }
       })
 
-      basicModel.templateCode = copyMode ? '' : (data.templateCode || '')
-      basicModel.templateName = copyMode ? `${data.templateName || ''}-副本` : (data.templateName || '')
+      basicModel.templateCode = data.templateCode || ''
+      basicModel.templateName = data.templateName || ''
       basicModel.description = data.description || ''
       basicModel.status = data.status || TEMPLATE_STATUS.DRAFT
       // 优先使用后端直接提供的 applicableProductIds
@@ -513,9 +501,8 @@ export default {
       basicModel.applicableAlloyGrades = data.applicableAlloyGrades || ''
       basicModel.applicableThicknessRange = data.applicableThicknessRange || ''
       basicModel.applicableWidthRange = data.applicableWidthRange || ''
-      basicModel.versionNumber = copyMode ? `${latestVersion.versionNumber || 'v1.0'}-copy` : (latestVersion.versionNumber || '')
+      basicModel.versionNumber = latestVersion.versionNumber || ''
       basicModel.versionDescription = latestVersion.versionDescription || ''
-      basicModel.copyFromVersionId = latestVersion.id || this.versionId || ''
 
       this.formModel = {
         basic: basicModel,
@@ -532,7 +519,6 @@ export default {
         lifecycleStatus: product.lifecycleStatus
       }))
       this.availableVersions = data.versions || []
-      this.copySourceVersion = latestVersion
     },
     async fetchInitialProductOptions() {
       try {
@@ -760,7 +746,6 @@ export default {
 
       // 移除不需要的字段（创建和更新时都需要移除）
       delete payload.status
-      delete payload.copyFromVersionId
 
       // 更新模式下，不允许修改 templateCode 和 versionNumber
       if (this.formMode === 'update') {
@@ -893,26 +878,15 @@ export default {
 
         if (this.formMode === 'update' && this.templateId && this.versionId) {
           response = await updateProcessTemplateVersion(this.templateId, this.versionId, payload)
-        } else if (this.formMode === 'copy' && this.templateId) {
-          response = await copyProcessTemplate(this.templateId, {
-            newTemplateCode: payload.templateCode,
-            newTemplateName: payload.templateName,
-            newVersionNumber: payload.versionNumber,
-            copyFromVersionId: payload.copyFromVersionId || this.copySourceVersion?.id || this.versionId
-          })
         } else {
           response = await createProcessTemplate(payload)
         }
 
         // 优先使用后端返回的消息，不同模式使用不同的备用消息
-        let message
-        if (this.formMode === 'update') {
-          message = response.message || MESSAGE_FALLBACKS.updateTemplate
-        } else if (this.formMode === 'copy') {
-          message = response.message || MESSAGE_FALLBACKS.copyTemplate
-        } else {
-          message = response.message || MESSAGE_FALLBACKS.createTemplate
-        }
+        const message = this.formMode === 'update'
+          ? (response.message || MESSAGE_FALLBACKS.updateTemplate)
+          : (response.message || MESSAGE_FALLBACKS.createTemplate)
+
         this.$message.success(message)
         this.$emit('success', response.data)
         this.visibleProxy = false

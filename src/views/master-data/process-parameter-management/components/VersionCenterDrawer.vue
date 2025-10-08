@@ -384,7 +384,7 @@ export default {
   data() {
     return {
       internalVisible: false,
-      drawerWidth: '1500px',
+      drawerWidth: '1800px',
       loading: false,
       versionsLoading: false,
       errorMessage: '',

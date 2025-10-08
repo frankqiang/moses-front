@@ -72,6 +72,17 @@
       @close="handleCurveViewerClose"
     />
 
+    <!-- 复制模板对话框 -->
+    <CopyTemplateDialog
+      v-if="copyDialog.visible"
+      :visible.sync="copyDialog.visible"
+      :source-template="copyDialog.sourceTemplate"
+      :source-version="copyDialog.sourceVersion"
+      :available-versions="copyDialog.availableVersions"
+      @success="handleCopySuccess"
+      @close="handleCopyDialogClose"
+    />
+
     <TemplateUsageDialog
       v-if="usageDialog.visible"
       :visible.sync="usageDialog.visible"
@@ -112,6 +123,7 @@ import TemplateTable from './components/TemplateTable.vue'
 import TemplateFormDrawer from './components/TemplateFormDrawer.vue'
 import VersionCenterDrawer from './components/VersionCenterDrawer.vue'
 import TemperatureCurveViewer from './components/TemperatureCurveViewer.vue'
+import CopyTemplateDialog from './components/CopyTemplateDialog.vue'
 import TemplateUsageDialog from './components/TemplateUsageDialog.vue'
 import DangerOperationConfirmDialog from './components/DangerOperationConfirmDialog.vue'
 import {
@@ -150,6 +162,7 @@ export default {
     TemplateFormDrawer,
     VersionCenterDrawer,
     TemperatureCurveViewer,
+    CopyTemplateDialog,
     TemplateUsageDialog,
     DangerOperationConfirmDialog
   },
@@ -195,6 +208,12 @@ export default {
         segments: [],
         comparisonVersions: [],
         deviceCapability: {}
+      },
+      copyDialog: {
+        visible: false,
+        sourceTemplate: null,
+        sourceVersion: null,
+        availableVersions: []
       },
       usageDialog: {
         visible: false,
@@ -446,16 +465,19 @@ export default {
     },
 
     async openCreateVersion(template) {
+      // 新建版本实际上是复制当前版本到同一模板
+      // 使用复制对话框，但提示用户这是新建版本
       try {
         this.loading.form = true
         const response = await getProcessTemplateDetail(template.id)
-        const data = (response && response.data) || {}
-        this.formDrawer = {
+        const detail = response.data || {}
+
+        // 打开简化的复制对话框（用于新建版本）
+        this.copyDialog = {
           visible: true,
-          mode: 'copy',
-          templateId: data.id || template.id,
-          versionId: (data.latestVersion && data.latestVersion.id) || (template.latestVersion && template.latestVersion.id) || '',
-          initialData: data
+          sourceTemplate: detail,
+          sourceVersion: detail.latestVersion,
+          availableVersions: detail.versions || []
         }
       } catch (error) {
         console.error('[ProcessParameterManagement] openCreateVersion failed', error)
@@ -559,17 +581,22 @@ export default {
     async handleCopyTemplate(template) {
       if (!template || !template.id) return
       try {
-        const detail = await getProcessTemplateDetail(template.id)
-        this.formDrawer = {
+        this.loading.form = true
+        const response = await getProcessTemplateDetail(template.id)
+        const detail = response.data || {}
+
+        // 打开简化的复制对话框
+        this.copyDialog = {
           visible: true,
-          mode: 'copy',
-          templateId: template.id,
-          versionId: (detail.data && detail.data.latestVersion && detail.data.latestVersion.id) || '',
-          initialData: detail.data || {}
+          sourceTemplate: detail,
+          sourceVersion: detail.latestVersion,
+          availableVersions: detail.versions || []
         }
       } catch (error) {
         console.error('[ProcessParameterManagement] handleCopyTemplate failed', error)
         this.$message.error((error && error.message) || '获取模板详情失败')
+      } finally {
+        this.loading.form = false
       }
     },
 
@@ -745,6 +772,19 @@ export default {
       this.curveViewer.segments = []
       this.curveViewer.comparisonVersions = []
       this.curveViewer.deviceCapability = {}
+    },
+
+    handleCopySuccess() {
+      // 消息提示已在 CopyTemplateDialog 组件中处理（使用后端返回的 message）
+      this.copyDialog.visible = false
+      this.fetchTemplateList()
+    },
+
+    handleCopyDialogClose() {
+      this.copyDialog.visible = false
+      this.copyDialog.sourceTemplate = null
+      this.copyDialog.sourceVersion = null
+      this.copyDialog.availableVersions = []
     }
   }
 }
