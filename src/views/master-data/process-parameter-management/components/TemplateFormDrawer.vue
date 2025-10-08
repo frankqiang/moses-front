@@ -66,13 +66,46 @@
                   :key="field.prop"
                   :span="getFieldSpan(field)"
                 >
-                  <el-form-item :label="field.label" :prop="field.prop">
+                  <el-form-item
+                    :label="field.label"
+                    :prop="field.prop"
+                    :class="{ 'form-item--full-width': field.prop === 'applicableProductIds' }"
+                  >
+                    <!-- 适用产品字段使用 el-select 并渲染 el-option -->
+                    <template v-if="field.prop === 'applicableProductIds'">
+                      <el-select
+                        v-model="formModel.basic[field.prop]"
+                        v-bind="buildFieldProps(field, formMode)"
+                        class="full-width-select"
+                        value-key="id"
+                        multiple
+                        filterable
+                        remote
+                        :remote-method="handleProductSearch"
+                        reserve-keyword
+                        collapse-tags
+                        collapse-tags-tooltip
+                        popper-class="template-form-drawer__product-popper"
+                      >
+                        <el-option
+                          v-for="product in productOptions"
+                          :key="product.id"
+                          :label="`${product.productCode} - ${product.productName}`"
+                          :value="product.id"
+                        >
+                          <div class="product-option">
+                            <div class="product-code">{{ product.productCode }}</div>
+                            <div class="product-name">{{ product.productName }}</div>
+                          </div>
+                        </el-option>
+                      </el-select>
+                    </template>
+                    <!-- 其他字段使用动态组件 -->
                     <component
                       :is="resolveFieldComponent(field)"
+                      v-else
                       v-model="formModel.basic[field.prop]"
                       v-bind="buildFieldProps(field, formMode)"
-                      @remote-search="handleProductSearch"
-                      @scroll-bottom="handleProductLoadMore"
                     />
                     <small v-if="field.hint" class="field-hint">{{ field.hint }}</small>
                   </el-form-item>
@@ -593,7 +626,12 @@ export default {
     },
     getFieldSpan(field) {
       if (field.colSpan) return field.colSpan
-      if (['description', 'applicableProductIds', 'versionDescription'].includes(field.prop)) {
+      // 描述类字段全宽
+      if (['description', 'versionDescription'].includes(field.prop)) {
+        return 24
+      }
+      // 适用范围字段统一全宽，确保对齐
+      if (['applicableProductIds', 'applicableAlloyGrades', 'applicableThicknessRange', 'applicableWidthRange'].includes(field.prop)) {
         return 24
       }
       return 12
@@ -669,6 +707,12 @@ export default {
     },
     transformPayload(formData) {
       const payload = { ...formData.basic }
+
+      // 创建模板时，移除不需要的字段
+      if (this.formMode === 'create') {
+        delete payload.status
+        delete payload.copyFromVersionId
+      }
 
       // 处理适用产品
       payload.applicableProductIds = Array.isArray(payload.applicableProductIds)
@@ -898,24 +942,49 @@ export default {
   font-size: 12px;
 }
 
+/* 适用产品字段使用更宽的输入框，确保 placeholder 能够完整显示 */
+.form-item--full-width >>> .el-form-item__label {
+  width: 120px !important;
+}
+
+.form-item--full-width >>> .el-form-item__content {
+  margin-left: 120px !important;
+}
+
+.full-width-select {
+  min-width: 500px;
+  max-width: 100%;
+}
+
+.full-width-select >>> .el-select__tags {
+  max-width: 100%;
+}
+
 .template-form-drawer__hint {
   margin-top: 16px;
 }
 
 .template-form-drawer__product-popper >>> .el-select-dropdown__item {
+  height: auto;
+  padding: 8px 12px;
+}
+
+.product-option {
   display: flex;
   flex-direction: column;
-  padding: 6px 12px;
+  line-height: 1.4;
 }
 
-.template-form-drawer__product-popper >>> .el-select-dropdown__item .product-code {
+.product-option .product-code {
   font-weight: 600;
   color: #1f2d3d;
+  font-size: 14px;
 }
 
-.template-form-drawer__product-popper >>> .el-select-dropdown__item .product-name {
+.product-option .product-name {
   font-size: 12px;
   color: #909399;
+  margin-top: 2px;
 }
 
 @media (max-width: 1440px) {
