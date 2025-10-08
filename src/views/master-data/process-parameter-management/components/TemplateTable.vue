@@ -568,11 +568,21 @@ export default {
 
     /**
      * 处理操作按钮点击
+     * @param {Object} eventData - ActionButtons组件发出的事件数据 { action, row, data }
      */
-    handleActionClick(action, row) {
+    handleActionClick(eventData) {
+      // ActionButtons 组件发出的 click 事件包含 { action, row, data }
+      const { action, row } = eventData
+
+      // 防御性检查
+      if (!row) {
+        console.error('[TemplateTable] handleActionClick: row is undefined', eventData)
+        return
+      }
+
       // 发送操作事件给父组件，附带模板和版本信息
       const payload = {
-        action: action.action || action,
+        action: action,
         template: row,
         version: row.latestVersion,
         templateId: row.id,
