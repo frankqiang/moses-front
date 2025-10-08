@@ -269,8 +269,8 @@ export default {
       selectedRows: [],
       // 列设置存储键
       columnSettingsKey: TABLE_COLUMN_SETTINGS_ID,
-      // 可配置列选项
-      columnOptions: TABLE_COLUMNS,
+      // 可配置列选项（排除操作列，操作列始终显示）
+      columnOptions: TABLE_COLUMNS.filter(col => col.columnId !== 'versionActions'),
       // 批量操作Loading状态
       batchLoading: false,
       // 批量操作加载状态管理
@@ -306,10 +306,10 @@ export default {
     enableVirtualScroll() {
       return this.data.length > 100
     },
-    // 表格列配置 - 根据可见列过滤
+    // 表格列配置 - 根据可见列过滤，操作列始终显示
     tableColumns() {
       return TABLE_COLUMNS.filter(col =>
-        this.visibleColumns.includes(col.columnId)
+        this.visibleColumns.includes(col.columnId) || col.columnId === 'versionActions'
       )
     },
     // 分页配置
