@@ -71,14 +71,20 @@
     </header>
 
     <div class="temperature-curve-viewer__body">
-      <ErrorHandler :error-message="errorMessage">
-        <template #default>
-          <div
-            ref="chartRef"
-            class="temperature-curve-viewer__chart"
-          />
-        </template>
-      </ErrorHandler>
+      <section class="temperature-curve-viewer__chart-wrapper">
+        <div
+          v-if="errorMessage"
+          class="temperature-curve-viewer__chart-error"
+        >
+          <i class="el-icon-warning-outline" />
+          <p>{{ errorMessage }}</p>
+        </div>
+        <div
+          v-else
+          ref="chartRef"
+          class="temperature-curve-viewer__chart"
+        />
+      </section>
       <aside class="temperature-curve-viewer__sidebar">
         <section class="temperature-curve-viewer__section">
           <h5>数据校验</h5>
@@ -130,7 +136,6 @@ import {
   MarkAreaComponent
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import ErrorHandler from '@/components/ErrorHandler'
 import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
 import {
@@ -154,9 +159,6 @@ echarts.use([
 
 export default {
   name: 'TemperatureCurveViewer',
-  components: {
-    ErrorHandler
-  },
   props: {
     segments: {
       type: Array,
@@ -618,9 +620,42 @@ export default {
   gap: 20px;
 }
 
+.temperature-curve-viewer__chart-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+}
+
 .temperature-curve-viewer__chart {
   flex: 1;
   height: 360px;
+}
+
+.temperature-curve-viewer__chart-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #f56c6c;
+  background: #fef0f0;
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+
+  i {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: #f56c6c;
+  }
 }
 
 .temperature-curve-viewer__sidebar {

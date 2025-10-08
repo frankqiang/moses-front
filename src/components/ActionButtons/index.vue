@@ -590,33 +590,39 @@ export default {
       }
     }
 
-    // 危险按钮样式
+    // 危险按钮样式（仅用于text类型按钮）
     &.danger-button {
-      color: #F56C6C;
-
-      &:hover {
+      &.el-button--text {
         color: #F56C6C;
-        background-color: #FEF0F0;
+
+        &:hover {
+          color: #F56C6C;
+          background-color: #FEF0F0;
+        }
       }
     }
 
-    // 成功按钮样式
+    // 成功按钮样式（仅用于text类型按钮）
     &.success-button {
-      color: #67C23A;
-
-      &:hover {
+      &.el-button--text {
         color: #67C23A;
-        background-color: #F0F9FF;
+
+        &:hover {
+          color: #67C23A;
+          background-color: #F0F9FF;
+        }
       }
     }
 
-    // 警告按钮样式
+    // 警告按钮样式（仅用于text类型按钮）
     &.warning-button {
-      color: #E6A23C;
-
-      &:hover {
+      &.el-button--text {
         color: #E6A23C;
-        background-color: #FDF6EC;
+
+        &:hover {
+          color: #E6A23C;
+          background-color: #FDF6EC;
+        }
       }
     }
 
