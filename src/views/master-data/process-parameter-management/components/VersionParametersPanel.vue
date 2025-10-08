@@ -20,7 +20,7 @@
     <el-tabs v-model="activeTab" type="card" @tab-click="handleTabClick">
       <el-tab-pane label="温度段配置" name="segments">
         <TemperatureCurveViewer
-          v-if="activeTab === 'segments'"
+          v-show="activeTab === 'segments'"
           ref="curveViewer"
           class="version-parameters-panel__curve"
           :segments="segmentList"
@@ -67,6 +67,7 @@
             <el-table
               v-else
               :data="segmentList"
+              :row-key="getSegmentRowKey"
               border
               class="segment-table"
             >
@@ -90,7 +91,7 @@
                     placeholder="选择类型"
                     size="mini"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="handleSegmentTypeChange(row)"
                   >
                     <el-option
                       v-for="option in segmentTypeOptions"
@@ -111,7 +112,7 @@
                     size="mini"
                     controls-position="right"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   />
                 </template>
               </el-table-column>
@@ -125,13 +126,14 @@
                     size="mini"
                     controls-position="right"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   />
                 </template>
               </el-table-column>
               <el-table-column prop="heatingRate" label="升温速率 (°C/h)" width="150">
                 <template #default="{ row }">
                   <el-input-number
+                    v-if="needsHeatingRate(row)"
                     v-model="row.heatingRate"
                     :min="0.1"
                     :max="500"
@@ -140,13 +142,15 @@
                     :precision="1"
                     controls-position="right"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   />
+                  <span v-else style="color: #909399;">-</span>
                 </template>
               </el-table-column>
               <el-table-column prop="coolingRate" label="降温速率 (°C/h)" width="150">
                 <template #default="{ row }">
                   <el-input-number
+                    v-if="needsCoolingRate(row)"
                     v-model="row.coolingRate"
                     :min="0.1"
                     :max="500"
@@ -155,8 +159,9 @@
                     :precision="1"
                     controls-position="right"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   />
+                  <span v-else style="color: #909399;">-</span>
                 </template>
               </el-table-column>
               <el-table-column prop="description" label="段说明">
@@ -168,7 +173,7 @@
                     placeholder="请输入段说明"
                     maxlength="200"
                     show-word-limit
-                    @input="emitChange"
+                    @input="debouncedEmitChange"
                   />
                 </template>
               </el-table-column>
@@ -230,8 +235,9 @@
           <div class="parameter-table-wrapper">
             <el-table
               :data="atmosphereList"
+              :row-key="getAtmosphereRowKey"
               border
-              :empty-text="editable ? '点击右上角“新增参数”按钮添加气氛配置' : '暂无气氛配置'"
+              :empty-text="editable ? '点击右上角【新增参数】按钮添加气氛配置' : '暂无气氛配置'"
             >
               <el-table-column prop="atmosphereType" label="气氛类型" width="160">
                 <template #default="{ row }">
@@ -240,7 +246,7 @@
                     placeholder="请选择"
                     size="mini"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   >
                     <el-option
                       v-for="option in atmosphereTypeOptions"
@@ -262,7 +268,7 @@
                     size="mini"
                     controls-position="right"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   />
                 </template>
               </el-table-column>
@@ -278,7 +284,7 @@
                       size="mini"
                       controls-position="right"
                       :disabled="!editable"
-                      @change="emitChange"
+                      @change="debouncedEmitChange"
                     />
                     <span class="inline-range__separator">至</span>
                     <el-input-number
@@ -290,7 +296,7 @@
                       size="mini"
                       controls-position="right"
                       :disabled="!editable"
-                      @change="emitChange"
+                      @change="debouncedEmitChange"
                     />
                   </div>
                 </template>
@@ -305,7 +311,7 @@
                     size="mini"
                     controls-position="right"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   />
                 </template>
               </el-table-column>
@@ -320,7 +326,7 @@
                       size="mini"
                       controls-position="right"
                       :disabled="!editable"
-                      @change="emitChange"
+                      @change="debouncedEmitChange"
                     />
                     <span class="inline-range__separator">至</span>
                     <el-input-number
@@ -331,7 +337,7 @@
                       size="mini"
                       controls-position="right"
                       :disabled="!editable"
-                      @change="emitChange"
+                      @change="debouncedEmitChange"
                     />
                   </div>
                 </template>
@@ -341,7 +347,7 @@
                   <el-switch
                     v-model="row.supportsHydrogen"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   />
                 </template>
               </el-table-column>
@@ -354,7 +360,7 @@
                     maxlength="200"
                     show-word-limit
                     placeholder="请输入说明"
-                    @input="emitChange"
+                    @input="debouncedEmitChange"
                   />
                 </template>
               </el-table-column>
@@ -393,8 +399,9 @@
           <div class="parameter-table-wrapper">
             <el-table
               :data="fanList"
+              :row-key="getFanRowKey"
               border
-              :empty-text="editable ? '点击右上角“新增风机参数”按钮添加配置' : '暂无风机配置'"
+              :empty-text="editable ? '点击右上角【新增风机参数】按钮添加配置' : '暂无风机配置'"
             >
               <el-table-column prop="frequency" label="频率设定 (Hz)" width="150">
                 <template #default="{ row }">
@@ -407,7 +414,7 @@
                     size="mini"
                     controls-position="right"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   />
                 </template>
               </el-table-column>
@@ -423,7 +430,7 @@
                       size="mini"
                       controls-position="right"
                       :disabled="!editable"
-                      @change="emitChange"
+                      @change="debouncedEmitChange"
                     />
                     <span class="inline-range__separator">至</span>
                     <el-input-number
@@ -435,7 +442,7 @@
                       size="mini"
                       controls-position="right"
                       :disabled="!editable"
-                      @change="emitChange"
+                      @change="debouncedEmitChange"
                     />
                   </div>
                 </template>
@@ -447,7 +454,7 @@
                     placeholder="请选择"
                     size="mini"
                     :disabled="!editable"
-                    @change="emitChange"
+                    @change="debouncedEmitChange"
                   >
                     <el-option
                       v-for="option in fanModeOptions"
@@ -458,18 +465,28 @@
                   </el-select>
                 </template>
               </el-table-column>
-              <el-table-column prop="segmentOrder" label="适用段序号" width="140">
+              <el-table-column prop="segmentOrder" label="适用段序号" width="160">
                 <template #default="{ row }">
-                  <el-input-number
-                    v-model="row.segmentOrder"
-                    :min="1"
-                    :max="1000"
-                    :step="1"
-                    size="mini"
-                    controls-position="right"
-                    :disabled="!editable"
-                    @change="emitChange"
-                  />
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <el-input-number
+                      v-model="row.segmentOrder"
+                      :min="1"
+                      :max="maxSegmentOrder"
+                      :step="1"
+                      size="mini"
+                      controls-position="right"
+                      placeholder="留空表示全局"
+                      :disabled="!editable"
+                      @change="debouncedEmitChange"
+                    />
+                    <el-tooltip
+                      v-if="row.segmentOrder && !isValidSegmentOrder(row.segmentOrder)"
+                      content="该段序号在温度段配置中不存在"
+                      placement="top"
+                    >
+                      <i class="el-icon-warning" style="color: #f56c6c;" />
+                    </el-tooltip>
+                  </div>
                 </template>
               </el-table-column>
               <el-table-column prop="description" label="备注说明">
@@ -481,7 +498,7 @@
                     maxlength="200"
                     show-word-limit
                     placeholder="请输入备注"
-                    @input="emitChange"
+                    @input="debouncedEmitChange"
                   />
                 </template>
               </el-table-column>
@@ -508,8 +525,9 @@
 </template>
 
 <script>
-import { cloneDeep } from 'lodash'
+import { cloneDeep, debounce } from 'lodash'
 import {
+  SEGMENT_TYPES,
   SEGMENT_TYPE_OPTIONS,
   ATMOSPHERE_TYPE_OPTIONS,
   FAN_MODE_OPTIONS,
@@ -578,7 +596,9 @@ export default {
       activeTab: 'segments',
       segmentList: [],
       atmosphereList: [],
-      fanList: []
+      fanList: [],
+      // 防抖版本的 emitChange
+      debouncedEmitChange: null
     }
   },
   computed: {
@@ -590,6 +610,16 @@ export default {
     },
     fanModeOptions() {
       return FAN_MODE_OPTIONS
+    },
+    // 有效的段序号列表（从温度段配置中提取）
+    validSegmentOrders() {
+      return this.segmentList.map(segment => segment.segmentOrder).filter(order => order > 0)
+    },
+    // 最大段序号
+    maxSegmentOrder() {
+      return this.validSegmentOrders.length > 0
+        ? Math.max(...this.validSegmentOrders)
+        : 1000
     }
   },
   watch: {
@@ -601,6 +631,16 @@ export default {
     },
     forceRefreshKey() {
       this.initializeParameters(this.version)
+    }
+  },
+  created() {
+    // 创建防抖函数，300ms 延迟
+    this.debouncedEmitChange = debounce(this.emitChange, 300)
+  },
+  beforeDestroy() {
+    // 组件销毁前取消防抖
+    if (this.debouncedEmitChange) {
+      this.debouncedEmitChange.cancel()
     }
   },
   methods: {
@@ -676,6 +716,22 @@ export default {
       this.emitChange()
     },
 
+    /**
+     * 段类型变化时清理不需要的速率字段
+     * @param {Object} row - 温度段对象
+     */
+    handleSegmentTypeChange(row) {
+      // 如果不需要升温速率，清空该字段
+      if (!this.needsHeatingRate(row)) {
+        row.heatingRate = null
+      }
+      // 如果不需要降温速率，清空该字段
+      if (!this.needsCoolingRate(row)) {
+        row.coolingRate = null
+      }
+      this.emitChange()
+    },
+
     handleSegmentMoveUp(index) {
       if (index === 0) return
       const temp = this.segmentList[index]
@@ -735,6 +791,16 @@ export default {
     handleFanRemove(index) {
       this.fanList.splice(index, 1)
       this.emitChange()
+    },
+
+    /**
+     * 校验风机的适用段序号是否有效
+     * @param {number} order - 段序号
+     * @returns {boolean} 是否有效
+     */
+    isValidSegmentOrder(order) {
+      if (!order) return true // 空值表示全局，总是有效
+      return this.validSegmentOrders.includes(order)
     },
 
     handleReset() {
@@ -800,6 +866,14 @@ export default {
         errors.push('请至少配置一个循环风机参数')
       }
 
+      // 校验风机的适用段序号
+      this.fanList.forEach((fan, index) => {
+        const context = `风机配置#${index + 1}`
+        if (fan.segmentOrder && !this.isValidSegmentOrder(fan.segmentOrder)) {
+          errors.push(`${context}：适用段序号 ${fan.segmentOrder} 在温度段配置中不存在`)
+        }
+      })
+
       return errors
     },
 
@@ -810,6 +884,46 @@ export default {
         segmentOrder: index + 1
       }))
       this.emitChange()
+    },
+
+    /**
+     * 判断当前段是否需要显示升温速率
+     * @param {Object} segment - 温度段对象
+     * @returns {boolean} - 是否需要显示
+     */
+    needsHeatingRate(segment) {
+      return segment.segmentType === SEGMENT_TYPES.HEATING
+    },
+
+    /**
+     * 判断当前段是否需要显示降温速率
+     * @param {Object} segment - 温度段对象
+     * @returns {boolean} - 是否需要显示
+     */
+    needsCoolingRate(segment) {
+      return segment.segmentType === SEGMENT_TYPES.COOLING ||
+             segment.segmentType === SEGMENT_TYPES.QUICK_COOLING
+    },
+
+    /**
+     * 获取温度段行的唯一key（用于表格性能优化）
+     */
+    getSegmentRowKey(row, index) {
+      return row.id || `segment-${row.segmentOrder || index}`
+    },
+
+    /**
+     * 获取保护气氛行的唯一key
+     */
+    getAtmosphereRowKey(row, index) {
+      return row.id || `atmosphere-${index}`
+    },
+
+    /**
+     * 获取循环风机行的唯一key
+     */
+    getFanRowKey(row, index) {
+      return row.id || `fan-${index}`
     }
   }
 }

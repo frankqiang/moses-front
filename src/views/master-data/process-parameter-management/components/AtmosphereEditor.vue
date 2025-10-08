@@ -291,7 +291,13 @@ export default {
       immediate: true,
       deep: true,
       handler(val) {
-        this.atmospheres = val ? JSON.parse(JSON.stringify(val)) : []
+        // 深拷贝并确保 supportsHydrogen 字段存在且为布尔类型
+        this.atmospheres = val ? JSON.parse(JSON.stringify(val)).map(item => ({
+          ...item,
+          supportsHydrogen: item.supportsHydrogen === true || item.supportsHydrogen === false
+            ? item.supportsHydrogen
+            : false  // 如果是 null/undefined，设置为 false
+        })) : []
       }
     }
   },
@@ -305,7 +311,7 @@ export default {
         pressure: null,
         pressureMin: null,
         pressureMax: null,
-        supportsHydrogen: false,
+        supportsHydrogen: false,  // 确保初始值是布尔类型 false，而不是 null
         description: ''
       }
       this.atmospheres.push(newAtmosphere)
@@ -331,6 +337,10 @@ export default {
              atmosphere.atmosphereType === ATMOSPHERE_TYPES.NITROGEN_HYDROGEN
     },
     emitChange() {
+      // 调试日志：检查 supportsHydrogen 的值
+      this.atmospheres.forEach((atm, index) => {
+        console.log(`[AtmosphereEditor] 气氛#${index + 1} supportsHydrogen:`, atm.supportsHydrogen, 'type:', typeof atm.supportsHydrogen)
+      })
       this.$emit('input', this.atmospheres)
       this.$emit('change', this.atmospheres)
     },

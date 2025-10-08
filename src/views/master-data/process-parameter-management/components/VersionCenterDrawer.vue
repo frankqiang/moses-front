@@ -4,6 +4,7 @@
 创建日期：2025-09-30
 修改记录：
   - 2025-09-30: 初始创建，完成TASK006 P0-1阶段需求
+  - 2025-10-08: 新增"创建新版本"对话框功能，完成TASK006 P0-6
 -->
 
 <template>
@@ -54,6 +55,7 @@
               v-model="versionStatusFilter"
               size="mini"
               placeholder="筛选版本状态"
+              style="flex: 1;"
               @change="handleVersionStatusChange"
             >
               <el-option label="全部状态" value="ALL" />
@@ -255,12 +257,12 @@
 
             <el-tab-pane label="版本对比" name="compare">
               <VersionComparePanel
-                v-if="selectedVersion"
+                v-if="selectedVersion && activeTab === 'compare'"
                 :template-id="templateId"
                 :current-version="selectedVersion"
               />
               <el-empty
-                v-else
+                v-else-if="!selectedVersion"
                 description="请选择需要对比的版本"
                 :image-size="160"
               />
@@ -327,6 +329,87 @@
         <el-button @click="showCurveViewer = false">关闭</el-button>
       </span>
     </el-dialog>
+
+    <!-- 创建新版本对话框 -->
+    <el-dialog
+      title="创建新版本"
+      :visible.sync="createNewVersionDialog.visible"
+      width="600px"
+      append-to-body
+      :close-on-click-modal="false"
+      class="create-new-version-dialog"
+      @close="handleCreateNewVersionDialogClose"
+    >
+      <el-alert
+        title="创建新版本说明"
+        type="info"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 16px;"
+      >
+        <template slot="default">
+          <p style="margin: 0 0 8px;">将在当前模板下创建一个新版本，新版本号在同一模板下必须唯一。</p>
+          <p style="margin: 0;">新版本会复制指定源版本的所有工艺参数配置，初始状态为"草稿"。</p>
+        </template>
+      </el-alert>
+
+      <el-form
+        ref="createNewVersionForm"
+        :model="createNewVersionDialog.formData"
+        :rules="createNewVersionRules"
+        label-width="100px"
+        size="small"
+      >
+        <el-form-item label="新版本号" prop="newVersionNumber">
+          <el-input
+            v-model="createNewVersionDialog.formData.newVersionNumber"
+            placeholder="请输入版本号，格式如 v1.1 或 1.1"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="版本说明" prop="versionDescription">
+          <el-input
+            v-model="createNewVersionDialog.formData.versionDescription"
+            type="textarea"
+            :rows="3"
+            maxlength="2000"
+            show-word-limit
+            placeholder="请描述新版本的主要变更内容、优化点等（选填）"
+          />
+        </el-form-item>
+
+        <el-form-item label="源版本" prop="copyFromVersionId">
+          <el-select
+            v-model="createNewVersionDialog.formData.copyFromVersionId"
+            placeholder="请选择要复制的源版本（默认为最新版本）"
+            clearable
+            style="width: 100%;"
+          >
+            <el-option
+              v-for="version in versionList"
+              :key="version.id"
+              :label="`${version.versionNumber} (${version.status})`"
+              :value="version.id"
+            />
+          </el-select>
+          <div style="font-size: 12px; color: #909399; margin-top: 4px;">
+            选择一个已有版本作为新版本的基础，留空则使用最新版本
+          </div>
+        </el-form-item>
+      </el-form>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="handleCreateNewVersionDialogClose">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="createNewVersionDialog.loading"
+          @click="handleCreateNewVersionSubmit"
+        >
+          创建
+        </el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -348,7 +431,8 @@ import {
   rejectProcessTemplateVersion,
   withdrawProcessTemplateVersion,
   activateProcessTemplateVersion,
-  voidProcessTemplateVersion
+  voidProcessTemplateVersion,
+  createNewVersion
 } from '../api'
 import {
   TEMPLATE_STATUS_CONFIG,
@@ -408,10 +492,54 @@ export default {
       curveDeviceCapability: {
         min: 0,
         max: 1200
+      },
+      createNewVersionDialog: {
+        visible: false,
+        loading: false,
+        formData: {
+          newVersionNumber: '',
+          versionDescription: '',
+          copyFromVersionId: ''
+        }
       }
     }
   },
   computed: {
+    createNewVersionRules() {
+      return {
+        newVersionNumber: [
+          { required: true, message: '新版本号不能为空', trigger: 'blur' },
+          {
+            pattern: /^(v?\d+(\.\d+)?)$/,
+            message: '版本号格式应为 v1.0 或 1.0',
+            trigger: 'blur'
+          },
+          {
+            validator: (rule, value, callback) => {
+              if (!value) {
+                callback()
+                return
+              }
+              // 检查版本号是否已存在
+              const exists = this.versionList.some(v => {
+                const normalizedExisting = v.versionNumber.toLowerCase().replace(/^v/, '')
+                const normalizedInput = value.toLowerCase().replace(/^v/, '')
+                return normalizedExisting === normalizedInput
+              })
+              if (exists) {
+                callback(new Error('该版本号已存在，请使用其他版本号'))
+              } else {
+                callback()
+              }
+            },
+            trigger: 'blur'
+          }
+        ],
+        versionDescription: [
+          { max: 2000, message: '版本说明不能超过2000个字符', trigger: 'blur' }
+        ]
+      }
+    },
     drawerTitle() {
       if (!this.templateDetail) {
         return '版本中心'
@@ -744,10 +872,11 @@ export default {
         return
       }
 
+      // 过滤掉系统字段，只保留业务字段
       const submitPayload = {
-        segments: payload.segments || [],
-        atmosphereSettings: payload.atmosphereSettings || [],
-        fanSettings: payload.fanSettings || []
+        segments: this.cleanSegments(payload.segments || []),
+        atmosphereSettings: this.cleanAtmosphereSettings(payload.atmosphereSettings || []),
+        fanSettings: this.cleanFanSettings(payload.fanSettings || [])
       }
 
       this.saving = true
@@ -778,6 +907,100 @@ export default {
       } finally {
         this.saving = false
       }
+    },
+
+    /**
+     * 清理温度段数据，只保留业务字段
+     */
+    cleanSegments(segments) {
+      return segments.map(segment => {
+        const cleaned = {
+          segmentOrder: segment.segmentOrder,
+          segmentType: segment.segmentType,
+          targetTemperature: segment.targetTemperature,
+          duration: segment.duration
+        }
+
+        // 可选字段
+        if (segment.heatingRate !== null && segment.heatingRate !== undefined) {
+          cleaned.heatingRate = segment.heatingRate
+        }
+        if (segment.coolingRate !== null && segment.coolingRate !== undefined) {
+          cleaned.coolingRate = segment.coolingRate
+        }
+        if (segment.description) {
+          cleaned.description = segment.description
+        }
+
+        return cleaned
+      })
+    },
+
+    /**
+     * 清理保护气氛数据，只保留业务字段
+     */
+    cleanAtmosphereSettings(atmosphereSettings) {
+      return atmosphereSettings.map(atmosphere => {
+        const cleaned = {
+          atmosphereType: atmosphere.atmosphereType,
+          flowRate: atmosphere.flowRate
+        }
+
+        // 可选字段
+        if (atmosphere.flowRateMin !== null && atmosphere.flowRateMin !== undefined) {
+          cleaned.flowRateMin = atmosphere.flowRateMin
+        }
+        if (atmosphere.flowRateMax !== null && atmosphere.flowRateMax !== undefined) {
+          cleaned.flowRateMax = atmosphere.flowRateMax
+        }
+        if (atmosphere.pressure !== null && atmosphere.pressure !== undefined) {
+          cleaned.pressure = atmosphere.pressure
+        }
+        if (atmosphere.pressureMin !== null && atmosphere.pressureMin !== undefined) {
+          cleaned.pressureMin = atmosphere.pressureMin
+        }
+        if (atmosphere.pressureMax !== null && atmosphere.pressureMax !== undefined) {
+          cleaned.pressureMax = atmosphere.pressureMax
+        }
+        if (atmosphere.supportsHydrogen !== null && atmosphere.supportsHydrogen !== undefined) {
+          cleaned.supportsHydrogen = atmosphere.supportsHydrogen
+        }
+        if (atmosphere.description) {
+          cleaned.description = atmosphere.description
+        }
+
+        return cleaned
+      })
+    },
+
+    /**
+     * 清理风机参数数据，只保留业务字段
+     */
+    cleanFanSettings(fanSettings) {
+      return fanSettings.map(fan => {
+        const cleaned = {
+          frequency: fan.frequency
+        }
+
+        // 可选字段
+        if (fan.frequencyMin !== null && fan.frequencyMin !== undefined) {
+          cleaned.frequencyMin = fan.frequencyMin
+        }
+        if (fan.frequencyMax !== null && fan.frequencyMax !== undefined) {
+          cleaned.frequencyMax = fan.frequencyMax
+        }
+        if (fan.segmentOrder !== null && fan.segmentOrder !== undefined) {
+          cleaned.segmentOrder = fan.segmentOrder
+        }
+        if (fan.mode) {
+          cleaned.mode = fan.mode
+        }
+        if (fan.description) {
+          cleaned.description = fan.description
+        }
+
+        return cleaned
+      })
     },
 
     handleParametersChange(changes) {
@@ -902,11 +1125,13 @@ export default {
     },
 
     applyUpdatedVersion(updatedVersion) {
+      // 更新版本列表中的版本数据
       this.versionList = this.versionList.map(item =>
         item.id === updatedVersion.id ? { ...item, ...updatedVersion } : item
       )
 
       if (this.templateDetail) {
+        // 更新 latestVersion（如果是最新版本）
         if (this.templateDetail.latestVersion && this.templateDetail.latestVersion.id === updatedVersion.id) {
           this.templateDetail = {
             ...this.templateDetail,
@@ -914,6 +1139,7 @@ export default {
           }
         }
 
+        // 更新 versions 数组
         if (Array.isArray(this.templateDetail.versions)) {
           this.templateDetail = {
             ...this.templateDetail,
@@ -928,6 +1154,31 @@ export default {
 
       if (updatedVersion.id === this.selectedVersionId) {
         this.prepareCurveComparison()
+      }
+    },
+
+    async refreshTemplateDetail() {
+      if (!this.templateId) {
+        return
+      }
+
+      try {
+        const response = await getProcessTemplateDetail(this.templateId)
+        const freshTemplateDetail = response.data || null
+
+        if (freshTemplateDetail) {
+          // 更新模板详情，保持当前选中的版本ID不变
+          this.templateDetail = freshTemplateDetail
+
+          console.info('[VersionCenterDrawer] 模板详情已刷新', {
+            templateId: this.templateId,
+            status: freshTemplateDetail.status,
+            latestVersion: freshTemplateDetail.latestVersion?.versionNumber
+          })
+        }
+      } catch (error) {
+        console.error('[VersionCenterDrawer] refreshTemplateDetail failed', error)
+        // 刷新失败不阻塞用户操作，仅记录日志
       }
     },
 
@@ -995,6 +1246,10 @@ export default {
         if (updatedVersion) {
           this.applyUpdatedVersion(updatedVersion)
         }
+
+        // 重新获取完整的模板详情，确保模板状态等字段与后端同步
+        await this.refreshTemplateDetail()
+
         this.$message.success(response.message || successMessage)
         this.$emit('approval-success', {
           templateId,
@@ -1054,6 +1309,107 @@ export default {
       link.click()
       URL.revokeObjectURL(url)
       this.$message.success('审批记录导出成功')
+    },
+
+    openCreateNewVersionDialog() {
+      if (!this.templateId) {
+        this.$message.warning('请先选择工艺模板')
+        return
+      }
+
+      // 重置表单
+      this.createNewVersionDialog.formData = {
+        newVersionNumber: '',
+        versionDescription: '',
+        copyFromVersionId: ''
+      }
+
+      // 设置默认源版本为最新版本
+      if (this.templateDetail && this.templateDetail.latestVersion) {
+        this.createNewVersionDialog.formData.copyFromVersionId = this.templateDetail.latestVersion.id
+      }
+
+      this.createNewVersionDialog.visible = true
+
+      // 清除表单验证
+      this.$nextTick(() => {
+        if (this.$refs.createNewVersionForm) {
+          this.$refs.createNewVersionForm.clearValidate()
+        }
+      })
+    },
+
+    handleCreateNewVersionDialogClose() {
+      this.createNewVersionDialog.visible = false
+      this.createNewVersionDialog.formData = {
+        newVersionNumber: '',
+        versionDescription: '',
+        copyFromVersionId: ''
+      }
+      if (this.$refs.createNewVersionForm) {
+        this.$refs.createNewVersionForm.clearValidate()
+      }
+    },
+
+    async handleCreateNewVersionSubmit() {
+      if (!this.$refs.createNewVersionForm) {
+        return
+      }
+
+      try {
+        await this.$refs.createNewVersionForm.validate()
+      } catch (error) {
+        return
+      }
+
+      this.createNewVersionDialog.loading = true
+
+      try {
+        const payload = {
+          newVersionNumber: this.createNewVersionDialog.formData.newVersionNumber.trim(),
+          versionDescription: this.createNewVersionDialog.formData.versionDescription?.trim() || '',
+          copyFromVersionId: this.createNewVersionDialog.formData.copyFromVersionId || undefined
+        }
+
+        const response = await createNewVersion(this.templateId, payload)
+
+        const newVersion = response.data
+        this.$message.success(response.message || '创建新版本成功')
+
+        // 关闭对话框
+        this.handleCreateNewVersionDialogClose()
+
+        // 刷新版本列表
+        await this.fetchVersionList({ reset: true })
+
+        // 自动选中新创建的版本
+        if (newVersion && newVersion.id) {
+          this.selectedVersionId = newVersion.id
+          this.activeTab = 'overview'
+
+          // 滚动到新版本
+          this.$nextTick(() => {
+            const container = this.$el.querySelector('.version-center__version-scroll .el-scrollbar__wrap')
+            const activeItem = this.$el.querySelector('.version-item.is-active')
+            if (container && activeItem) {
+              container.scrollTop = activeItem.offsetTop - 40
+            }
+          })
+        }
+
+        // 通知父组件
+        this.$emit('version-created', {
+          templateId: this.templateId,
+          versionId: newVersion?.id,
+          version: newVersion
+        })
+      } catch (error) {
+        console.error('[VersionCenterDrawer] handleCreateNewVersionSubmit failed', error)
+        const message = (error && error.message) || '创建新版本失败，请稍后重试'
+        this.$message.error(message)
+      } finally {
+        this.createNewVersionDialog.loading = false
+      }
     }
   }
 }
@@ -1103,6 +1459,7 @@ export default {
   display: flex;
   gap: 8px;
   margin-bottom: 10px;
+  align-items: center;
 }
 
 .version-center__version-scroll {

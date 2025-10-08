@@ -139,13 +139,17 @@ export default {
     }
   },
   watch: {
-    currentVersion: {
-      immediate: true,
-      handler(newVal) {
-        if (newVal) {
-          this.loadOtherVersions()
-        }
+    currentVersion(newVal, oldVal) {
+      // 只在版本切换时重新加载（不在初次挂载时触发）
+      if (newVal && oldVal && newVal.id !== oldVal.id) {
+        this.loadOtherVersions()
       }
+    }
+  },
+  mounted() {
+    // 组件挂载时（即用户切换到"版本对比" tab）才加载数据
+    if (this.currentVersion) {
+      this.loadOtherVersions()
     }
   },
   methods: {

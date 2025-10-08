@@ -4,6 +4,7 @@
 创建日期：2025-09-30
 修改记录：
   - 2025-09-30: 初始创建，实现TASK008 P0阶段核心功能以及P1第8项（筛选参数路由同步）
+  - 2025-10-08: 新增处理"创建新版本"事件，完成TASK008 P0-6
 -->
 
 <template>
@@ -59,6 +60,7 @@
       @close="handleVersionDrawerClose"
       @approval-success="handleVersionActionSuccess"
       @parameters-saved="handleVersionParametersSaved"
+      @version-created="handleVersionCreated"
     />
 
     <!-- 温度曲线查看器弹窗 -->
@@ -465,25 +467,30 @@ export default {
     },
 
     async openCreateVersion(template) {
-      // 新建版本实际上是复制当前版本到同一模板
-      // 使用复制对话框，但提示用户这是新建版本
+      // 打开版本中心抽屉，并触发创建新版本对话框
       try {
-        this.loading.form = true
-        const response = await getProcessTemplateDetail(template.id)
-        const detail = response.data || {}
-
-        // 打开简化的复制对话框（用于新建版本）
-        this.copyDialog = {
+        // 先打开版本中心抽屉
+        this.versionDrawer = {
           visible: true,
-          sourceTemplate: detail,
-          sourceVersion: detail.latestVersion,
-          availableVersions: detail.versions || []
+          templateId: template.id,
+          versionId: ''
         }
+
+        // 等待版本中心加载完成后，打开创建新版本对话框
+        this.$nextTick(() => {
+          // 延迟一下确保版本中心已初始化
+          setTimeout(() => {
+            const versionCenterDrawer = this.$children.find(
+              child => child.$options.name === 'VersionCenterDrawer'
+            )
+            if (versionCenterDrawer && versionCenterDrawer.openCreateNewVersionDialog) {
+              versionCenterDrawer.openCreateNewVersionDialog()
+            }
+          }, 300)
+        })
       } catch (error) {
         console.error('[ProcessParameterManagement] openCreateVersion failed', error)
-        this.$message.error((error && error.message) || '获取模板详情失败')
-      } finally {
-        this.loading.form = false
+        this.$message.error((error && error.message) || '打开创建新版本失败')
       }
     },
 
@@ -763,6 +770,15 @@ export default {
     },
     handleVersionParametersSaved() {
       this.fetchTemplateList()
+    },
+    handleVersionCreated({ templateId, versionId, version }) {
+      // 刷新模板列表以显示最新版本信息
+      this.fetchTemplateList()
+      console.info('[ProcessParameterManagement] 新版本创建成功', {
+        templateId,
+        versionId,
+        versionNumber: version?.versionNumber
+      })
     },
 
     handleCurveViewerClose() {

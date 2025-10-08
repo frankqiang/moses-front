@@ -4,6 +4,7 @@
  * 创建日期：2025-09-29
  * 修改记录：
  *   - 2025-09-29: 初始创建，完成TASK001 P0阶段全部接口封装
+ *   - 2025-10-08: 新增createNewVersion接口封装，完成TASK001 P0-6
  */
 
 import service, { ApiError } from '@/utils/request'
@@ -368,6 +369,25 @@ export async function getProcessTemplateUsage(templateId) {
   }
 }
 
+export async function createNewVersion(templateId, payload) {
+  assertTemplateId(templateId)
+  if (!payload || !payload.newVersionNumber) {
+    throw new ApiError('PTM_CLIENT_009', '创建新版本缺少必填字段：newVersionNumber', 400)
+  }
+
+  const response = await service({
+    url: `${BASE_URL}/${templateId}/versions/create`,
+    method: 'post',
+    data: payload
+  })
+
+  return {
+    data: response.data,
+    message: response.message,
+    meta: response.meta
+  }
+}
+
 export async function deleteProcessTemplate(templateId) {
   assertTemplateId(templateId)
 
@@ -396,6 +416,7 @@ export default {
   fetchProcessTemplateVersions,
   compareProcessTemplateVersions,
   copyProcessTemplate,
+  createNewVersion,
   activateProcessTemplateVersion,
   getProcessTemplateUsage,
   deleteProcessTemplate

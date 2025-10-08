@@ -385,11 +385,11 @@ export default {
         })
       }
 
-      // 新建版本 - 生效/历史状态可新建版本
+      // 创建新版本 - 生效/历史状态可创建新版本
       if (this.canCreateVersion(template, latestVersion)) {
         buttons.push({
           action: 'createVersion',
-          text: '新建版本',
+          text: '创建新版本',
           icon: 'el-icon-plus',
           type: 'text'
         })
@@ -492,7 +492,7 @@ export default {
     },
 
     /**
-     * 判断是否可以新建版本
+     * 判断是否可以创建新版本
      */
     canCreateVersion(template, latestVersion) {
       if (!latestVersion) return false

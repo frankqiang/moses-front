@@ -464,12 +464,22 @@ export default {
       basicModel.versionNumber = latestVersion.versionNumber || ''
       basicModel.versionDescription = latestVersion.versionDescription || ''
 
+      // 标准化 atmosphereSettings 数据，确保 supportsHydrogen 是布尔类型
+      const atmosphereSettings = (latestVersion.atmosphereSettings || []).map(atm => ({
+        ...atm,
+        supportsHydrogen: atm.supportsHydrogen === true || atm.supportsHydrogen === false
+          ? atm.supportsHydrogen
+          : false
+      }))
+
       this.formModel = {
         basic: basicModel,
         segments: latestVersion.segments || [],
-        atmosphereSettings: latestVersion.atmosphereSettings || [],
+        atmosphereSettings: atmosphereSettings,
         fanSettings: latestVersion.fanSettings || []
       }
+
+      console.log('[TemplateFormDrawer] loadTemplateDetail - atmosphereSettings:', atmosphereSettings)
 
       this.productOptions = (data.applicableProducts || []).map(product => ({
         id: product.id,
@@ -504,12 +514,22 @@ export default {
       basicModel.versionNumber = latestVersion.versionNumber || ''
       basicModel.versionDescription = latestVersion.versionDescription || ''
 
+      // 标准化 atmosphereSettings 数据，确保 supportsHydrogen 是布尔类型
+      const atmosphereSettings = (latestVersion.atmosphereSettings || []).map(atm => ({
+        ...atm,
+        supportsHydrogen: atm.supportsHydrogen === true || atm.supportsHydrogen === false
+          ? atm.supportsHydrogen
+          : false
+      }))
+
       this.formModel = {
         basic: basicModel,
         segments: latestVersion.segments || [],
-        atmosphereSettings: latestVersion.atmosphereSettings || [],
+        atmosphereSettings: atmosphereSettings, // ✅ 使用标准化后的数据
         fanSettings: latestVersion.fanSettings || []
       }
+
+      console.log('[TemplateFormDrawer] parseInitialData - atmosphereSettings:', atmosphereSettings)
 
       // 初始化产品下拉选项与版本列表，便于显示
       this.productOptions = (data.applicableProducts || []).map(product => ({
@@ -746,6 +766,7 @@ export default {
 
       // 移除不需要的字段（创建和更新时都需要移除）
       delete payload.status
+      delete payload.copyFromVersionId // 创建模板接口不允许该参数
 
       // 更新模式下，不允许修改 templateCode 和 versionNumber
       if (this.formMode === 'update') {
@@ -815,11 +836,21 @@ export default {
       // 移除数据库相关字段，只保留业务字段
       const fieldsToRemove = ['id', 'versionId', 'isDeleted', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
 
-      return items.map(item => {
+      return items.map((item, index) => {
         const cleanItem = { ...item }
         fieldsToRemove.forEach(field => {
           delete cleanItem[field]
         })
+
+        // 调试日志：检查清理后的 supportsHydrogen 值
+        if (cleanItem.atmosphereType) {
+          console.log(`[TemplateFormDrawer] cleanDatabaseFields 气氛#${index + 1}:`, {
+            atmosphereType: cleanItem.atmosphereType,
+            supportsHydrogen: cleanItem.supportsHydrogen,
+            type: typeof cleanItem.supportsHydrogen
+          })
+        }
+
         return cleanItem
       })
     },
@@ -874,6 +905,11 @@ export default {
 
       try {
         const payload = this.transformPayload(this.formModel)
+
+        // 调试日志：检查提交前的数据
+        console.log('[TemplateFormDrawer] 提交的 payload:', JSON.stringify(payload, null, 2))
+        console.log('[TemplateFormDrawer] atmosphereSettings 详细数据:', payload.atmosphereSettings)
+
         let response
 
         if (this.formMode === 'update' && this.templateId && this.versionId) {

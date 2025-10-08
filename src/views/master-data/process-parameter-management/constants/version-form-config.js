@@ -4,6 +4,7 @@
  * 创建日期：2025-09-29
  * 修改记录：
  *   - 2025-09-29: 初始创建，完成TASK002 P0版本参数配置定义
+ *   - 2025-10-08: 新增"创建新版本"表单配置，完成TASK002 P1-8
  */
 
 import {
@@ -334,4 +335,41 @@ function validateRange(label) {
     callback()
   }
 }
+
+// 创建新版本表单配置
+export const CREATE_NEW_VERSION_FORM_FIELDS = [
+  {
+    type: 'input',
+    prop: 'newVersionNumber',
+    label: '新版本号',
+    placeholder: '请输入版本号，格式如 v1.1 或 1.1',
+    required: true,
+    clearable: true,
+    rules: [
+      { required: true, message: '新版本号不能为空', trigger: 'blur' },
+      {
+        pattern: /^(v?\d+(\.\d+)?)$/,
+        message: '版本号格式应为 v1.0 或 1.0',
+        trigger: 'blur'
+      }
+    ]
+  },
+  {
+    type: 'textarea',
+    prop: 'versionDescription',
+    label: '版本说明',
+    rows: 3,
+    maxlength: 2000,
+    placeholder: '请描述新版本的主要变更内容、优化点等（选填）',
+    clearable: true
+  },
+  {
+    type: 'select',
+    prop: 'copyFromVersionId',
+    label: '源版本',
+    placeholder: '请选择要复制的源版本',
+    clearable: true,
+    tooltip: '选择一个已有版本作为新版本的基础，默认为最新版本'
+  }
+]
 
