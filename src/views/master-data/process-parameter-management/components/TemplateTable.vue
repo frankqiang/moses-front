@@ -180,7 +180,6 @@ import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import TableToolbar from '@/components/TableToolbar'
-import tableConfigStore from '@/utils/table-config-store'
 import {
   TABLE_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
@@ -324,11 +323,6 @@ export default {
         background: true,
         autoScroll: true
       }
-    }
-  },
-  watch: {
-    visibleColumns(newVal) {
-      tableConfigStore.saveColumnConfig(this.columnSettingsKey, newVal)
     }
   },
   methods: {
@@ -639,7 +633,6 @@ export default {
 
     handleColumnChange(columns) {
       const columnIds = columns.map(column => column.columnId || column)
-      tableConfigStore.saveColumnConfig(this.columnSettingsKey, columnIds)
       this.$emit('column-change', columnIds)
     },
 

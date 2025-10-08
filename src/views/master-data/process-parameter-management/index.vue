@@ -23,12 +23,14 @@
       :loading="loading.list"
       :load-error="listError || null"
       :pagination="pagination"
+      :visible-columns="visibleColumns"
       :toolbar-buttons="toolbarButtons"
       @refresh="handleRefresh"
       @create="handleCreateTemplate"
       @selection-change="handleSelectionChange"
       @pagination-change="handlePaginationChange"
       @sort-change="handleSortChange"
+      @column-change="handleColumnChange"
       @toolbar-action="handleToolbarAction"
       @action="handleTableAction"
       @view-detail="handleViewDetail"
@@ -127,9 +129,12 @@ import {
   DEFAULT_PAGINATION,
   DEFAULT_SORT,
   MESSAGE_FALLBACKS,
-  ERROR_MESSAGES
+  ERROR_MESSAGES,
+  DEFAULT_VISIBLE_COLUMNS,
+  TABLE_COLUMN_SETTINGS_ID
 } from './constants'
 import { debounce } from '@/utils'
+import tableConfigStore from '@/utils/table-config-store'
 
 const DEFAULT_QUERY = {
   ...DEFAULT_PAGINATION,
@@ -161,6 +166,7 @@ export default {
         action: false
       },
       selectedRows: [],
+      visibleColumns: tableConfigStore.getColumnConfig(TABLE_COLUMN_SETTINGS_ID) || DEFAULT_VISIBLE_COLUMNS,
       toolbarButtons: [
         {
           action: 'create',
@@ -314,6 +320,11 @@ export default {
 
     handleSelectionChange(selection) {
       this.selectedRows = selection
+    },
+
+    handleColumnChange(columns) {
+      this.visibleColumns = columns
+      tableConfigStore.saveColumnConfig(TABLE_COLUMN_SETTINGS_ID, columns)
     },
 
     handlePaginationChange({ page, limit }) {
