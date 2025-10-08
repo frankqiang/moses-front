@@ -364,6 +364,18 @@ export default {
         }
       }
     },
+    // 同步来自父组件的 visible 变化，避免初始化时机错过
+    formMode(val) {
+      // no-op 仅确保响应式
+    },
+    initialData: {
+      handler(val) {
+        if (val && Object.keys(val).length) {
+          this.parseInitialData(val, { copyMode: this.formMode === 'copy' })
+        }
+      },
+      deep: false
+    },
     visibleProxy(val) {
       this.$emit('update:visible', val)
       if (!val) {
@@ -384,6 +396,12 @@ export default {
       this.activeTab = 'basic'
       try {
         await this.prepareFormModel()
+        // 二次兜底：initialData 异步注入的场景（保持复制模式下的字段处理）
+        if (!this.formModel || !this.formModel.basic || !this.formModel.basic.templateCode) {
+          if (Object.keys(this.initialData || {}).length) {
+            this.parseInitialData(this.initialData, { copyMode: this.formMode === 'copy' })
+          }
+        }
         await this.fetchInitialProductOptions()
       } catch (error) {
         console.error('[TemplateFormDrawer] initialize failed', error)
@@ -397,21 +415,23 @@ export default {
         this.formModel = this.buildDefaultModel()
         return
       }
+
+      // 优先使用父组件传入的 initialData（避免重复请求）
+      if (Object.keys(this.initialData || {}).length) {
+        this.parseInitialData(this.initialData, { copyMode: this.formMode === 'copy' })
+        return
+      }
+
       if (this.formMode === 'copy' && this.templateId) {
         await this.loadTemplateDetail({ copyMode: true })
         return
       }
-      if (this.formMode === 'update' || this.formMode === 'view') {
-        if (this.templateId) {
-          await this.loadTemplateDetail()
-          return
-        }
+      if ((this.formMode === 'update' || this.formMode === 'view') && this.templateId) {
+        await this.loadTemplateDetail()
+        return
       }
-      if (Object.keys(this.initialData || {}).length) {
-        this.parseInitialData(this.initialData)
-      } else {
-        this.formModel = this.buildDefaultModel()
-      }
+
+      this.formModel = this.buildDefaultModel()
     },
     buildDefaultModel() {
       const basicModel = {}
@@ -447,7 +467,7 @@ export default {
       basicModel.templateName = copyMode ? `${data.templateName || ''}-副本` : data.templateName
       basicModel.description = data.description || ''
       basicModel.status = data.status || TEMPLATE_STATUS.DRAFT
-      basicModel.applicableProductIds = (data.applicableProducts || []).map(item => item.id)
+      basicModel.applicableProductIds = data.applicableProductIds || (data.applicableProducts || []).map(item => item.id)
       basicModel.applicableAlloyGrades = data.applicableAlloyGrades || ''
       basicModel.applicableThicknessRange = data.applicableThicknessRange || ''
       basicModel.applicableWidthRange = data.applicableWidthRange || ''
@@ -471,18 +491,48 @@ export default {
       this.availableVersions = data.versions || []
       this.copySourceVersion = targetVersion
     },
-    parseInitialData(data) {
+    parseInitialData(data, { copyMode = false } = {}) {
+      // data 为模板详情的完整数据结构
+      const latestVersion = data.latestVersion || {}
+
       const basicModel = {}
       TEMPLATE_FORM_FIELDS.forEach(field => {
-        basicModel[field.prop] = data[field.prop] || (field.type === 'remote-select' ? [] : '')
+        if (field.type === 'remote-select') {
+          basicModel[field.prop] = []
+        } else {
+          basicModel[field.prop] = ''
+        }
       })
+
+      basicModel.templateCode = copyMode ? '' : (data.templateCode || '')
+      basicModel.templateName = copyMode ? `${data.templateName || ''}-副本` : (data.templateName || '')
+      basicModel.description = data.description || ''
+      basicModel.status = data.status || TEMPLATE_STATUS.DRAFT
+      // 优先使用后端直接提供的 applicableProductIds
+      basicModel.applicableProductIds = data.applicableProductIds || (data.applicableProducts || []).map(item => item.id)
+      basicModel.applicableAlloyGrades = data.applicableAlloyGrades || ''
+      basicModel.applicableThicknessRange = data.applicableThicknessRange || ''
+      basicModel.applicableWidthRange = data.applicableWidthRange || ''
+      basicModel.versionNumber = copyMode ? `${latestVersion.versionNumber || 'v1.0'}-copy` : (latestVersion.versionNumber || '')
+      basicModel.versionDescription = latestVersion.versionDescription || ''
+      basicModel.copyFromVersionId = latestVersion.id || this.versionId || ''
 
       this.formModel = {
         basic: basicModel,
-        segments: data.segments || [],
-        atmosphereSettings: data.atmosphereSettings || [],
-        fanSettings: data.fanSettings || []
+        segments: latestVersion.segments || [],
+        atmosphereSettings: latestVersion.atmosphereSettings || [],
+        fanSettings: latestVersion.fanSettings || []
       }
+
+      // 初始化产品下拉选项与版本列表，便于显示
+      this.productOptions = (data.applicableProducts || []).map(product => ({
+        id: product.id,
+        productCode: product.productCode,
+        productName: product.productName,
+        lifecycleStatus: product.lifecycleStatus
+      }))
+      this.availableVersions = data.versions || []
+      this.copySourceVersion = latestVersion
     },
     async fetchInitialProductOptions() {
       try {

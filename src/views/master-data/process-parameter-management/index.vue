@@ -39,6 +39,7 @@
 
     <!-- 模板表单抽屉 -->
     <TemplateFormDrawer
+      :key="`${formDrawer.templateId || 'new'}-${formDrawer.mode}-${formDrawer.versionId || ''}`"
       v-if="formDrawer.visible"
       :visible.sync="formDrawer.visible"
       :mode="formDrawer.mode"
@@ -424,23 +425,43 @@ export default {
       }
     },
 
-    openEditTemplate(template) {
-      this.formDrawer = {
-        visible: true,
-        mode: 'update',
-        templateId: template.id,
-        versionId: (template.latestVersion && template.latestVersion.id) || '',
-        initialData: template
+    async openEditTemplate(template) {
+      try {
+        this.loading.form = true
+        const response = await getProcessTemplateDetail(template.id)
+        const data = (response && response.data) || {}
+        this.formDrawer = {
+          visible: true,
+          mode: 'update',
+          templateId: data.id || template.id,
+          versionId: (data.latestVersion && data.latestVersion.id) || (template.latestVersion && template.latestVersion.id) || '',
+          initialData: data
+        }
+      } catch (error) {
+        console.error('[ProcessParameterManagement] openEditTemplate failed', error)
+        this.$message.error((error && error.message) || '获取模板详情失败')
+      } finally {
+        this.loading.form = false
       }
     },
 
-    openCreateVersion(template) {
-      this.formDrawer = {
-        visible: true,
-        mode: 'copy',
-        templateId: template.id,
-        versionId: (template.latestVersion && template.latestVersion.id) || '',
-        initialData: template
+    async openCreateVersion(template) {
+      try {
+        this.loading.form = true
+        const response = await getProcessTemplateDetail(template.id)
+        const data = (response && response.data) || {}
+        this.formDrawer = {
+          visible: true,
+          mode: 'copy',
+          templateId: data.id || template.id,
+          versionId: (data.latestVersion && data.latestVersion.id) || (template.latestVersion && template.latestVersion.id) || '',
+          initialData: data
+        }
+      } catch (error) {
+        console.error('[ProcessParameterManagement] openCreateVersion failed', error)
+        this.$message.error((error && error.message) || '获取模板详情失败')
+      } finally {
+        this.loading.form = false
       }
     },
 

@@ -146,7 +146,7 @@ export const TABLE_COLUMNS = [
     columnId: 'versionActions',
     prop: 'actions',
     label: '操作',
-    minWidth: 260,
+    minWidth: 300,
     fixed: 'right',
     slotName: 'actions'
   }
