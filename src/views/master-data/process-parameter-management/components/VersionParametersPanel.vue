@@ -874,7 +874,52 @@ export default {
         }
       })
 
+      // 校验风机段序号的连续性（必须从1开始连续递增）
+      const segmentOrderError = this.validateFanSegmentOrderContinuity()
+      if (segmentOrderError) {
+        errors.push(segmentOrderError)
+      }
+
       return errors
+    },
+
+    /**
+     * 校验风机段序号的连续性
+     * 后端要求：风机参数的段序号必须从1开始连续递增
+     * @returns {string|null} 返回错误消息，如果校验通过则返回 null
+     */
+    validateFanSegmentOrderContinuity() {
+      // 过滤出有段序号的风机（null 表示全局风机，不参与校验）
+      const fansWithSegmentOrder = this.fanList.filter(fan => fan.segmentOrder !== null && fan.segmentOrder !== undefined)
+
+      // 如果没有指定段序号的风机，不需要校验
+      if (fansWithSegmentOrder.length === 0) {
+        return null
+      }
+
+      // 提取所有段序号并排序
+      const segmentOrders = fansWithSegmentOrder.map(fan => fan.segmentOrder).sort((a, b) => a - b)
+
+      // 检查是否有重复
+      const uniqueOrders = [...new Set(segmentOrders)]
+      if (uniqueOrders.length !== segmentOrders.length) {
+        const duplicates = segmentOrders.filter((item, index) => segmentOrders.indexOf(item) !== index)
+        return `风机参数的段序号不能重复，重复的段序号：${[...new Set(duplicates)].join(', ')}`
+      }
+
+      // 检查是否从1开始
+      if (segmentOrders[0] !== 1) {
+        return `风机参数的段序号必须从1开始，当前最小段序号为 ${segmentOrders[0]}`
+      }
+
+      // 检查是否连续递增
+      for (let i = 0; i < segmentOrders.length; i++) {
+        if (segmentOrders[i] !== i + 1) {
+          return `风机参数的段序号必须从1开始连续递增，当前缺少段序号 ${i + 1}`
+        }
+      }
+
+      return null
     },
 
     handleApplyRecommendations() {
