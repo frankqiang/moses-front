@@ -561,7 +561,8 @@ export default {
             response = await withdrawProcessTemplateVersion(templateId, versionId, payload)
             break
           case 'activate':
-            response = await activateProcessTemplateVersion(templateId, versionId, payload)
+            // 快速生效接口不需要 currentStatus 参数，只需要可选的 effectiveDate、expiryDate、comment
+            response = await activateProcessTemplateVersion(templateId, versionId, {})
             break
           case 'void':
             this.openDangerConfirm('void', template, async() => {

@@ -443,8 +443,8 @@ export default {
             action: 'activate',
             text: '快速生效',
             icon: 'el-icon-success',
-            type: 'text',
-            confirmText: '确认快速生效该版本吗？'
+            type: 'text'
+            // 不在此处配置 confirmText，由主页面统一处理二次确认
           })
         }
 
