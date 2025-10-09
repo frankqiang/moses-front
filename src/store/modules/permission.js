@@ -188,6 +188,16 @@ export const asyncRoutes = [
           icon: 'el-icon-setting'
           // 开发阶段：移除 roles 限制
         }
+      },
+      {
+        path: 'bin-specification-management',
+        name: 'BinSpecificationManagement',
+        component: () => import('@/views/master-data/bin-management/index'),
+        meta: {
+          title: '料框规格管理',
+          icon: 'el-icon-goods'
+          // 开发阶段：移除 roles 限制
+        }
       }
       // 可以继续添加其他主数据管理路由...
     ]
