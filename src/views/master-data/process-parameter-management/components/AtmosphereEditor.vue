@@ -296,7 +296,7 @@ export default {
           ...item,
           supportsHydrogen: item.supportsHydrogen === true || item.supportsHydrogen === false
             ? item.supportsHydrogen
-            : false  // 如果是 null/undefined，设置为 false
+            : false // 如果是 null/undefined，设置为 false
         })) : []
       }
     }
@@ -311,7 +311,7 @@ export default {
         pressure: null,
         pressureMin: null,
         pressureMax: null,
-        supportsHydrogen: false,  // 确保初始值是布尔类型 false，而不是 null
+        supportsHydrogen: false, // 确保初始值是布尔类型 false，而不是 null
         description: ''
       }
       this.atmospheres.push(newAtmosphere)
