@@ -37,16 +37,17 @@ export const SEARCH_FORM_CONFIG = [
     type: 'select',
     prop: 'versionStatus',
     label: '版本状态',
-    placeholder: '请选择版本状态',
+    placeholder: '请选择版本状态（注：接口暂不支持，仅前端收集）',
     options: VERSION_STATUS_OPTIONS,
     clearable: true,
-    priority: 'primary'
+    priority: 'primary',
+    disabled: true // 接口暂不支持，禁用此字段
   },
   {
     type: 'select',
     prop: 'applicableProductIds',
     label: '适用产品',
-    placeholder: '搜索并选择适用产品',
+    placeholder: '搜索并选择适用产品（注：多选时仅第一个生效）',
     multiple: true,
     collapseTags: true,
     clearable: true,
@@ -60,34 +61,37 @@ export const SEARCH_FORM_CONFIG = [
     type: 'input',
     prop: 'applicableAlloy',
     label: '适用合金',
-    placeholder: '输入合金牌号，支持多个以逗号分隔',
+    placeholder: '接口暂不支持此搜索条件',
     clearable: true,
     formatter: value => value?.toUpperCase(),
-    priority: 'advanced'
+    priority: 'advanced',
+    disabled: true // 接口暂不支持
   },
   {
     type: 'number-range',
     prop: 'thicknessRange',
     label: '厚度范围 (mm)',
-    placeholder: '最小值 - 最大值，空表示不限',
+    placeholder: '接口暂不支持此搜索条件',
     startProp: 'thicknessMin',
     endProp: 'thicknessMax',
     precision: 3,
     min: 0,
     max: 10,
-    priority: 'advanced'
+    priority: 'advanced',
+    disabled: true // 接口暂不支持
   },
   {
     type: 'number-range',
     prop: 'widthRange',
     label: '宽度范围 (mm)',
-    placeholder: '最小值 - 最大值，空表示不限',
+    placeholder: '接口暂不支持此搜索条件',
     startProp: 'widthMin',
     endProp: 'widthMax',
     precision: 1,
     min: 0,
     max: 3000,
-    priority: 'advanced'
+    priority: 'advanced',
+    disabled: true // 接口暂不支持
   },
   {
     type: 'daterange',
@@ -98,7 +102,8 @@ export const SEARCH_FORM_CONFIG = [
     valueFormat: 'yyyy-MM-ddTHH:mm:ss',
     format: 'yyyy-MM-dd',
     clearable: true,
-    priority: 'advanced'
+    priority: 'advanced',
+    disabled: true // 接口暂不支持
   },
   {
     type: 'daterange',
@@ -109,7 +114,8 @@ export const SEARCH_FORM_CONFIG = [
     valueFormat: 'yyyy-MM-ddTHH:mm:ss',
     format: 'yyyy-MM-dd',
     clearable: true,
-    priority: 'advanced'
+    priority: 'advanced',
+    disabled: true // 接口暂不支持
   },
   {
     type: 'select',

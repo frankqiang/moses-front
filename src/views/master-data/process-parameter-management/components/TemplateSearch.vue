@@ -5,6 +5,7 @@
 修改记录：
   - 2025-09-29: 初始创建，实现TASK003 P0阶段核心功能
   - 2025-09-29: 增加路由Query同步功能（P1阶段第8项）
+  - 2025-10-09: 修复搜索参数传递问题，添加@input事件监听同步SearchForm的数据
 -->
 
 <template>
@@ -15,9 +16,9 @@
       :items="searchFormConfig"
       :value="searchParams"
       :loading="loading"
+      @input="handleFormInput"
       @search="handleSearch"
       @reset="handleReset"
-      @change="handleSearchChange"
     />
   </div>
 </template>
@@ -26,7 +27,6 @@
 import SearchForm from '@/components/SearchForm'
 import { SEARCH_FORM_CONFIG, DEFAULT_PAGINATION, DEFAULT_SORT } from '../constants'
 import { fetchProductOptions } from '../api'
-import { debounce } from '@/utils'
 
 export default {
   name: 'TemplateSearch',
@@ -97,9 +97,6 @@ export default {
     }
   },
   async created() {
-    // 创建防抖搜索函数
-    this.debouncedSearch = debounce(this.executeSearch, 300)
-
     // 标记是否应该从路由同步（避免初始化时的循环）
     this.shouldSyncFromRoute = false
 
@@ -132,6 +129,18 @@ export default {
       } catch (error) {
         console.error('加载产品选项失败:', error)
         this.$message.warning('加载产品选项失败，请稍后重试')
+      }
+    },
+
+    /**
+     * 处理SearchForm的input事件 - 同步表单数据
+     * SearchForm组件会通过@input事件将内部表单数据同步到父组件
+     */
+    handleFormInput(formData) {
+      // 同步SearchForm的内部数据到searchParams
+      this.searchParams = {
+        ...this.searchParams,
+        ...formData
       }
     },
 
@@ -169,19 +178,6 @@ export default {
 
       // 立即执行搜索
       this.handleSearch()
-    },
-
-    /**
-     * 处理搜索条件变化
-     * 用于实时搜索或表单验证
-     */
-    handleSearchChange(field, value) {
-      this.searchParams[field] = value
-
-      // 对于某些字段进行实时搜索（如状态选择）
-      if (['status', 'versionStatus', 'sortBy'].includes(field)) {
-        this.debouncedSearch(this.formatSearchParams(this.searchParams))
-      }
     },
 
     /**
