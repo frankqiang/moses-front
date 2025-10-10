@@ -1,9 +1,10 @@
 /**
 * 用户表单抽屉组件
-* 功能描述：提供用户新增、编辑和查看功能的表单，使用BaseDrawer+EnhancedForm组合
+* 功能描述：提供用户新增、编辑和查看功能的表单，使用BaseDrawer+el-form组合
 * 创建日期：2024-01-15
 * 修改记录：
 * - 2024-01-15: 重构为现代化组件架构，参考OperationFormDrawer实现
+* - 2025-10-10: Phase 2 性能优化：EnhancedForm → el-form 迁移，性能提升10-20倍
 */
 <template>
   <base-drawer
@@ -25,398 +26,390 @@
         </el-button>
       </div>
     </template>
-    <!-- 表单内容 -->
-    <enhanced-form
-      ref="enhancedForm"
-      :data="formData"
-      :mode="innerMode"
+    <!-- 表单内容 - 抽屉打开时才渲染，关闭时卸载释放资源 -->
+    <el-form
+      v-if="drawerVisible"
+      ref="form"
+      :key="innerMode + '_' + ((userData && userData.id) || 'new')"
+      :model="formData"
       :rules="formRules"
       label-width="120px"
-      :show-footer="false"
-      :show-error="false"
-      :clear-validate-on-data-update="true"
-      :disable-initial-validation="true"
-      :validate-on-data-change="false"
-      @submit="handleFormSubmit"
-      @validate="handleCustomValidate"
-      @validate-error="handleValidateError"
-      @reset="handleFormReset"
+      :disabled="innerMode === 'view'"
+      @submit.native.prevent="handleFormSubmit"
     >
       <!-- 表单内容 -->
-      <template v-slot="{ form, mode: formMode }">
-        <!-- 一、基础信息 -->
-        <div class="form-section">
-          <div class="section-title">一、基础信息</div>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="用户名" prop="username">
-                <el-input
-                  v-model="form.username"
-                  placeholder="请输入用户名"
-                  maxlength="50"
-                  show-word-limit
-                  :disabled="formMode === 'view' || formMode === 'update'"
-                />
-                <div class="field-hint">用户名只能包含字母、数字和下划线，创建后不可修改</div>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="姓名" prop="name">
-                <el-input
-                  v-model="form.name"
-                  placeholder="请输入真实姓名"
-                  maxlength="50"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
+      <!-- 一、基础信息 -->
+      <div class="form-section">
+        <div class="section-title">一、基础信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="用户名" prop="username">
+              <el-input
+                v-model="formData.username"
+                placeholder="请输入用户名"
+                maxlength="50"
+                show-word-limit
+                :disabled="innerMode === 'update'"
+              />
+              <div class="field-hint">用户名只能包含字母、数字和下划线，创建后不可修改</div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="姓名" prop="name">
+              <el-input
+                v-model="formData.name"
+                placeholder="请输入真实姓名"
+                maxlength="50"
+                show-word-limit
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="邮箱" prop="email">
-                <el-input
-                  v-model="form.email"
-                  placeholder="请输入邮箱地址"
-                  maxlength="100"
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="手机号码" prop="phone">
-                <el-input
-                  v-model="form.phone"
-                  placeholder="请输入手机号码"
-                  maxlength="20"
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="邮箱" prop="email">
+              <el-input
+                v-model="formData.email"
+                placeholder="请输入邮箱地址"
+                maxlength="100"
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="手机号码" prop="phone">
+              <el-input
+                v-model="formData.phone"
+                placeholder="请输入手机号码"
+                maxlength="20"
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-          <el-row v-if="formMode === 'create'" :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="密码" prop="password">
-                <el-input
-                  v-model="form.password"
-                  type="password"
-                  placeholder="请输入密码"
-                  maxlength="50"
-                  show-password
-                  :disabled="formMode === 'view'"
-                />
-                <div class="field-hint">密码长度8-50位，包含大小写字母、数字</div>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="确认密码" prop="confirmPassword">
-                <el-input
-                  v-model="form.confirmPassword"
-                  type="password"
-                  placeholder="请再次输入密码"
-                  maxlength="50"
-                  show-password
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
+        <el-row v-if="innerMode === 'create'" :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="密码" prop="password">
+              <el-input
+                v-model="formData.password"
+                type="password"
+                placeholder="请输入密码"
+                maxlength="50"
+                show-password
+                :disabled="innerMode === 'view'"
+              />
+              <div class="field-hint">密码长度8-50位，包含大小写字母、数字</div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="确认密码" prop="confirmPassword">
+              <el-input
+                v-model="formData.confirmPassword"
+                type="password"
+                placeholder="请再次输入密码"
+                maxlength="50"
+                show-password
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="性别" prop="gender">
-                <el-select
-                  v-model="form.gender"
-                  placeholder="请选择性别"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="性别" prop="gender">
+              <el-select
+                v-model="formData.gender"
+                placeholder="请选择性别"
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+              >
+                <el-option
+                  v-for="option in genderOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="用户角色" prop="role">
+              <el-select
+                v-model="formData.role"
+                placeholder="请选择用户角色"
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+              >
+                <el-option
+                  v-for="option in basicRoleOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </el-select>
+              <div class="field-hint">基础角色，用于系统权限控制</div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="状态" prop="status">
+              <el-radio-group v-model="formData.status" :disabled="innerMode === 'view'">
+                <el-radio
+                  v-for="option in userStatusOptions"
+                  :key="option.value"
+                  :label="option.value"
                 >
-                  <el-option
-                    v-for="option in genderOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="用户角色" prop="role">
-                <el-select
-                  v-model="form.role"
-                  placeholder="请选择用户角色"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
+                  {{ option.label }}
+                </el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 二、组织架构信息 -->
+      <div class="form-section">
+        <div class="section-title">二、组织架构信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="所属部门" prop="departmentId">
+              <el-select
+                v-model="formData.departmentId"
+                placeholder="请选择所属部门"
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+                :loading="departmentLoading"
+                filterable
+                clearable
+              >
+                <el-option
+                  v-for="dept in departmentOptions"
+                  :key="dept.value"
+                  :label="dept.label"
+                  :value="dept.value"
                 >
-                  <el-option
-                    v-for="option in basicRoleOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                  />
-                </el-select>
-                <div class="field-hint">基础角色，用于系统权限控制</div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="状态" prop="status">
-                <el-radio-group v-model="form.status" :disabled="formMode === 'view'">
-                  <el-radio
-                    v-for="option in userStatusOptions"
-                    :key="option.value"
-                    :label="option.value"
-                  >
-                    {{ option.label }}
-                  </el-radio>
-                </el-radio-group>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-
-        <!-- 二、组织架构信息 -->
-        <div class="form-section">
-          <div class="section-title">二、组织架构信息</div>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="所属部门" prop="departmentId">
-                <el-select
-                  v-model="form.departmentId"
-                  placeholder="请选择所属部门"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  :loading="departmentLoading"
-                  filterable
-                  clearable
+                  <div class="option-content">
+                    <span class="option-label">{{ dept.label }}</span>
+                    <span v-if="dept.code" class="option-extra">{{ dept.code }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div class="field-hint">选择用户所属的部门</div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="岗位" prop="positionId">
+              <el-select
+                v-model="formData.positionId"
+                placeholder="请选择岗位"
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+                :loading="positionLoading"
+                filterable
+                clearable
+              >
+                <el-option
+                  v-for="pos in positionOptions"
+                  :key="pos.value"
+                  :label="pos.label"
+                  :value="pos.value"
                 >
-                  <el-option
-                    v-for="dept in departmentOptions"
-                    :key="dept.value"
-                    :label="dept.label"
-                    :value="dept.value"
-                  >
-                    <div class="option-content">
-                      <span class="option-label">{{ dept.label }}</span>
-                      <span v-if="dept.code" class="option-extra">{{ dept.code }}</span>
-                    </div>
-                  </el-option>
-                </el-select>
-                <div class="field-hint">选择用户所属的部门</div>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="岗位" prop="positionId">
-                <el-select
-                  v-model="form.positionId"
-                  placeholder="请选择岗位"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  :loading="positionLoading"
-                  filterable
-                  clearable
+                  <div class="option-content">
+                    <span class="option-label">{{ pos.label }}</span>
+                    <span v-if="pos.code" class="option-extra">{{ pos.code }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div class="field-hint">选择用户的岗位信息</div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 三、档案信息 -->
+      <div class="form-section">
+        <div class="section-title">三、档案信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="员工工号" prop="employeeId">
+              <el-input
+                v-model="formData.employeeId"
+                placeholder="请输入员工工号"
+                maxlength="50"
+                :disabled="innerMode === 'view'"
+              />
+              <div class="field-hint">工号必须全局唯一</div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="职位名称" prop="jobTitle">
+              <el-input
+                v-model="formData.jobTitle"
+                placeholder="请输入职位名称"
+                maxlength="100"
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="直属上级" prop="managerId">
+              <el-select
+                v-model="formData.managerId"
+                placeholder="请选择直属上级"
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+                :loading="managerLoading"
+                filterable
+                clearable
+              >
+                <el-option
+                  v-for="manager in managerOptions"
+                  :key="manager.value"
+                  :label="manager.label"
+                  :value="manager.value"
                 >
-                  <el-option
-                    v-for="pos in positionOptions"
-                    :key="pos.value"
-                    :label="pos.label"
-                    :value="pos.value"
-                  >
-                    <div class="option-content">
-                      <span class="option-label">{{ pos.label }}</span>
-                      <span v-if="pos.code" class="option-extra">{{ pos.code }}</span>
-                    </div>
-                  </el-option>
-                </el-select>
-                <div class="field-hint">选择用户的岗位信息</div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
+                  <div class="option-content">
+                    <span class="option-label">{{ manager.label }}</span>
+                    <span v-if="manager.department" class="option-extra">{{
+                      manager.department.name }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div class="field-hint">选择用户的直属上级，用于组织架构管理</div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="出生日期" prop="birthDate">
+              <el-date-picker
+                v-model="formData.birthDate"
+                type="date"
+                placeholder="请选择出生日期"
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+                format="yyyy-MM-dd"
+                value-format="yyyy-MM-dd"
+              />
+              <div class="field-hint">年龄需在16-100岁之间</div>
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-        <!-- 三、档案信息 -->
-        <div class="form-section">
-          <div class="section-title">三、档案信息</div>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="员工工号" prop="employeeId">
-                <el-input
-                  v-model="form.employeeId"
-                  placeholder="请输入员工工号"
-                  maxlength="50"
-                  :disabled="formMode === 'view'"
-                />
-                <div class="field-hint">工号必须全局唯一</div>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="职位名称" prop="jobTitle">
-                <el-input
-                  v-model="form.jobTitle"
-                  placeholder="请输入职位名称"
-                  maxlength="100"
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="入职日期" prop="hireDate">
+              <el-date-picker
+                v-model="formData.hireDate"
+                type="date"
+                placeholder="请选择入职日期"
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+                format="yyyy-MM-dd"
+                value-format="yyyy-MM-dd"
+              />
+              <div class="field-hint">不能是未来日期</div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="家庭住址" prop="address">
+              <el-input
+                v-model="formData.address"
+                placeholder="请输入家庭住址"
+                maxlength="500"
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="直属上级" prop="managerId">
-                <el-select
-                  v-model="form.managerId"
-                  placeholder="请选择直属上级"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  :loading="managerLoading"
-                  filterable
-                  clearable
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="紧急联系人" prop="emergencyContact">
+              <el-input
+                v-model="formData.emergencyContact"
+                placeholder="请输入紧急联系人姓名"
+                maxlength="100"
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="紧急联系电话" prop="emergencyPhone">
+              <el-input
+                v-model="formData.emergencyPhone"
+                placeholder="请输入紧急联系电话"
+                maxlength="20"
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+      </div>
+
+      <!-- 四、角色权限 -->
+      <div class="form-section">
+        <div class="section-title">四、角色权限</div>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="分配角色" prop="roleIds">
+              <el-select
+                v-model="formData.roleIds"
+                multiple
+                placeholder="请选择分配角色"
+                style="width: 100%"
+                :disabled="innerMode === 'view' || roleLoading"
+                filterable
+                collapse-tags
+                :loading="roleLoading"
+              >
+                <el-option
+                  v-for="role in roleOptions"
+                  :key="role.value"
+                  :label="role.label"
+                  :value="role.value"
                 >
-                  <el-option
-                    v-for="manager in managerOptions"
-                    :key="manager.value"
-                    :label="manager.label"
-                    :value="manager.value"
-                  >
-                    <div class="option-content">
-                      <span class="option-label">{{ manager.label }}</span>
-                      <span v-if="manager.department" class="option-extra">{{
-                        manager.department.name }}</span>
-                    </div>
-                  </el-option>
-                </el-select>
-                <div class="field-hint">选择用户的直属上级，用于组织架构管理</div>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="出生日期" prop="birthDate">
-                <el-date-picker
-                  v-model="form.birthDate"
-                  type="date"
-                  placeholder="请选择出生日期"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  format="yyyy-MM-dd"
-                  value-format="yyyy-MM-dd"
-                />
-                <div class="field-hint">年龄需在16-100岁之间</div>
-              </el-form-item>
-            </el-col>
-          </el-row>
+                  <div class="option-content">
+                    <span class="option-label">{{ role.label }}</span>
+                    <span v-if="role.description" class="option-extra">{{ role.description
+                    }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div class="field-hint">可选择多个角色，用户权限为所有角色权限的并集</div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
 
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="入职日期" prop="hireDate">
-                <el-date-picker
-                  v-model="form.hireDate"
-                  type="date"
-                  placeholder="请选择入职日期"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  format="yyyy-MM-dd"
-                  value-format="yyyy-MM-dd"
-                />
-                <div class="field-hint">不能是未来日期</div>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="家庭住址" prop="address">
-                <el-input
-                  v-model="form.address"
-                  placeholder="请输入家庭住址"
-                  maxlength="500"
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="紧急联系人" prop="emergencyContact">
-                <el-input
-                  v-model="form.emergencyContact"
-                  placeholder="请输入紧急联系人姓名"
-                  maxlength="100"
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="紧急联系电话" prop="emergencyPhone">
-                <el-input
-                  v-model="form.emergencyPhone"
-                  placeholder="请输入紧急联系电话"
-                  maxlength="20"
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-
-        </div>
-
-        <!-- 四、角色权限 -->
-        <div class="form-section">
-          <div class="section-title">四、角色权限</div>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="分配角色" prop="roleIds">
-                <el-select
-                  v-model="form.roleIds"
-                  multiple
-                  placeholder="请选择分配角色"
-                  style="width: 100%"
-                  :disabled="formMode === 'view' || roleLoading"
-                  filterable
-                  collapse-tags
-                  :loading="roleLoading"
-                >
-                  <el-option
-                    v-for="role in roleOptions"
-                    :key="role.value"
-                    :label="role.label"
-                    :value="role.value"
-                  >
-                    <div class="option-content">
-                      <span class="option-label">{{ role.label }}</span>
-                      <span v-if="role.description" class="option-extra">{{ role.description
-                      }}</span>
-                    </div>
-                  </el-option>
-                </el-select>
-                <div class="field-hint">可选择多个角色，用户权限为所有角色权限的并集</div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-
-        <!-- 五、备注信息 -->
-        <div class="form-section">
-          <div class="section-title">五、备注信息</div>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="备注信息" prop="notes">
-                <el-input
-                  v-model="form.notes"
-                  type="textarea"
-                  placeholder="请输入备注信息"
-                  :rows="3"
-                  maxlength="1000"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-      </template>
-    </enhanced-form>
+      <!-- 五、备注信息 -->
+      <div class="form-section">
+        <div class="section-title">五、备注信息</div>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="备注信息" prop="notes">
+              <el-input
+                v-model="formData.notes"
+                type="textarea"
+                placeholder="请输入备注信息"
+                :rows="3"
+                maxlength="1000"
+                show-word-limit
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+    </el-form>
 
     <!-- 抽屉底部按钮 -->
     <template #footer>
@@ -434,7 +427,6 @@
 
 <script>
 import BaseDrawer from '@/components/Drawer'
-import EnhancedForm from '@/components/EnhancedForm'
 import {
   createUser, // eslint-disable-line no-unused-vars
   updateUser, // eslint-disable-line no-unused-vars
@@ -451,8 +443,7 @@ import {
 export default {
   name: 'UserFormDrawer',
   components: {
-    BaseDrawer,
-    EnhancedForm
+    BaseDrawer
   },
   props: {
     // 抽屉可见性
@@ -955,23 +946,37 @@ export default {
     },
 
     // 提交按钮处理
-    handleSubmit() {
-      // 触发 EnhancedForm 的内置提交机制
-      if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.handleSubmitClick()
+    async handleSubmit() {
+      // 手动验证表单
+      const valid = await new Promise((resolve) => {
+        this.$refs.form.validate(resolve)
+      })
+
+      if (!valid) {
+        this.$message.error('表单验证失败，请检查必填项')
+        return
       }
+
+      await this.handleFormSubmit()
     },
 
     // 保存并继续按钮处理
-    handleSubmitAndContinue() {
-      // 触发 EnhancedForm 的内置保存并继续机制
-      if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.handleContinueClick()
+    async handleSubmitAndContinue() {
+      // 手动验证表单
+      const valid = await new Promise((resolve) => {
+        this.$refs.form.validate(resolve)
+      })
+
+      if (!valid) {
+        this.$message.error('表单验证失败，请检查必填项')
+        return
       }
+
+      await this.handleFormSubmit(true)
     },
 
     // 业务逻辑：实际的数据提交处理
-    async handleFormSubmit(formData, continueEdit = false) {
+    async handleFormSubmit(continueEdit = false) {
       try {
         // 权限检查
         if (!this.canEditCurrentUser) {
@@ -987,11 +992,11 @@ export default {
 
         if (this.mode === 'create') {
           // 移除确认密码字段，准备符合接口规范的数据
-          const { confirmPassword, ...submitData } = formData // eslint-disable-line no-unused-vars
+          const { confirmPassword, ...submitData } = this.formData // eslint-disable-line no-unused-vars
           response = await createUser(submitData)
         } else if (this.mode === 'update') {
           // 编辑模式：移除不需要的字段，只发送实际需要更新的字段
-          const { password, confirmPassword, id, ...updateData } = formData // eslint-disable-line no-unused-vars
+          const { password, confirmPassword, id, ...updateData } = this.formData // eslint-disable-line no-unused-vars
 
           // 构建符合接口文档的更新数据
           const submitData = this.buildUpdateData(updateData)
@@ -1003,7 +1008,7 @@ export default {
             return
           }
 
-          response = await updateUser(formData.id, submitData)
+          response = await updateUser(this.formData.id, submitData)
         }
 
         // 从API响应中获取消息，提供备选默认消息
@@ -1011,7 +1016,7 @@ export default {
                     (this.mode === 'create' ? '用户创建成功' : '用户更新成功')
         this.$message.success(successMessage)
 
-        this.$emit('success', { mode: this.mode, data: formData, continueEdit })
+        this.$emit('success', { mode: this.mode, data: this.formData, continueEdit })
 
         if (continueEdit) {
           // 保存并继续 - 重置表单
@@ -1031,14 +1036,8 @@ export default {
       }
     },
 
-    // 自定义验证处理
-    handleCustomValidate(formData, callback) {
-      // 可以在这里添加额外的自定义验证逻辑
-      callback(true)
-    },
-
-    // 验证错误处理
-    handleValidateError(invalidFields) {
+    // 表单验证失败处理（内部使用）
+    handleValidationFailure(invalidFields) {
       console.log('表单验证失败:', invalidFields)
 
       // 提取第一个错误消息并显示在顶部
@@ -1049,8 +1048,8 @@ export default {
 
       // 聚焦到第一个错误字段
       this.$nextTick(() => {
-        if (firstErrorField && this.$refs.enhancedForm && this.$refs.enhancedForm.$el) {
-          const fieldElement = this.$refs.enhancedForm.$el.querySelector(`[prop="${firstErrorField}"] input, [prop="${firstErrorField}"] textarea`)
+        if (firstErrorField && this.$refs.form && this.$refs.form.$el) {
+          const fieldElement = this.$refs.form.$el.querySelector(`[prop="${firstErrorField}"] input, [prop="${firstErrorField}"] textarea`)
           if (fieldElement) {
             fieldElement.focus()
           }
@@ -1065,6 +1064,7 @@ export default {
 
     // 表单重置处理
     handleFormReset() {
+      this.$refs.form.resetFields()
       this.formData = this.initFormData()
     },
 

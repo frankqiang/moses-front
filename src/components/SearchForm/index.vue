@@ -153,10 +153,10 @@ export default {
       type: Boolean,
       default: false
     },
-    // 防抖延迟时间(ms)
+    // 防抖延迟时间(ms) - Phase 1 优化：增加到 500ms
     debounceTime: {
       type: Number,
-      default: 300
+      default: 500
     }
   },
   data() {

@@ -43,8 +43,9 @@
       </template>
     </user-table>
 
-    <!-- 用户表单抽屉 -->
+    <!-- 用户表单抽屉 - 使用 v-if 控制挂载，关闭时卸载释放资源 -->
     <user-form-drawer
+      v-if="drawerVisible"
       ref="userFormDrawer"
       :visible.sync="drawerVisible"
       :mode="drawerMode"
@@ -53,16 +54,18 @@
       @close="handleDrawerClose"
     />
 
-    <!-- 管理员重置密码对话框 -->
+    <!-- 管理员重置密码对话框 - 使用 v-if 控制挂载 -->
     <reset-password-dialog
+      v-if="resetPasswordDialogVisible"
       :visible.sync="resetPasswordDialogVisible"
       :user-data="currentResetUser"
       @success="handleResetPasswordSuccess"
       @close="handleResetPasswordClose"
     />
 
-    <!-- 角色分配对话框 -->
+    <!-- 角色分配对话框 - 使用 v-if 控制挂载 -->
     <role-assignment-dialog
+      v-if="roleAssignmentDialogVisible"
       :visible.sync="roleAssignmentDialogVisible"
       :user-info="currentAssignUser"
       @role-updated="handleRoleUpdated"

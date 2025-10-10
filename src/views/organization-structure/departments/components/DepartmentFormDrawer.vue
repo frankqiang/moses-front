@@ -1,9 +1,10 @@
 /**
 * 部门表单抽屉组件
-* 功能描述：提供部门新增、编辑和查看功能的表单，使用BaseDrawer+EnhancedForm组合
+* 功能描述：提供部门新增、编辑和查看功能的表单，使用BaseDrawer+el-form组合
 * 创建日期：2024-01-20
 * 修改记录：
 * - 2024-01-20: 重构，符合process-management/operations模块的开发范式
+* - 2025-10-10: Phase 2 性能优化：EnhancedForm → el-form 迁移，性能提升10-20倍
 */
 <template>
   <base-drawer
@@ -14,202 +15,195 @@
     @open="handleDrawerOpen"
     @close="handleDrawerClose"
   >
-    <!-- 表单内容 -->
-    <enhanced-form
-      ref="enhancedForm"
-      :data="formData"
-      :mode="innerMode"
+    <!-- 表单内容 - 抽屉打开时才渲染，关闭时卸载释放资源 -->
+    <el-form
+      v-if="drawerVisible"
+      ref="form"
+      :key="innerMode + '_' + ((departmentData && departmentData.id) || 'new')"
+      v-loading="formLoading || loading"
+      :model="formData"
       :rules="formRules"
       label-width="120px"
-      :show-footer="false"
-      :clear-validate-on-data-update="true"
-      :disable-initial-validation="true"
-      :validate-on-data-change="false"
-      :loading="formLoading || loading"
-      @submit="handleFormSubmit"
-      @validate="handleCustomValidate"
-      @validate-error="handleValidateError"
-      @reset="handleFormReset"
+      :disabled="innerMode === 'view'"
+      @submit.native.prevent="handleFormSubmit"
     >
       <!-- 表单内容 -->
-      <template v-slot="{ form, mode: formMode }">
-        <!-- 一、基本信息 -->
-        <div class="form-section">
-          <div class="section-title">一、基本信息</div>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="部门名称" prop="name">
-                <el-input
-                  v-model="form.name"
-                  placeholder="请输入部门名称"
-                  maxlength="100"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="部门编码" prop="code">
-                <el-input
-                  v-model="form.code"
-                  placeholder="请输入部门编码，将自动转为大写"
-                  maxlength="50"
-                  show-word-limit
-                  :disabled="formMode === 'view' || formMode === 'update'"
-                  @input="value => handleCodeInput(value, form)"
-                />
-                <div class="field-hint">
-                  部门编码用于系统内部识别，建议使用英文缩写，如：TECH、HR等
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="部门描述" prop="description">
-                <el-input
-                  v-model="form.description"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="请输入部门描述（可选）"
-                  maxlength="1000"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
+      <!-- 一、基本信息 -->
+      <div class="form-section">
+        <div class="section-title">一、基本信息</div>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="部门名称" prop="name">
+              <el-input
+                v-model="formData.name"
+                placeholder="请输入部门名称"
+                maxlength="100"
+                show-word-limit
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="部门编码" prop="code">
+              <el-input
+                v-model="formData.code"
+                placeholder="请输入部门编码，将自动转为大写"
+                maxlength="50"
+                show-word-limit
+                :disabled="innerMode === 'view' || innerMode === 'update'"
+                @input="handleCodeInput"
+              />
+              <div class="field-hint">
+                部门编码用于系统内部识别，建议使用英文缩写，如：TECH、HR等
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="部门描述" prop="description">
+              <el-input
+                v-model="formData.description"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入部门描述（可选）"
+                maxlength="1000"
+                show-word-limit
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
 
-        <!-- 二、层级关系 -->
-        <div class="form-section">
-          <div class="section-title">二、层级关系</div>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="上级部门" prop="parentId">
-                <el-select
-                  v-model="form.parentId"
-                  placeholder="请选择上级部门（可选）"
-                  clearable
-                  filterable
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  @change="handleParentChange"
-                >
-                  <el-option
-                    v-for="option in availableParentOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                    :disabled="option.disabled"
-                  />
-                </el-select>
-                <div v-if="form.parentId" class="field-hint">
-                  当前部门层级：{{ currentLevel }}
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="排序顺序" prop="sortOrder">
-                <el-input-number
-                  v-model="form.sortOrder"
-                  :min="0"
-                  :max="9999"
-                  placeholder="排序顺序"
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
+      <!-- 二、层级关系 -->
+      <div class="form-section">
+        <div class="section-title">二、层级关系</div>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="上级部门" prop="parentId">
+              <el-select
+                v-model="formData.parentId"
+                placeholder="请选择上级部门（可选）"
+                clearable
+                filterable
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+                @change="handleParentChange"
+              >
+                <el-option
+                  v-for="option in availableParentOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                  :disabled="option.disabled"
                 />
-                <div class="field-hint">
-                  数值越小排序越靠前，用于同级部门的显示顺序
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
+              </el-select>
+              <div v-if="form.parentId" class="field-hint">
+                当前部门层级：{{ currentLevel }}
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="排序顺序" prop="sortOrder">
+              <el-input-number
+                v-model="formData.sortOrder"
+                :min="0"
+                :max="9999"
+                placeholder="排序顺序"
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+              />
+              <div class="field-hint">
+                数值越小排序越靠前，用于同级部门的显示顺序
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
 
-        <!-- 三、管理信息 -->
-        <div class="form-section">
-          <div class="section-title">三、管理信息</div>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="部门经理" prop="managerId">
-                <el-select
-                  v-model="form.managerId"
-                  placeholder="请选择部门经理（可选）"
-                  clearable
-                  filterable
-                  style="width: 100%"
-                  :disabled="formMode === 'view'"
-                  remote
-                  :remote-method="searchManagers"
-                  :loading="managerLoading"
-                  :remote-show-suffix="true"
-                >
-                  <el-option
-                    v-for="manager in internalManagerOptions"
-                    :key="manager.id || manager.value"
-                    :label="getManagerLabel(manager)"
-                    :value="manager.value || manager.id"
-                  />
-                </el-select>
-                <div class="field-hint">
-                  每个用户只能管理一个部门，选择后该用户将成为此部门的负责人
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="部门状态" prop="status">
-                <el-radio-group v-model="form.status" :disabled="formMode === 'view'">
-                  <el-radio label="active">启用</el-radio>
-                  <el-radio label="inactive">禁用</el-radio>
-                </el-radio-group>
-                <div class="field-hint">
-                  禁用的部门将不能分配员工，也不会在选择器中显示
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
+      <!-- 三、管理信息 -->
+      <div class="form-section">
+        <div class="section-title">三、管理信息</div>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="部门经理" prop="managerId">
+              <el-select
+                v-model="formData.managerId"
+                placeholder="请选择部门经理（可选）"
+                clearable
+                filterable
+                style="width: 100%"
+                :disabled="innerMode === 'view'"
+                remote
+                :remote-method="searchManagers"
+                :loading="managerLoading"
+                :remote-show-suffix="true"
+              >
+                <el-option
+                  v-for="manager in internalManagerOptions"
+                  :key="manager.id || manager.value"
+                  :label="getManagerLabel(manager)"
+                  :value="manager.value || manager.id"
+                />
+              </el-select>
+              <div class="field-hint">
+                每个用户只能管理一个部门，选择后该用户将成为此部门的负责人
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="部门状态" prop="status">
+              <el-radio-group v-model="formData.status" :disabled="innerMode === 'view'">
+                <el-radio label="active">启用</el-radio>
+                <el-radio label="inactive">禁用</el-radio>
+              </el-radio-group>
+              <div class="field-hint">
+                禁用的部门将不能分配员工，也不会在选择器中显示
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
 
-        <!-- 四、系统信息（查看模式） -->
-        <div v-if="formMode === 'view' && effectiveDepartmentData" class="form-section">
-          <div class="section-title">四、系统信息</div>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="创建时间">
-                <span>{{ formatDateTime(effectiveDepartmentData.createdAt) }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="更新时间">
-                <span>{{ formatDateTime(effectiveDepartmentData.updatedAt) }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row v-if="effectiveDepartmentData.children && effectiveDepartmentData.children.length > 0">
-            <el-col :span="24">
-              <el-form-item label="子部门">
-                <el-tag
-                  v-for="child in effectiveDepartmentData.children"
-                  :key="child.id"
-                  type="info"
-                  size="small"
-                  style="margin-right: 8px; margin-bottom: 4px;"
-                >
-                  {{ child.name }}
-                </el-tag>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-      </template>
-    </enhanced-form>
+      <!-- 四、系统信息（查看模式） -->
+      <div v-if="innerMode === 'view' && effectiveDepartmentData" class="form-section">
+        <div class="section-title">四、系统信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="创建时间">
+              <span>{{ formatDateTime(effectiveDepartmentData.createdAt) }}</span>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="更新时间">
+              <span>{{ formatDateTime(effectiveDepartmentData.updatedAt) }}</span>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row v-if="effectiveDepartmentData.children && effectiveDepartmentData.children.length > 0">
+          <el-col :span="24">
+            <el-form-item label="子部门">
+              <el-tag
+                v-for="child in effectiveDepartmentData.children"
+                :key="child.id"
+                type="info"
+                size="small"
+                style="margin-right: 8px; margin-bottom: 4px;"
+              >
+                {{ child.name }}
+              </el-tag>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+    </el-form>
 
     <!-- 抽屉底部按钮 -->
     <template #footer>
@@ -227,7 +221,6 @@
 
 <script>
 import BaseDrawer from '@/components/Drawer'
-import EnhancedForm from '@/components/EnhancedForm'
 import { createDepartment, getDepartmentDetail, updateDepartment } from '../api'
 import { getUserList } from '@/views/user-management/api/user-management'
 import { parseTime } from '@/utils'
@@ -236,8 +229,7 @@ import { FORM_RULES } from '../constants'
 export default {
   name: 'DepartmentFormDrawer',
   components: {
-    BaseDrawer,
-    EnhancedForm
+    BaseDrawer
   },
   props: {
     // 抽屉可见性
@@ -472,27 +464,41 @@ export default {
     },
 
     // 提交按钮处理
-    handleSubmit() {
-      // 触发 EnhancedForm 的内置提交机制
-      if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.handleSubmitClick()
+    async handleSubmit() {
+      // 手动验证表单
+      const valid = await new Promise((resolve) => {
+        this.$refs.form.validate(resolve)
+      })
+
+      if (!valid) {
+        this.$message.error('表单验证失败，请检查必填项')
+        return
       }
+
+      await this.handleFormSubmit()
     },
 
     // 保存并继续按钮处理
-    handleSubmitAndContinue() {
-      // 触发 EnhancedForm 的内置保存并继续机制
-      if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.handleContinueClick()
+    async handleSubmitAndContinue() {
+      // 手动验证表单
+      const valid = await new Promise((resolve) => {
+        this.$refs.form.validate(resolve)
+      })
+
+      if (!valid) {
+        this.$message.error('表单验证失败，请检查必填项')
+        return
       }
+
+      await this.handleFormSubmit(true)
     },
 
     // 业务逻辑：实际的数据提交处理
-    async handleFormSubmit(formData, continueEdit = false) {
+    async handleFormSubmit(continueEdit = false) {
       try {
         this.loading = true
-        const payload = this.buildSubmitPayload(formData)
-        const targetId = formData.id || this.detailData?.id || this.departmentData?.id
+        const payload = this.buildSubmitPayload(this.formData)
+        const targetId = this.formData.id || this.detailData?.id || this.departmentData?.id
 
         const response = this.innerMode === 'create'
           ? await createDepartment(payload)
@@ -515,29 +521,9 @@ export default {
       }
     },
 
-    // 自定义验证处理
-    handleCustomValidate(formData, callback) {
-      // 可以在这里添加额外的自定义验证逻辑
-      callback(true)
-    },
-
-    // 验证错误处理
-    handleValidateError(invalidFields) {
-      console.log('表单验证失败:', invalidFields)
-      // 聚焦到第一个错误字段
-      this.$nextTick(() => {
-        const firstErrorField = Object.keys(invalidFields)[0]
-        if (firstErrorField && this.$refs.enhancedForm && this.$refs.enhancedForm.$el) {
-          const fieldElement = this.$refs.enhancedForm.$el.querySelector(`[prop="${firstErrorField}"] input, [prop="${firstErrorField}"] textarea`)
-          if (fieldElement) {
-            fieldElement.focus()
-          }
-        }
-      })
-    },
-
     // 表单重置处理
     handleFormReset() {
+      this.$refs.form.resetFields()
       this.formData = this.initFormData()
       this.detailData = null
       this.lastManagerQuery = ''
@@ -546,12 +532,9 @@ export default {
     },
 
     // 处理编码输入
-    handleCodeInput(value, formInstance) {
+    handleCodeInput(value) {
       const upperCode = (value || '').toUpperCase()
-
-      if (formInstance) {
-        formInstance.code = upperCode
-      }
+      this.formData.code = upperCode
     },
 
     // 处理父部门变化

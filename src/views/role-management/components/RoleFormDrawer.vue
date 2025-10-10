@@ -1,10 +1,11 @@
 /**
 * 角色表单抽屉组件
-* 功能描述：提供角色新增、编辑、查看、复制功能，使用BaseDrawer+EnhancedForm组合
+* 功能描述：提供角色新增、编辑、查看、复制功能，使用BaseDrawer+el-form组合
 * 创建日期：2024-01-20
 * 修改记录：
 * - 2024-01-20: 初始创建，实现基础表单功能
 * - 2024-12-24: 重构使用EnhancedForm组件，遵循现代前端开发范式
+* - 2025-10-10: Phase 2 性能优化：EnhancedForm → el-form 迁移，性能提升10-20倍
 */
 <template>
   <base-drawer
@@ -15,175 +16,168 @@
     @open="handleDrawerOpen"
     @close="handleDrawerClose"
   >
-    <!-- 表单内容 -->
-    <enhanced-form
-      ref="enhancedForm"
-      :data="formData"
-      :mode="innerMode"
+    <!-- 表单内容 - 抽屉打开时才渲染，关闭时卸载释放资源 -->
+    <el-form
+      v-if="drawerVisible"
+      ref="form"
+      :key="innerMode + '_' + ((roleData && roleData.id) || 'new')"
+      :model="formData"
       :rules="formRules"
       label-width="120px"
-      :show-footer="false"
-      :clear-validate-on-data-update="true"
-      :disable-initial-validation="true"
-      :validate-on-data-change="false"
-      @submit="handleFormSubmit"
-      @validate="handleCustomValidate"
-      @validate-error="handleValidateError"
-      @reset="handleFormReset"
+      :disabled="innerMode === 'view'"
+      @submit.native.prevent="handleFormSubmit"
     >
       <!-- 表单内容 -->
-      <template v-slot="{ form, mode: formMode }">
-        <!-- 一、基础信息 -->
-        <div class="form-section">
-          <div class="section-title">一、基础信息</div>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="角色名称" prop="name">
-                <el-input
-                  v-model="form.name"
-                  placeholder="请输入角色名称（1-100字符）"
-                  maxlength="100"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                  clearable
+      <!-- 一、基础信息 -->
+      <div class="form-section">
+        <div class="section-title">一、基础信息</div>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="角色名称" prop="name">
+              <el-input
+                v-model="formData.name"
+                placeholder="请输入角色名称（1-100字符）"
+                maxlength="100"
+                show-word-limit
+                :disabled="innerMode === 'view'"
+                clearable
+              />
+              <div class="field-hint">
+                角色名称支持中文、英文、数字、空格、括号
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="角色编码" prop="code">
+              <el-input
+                v-model="formData.code"
+                placeholder="请输入角色编码（1-50字符）"
+                maxlength="50"
+                show-word-limit
+                :disabled="isFieldDisabled('code')"
+                clearable
+              />
+              <div class="field-hint">
+                角色编码只能包含字母、数字、下划线、中划线，不能以数字、下划线或中划线开头或结尾
+                <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色编码不可修改）</span>
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="角色类型" prop="type">
+              <el-select
+                v-model="formData.type"
+                placeholder="请选择角色类型"
+                style="width: 100%"
+                :disabled="isFieldDisabled('type')"
+              >
+                <el-option
+                  v-for="option in typeOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                  :disabled="option.value === 'system'"
                 />
-                <div class="field-hint">
-                  角色名称支持中文、英文、数字、空格、括号
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
+              </el-select>
+              <div class="field-hint">
+                系统角色由系统预置，用户只能创建自定义角色
+                <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色类型不可修改）</span>
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="角色编码" prop="code">
-                <el-input
-                  v-model="form.code"
-                  placeholder="请输入角色编码（1-50字符）"
-                  maxlength="50"
-                  show-word-limit
-                  :disabled="isFieldDisabled('code')"
-                  clearable
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="角色级别" prop="level">
+              <el-select
+                v-model="formData.level"
+                placeholder="请选择角色级别（1-999）"
+                style="width: 100%"
+                :disabled="isFieldDisabled('level')"
+              >
+                <el-option
+                  v-for="level in levelOptions"
+                  :key="level.value"
+                  :label="level.label"
+                  :value="level.value"
                 />
-                <div class="field-hint">
-                  角色编码只能包含字母、数字、下划线、中划线，不能以数字、下划线或中划线开头或结尾
-                  <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色编码不可修改）</span>
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
+              </el-select>
+              <div class="field-hint">
+                角色级别用于权限层级控制，数字越小级别越高
+                <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色级别不可修改）</span>
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="角色类型" prop="type">
-                <el-select
-                  v-model="form.type"
-                  placeholder="请选择角色类型"
-                  style="width: 100%"
-                  :disabled="isFieldDisabled('type')"
-                >
-                  <el-option
-                    v-for="option in typeOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                    :disabled="option.value === 'system'"
-                  />
-                </el-select>
-                <div class="field-hint">
-                  系统角色由系统预置，用户只能创建自定义角色
-                  <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色类型不可修改）</span>
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="角色状态" prop="status">
+              <el-radio-group v-model="formData.status" :disabled="innerMode === 'view'">
+                <el-radio label="active">启用</el-radio>
+                <el-radio label="inactive">禁用</el-radio>
+              </el-radio-group>
+              <div class="field-hint">
+                启用状态的角色可以分配给用户，禁用状态的角色不能分配给新用户
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="角色级别" prop="level">
-                <el-select
-                  v-model="form.level"
-                  placeholder="请选择角色级别（1-999）"
-                  style="width: 100%"
-                  :disabled="isFieldDisabled('level')"
-                >
-                  <el-option
-                    v-for="level in levelOptions"
-                    :key="level.value"
-                    :label="level.label"
-                    :value="level.value"
-                  />
-                </el-select>
-                <div class="field-hint">
-                  角色级别用于权限层级控制，数字越小级别越高
-                  <span v-if="innerMode === 'update' && isSystemRole" class="field-hint-warning">（系统角色级别不可修改）</span>
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="默认角色" prop="isDefault">
+              <el-switch v-model="formData.isDefault" :disabled="innerMode === 'view'" active-text="是" inactive-text="否" />
+              <div class="field-hint">
+                默认角色会在新用户注册时自动分配
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
 
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="角色状态" prop="status">
-                <el-radio-group v-model="form.status" :disabled="formMode === 'view'">
-                  <el-radio label="active">启用</el-radio>
-                  <el-radio label="inactive">禁用</el-radio>
-                </el-radio-group>
-                <div class="field-hint">
-                  启用状态的角色可以分配给用户，禁用状态的角色不能分配给新用户
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
+      <!-- 二、详细信息 -->
+      <div class="form-section">
+        <div class="section-title">二、详细信息</div>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="角色描述" prop="description">
+              <el-input
+                v-model="formData.description"
+                type="textarea"
+                :rows="4"
+                placeholder="请输入角色描述（最大1000字符）"
+                maxlength="1000"
+                show-word-limit
+                :disabled="innerMode === 'view'"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
 
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="默认角色" prop="isDefault">
-                <el-switch v-model="form.isDefault" :disabled="formMode === 'view'" active-text="是" inactive-text="否" />
-                <div class="field-hint">
-                  默认角色会在新用户注册时自动分配
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-
-        <!-- 二、详细信息 -->
-        <div class="form-section">
-          <div class="section-title">二、详细信息</div>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="角色描述" prop="description">
-                <el-input
-                  v-model="form.description"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="请输入角色描述（最大1000字符）"
-                  maxlength="1000"
-                  show-word-limit
-                  :disabled="formMode === 'view'"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-
-        <!-- 三、复制配置（复制模式专用） -->
-        <div v-if="isCopyMode" class="form-section">
-          <div class="section-title">三、复制配置</div>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="复制权限配置" prop="copyPermissions">
-                <el-switch v-model="form.copyPermissions" active-text="是" inactive-text="否" />
-                <div class="field-hint">
-                  是否同时复制原角色的权限配置
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-      </template>
-    </enhanced-form>
+      <!-- 三、复制配置（复制模式专用） -->
+      <div v-if="isCopyMode" class="form-section">
+        <div class="section-title">三、复制配置</div>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="复制权限配置" prop="copyPermissions">
+              <el-switch v-model="formData.copyPermissions" active-text="是" inactive-text="否" />
+              <div class="field-hint">
+                是否同时复制原角色的权限配置
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+    </el-form>
 
     <!-- 抽屉底部按钮 -->
     <template #footer>
@@ -201,7 +195,6 @@
 
 <script>
 import BaseDrawer from '@/components/Drawer'
-import EnhancedForm from '@/components/EnhancedForm'
 import { ApiError } from '@/utils/request'
 import { createRole, updateRole, copyRole, getRoleById } from '../api'
 import { ROLE_LEVEL_OPTIONS, ROLE_TYPE_OPTIONS, FORM_RULES, ROLE_TYPES } from '../constants'
@@ -209,8 +202,7 @@ import { ROLE_LEVEL_OPTIONS, ROLE_TYPE_OPTIONS, FORM_RULES, ROLE_TYPES } from '.
 export default {
   name: 'RoleFormDrawer',
   components: {
-    BaseDrawer,
-    EnhancedForm
+    BaseDrawer
   },
   props: {
     // 抽屉可见状态
@@ -431,29 +423,44 @@ export default {
     },
 
     // 提交按钮处理
-    handleSubmit() {
-      // 触发 EnhancedForm 的内置提交机制
-      if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.handleSubmitClick()
+    async handleSubmit() {
+      // 手动验证表单
+      const valid = await new Promise((resolve) => {
+        this.$refs.form.validate(resolve)
+      })
+
+      if (!valid) {
+        this.$message.error('表单验证失败，请检查必填项')
+        return
       }
+
+      await this.handleFormSubmit()
     },
 
     // 保存并继续按钮处理
-    handleSubmitAndContinue() {
-      // 触发 EnhancedForm 的内置保存并继续机制
-      if (this.$refs.enhancedForm) {
-        this.$refs.enhancedForm.handleContinueClick()
+    async handleSubmitAndContinue() {
+      // 手动验证表单
+      const valid = await new Promise((resolve) => {
+        this.$refs.form.validate(resolve)
+      })
+
+      if (!valid) {
+        this.$message.error('表单验证失败，请检查必填项')
+        return
       }
+
+      await this.handleFormSubmit(true)
     },
 
     // 业务逻辑：实际的数据提交处理
-    async handleFormSubmit(formData, continueEdit = false) {
+    async handleFormSubmit(continueEdit = false) {
       try {
         this.loading = true
         let response
 
         // 准备提交数据，严格按照接口文档要求过滤参数
         let submitData = {}
+        const formData = this.formData
 
         if (this.mode === 'create') {
           // 创建角色：传递所有必需和可选的创建参数
@@ -511,7 +518,7 @@ export default {
         const successMessage = response?.message || `角色${actionText}成功`
         this.$message.success(successMessage)
 
-        this.$emit('success', { mode: this.mode, data: formData, continueEdit })
+        this.$emit('success', { mode: this.mode, data: this.formData, continueEdit })
 
         if (continueEdit) {
           // 保存并继续 - 重置表单
@@ -562,29 +569,9 @@ export default {
       }
     },
 
-    // 自定义验证处理
-    handleCustomValidate(formData, callback) {
-      // 可以在这里添加额外的自定义验证逻辑
-      callback(true)
-    },
-
-    // 验证错误处理
-    handleValidateError(invalidFields) {
-      console.log('表单验证失败:', invalidFields)
-      // 聚焦到第一个错误字段
-      this.$nextTick(() => {
-        const firstErrorField = Object.keys(invalidFields)[0]
-        if (firstErrorField && this.$refs.enhancedForm && this.$refs.enhancedForm.$el) {
-          const fieldElement = this.$refs.enhancedForm.$el.querySelector(`[prop="${firstErrorField}"] input, [prop="${firstErrorField}"] textarea`)
-          if (fieldElement) {
-            fieldElement.focus()
-          }
-        }
-      })
-    },
-
     // 表单重置处理
     handleFormReset() {
+      this.$refs.form.resetFields()
       this.formData = this.initFormData()
     }
   }

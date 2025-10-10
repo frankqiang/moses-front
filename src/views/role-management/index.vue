@@ -35,8 +35,9 @@
         @clear-search="handleClearSearch"
       />
 
-      <!-- 角色表单抽屉 -->
+      <!-- 角色表单抽屉 - 使用 v-if 控制挂载，关闭时卸载释放资源 -->
       <role-form-drawer
+        v-if="drawerVisible"
         ref="roleFormDrawer"
         :visible.sync="drawerVisible"
         :mode="drawerMode"

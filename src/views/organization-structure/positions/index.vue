@@ -35,8 +35,9 @@
       @retry="fetchList"
     />
 
-    <!-- 岗位表单抽屉 -->
+    <!-- 岗位表单抽屉 - 使用 v-if 控制挂载，关闭时卸载释放资源 -->
     <position-form-drawer
+      v-if="formDrawerVisible"
       :visible.sync="formDrawerVisible"
       :mode="formMode"
       :position-data="currentPosition"

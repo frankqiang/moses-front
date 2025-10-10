@@ -42,8 +42,9 @@
       @retry="handleRetry"
     />
 
-    <!-- 部门表单抽屉 -->
+    <!-- 部门表单抽屉 - 使用 v-if 控制挂载，关闭时卸载释放资源 -->
     <department-form-drawer
+      v-if="formDrawerVisible"
       :visible.sync="formDrawerVisible"
       :mode="formMode"
       :department-data="currentDepartment"

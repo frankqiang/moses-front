@@ -33,8 +33,9 @@
       @export="handleExport"
     />
 
-    <!-- 表单抽屉 -->
+    <!-- 表单抽屉 - 使用 v-if 控制挂载，关闭时卸载释放资源 -->
     <equipment-form-drawer
+      v-if="drawer.visible"
       :visible.sync="drawer.visible"
       :mode="drawer.mode"
       :equipment-id="drawer.equipmentId"
@@ -43,7 +44,9 @@
       @close="handleDrawerClose"
     />
 
+    <!-- 详情抽屉 - 使用 v-if 控制挂载 -->
     <equipment-detail-drawer
+      v-if="detailDrawer.visible"
       :visible.sync="detailDrawer.visible"
       :equipment-id="detailDrawer.equipmentId"
       @edit="handleDetailEdit"

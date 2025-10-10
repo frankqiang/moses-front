@@ -12,18 +12,12 @@
           <login-header />
         </div>
 
-        <enhanced-form
-          ref="enhancedForm"
-          :data="formData"
+        <el-form
+          ref="form"
+          :model="formData"
           :rules="formRules"
-          mode="create"
           label-width="120px"
-          :show-footer="true"
-          :clear-validate-on-data-update="true"
-          :disable-initial-validation="true"
-          :validate-on-data-change="false"
-          @submit="handleFormSubmit"
-          @reset="handleFormReset"
+          @submit.native.prevent="handleFormSubmit"
         >
           <!-- 基本信息 -->
           <div class="form-section">
@@ -307,7 +301,16 @@
               </el-button>
             </div>
           </template>
-        </enhanced-form>
+
+          <!-- 提交按钮 -->
+          <div class="form-footer">
+            <el-button @click="handleFormReset">重置</el-button>
+            <el-button type="primary" :loading="loading" @click="handleSubmit">
+              提交申请
+            </el-button>
+          </div>
+
+        </el-form>
       </div>
 
       <!-- 成功提示组件 -->
@@ -330,7 +333,6 @@
 // 导入组件
 import LoadingIndicator from './components/LoadingIndicator.vue'
 import SuccessNotification from './components/SuccessNotification.vue'
-import EnhancedForm from '@/components/EnhancedForm'
 
 import ErrorBoundary from './components/ErrorBoundary.vue'
 
@@ -361,8 +363,6 @@ export default {
     LoginHeader,
     LoadingIndicator,
     SuccessNotification,
-    EnhancedForm,
-
     ErrorBoundary
   },
 
@@ -423,7 +423,7 @@ export default {
      * 处理表单提交
      */
     async handleSubmit() {
-      if (!this.$refs.enhancedForm) {
+      if (!this.$refs.form) {
         this.$message.error('表单未加载完成，请稍后重试')
         return
       }
@@ -431,7 +431,7 @@ export default {
       try {
         // 表单验证
         const validationResult = await new Promise((resolve) => {
-          this.$refs.enhancedForm.validate((valid, invalidFields) => {
+          this.$refs.form.validate((valid, invalidFields) => {
             if (!valid) {
               this.handleValidationError(invalidFields)
             }
@@ -509,7 +509,7 @@ export default {
       this.$message.warning(errorMessage)
 
       this.$nextTick(() => {
-        const formRef = this.$refs.enhancedForm?.$refs?.form
+        const formRef = this.$refs.form
         if (formRef && typeof formRef.scrollToField === 'function') {
           formRef.scrollToField(firstFieldKey)
         }
@@ -519,22 +519,9 @@ export default {
     /**
      * 重置表单
      */
-    handleReset() {
-      this.$refs.enhancedForm.resetFields()
-    },
-
-    /**
-     * 处理表单提交（enhanced-form组件回调）
-     */
-    handleFormSubmit() {
-      this.handleSubmit()
-    },
-
-    /**
-     * 处理表单重置（enhanced-form组件回调）
-     */
     handleFormReset() {
-      this.handleReset()
+      this.$refs.form.resetFields()
+      this.formData = { ...DEFAULT_REGISTER_FORM }
     },
 
     /**
@@ -566,7 +553,7 @@ export default {
      */
     submitAnother() {
       this.successDialog.visible = false
-      this.$refs.enhancedForm.resetFields()
+      this.$refs.form.resetFields()
       this.formData = { ...DEFAULT_REGISTER_FORM }
       this.applicationId = ''
     },
