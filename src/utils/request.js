@@ -400,8 +400,19 @@ async function handleTokenExpired(response) {
     removeToken()
     await store.dispatch('user/resetToken')
 
-    // 跳转到登录页
-    handleAuthError('登录已过期，请重新登录')
+    // 直接跳转到登录页（不显示弹窗，避免重复提示）
+    const currentPath = router.currentRoute.fullPath
+    router.push({
+      path: '/login',
+      query: currentPath !== '/login' ? { redirect: currentPath } : {}
+    })
+
+    // 显示简单提示
+    Message({
+      message: '登录已过期，请重新登录',
+      type: 'warning',
+      duration: 3000
+    })
 
     return Promise.reject(error)
   } finally {
