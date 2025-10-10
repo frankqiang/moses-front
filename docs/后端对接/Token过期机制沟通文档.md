@@ -97,7 +97,7 @@ Token过期时，后端应返回以下错误码之一：
   accessToken:
     有效期: 30分钟
     刷新时机: 过期时自动刷新
-  
+
   refreshToken:
     有效期: 7天
     刷新时机: 登录时获取，过期需重新登录
@@ -115,7 +115,7 @@ Token过期时，后端应返回以下错误码之一：
   accessToken:
     有效期: 2小时
     刷新时机: 过期时自动刷新
-  
+
   refreshToken:
     有效期: 30天
     刷新时机: 登录时获取
@@ -157,7 +157,7 @@ Content-Type: application/json
       "expires": "2025-01-10T12:00:00.000Z"
     },
     "refresh": {
-      "token": "新的refreshToken", 
+      "token": "新的refreshToken",
       "expires": "2025-01-17T11:30:00.000Z"
     }
   },
