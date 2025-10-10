@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { MessageBox, Message } from 'element-ui'
-import Vue from 'vue'
 import store from '@/store'
 import router from '@/router'
 import { getToken, getRefreshToken, setTokens, removeToken } from '@/utils/auth'
@@ -419,21 +418,15 @@ async function handleTokenExpired(response) {
       duration: 3000
     })
 
-    // 直接跳转，使用nextTick确保Vue更新完成
-    Vue.nextTick(() => {
-      const currentPath = router.currentRoute.fullPath
-      router.replace({
-        path: '/login',
-        query: currentPath !== '/login' ? { redirect: currentPath } : {}
-      }).catch(() => {
-        // 忽略导航重复错误
-      })
+    // 使用window.location强制跳转，避免触发路由守卫的getInfo
+    const currentPath = router.currentRoute.fullPath
+    const redirectParam = currentPath !== '/login' ? `?redirect=${encodeURIComponent(currentPath)}` : ''
 
+    setTimeout(() => {
+      window.location.href = `/login${redirectParam}`
       // 重置标志
-      setTimeout(() => {
-        isTokenRefreshFailed = false
-      }, 1000)
-    })
+      isTokenRefreshFailed = false
+    }, 100)
 
     return Promise.reject(error)
   } finally {
