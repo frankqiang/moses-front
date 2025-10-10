@@ -74,22 +74,42 @@ export default {
     // 处理认证错误
     handleAuthError(error) {
       const { code, message } = error
+      console.warn(`⚠️ 认证错误 ${code}:`, message, '静默跳转登录页')
 
-      if (code === 'AUTH_001') {
-        this.error401Message = '请先登录'
-      } else if (code === 'AUTH_002') {
-        this.error401Message = '登录已过期，请重新登录'
-      } else {
-        this.error401Message = message || '认证失败，请重新登录'
-      }
+      // ✅ 静默处理：不弹窗，直接跳转登录页
+      // Token刷新机制已在 request.js 中完全处理，这里不需要再弹窗
 
-      this.show401Dialog = true
+      // 清除本地状态
+      this.resetToken().then(() => {
+        // 静默跳转到登录页
+        const currentPath = this.$route.fullPath
+        this.$router.replace({
+          path: '/login',
+          query: currentPath !== '/login' ? { redirect: currentPath } : {}
+        }).catch(err => {
+          console.warn('路由跳转警告:', err.message)
+        })
+      })
     },
 
     // 处理用户信息获取错误
     handleUserInfoError(error) {
-      this.userInfoErrorMessage = error.message || '获取用户信息失败'
-      this.showUserInfoErrorDialog = true
+      console.warn('⚠️ 用户信息获取失败，静默处理:', error.message)
+
+      // ✅ 静默处理：不弹窗，直接跳转登录页
+      // Token刷新机制已在 request.js 中完全处理，这里不需要再弹窗
+
+      // 清除本地状态
+      this.resetToken().then(() => {
+        // 静默跳转到登录页
+        const currentPath = this.$route.fullPath
+        this.$router.replace({
+          path: '/login',
+          query: currentPath !== '/login' ? { redirect: currentPath } : {}
+        }).catch(err => {
+          console.warn('路由跳转警告:', err.message)
+        })
+      })
     },
 
     // 重新登录

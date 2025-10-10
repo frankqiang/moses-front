@@ -51,10 +51,15 @@
 
 | 错误码                    | 代码       | 消息                       | HTTP状态码 | 使用场景           |
 | ------------------------- | ---------- | -------------------------- | ---------- | ------------------ |
-| **TOKEN_EXPIRED**         | `AUTH_002` | 登录已过期，请重新登录     | 401        | accessToken过期    |
-| **REFRESH_TOKEN_EXPIRED** | `AUTH_032` | 刷新令牌已过期，请重新登录 | 401        | refreshToken过期   |
-| **INVALID_TOKEN**         | `AUTH_003` | 无效的访问令牌             | 401        | Token格式错误      |
+| **TOKEN_EXPIRED**         | `AUTH_002` | 登录已过期，请重新登录     | 401        | accessToken过期 ✅  |
+| **INVALID_TOKEN**         | `AUTH_003` | 无效的访问令牌             | 401        | Token签名无效      |
+| **TOKEN_MALFORMED**       | `AUTH_004` | 访问令牌格式错误           | 401        | Token格式错误      |
 | **TOKEN_BLACKLISTED**     | `AUTH_005` | 访问令牌已失效             | 401        | Token被撤销/黑名单 |
+| **REFRESH_TOKEN_EXPIRED** | `AUTH_032` | 刷新令牌已过期，请重新登录 | 401        | refreshToken过期   |
+
+**⚠️ 重要说明**：
+- Token过期时返回 `AUTH_002` (已修复)
+- 之前代码存在Bug，错误返回 `AUTH_004`，现已修正
 
 **错误响应格式**：
 ```json
@@ -135,8 +140,8 @@ Content-Type: application/json
 {
   "success": false,
   "error": {
-    "code": "AUTH_003",
-    "message": "无效的访问令牌"
+    "code": "AUTH_033",
+    "message": "刷新令牌无效，请重新登录"
   },
   "meta": {
     "timestamp": "2025-01-10T11:30:00.000Z"
@@ -152,15 +157,23 @@ Content-Type: application/json
 5. 生成新的accessToken和refreshToken对
 6. 返回新Token给前端
 
+**前端关心的问题确认**：
+- ✅ 响应格式正确，符合统一响应格式
+- ✅ `expires` 字段使用 ISO8601 格式 (例: `2025-01-10T12:30:00.000Z`)
+- ✅ 会返回新的 refreshToken (实现Token轮换安全机制)
+- ✅ 同时返回 accessToken 和 refreshToken 的过期时间
+
 ---
 
 ## 📊 Token过期场景处理
 
+**前端需要识别的三种场景** (来自前端文档要求)：
+
 ### 场景1：accessToken过期，refreshToken有效
 
 **后端行为**：
-- 中间件 `auth.js:108` 检测到Token过期
-- 返回 `401 Unauthorized` + 错误码 `AUTH_004`
+- 中间件 `auth.js:110` 检测到Token过期
+- 返回 `401 Unauthorized` + 错误码 `AUTH_002` ✅
 - 前端自动调用 `/auth/refresh-tokens` 刷新Token
 
 **错误响应**：
@@ -168,7 +181,7 @@ Content-Type: application/json
 {
   "success": false,
   "error": {
-    "code": "AUTH_004",
+    "code": "AUTH_002",
     "message": "访问令牌已过期，请重新登录或刷新令牌"
   }
 }
@@ -204,7 +217,7 @@ Content-Type: application/json
 
 **后端行为**：
 - `refreshAuth` 方法在数据库中找不到Token
-- 返回 `401 Unauthorized` + 错误码 `AUTH_013`
+- 返回 `401 Unauthorized` + 错误码 `AUTH_033` (REFRESH_TOKEN_INVALID)
 - 前端清除本地Token并跳转登录
 
 **错误响应**：
@@ -212,13 +225,20 @@ Content-Type: application/json
 {
   "success": false,
   "error": {
-    "code": "AUTH_013",
-    "message": "令牌无效或已过期，请重新登录"
+    "code": "AUTH_033",
+    "message": "刷新令牌无效，请重新登录"
   }
 }
 ```
 
 **前端处理**: 跳转登录页
+
+**✅ 场景确认**：
+- 以上三种场景的错误码已全部确认 ✅
+- 场景1返回 `AUTH_002` (TOKEN_EXPIRED)
+- 场景2返回 `AUTH_032` (REFRESH_TOKEN_EXPIRED)
+- 场景3返回 `AUTH_033` (REFRESH_TOKEN_INVALID)
+- 没有其他特殊的Token过期场景
 
 ---
 
@@ -273,7 +293,7 @@ Content-Type: application/json
 5. 检查localStorage中的Token是否已更新
 
 **预期结果**：
-- ✅ 返回 401 + AUTH_004
+- ✅ 返回 401 + AUTH_002 (Token过期)
 - ✅ 前端自动刷新Token
 - ✅ 原始请求使用新Token重试成功
 
@@ -295,8 +315,8 @@ Content-Type: application/json
 4. 观察返回的错误码和消息
 
 **预期结果**：
-- ✅ 返回 401 + AUTH_032 或 AUTH_013
-- ✅ 错误消息: "刷新令牌已过期，请重新登录"
+- ✅ 返回 401 + AUTH_032 (过期) 或 AUTH_033 (无效)
+- ✅ 错误消息: "刷新令牌已过期，请重新登录" 或 "刷新令牌无效，请重新登录"
 - ✅ 前端跳转登录页
 
 **后端日志**：
@@ -427,10 +447,13 @@ Content-Type: application/json
 
 ## 📝 更新记录
 
-| 日期       | 修改人       | 修改内容                              |
-| ---------- | ------------ | ------------------------------------- |
-| 2025-01-10 | [后端负责人] | 初始创建，确认后端配置                |
-| 2025-01-10 | [后端负责人] | 调整refreshToken有效期从30天改为7天 ✅ |
+| 日期       | 修改人       | 修改内容                                     |
+| ---------- | ------------ | -------------------------------------------- |
+| 2025-01-10 | [后端负责人] | 初始创建，确认后端配置                       |
+| 2025-01-10 | [后端负责人] | 调整refreshToken有效期从30天改为7天 ✅        |
+| 2025-01-10 | [后端负责人] | 修复Token过期错误码Bug (AUTH_004→AUTH_002) ✅ |
+| 2025-01-10 | [后端负责人] | 修复refreshAuth错误码 (AUTH_013→AUTH_033) ✅  |
+| 2025-01-10 | [后端负责人] | 完善文档，补充前端关心的所有确认项 ✅         |
 
 ---
 

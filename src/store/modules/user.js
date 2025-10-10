@@ -138,26 +138,21 @@ const actions = {
 
         resolve(data)
       }).catch(error => {
-        console.error('获取用户信息失败:', error)
+        console.error('❌ 获取用户信息失败:', error)
 
-        // 处理401错误，自动跳转到登录页
+        // ✅ 静默处理：不触发弹窗事件
+        // Token刷新和认证失败已在 request.js 中统一处理
+        // 这里只需要清理状态并 reject 错误即可
+
+        // 处理401错误（认证失败）
         if (error.response && error.response.status === 401) {
-          // 触发认证错误事件
-          Vue.prototype.$bus.$emit('auth-error', {
-            code: 'AUTH_002',
-            message: '登录已过期，请重新登录'
-          })
-
+          console.warn('⚠️ 401错误，清理认证状态')
           commit('RESET_STATE')
           removeToken()
-          // 这里不直接跳转，让调用方处理跳转逻辑
-        } else {
-          // 触发用户信息获取错误事件
-          Vue.prototype.$bus.$emit('user-info-error', {
-            message: error.message || '获取用户信息失败，请稍后重试'
-          })
         }
 
+        // 不再触发弹窗事件，直接 reject 错误
+        // request.js 会自动处理跳转逻辑
         reject(error)
       })
     })

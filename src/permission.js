@@ -1,6 +1,6 @@
 import router from './router'
 import store from './store'
-import { Message } from 'element-ui'
+// import { Message } from 'element-ui' // 不再使用弹窗提示，改为静默跳转
 import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // get token from cookie
@@ -59,8 +59,13 @@ router.beforeEach(async(to, from, next) => {
             }
             next({ ...to, replace: true })
           } catch (error) {
+            // ✅ 静默处理：路由生成失败，不弹出错误提示
+            console.error('❌ 路由生成失败:', error)
             await store.dispatch('user/resetToken')
-            Message.error('路由生成失败，请重新登录')
+
+            // 不再显示错误提示，静默跳转
+            // Message.error('路由生成失败，请重新登录')
+
             next(`/login?redirect=${to.path}`)
             NProgress.done()
           }
@@ -92,9 +97,13 @@ router.beforeEach(async(to, from, next) => {
           // set the replace: true, so the navigation will not leave a history record
           next({ ...to, replace: true })
         } catch (error) {
-          // remove token and go to login page to re-login
+          // ✅ 静默处理：移除 token 并跳转登录页，不弹出错误提示
+          console.error('❌ 获取用户信息失败:', error)
           await store.dispatch('user/resetToken')
-          Message.error(error || 'Has Error')
+
+          // 不再显示错误提示，静默跳转
+          // Message.error(error || 'Has Error')
+
           next(`/login?redirect=${to.path}`)
           NProgress.done()
         }
