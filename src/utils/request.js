@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { MessageBox, Message } from 'element-ui'
+import Vue from 'vue'
 import store from '@/store'
 import router from '@/router'
 import { getToken, getRefreshToken, setTokens, removeToken } from '@/utils/auth'
@@ -28,6 +29,9 @@ let isHandlingAuthFailure = false
 // Token刷新相关变量
 let isRefreshingToken = false
 const refreshTokenQueue = []
+
+// Token刷新失败标志（防止重复处理）
+let isTokenRefreshFailed = false
 
 /**
  * 添加请求到token刷新队列
@@ -393,27 +397,42 @@ async function handleTokenExpired(response) {
   } catch (error) {
     console.error('❌ Token刷新失败:', error)
 
+    // 设置刷新失败标志，防止重复处理
+    if (isTokenRefreshFailed) {
+      return Promise.reject(error)
+    }
+    isTokenRefreshFailed = true
+
     // 处理队列中的请求（失败）
     processRefreshQueue(false)
 
-    // 清除所有token（同步操作）
-    removeToken()
-
-    // 清除store状态（同步操作）
+    // 先清除store状态，确保getToken()返回null
     store.commit('user/RESET_STATE')
 
-    // 直接跳转到登录页（使用replace避免在历史记录中留下痕迹）
-    const currentPath = router.currentRoute.fullPath
-    router.replace({
-      path: '/login',
-      query: currentPath !== '/login' ? { redirect: currentPath } : {}
-    })
+    // 清除所有token（同步操作）
+    removeToken()
 
     // 显示简单提示
     Message({
       message: '登录已过期，请重新登录',
       type: 'warning',
       duration: 3000
+    })
+
+    // 直接跳转，使用nextTick确保Vue更新完成
+    Vue.nextTick(() => {
+      const currentPath = router.currentRoute.fullPath
+      router.replace({
+        path: '/login',
+        query: currentPath !== '/login' ? { redirect: currentPath } : {}
+      }).catch(() => {
+        // 忽略导航重复错误
+      })
+
+      // 重置标志
+      setTimeout(() => {
+        isTokenRefreshFailed = false
+      }, 1000)
     })
 
     return Promise.reject(error)
