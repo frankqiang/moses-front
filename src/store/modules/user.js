@@ -1,4 +1,3 @@
-import Vue from 'vue'
 import { login, logout, getInfo } from '@/views/login/api'
 import { getToken, removeToken, setTokens } from '@/utils/auth'
 import { resetRouter } from '@/router'
