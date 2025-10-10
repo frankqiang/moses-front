@@ -24,8 +24,7 @@ tokenService.interceptors.response.use(
     return response.data
   },
   error => {
-    // 统一错误处理
-    console.error('TokenService请求失败:', error)
+    // 静默处理错误，由调用方处理（避免重复的console.error）
     return Promise.reject(error)
   }
 )

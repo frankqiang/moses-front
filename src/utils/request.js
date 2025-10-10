@@ -396,13 +396,15 @@ async function handleTokenExpired(response) {
     // 处理队列中的请求（失败）
     processRefreshQueue(false)
 
-    // 清除所有token
+    // 清除所有token（同步操作）
     removeToken()
-    await store.dispatch('user/resetToken')
 
-    // 直接跳转到登录页（不显示弹窗，避免重复提示）
+    // 清除store状态（同步操作）
+    store.commit('user/RESET_STATE')
+
+    // 直接跳转到登录页（使用replace避免在历史记录中留下痕迹）
     const currentPath = router.currentRoute.fullPath
-    router.push({
+    router.replace({
       path: '/login',
       query: currentPath !== '/login' ? { redirect: currentPath } : {}
     })
