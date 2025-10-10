@@ -202,7 +202,7 @@ service.interceptors.response.use(
     }
 
     // 🔄 重试机制 - 对网络错误进行重试
-    if (config && !config._isRetry) {
+    if (config && !config._isRetry && (!error.response || error.response.status !== 401)) {
       // 检查是否为离线状态，如果离线则不进行重试
       const isOffline = !navigator.onLine ||
         error.message === 'Network Error' ||
@@ -242,6 +242,11 @@ service.interceptors.response.use(
       errorMessage = '网络连接已断开，请检查网络连接'
     }
 
+    // 对于401统一由认证流程处理，这里不再弹出英文错误提示
+    if (error.response && error.response.status === 401) {
+      return Promise.reject(error)
+    }
+
     // 显示用户友好的错误消息
     showErrorMessage(errorMessage)
 
@@ -262,7 +267,7 @@ service.interceptors.response.use(
 function handleModernFormat(res, status, response = null) {
   if (!res.success) {
     // 🔐 认证错误处理（支持token自动刷新）
-    if (isAuthError(res.error?.code)) {
+    if (isAuthError(res.error?.code, status)) {
       // 检查是否为token过期错误，尝试自动刷新
       // AUTH_002: TOKEN_EXPIRED
       // AUTH_004: 访问令牌已过期（后端实际返回的错误码）
@@ -279,7 +284,10 @@ function handleModernFormat(res, status, response = null) {
         })
       }
 
-      handleAuthError(res.error?.message || 'Authentication Error')
+      // 401类错误不在这里提示，由统一认证流程处理，避免英文错误信息
+      if (response?.status !== 401) {
+        handleAuthError(res.error?.message || 'Authentication Error')
+      }
     }
 
     // 📋 统一处理常见错误
@@ -317,8 +325,11 @@ function handleModernFormat(res, status, response = null) {
  * @param {string} errorCode - 错误码
  * @returns {boolean} 是否为认证失效错误
  */
-function isAuthError(errorCode) {
-  if (!errorCode) return false
+function isAuthError(errorCode, status) {
+  if (!errorCode) {
+    // 当HTTP状态码为401但没有错误码时，也视为认证错误
+    return status === 401
+  }
 
   // 1. 后端认证失效错误码（基于errorCodes.js）
   const authFailureCodes = [
@@ -411,22 +422,19 @@ async function handleTokenExpired(response) {
     // 清除所有token（同步操作）
     removeToken()
 
-    // 显示简单提示
-    Message({
-      message: '登录已过期，请重新登录',
-      type: 'warning',
-      duration: 3000
-    })
+    // 不再显示顶部消息，避免与弹窗重复
 
-    // 使用window.location强制跳转，避免触发路由守卫的getInfo
+    // 使用路由跳转到登录页（不会产生二次跳转）
     const currentPath = router.currentRoute.fullPath
-    const redirectParam = currentPath !== '/login' ? `?redirect=${encodeURIComponent(currentPath)}` : ''
+    router.replace({
+      path: '/login',
+      query: currentPath !== '/login' ? { redirect: currentPath } : {}
+    }).catch(() => { /* ignore */ })
 
+    // 重置标志（稍后）
     setTimeout(() => {
-      window.location.href = `/login${redirectParam}`
-      // 重置标志
       isTokenRefreshFailed = false
-    }, 100)
+    }, 1000)
 
     return Promise.reject(error)
   } finally {
