@@ -261,8 +261,11 @@ function handleModernFormat(res, status, response = null) {
     // 🔐 认证错误处理（支持token自动刷新）
     if (isAuthError(res.error?.code)) {
       // 检查是否为token过期错误，尝试自动刷新
+      // AUTH_002: TOKEN_EXPIRED
       // AUTH_004: 访问令牌已过期（后端实际返回的错误码）
-      if (res.error?.code === 'AUTH_004') {
+      if (res.error?.code === 'AUTH_002' ||
+          res.error?.code === 'AUTH_004' ||
+          res.error?.code === 'TOKEN_EXPIRED') {
         return handleTokenExpired(response)
       }
 
@@ -362,8 +365,9 @@ async function handleTokenExpired(response) {
     console.log('🔄 Token过期，尝试自动刷新...')
     const refreshResponse = await refreshTokens(refreshToken)
 
-    if (refreshResponse.data && refreshResponse.data.success) {
-      const { access, refresh } = refreshResponse.data.data
+    // refreshTokens返回的已经是响应体：{ success: true, data: { access: {...}, refresh: {...} } }
+    if (refreshResponse && refreshResponse.success) {
+      const { access, refresh } = refreshResponse.data
 
       // 更新token存储
       setTokens({
