@@ -85,7 +85,8 @@ const actions = {
           authStorageManager.clearLoginFailedCount()
 
           // 启动会话超时管理器
-          sessionManager.init()
+          // 已禁用前端会话超时管理，完全依赖后端Token过期机制
+          // sessionManager.init()
 
           // 返回完整响应给调用方
           resolve(response)

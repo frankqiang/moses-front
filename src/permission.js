@@ -30,9 +30,10 @@ router.beforeEach(async(to, from, next) => {
       const hasGetUserInfo = store.getters.name
       if (hasGetUserInfo) {
         // 用户信息已存在，确保会话管理器已启动
-        if (!sessionManager.isActive) {
-          sessionManager.init()
-        }
+        // 已禁用前端会话超时管理，完全依赖后端Token过期机制
+        // if (!sessionManager.isActive) {
+        //   sessionManager.init()
+        // }
 
         // 检查是否已经生成动态路由，并且角色没有变化
         const hasRoutes = store.getters.routesGenerated
