@@ -11,7 +11,7 @@
   <base-drawer
     :visible.sync="drawerVisible"
     :title="drawerTitle"
-    width="800px"
+    width="1000px"
     :wrapper-closable="false"
     @open="handleDrawerOpen"
     @close="handleDrawerClose"
@@ -175,8 +175,8 @@
         </el-row>
       </div>
 
-      <!-- 四、适用产品类型（P1第6项） -->
-      <div class="form-section">
+      <!-- 四、适用产品类型（P1第6项） - 已隐藏 -->
+      <div v-if="false" class="form-section">
         <div class="section-title">四、适用产品类型</div>
         <el-row :gutter="20">
           <el-col :span="24">
@@ -204,9 +204,9 @@
         </el-row>
       </div>
 
-      <!-- 五、供应商信息 -->
+      <!-- 四、供应商信息 -->
       <div class="form-section">
-        <div class="section-title">五、供应商信息</div>
+        <div class="section-title">四、供应商信息</div>
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item label="供应商信息" prop="supplierInfo">

@@ -147,7 +147,7 @@ export default {
 
 <style lang="scss" scoped>
 .bin-specification-search {
-  margin-bottom: 16px;
+
 }
 </style>
 

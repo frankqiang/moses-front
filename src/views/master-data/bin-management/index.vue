@@ -27,9 +27,8 @@
       :sort-by="sortBy"
       :export-params="exportParams"
       @create="handleCreate"
+      @view="handleView"
       @edit="handleEdit"
-      @enable="handleEnable"
-      @disable="handleDisable"
       @pagination-change="handlePaginationChange"
       @sort-change="handleSortChange"
       @refresh="handleRefresh"
@@ -48,7 +47,7 @@
 
 <script>
 import { debounce } from '@/utils'
-import { fetchBinSpecificationList, toggleBinSpecificationStatus } from './api'
+import { fetchBinSpecificationList } from './api'
 import {
   DEFAULT_PAGINATION,
   DEFAULT_SORT
@@ -220,56 +219,21 @@ export default {
     },
 
     /**
+     * 查看规格详情
+     */
+    handleView(row) {
+      this.formMode = 'view'
+      this.currentSpecificationId = row.id
+      this.formDrawerVisible = true
+    },
+
+    /**
      * 编辑规格
      */
     handleEdit(row) {
       this.formMode = 'update'
       this.currentSpecificationId = row.id
       this.formDrawerVisible = true
-    },
-
-    /**
-     * 启用规格
-     */
-    async handleEnable(row) {
-      try {
-        await this.$confirm(`确定要启用规格"${row.specCode}"吗？`, '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-
-        const response = await toggleBinSpecificationStatus(row.id, '启用')
-        this.$message.success(response.message || '启用成功')
-        this.fetchListSafe()
-      } catch (error) {
-        if (error !== 'cancel') {
-          const message = error.response?.data?.error?.message || error.message || '启用失败'
-          this.$message.error(message)
-        }
-      }
-    },
-
-    /**
-     * 禁用规格
-     */
-    async handleDisable(row) {
-      try {
-        await this.$confirm(`确定要禁用规格"${row.specCode}"吗？`, '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-
-        const response = await toggleBinSpecificationStatus(row.id, '禁用')
-        this.$message.success(response.message || '禁用成功')
-        this.fetchListSafe()
-      } catch (error) {
-        if (error !== 'cancel') {
-          const message = error.response?.data?.error?.message || error.message || '禁用失败'
-          this.$message.error(message)
-        }
-      }
     },
 
     /**

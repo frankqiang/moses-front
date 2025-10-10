@@ -116,7 +116,6 @@
           :buttons="getActionButtons(row)"
           :row="row"
           mode="text"
-          size="small"
           @click="handleActionClick"
         />
       </template>
@@ -145,7 +144,8 @@ const DEFAULT_VISIBLE_COLUMNS = [
   'material',
   'maxStackLayers',
   'status',
-  'createdAt'
+  'createdAt',
+  'actions'
 ]
 
 // 工具栏配置
@@ -153,7 +153,7 @@ const TABLE_TOOLBAR_CONFIG = {
   enableColumnSettings: true,
   enableBatchActions: false,
   enableRefresh: true,
-  refreshFeedbackMode: 'message'
+  refreshFeedbackMode: 'error'
 }
 
 export default {
@@ -267,7 +267,7 @@ export default {
         : this.defaultVisibleColumns
 
       return this.columnOptions
-        .filter((column) => visibleProps.includes(column.prop) || column.prop === 'actions')
+        .filter((column) => visibleProps.includes(column.prop))
         .map((column) => {
           if (column.prop === 'createdAt') {
             return {
@@ -471,33 +471,18 @@ export default {
       if (!row) {
         return []
       }
-
-      const buttons = [
+      return [
+        {
+          text: '查看详情',
+          action: 'view',
+          icon: 'el-icon-view'
+        },
         {
           text: '编辑',
           action: 'edit',
           icon: 'el-icon-edit'
         }
       ]
-
-      // 根据状态显示启用/禁用按钮
-      if (row.status === '启用') {
-        buttons.push({
-          text: '禁用',
-          action: 'disable',
-          icon: 'el-icon-close',
-          type: 'warning'
-        })
-      } else {
-        buttons.push({
-          text: '启用',
-          action: 'enable',
-          icon: 'el-icon-check',
-          type: 'success'
-        })
-      }
-
-      return buttons
     },
     /**
      * 操作按钮点击事件
