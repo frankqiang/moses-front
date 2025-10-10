@@ -203,6 +203,33 @@ export const asyncRoutes = [
     ]
   },
 
+  // 库存管理模块
+  {
+    path: '/inventory-management',
+    component: Layout,
+    redirect: '/inventory-management/bin-stack-management',
+    name: 'InventoryManagement',
+    alwaysShow: true,
+    meta: {
+      title: '库存管理',
+      icon: 'el-icon-s-grid'
+      // 开发阶段：移除 roles 限制
+    },
+    children: [
+      {
+        path: 'bin-stack-management',
+        name: 'BinStackManagement',
+        component: () => import('@/views/inventory-management/bin-stack-management/index'),
+        meta: {
+          title: '料框/料垛管理',
+          icon: 'el-icon-postcard'
+          // 开发阶段：移除 roles 限制
+        }
+      }
+      // 可以继续添加其他库存管理路由...
+    ]
+  },
+
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]
