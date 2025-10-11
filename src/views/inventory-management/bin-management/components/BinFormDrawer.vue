@@ -218,7 +218,8 @@
 
 <script>
 import BaseDrawer from '@/components/Drawer'
-import { BIN_FORM_RULES, BIN_FORM_DEFAULTS, BIN_CODE_PATTERN } from '../constants/form-config'
+import { BIN_FORM_RULES, BIN_FORM_DEFAULTS } from '../constants/form-config'
+import { BIN_CODE_PATTERN } from '../constants/bin-management'
 import { registerBin, getBinDetail } from '../api/bin-management'
 import { getBinSpecList } from '@/api/master-data/bin-specification'
 import { getAllProductList } from '@/api/master-data/product-management'
