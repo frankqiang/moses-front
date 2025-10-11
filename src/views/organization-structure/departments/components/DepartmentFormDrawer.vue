@@ -101,7 +101,7 @@
                   :disabled="option.disabled"
                 />
               </el-select>
-              <div v-if="form.parentId" class="field-hint">
+              <div v-if="formData.parentId" class="field-hint">
                 当前部门层级：{{ currentLevel }}
               </div>
             </el-form-item>
