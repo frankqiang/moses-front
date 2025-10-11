@@ -86,7 +86,8 @@ export const LOCATION_TABLE_COLUMNS = [
     label: '操作',
     width: 260,
     fixed: 'right',
-    slotName: 'actions'
+    slotName: 'actions',
+    showOverflowTooltip: false
   }
 ]
 

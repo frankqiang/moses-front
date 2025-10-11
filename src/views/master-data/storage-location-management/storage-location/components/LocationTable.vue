@@ -9,7 +9,7 @@
 <template>
   <div class="location-table-container">
     <!-- 表格工具栏 -->
-    <TableToolbar
+    <table-toolbar
       :enable-refresh="true"
       :enable-column-settings="true"
       :column-options="allTableColumns"
@@ -30,10 +30,10 @@
         </el-button>
         <slot name="toolbar-buttons" />
       </template>
-    </TableToolbar>
+    </table-toolbar>
 
     <!-- 表格 -->
-    <BaseTable
+    <base-table
       :columns="visibleColumns"
       :data="tableData"
       :loading="loading"
@@ -69,7 +69,7 @@
 
       <!-- 占用状态 -->
       <template #occupancyStatus="{ row }">
-        <StatusTag
+        <status-tag
           :status="row.occupancyStatus"
           :type-map="statusConfig.typeMap"
           :text-map="statusConfig.textMap"
@@ -86,7 +86,7 @@
 
       <!-- 适用料框规格 -->
       <template #binSpecCodes="{ row }">
-        <OverflowTagsPopover
+        <overflow-tags-popover
           v-if="row.applicableBinSpecCodes && row.applicableBinSpecCodes.length > 0"
           :tags="row.applicableBinSpecCodes"
           :max-visible="2"
@@ -96,7 +96,7 @@
 
       <!-- 操作列 -->
       <template #actions="{ row }">
-        <ActionButtons
+        <action-buttons
           :buttons="getActionButtons(row)"
           :row="row"
           mode="text"
@@ -104,7 +104,7 @@
           @click="handleActionClick"
         />
       </template>
-    </BaseTable>
+    </base-table>
   </div>
 </template>
 
@@ -114,6 +114,7 @@ import TableToolbar from '@/components/TableToolbar'
 import StatusTag from '@/components/StatusTag'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import ActionButtons from '@/components/ActionButtons'
+import tableConfigStore from '@/utils/table-config-store'
 import {
   LOCATION_TABLE_COLUMNS,
   OCCUPANCY_STATUS_CONFIG,
@@ -151,7 +152,7 @@ export default {
     return {
       statusConfig: OCCUPANCY_STATUS_CONFIG,
       defaultVisibleColumns: LOCATION_TABLE_COLUMNS.map(col => col.prop),
-      visibleColumns: [...LOCATION_TABLE_COLUMNS]
+      visibleColumns: []
     }
   },
   computed: {
@@ -159,7 +160,33 @@ export default {
       return LOCATION_TABLE_COLUMNS
     }
   },
+  created() {
+    // 从持久化存储加载列配置
+    this.initVisibleColumns()
+  },
   methods: {
+    /**
+     * 初始化可见列（从localStorage加载持久化配置）
+     */
+    initVisibleColumns() {
+      try {
+        // 从配置存储服务获取可见列
+        const visibleColumnProps = tableConfigStore.getColumnConfig(
+          'storage_location_visible_columns',
+          this.defaultVisibleColumns
+        )
+
+        // 根据持久化的列属性过滤显示的列
+        this.visibleColumns = LOCATION_TABLE_COLUMNS.filter(col =>
+          visibleColumnProps.includes(col.prop)
+        )
+      } catch (error) {
+        console.error('加载列配置失败:', error)
+        // 加载失败时使用默认配置
+        this.visibleColumns = [...LOCATION_TABLE_COLUMNS]
+      }
+    },
+
     /**
      * 判断是否有坐标数据
      */

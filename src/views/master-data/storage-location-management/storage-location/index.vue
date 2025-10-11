@@ -129,7 +129,8 @@ export default {
       pagination: {
         page: 1,
         limit: 10,
-        total: 0
+        total: 0,
+        pageSizes: [10, 20, 50, 100] // 明确指定分页选项，符合接口文档limit参数1-100的要求
       },
       queryParams: {
         keyword: '',
@@ -280,7 +281,18 @@ export default {
           this.formDrawerVisible = false
           this.fetchLocationList()
         } else if (this.formMode === 'edit') {
-          const { ...updateData } = formData
+          // 更新接口只允许传递可编辑字段，过滤掉系统字段和不可修改字段
+          const updateData = {
+            coordinateX: formData.coordinateX,
+            coordinateY: formData.coordinateY,
+            coordinateZ: formData.coordinateZ,
+            lengthLimit: formData.lengthLimit,
+            widthLimit: formData.widthLimit,
+            heightLimit: formData.heightLimit,
+            loadCapacity: formData.loadCapacity,
+            applicableBinSpecCodes: formData.applicableBinSpecCodes,
+            maxStackHeight: formData.maxStackHeight
+          }
           const response = await updateLocation(this.currentLocation.id, updateData)
           this.$message.success(response.message || '更新库位信息成功')
           this.formDrawerVisible = false

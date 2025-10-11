@@ -72,6 +72,7 @@ import BaseTable from '@/components/BaseTable'
 import TableToolbar from '@/components/TableToolbar'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
+import tableConfigStore from '@/utils/table-config-store'
 import {
   STORAGE_AREA_TABLE_COLUMNS,
   STORAGE_AREA_STATUS_CONFIG
@@ -117,20 +118,52 @@ export default {
     }
   },
   created() {
-    // 初始化可见列(添加格式化处理)
-    this.visibleColumns = this.columns.map(col => {
-      if (col.prop === 'createdAt' || col.prop === 'updatedAt') {
-        return {
-          ...col,
-          formatter: (row, column, cellValue) => {
-            return cellValue ? parseTime(cellValue, '{y}-{m}-{d} {h}:{i}:{s}') : '-'
-          }
-        }
-      }
-      return col
-    })
+    // 从持久化存储加载列配置
+    this.initVisibleColumns()
   },
   methods: {
+    /**
+     * 初始化可见列（从localStorage加载持久化配置）
+     */
+    initVisibleColumns() {
+      try {
+        // 从配置存储服务获取可见列
+        const visibleColumnProps = tableConfigStore.getColumnConfig(
+          'storage_area_visible_columns',
+          this.defaultVisibleColumns
+        )
+
+        // 根据持久化的列属性过滤显示的列，并添加格式化处理
+        this.visibleColumns = this.columns
+          .filter(col => visibleColumnProps.includes(col.prop))
+          .map(col => {
+            if (col.prop === 'createdAt' || col.prop === 'updatedAt') {
+              return {
+                ...col,
+                formatter: (row, column, cellValue) => {
+                  return cellValue ? parseTime(cellValue, '{y}-{m}-{d} {h}:{i}:{s}') : '-'
+                }
+              }
+            }
+            return col
+          })
+      } catch (error) {
+        console.error('加载列配置失败:', error)
+        // 加载失败时使用默认配置（全部列）
+        this.visibleColumns = this.columns.map(col => {
+          if (col.prop === 'createdAt' || col.prop === 'updatedAt') {
+            return {
+              ...col,
+              formatter: (row, column, cellValue) => {
+                return cellValue ? parseTime(cellValue, '{y}-{m}-{d} {h}:{i}:{s}') : '-'
+              }
+            }
+          }
+          return col
+        })
+      }
+    },
+
     handleCreate() {
       this.$emit('create')
     },

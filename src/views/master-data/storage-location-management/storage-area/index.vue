@@ -88,7 +88,8 @@ export default {
       pagination: {
         page: DEFAULT_PAGE_CONFIG.page,
         limit: DEFAULT_PAGE_CONFIG.limit,
-        total: 0
+        total: 0,
+        pageSizes: [10, 20, 50, 100] // 明确指定分页选项，符合接口文档limit参数1-100的要求
       },
       // 排序参数
       sortBy: DEFAULT_SORT_CONFIG.sortBy,
@@ -242,7 +243,13 @@ export default {
           const response = await createStorageArea(formData)
           this.$message.success(response.message || '创建库区成功')
         } else {
-          const response = await updateStorageArea(this.currentRow.id, formData)
+          // 更新接口只允许传递可编辑字段，过滤掉系统字段和不可修改字段
+          const updateData = {
+            areaName: formData.areaName,
+            description: formData.description,
+            status: formData.status
+          }
+          const response = await updateStorageArea(this.currentRow.id, updateData)
           this.$message.success(response.message || '更新库区信息成功')
         }
         this.formDrawerVisible = false

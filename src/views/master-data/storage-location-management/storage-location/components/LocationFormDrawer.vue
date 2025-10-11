@@ -348,7 +348,7 @@ export default {
         const response = await getStorageAreas({
           status: 'enabled', // 只获取启用状态的库区
           page: 1,
-          limit: 1000
+          limit: 100 // 接口限制最大100条，符合接口文档要求
         })
         this.areaOptions = (response.data.results || []).map(area => ({
           label: `${area.areaCode} - ${area.areaName}`,

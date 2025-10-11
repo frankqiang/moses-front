@@ -90,7 +90,7 @@ export default {
         this.loadingAreas = true
         const response = await getStorageAreas({
           page: 1,
-          limit: 1000 // 获取所有库区用于筛选
+          limit: 100 // 接口限制最大100条，符合接口文档要求
         })
         this.areaOptions = (response.data.results || []).map(area => ({
           label: `${area.areaCode} - ${area.areaName}`,
