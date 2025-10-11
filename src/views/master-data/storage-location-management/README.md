@@ -4,7 +4,11 @@
 
 库位管理模块是主数据管理系统的核心子模块,负责管理车间内所有物理存储位置的信息。本模块包含库区管理和库位管理两大功能板块,为库位分配优化、物流调度、退火任务执行等业务提供空间基础数据支持。
 
-**架构特点**: 库区和库位管理采用独立页面设计,各自拥有独立的路由和菜单项,提供更清晰的用户体验。
+**架构特点**: 
+- 库区和库位管理完全独立，各自拥有完整的目录结构
+- 每个模块有独立的 api、components、constants、docs、utils
+- 独立的路由和菜单项
+- 参考 inventory-management 模块的 bin-management 和 stack-management 结构设计
 
 ## 当前开发状态
 
@@ -48,37 +52,47 @@
 
 ```
 storage-location-management/
-├── api/                              # API接口层
-│   ├── index.js                     # 统一导出入口
-│   ├── storage-area.js              # 库区API接口
-│   └── storage-location.js          # 库位API接口
-├── components/                       # 组件层
-│   ├── AreaSearch.vue               # 库区搜索组件
-│   ├── AreaTable.vue                # 库区表格组件
-│   ├── AreaFormDrawer.vue           # 库区表单抽屉组件
-│   ├── AreaDetailDrawer.vue         # 库区详情抽屉组件
-│   ├── LocationSearch.vue           # 库位搜索组件
-│   ├── LocationTable.vue            # 库位表格组件
-│   ├── LocationFormDrawer.vue       # 库位表单抽屉组件
-│   └── LocationDetailDrawer.vue     # 库位详情抽屉组件
-├── constants/                        # 常量配置层
-│   ├── index.js                     # 统一导出入口
-│   ├── storage-area.js              # 库区基础常量
-│   ├── storage-location.js          # 库位基础常量
-│   ├── table-config.js              # 库区表格配置
-│   ├── location-table-config.js     # 库位表格配置
-│   ├── form-config.js               # 库区表单配置
-│   └── location-form-config.js      # 库位表单配置
-├── docs/                             # 文档目录
+├── storage-area/                     # 库区管理模块(完全独立)
+│   ├── api/                         # 库区API接口
+│   │   ├── index.js                # 统一导出
+│   │   └── storage-area.js         # 库区API
+│   ├── components/                  # 库区组件
+│   │   ├── AreaSearch.vue          # 搜索组件
+│   │   ├── AreaTable.vue           # 表格组件
+│   │   ├── AreaFormDrawer.vue      # 表单抽屉
+│   │   └── AreaDetailDrawer.vue    # 详情抽屉
+│   ├── constants/                   # 库区常量
+│   │   ├── index.js                # 统一导出
+│   │   ├── storage-area.js         # 基础常量
+│   │   ├── table-config.js         # 表格配置
+│   │   └── form-config.js          # 表单配置
+│   ├── docs/                        # 库区文档(可选)
+│   ├── utils/                       # 库区工具(可选)
+│   └── index.vue                    # 库区管理主页面
+├── storage-location/                 # 库位管理模块(完全独立)
+│   ├── api/                         # 库位API接口
+│   │   ├── index.js                # 统一导出
+│   │   └── storage-location.js     # 库位API(含库区查询)
+│   ├── components/                  # 库位组件
+│   │   ├── LocationSearch.vue      # 搜索组件
+│   │   ├── LocationTable.vue       # 表格组件
+│   │   ├── LocationFormDrawer.vue  # 表单抽屉
+│   │   └── LocationDetailDrawer.vue # 详情抽屉
+│   ├── constants/                   # 库位常量
+│   │   ├── index.js                # 统一导出
+│   │   ├── storage-location.js     # 基础常量
+│   │   ├── table-config.js         # 表格配置
+│   │   └── form-config.js          # 表单配置
+│   ├── docs/                        # 库位文档(可选)
+│   ├── utils/                       # 库位工具(可选)
+│   └── index.vue                    # 库位管理主页面
+├── docs/                             # 共享文档
 │   ├── 任务清单/
 │   └── 接口文档/
-├── storage-area/                     # 库区管理页面
-│   └── index.vue                    # 库区管理主页面
-├── storage-location/                 # 库位管理页面
-│   └── index.vue                    # 库位管理主页面
-├── utils/                            # 工具函数(可选)
 └── README.md                         # 本文档
 ```
+
+**设计理念**: 完全独立的模块结构，参考 `inventory-management` 的 `bin-management` 和 `stack-management` 设计
 
 ## 技术特性
 
