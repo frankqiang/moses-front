@@ -226,7 +226,7 @@ import {
   CREATE_FORM_DEFAULT,
   EDIT_DISABLED_FIELDS
 } from '../constants'
-import { getAreaList } from '../api'
+import { getStorageAreas } from '../api'
 
 export default {
   name: 'LocationFormDrawer',
@@ -346,7 +346,7 @@ export default {
     async fetchAreaOptions() {
       try {
         this.loadingAreas = true
-        const response = await getAreaList({
+        const response = await getStorageAreas({
           status: 'enabled', // 只获取启用状态的库区
           page: 1,
           limit: 1000

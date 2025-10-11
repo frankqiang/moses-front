@@ -21,7 +21,7 @@ import {
   LOCATION_TYPE_OPTIONS,
   OCCUPANCY_STATUS_OPTIONS
 } from '../constants'
-import { getAreaList } from '../api'
+import { getStorageAreas } from '../api'
 
 export default {
   name: 'LocationSearch',
@@ -88,7 +88,7 @@ export default {
     async fetchAreaOptions() {
       try {
         this.loadingAreas = true
-        const response = await getAreaList({
+        const response = await getStorageAreas({
           page: 1,
           limit: 1000 // 获取所有库区用于筛选
         })
