@@ -47,7 +47,10 @@
       <template #actions="{ row }">
         <action-buttons
           :buttons="getActionButtons(row)"
+          :row="row"
           mode="text"
+          size="small"
+          @click="handleActionClick"
         />
       </template>
     </base-table>
@@ -139,40 +142,45 @@ export default {
       this.$emit('size-change', limit)
     },
     getActionButtons(row) {
-      const buttons = []
-
-      // 查看详情按钮
-      buttons.push({
-        text: '详情',
-        type: 'primary',
-        onClick: () => this.handleView(row)
-      })
-
-      // 编辑按钮
-      buttons.push({
-        text: '编辑',
-        type: 'primary',
-        onClick: () => this.handleEdit(row)
-      })
-
-      // 状态切换按钮
-      const statusButton = {
-        text: row.status === 'enabled' ? '禁用' : '启用',
-        type: row.status === 'enabled' ? 'warning' : 'success',
-        onClick: () => this.handleStatusChange(row)
+      if (!row) {
+        return []
       }
-      buttons.push(statusButton)
+
+      const buttons = [
+        {
+          key: 'detail',
+          label: '详情',
+          type: 'primary',
+          icon: 'el-icon-view'
+        },
+        {
+          key: 'edit',
+          label: '编辑',
+          type: 'primary',
+          icon: 'el-icon-edit'
+        },
+        {
+          key: row.status === 'enabled' ? 'disable' : 'enable',
+          label: row.status === 'enabled' ? '禁用' : '启用',
+          type: row.status === 'enabled' ? 'warning' : 'success',
+          icon: row.status === 'enabled' ? 'el-icon-turn-off' : 'el-icon-open'
+        }
+      ]
 
       return buttons
     },
-    handleView(row) {
-      this.$emit('view', row)
-    },
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleStatusChange(row) {
-      this.$emit('status-change', row)
+    handleActionClick(action, row) {
+      const actionMap = {
+        detail: () => this.$emit('view', row),
+        edit: () => this.$emit('edit', row),
+        enable: () => this.$emit('status-change', row),
+        disable: () => this.$emit('status-change', row)
+      }
+
+      const handler = actionMap[action]
+      if (handler) {
+        handler()
+      }
     }
   }
 }
