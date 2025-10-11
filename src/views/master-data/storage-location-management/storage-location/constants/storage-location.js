@@ -22,14 +22,6 @@ export const LOCATION_TYPE_OPTIONS = [
   { label: '炉口虚拟位', value: LOCATION_TYPE.FURNACE_PORT_VIRTUAL }
 ]
 
-// 库位类型映射
-export const LOCATION_TYPE_MAP = {
-  [LOCATION_TYPE.GROUND_STACKING]: '地面堆垛区',
-  [LOCATION_TYPE.FIXED_RACK]: '固定货架',
-  [LOCATION_TYPE.PREPARATION_STATION]: '备料台工位',
-  [LOCATION_TYPE.FURNACE_PORT_VIRTUAL]: '炉口虚拟位'
-}
-
 // 占用状态枚举
 export const OCCUPANCY_STATUS = {
   FREE: 'free',
@@ -59,11 +51,11 @@ export const OCCUPANCY_STATUS_MAP = {
 
 // 占用状态颜色标记
 export const OCCUPANCY_STATUS_COLORS = {
-  [OCCUPANCY_STATUS.FREE]: 'success', // 绿色
-  [OCCUPANCY_STATUS.OCCUPIED]: 'danger', // 红色
-  [OCCUPANCY_STATUS.RESERVED]: 'warning', // 橙色
-  [OCCUPANCY_STATUS.DISABLED]: 'info', // 灰色
-  [OCCUPANCY_STATUS.MAINTENANCE]: 'primary' // 蓝色
+  [OCCUPANCY_STATUS.FREE]: 'success',
+  [OCCUPANCY_STATUS.OCCUPIED]: 'danger',
+  [OCCUPANCY_STATUS.RESERVED]: 'warning',
+  [OCCUPANCY_STATUS.DISABLED]: 'info',
+  [OCCUPANCY_STATUS.MAINTENANCE]: 'primary'
 }
 
 // 状态转换规则
@@ -93,33 +85,4 @@ export const STATUS_TRANSITION_RULES = {
     OCCUPANCY_STATUS.DISABLED
   ]
 }
-
-// 坐标范围限制
-export const COORDINATE_LIMITS = {
-  X: { min: -100000, max: 100000 },
-  Y: { min: -100000, max: 100000 },
-  Z: { min: 0, max: 10000 }
-}
-
-// 尺寸范围限制
-export const SIZE_LIMITS = {
-  LENGTH: { min: 0.01, max: 10000 },
-  WIDTH: { min: 0.01, max: 10000 },
-  HEIGHT: { min: 0.01, max: 10000 }
-}
-
-// 承重范围限制
-export const LOAD_CAPACITY_LIMITS = {
-  min: 0.01,
-  max: 100000
-}
-
-// 堆叠高度范围限制
-export const STACK_HEIGHT_LIMITS = {
-  min: 1,
-  max: 20
-}
-
-// 库位ID格式正则(大写字母、数字和中划线)
-export const LOCATION_ID_PATTERN = /^[A-Z0-9-]+$/
 

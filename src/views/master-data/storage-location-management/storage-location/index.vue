@@ -93,10 +93,10 @@
 </template>
 
 <script>
-import LocationSearch from '../components/LocationSearch.vue'
-import LocationTable from '../components/LocationTable.vue'
-import LocationFormDrawer from '../components/LocationFormDrawer.vue'
-import LocationDetailDrawer from '../components/LocationDetailDrawer.vue'
+import LocationSearch from './components/LocationSearch.vue'
+import LocationTable from './components/LocationTable.vue'
+import LocationFormDrawer from './components/LocationFormDrawer.vue'
+import LocationDetailDrawer from './components/LocationDetailDrawer.vue'
 import StatusTag from '@/components/StatusTag'
 import {
   getLocationList,
@@ -104,13 +104,13 @@ import {
   createLocation,
   updateLocation,
   updateLocationOccupancy
-} from '../api'
+} from './api'
 import {
   OCCUPANCY_STATUS_CONFIG,
   OCCUPANCY_STATUS_MAP,
   OCCUPANCY_STATUS_OPTIONS,
   STATUS_TRANSITION_RULES
-} from '../constants'
+} from './constants'
 import { debounce } from '@/utils'
 
 export default {

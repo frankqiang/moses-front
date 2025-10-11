@@ -6,6 +6,5 @@
  *   - 2025-01-20: 初始创建
  */
 
-export * from './storage-area'
 export * from './storage-location'
 

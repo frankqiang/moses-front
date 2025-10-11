@@ -111,8 +111,7 @@ import ActionButtons from '@/components/ActionButtons'
 import {
   LOCATION_TABLE_COLUMNS,
   OCCUPANCY_STATUS_CONFIG,
-  OCCUPANCY_STATUS,
-  OCCUPANCY_STATUS_MAP
+  OCCUPANCY_STATUS
 } from '../constants'
 
 export default {

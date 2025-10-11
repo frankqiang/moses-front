@@ -1,5 +1,5 @@
 /**
- * 文件名称: location-table-config.js
+ * 文件名称: table-config.js
  * 文件描述: 库位表格配置
  * 创建日期: 2025-01-20
  * 修改记录:

@@ -50,20 +50,20 @@
 </template>
 
 <script>
-import AreaSearch from '../components/AreaSearch.vue'
-import AreaTable from '../components/AreaTable.vue'
-import AreaFormDrawer from '../components/AreaFormDrawer.vue'
-import AreaDetailDrawer from '../components/AreaDetailDrawer.vue'
+import AreaSearch from './components/AreaSearch.vue'
+import AreaTable from './components/AreaTable.vue'
+import AreaFormDrawer from './components/AreaFormDrawer.vue'
+import AreaDetailDrawer from './components/AreaDetailDrawer.vue'
 import {
   createStorageArea,
   getStorageAreas,
   getStorageAreaById,
   updateStorageArea
-} from '../api'
+} from './api'
 import {
   DEFAULT_PAGE_CONFIG,
   DEFAULT_SORT_CONFIG
-} from '../constants'
+} from './constants'
 import { debounce } from '@/utils'
 
 export default {

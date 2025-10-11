@@ -223,8 +223,7 @@ import {
   LOCATION_TYPE_OPTIONS,
   LOCATION_TYPE,
   LOCATION_FORM_FIELDS,
-  CREATE_FORM_DEFAULT,
-  EDIT_DISABLED_FIELDS
+  CREATE_FORM_DEFAULT
 } from '../constants'
 import { getStorageAreas } from '../api'
 
