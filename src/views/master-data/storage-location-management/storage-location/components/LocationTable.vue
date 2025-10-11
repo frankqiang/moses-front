@@ -10,19 +10,24 @@
   <div class="location-table-container">
     <!-- 表格工具栏 -->
     <TableToolbar
-      title="库位列表"
-      :enable-create="true"
       :enable-refresh="true"
       :enable-column-settings="true"
       :column-options="allTableColumns"
       :storage-key="'storage_location_visible_columns'"
       :default-visible-columns="defaultVisibleColumns"
       :enable-export="false"
-      @create="handleCreate"
       @refresh="handleRefresh"
       @column-change="handleColumnChange"
     >
       <template #toolbar-left>
+        <el-button
+          type="primary"
+          icon="el-icon-plus"
+          size="small"
+          @click="handleCreate"
+        >
+          创建库位
+        </el-button>
         <slot name="toolbar-buttons" />
       </template>
     </TableToolbar>

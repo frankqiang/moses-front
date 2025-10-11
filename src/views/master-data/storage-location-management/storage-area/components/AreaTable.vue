@@ -10,18 +10,24 @@
   <div class="area-table">
     <!-- 工具栏 -->
     <table-toolbar
-      :enable-create="true"
       :enable-refresh="true"
       :enable-column-settings="true"
       :column-options="columns"
       :storage-key="'storage_area_visible_columns'"
       :default-visible-columns="defaultVisibleColumns"
       :enable-export="false"
-      @create="handleCreate"
       @refresh="handleRefresh"
       @column-change="handleColumnChange"
     >
-      <template #custom-buttons>
+      <template #toolbar-left>
+        <el-button
+          type="primary"
+          icon="el-icon-plus"
+          size="small"
+          @click="handleCreate"
+        >
+          创建库区
+        </el-button>
         <slot name="toolbar-buttons" />
       </template>
     </table-toolbar>
