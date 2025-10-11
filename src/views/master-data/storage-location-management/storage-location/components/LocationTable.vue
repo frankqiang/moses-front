@@ -98,7 +98,10 @@
       <template #actions="{ row }">
         <ActionButtons
           :buttons="getActionButtons(row)"
-          @action="handleAction($event, row)"
+          :row="row"
+          mode="text"
+          size="small"
+          @click="handleActionClick"
         />
       </template>
     </BaseTable>
@@ -187,16 +190,20 @@ export default {
      * 获取操作按钮配置
      */
     getActionButtons(row) {
+      if (!row) {
+        return []
+      }
+
       const buttons = [
         {
-          key: 'detail',
-          label: '详情',
+          action: 'detail',
+          text: '详情',
           type: 'text',
           icon: 'el-icon-view'
         },
         {
-          key: 'edit',
-          label: '编辑',
+          action: 'edit',
+          text: '编辑',
           type: 'text',
           icon: 'el-icon-edit'
         }
@@ -205,22 +212,22 @@ export default {
       // 根据当前占用状态添加状态切换按钮
       if (row.occupancyStatus === OCCUPANCY_STATUS.FREE) {
         buttons.push({
-          key: 'occupy',
-          label: '占用',
+          action: 'occupy',
+          text: '占用',
           type: 'text',
           icon: 'el-icon-lock'
         })
       } else if (row.occupancyStatus === OCCUPANCY_STATUS.OCCUPIED) {
         buttons.push({
-          key: 'release',
-          label: '释放',
+          action: 'release',
+          text: '释放',
           type: 'text',
           icon: 'el-icon-unlock'
         })
       } else {
         buttons.push({
-          key: 'changeStatus',
-          label: '状态变更',
+          action: 'changeStatus',
+          text: '状态变更',
           type: 'text',
           icon: 'el-icon-refresh'
         })
@@ -232,7 +239,11 @@ export default {
     /**
      * 处理操作按钮点击
      */
-    handleAction(action, row) {
+    handleActionClick({ action, row }) {
+      if (!action) {
+        return
+      }
+
       const actionMap = {
         detail: () => this.$emit('detail', row),
         edit: () => this.$emit('edit', row),

@@ -159,28 +159,32 @@ export default {
 
       const buttons = [
         {
-          key: 'detail',
-          label: '详情',
-          type: 'primary',
+          action: 'detail',
+          text: '详情',
+          type: 'text',
           icon: 'el-icon-view'
         },
         {
-          key: 'edit',
-          label: '编辑',
-          type: 'primary',
+          action: 'edit',
+          text: '编辑',
+          type: 'text',
           icon: 'el-icon-edit'
         },
         {
-          key: row.status === 'enabled' ? 'disable' : 'enable',
-          label: row.status === 'enabled' ? '禁用' : '启用',
-          type: row.status === 'enabled' ? 'warning' : 'success',
+          action: row.status === 'enabled' ? 'disable' : 'enable',
+          text: row.status === 'enabled' ? '禁用' : '启用',
+          type: 'text',
           icon: row.status === 'enabled' ? 'el-icon-turn-off' : 'el-icon-open'
         }
       ]
 
       return buttons
     },
-    handleActionClick(action, row) {
+    handleActionClick({ action, row }) {
+      if (!action) {
+        return
+      }
+
       const actionMap = {
         detail: () => this.$emit('view', row),
         edit: () => this.$emit('edit', row),
