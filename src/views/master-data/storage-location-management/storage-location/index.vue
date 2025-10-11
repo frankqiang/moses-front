@@ -1,13 +1,14 @@
 <!--
-  文件名称: LocationManagement.vue
+  文件名称: index.vue
   文件描述: 库位管理页面
   创建日期: 2025-01-20
   修改记录:
     - 2025-01-20: 初始创建
+    - 2025-01-20: 重构为独立页面
 -->
 
 <template>
-  <div class="location-management-container">
+  <div class="location-management-container app-container">
     <!-- 搜索表单 -->
     <LocationSearch @search="handleSearch" @reset="handleReset" />
 
@@ -113,7 +114,7 @@ import {
 import { debounce } from '@/utils'
 
 export default {
-  name: 'LocationManagement',
+  name: 'StorageLocationManagement',
   components: {
     LocationSearch,
     LocationTable,

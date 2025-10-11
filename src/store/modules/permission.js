@@ -200,12 +200,22 @@ export const asyncRoutes = [
         }
       },
       {
+        path: 'storage-area-management',
+        name: 'StorageAreaManagement',
+        component: () => import('@/views/master-data/storage-location-management/storage-area'),
+        meta: {
+          title: '库区管理',
+          icon: 'el-icon-office-building'
+          // 开发阶段：移除 roles 限制
+        }
+      },
+      {
         path: 'storage-location-management',
         name: 'StorageLocationManagement',
-        component: () => import('@/views/master-data/storage-location-management/index'),
+        component: () => import('@/views/master-data/storage-location-management/storage-location'),
         meta: {
           title: '库位管理',
-          icon: 'el-icon-office-building'
+          icon: 'el-icon-map-location'
           // 开发阶段：移除 roles 限制
         }
       }

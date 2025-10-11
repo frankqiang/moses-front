@@ -66,19 +66,15 @@ storage-location-management/
 │   ├── table-config.js              # 库区表格配置
 │   ├── location-table-config.js     # 库位表格配置
 │   ├── form-config.js               # 库区表单配置
-│   ├── location-form-config.js      # 库位表单配置
-│   ├── api-config.js                # 库区API错误码配置
-│   ├── location-api-config.js       # 库位API错误码配置
-│   ├── messages-config.js           # 库区消息提示配置
-│   └── location-messages-config.js  # 库位消息提示配置
+│   └── location-form-config.js      # 库位表单配置
 ├── docs/                             # 文档目录
 │   ├── 任务清单/
 │   └── 接口文档/
-├── views/                            # 页面层
-│   ├── AreaManagement.vue           # 库区管理页面
-│   └── LocationManagement.vue       # 库位管理页面
+├── storage-area/                     # 库区管理页面
+│   └── index.vue                    # 库区管理主页面
+├── storage-location/                 # 库位管理页面
+│   └── index.vue                    # 库位管理主页面
 ├── utils/                            # 工具函数(可选)
-├── index.vue                         # 主页面入口(Tab切换)
 └── README.md                         # 本文档
 ```
 
@@ -96,8 +92,9 @@ storage-location-management/
 ### 2. 接口规范
 - 严格按照后端接口文档实现
 - 使用统一响应格式处理
-- 完整的错误码映射和处理
-- 优先使用后端返回的消息
+- **优先使用后端返回的消息** - 不硬编码错误消息
+- 错误处理: `error.error?.message || error.message || 备用消息`
+- 成功提示: `response.message || 备用消息`
 
 ### 3. 代码规范
 - 通过ESLint检查
@@ -111,7 +108,8 @@ storage-location-management/
 
 通过系统左侧菜单进入:
 ```
-主数据管理 -> 库位管理
+主数据管理 -> 库区管理  (独立页面)
+主数据管理 -> 库位管理  (独立页面)
 ```
 
 ### 库区管理功能
@@ -246,15 +244,18 @@ storage-location-management/
 
 ## 错误处理
 
-系统会针对不同错误码显示友好提示:
+系统采用**后端消息优先**的策略:
 
-| 错误码 | 说明 | 用户提示 |
-|--------|------|---------|
-| STR_001 | 库区代码已存在 | 该库区代码已存在,请更换后重试 |
-| STR_002 | 库区代码格式不正确 | 库区代码格式不正确,只能包含大写字母、数字和中划线 |
-| STR_003 | 库区不存在或已删除 | 库区不存在或已被删除 |
-| STR_008 | 库区状态无效 | 库区状态值无效,请选择启用或禁用 |
-| STR_009 | 库区已禁用 | 该库区已禁用,无法添加库位 |
+1. **成功消息**: 优先使用`response.message`,备用消息仅作为fallback
+2. **错误消息**: 优先使用`error.error.message`或`error.message`,备用消息仅作为fallback
+3. **不硬编码**: 前端不维护错误码到消息的映射表,直接展示后端返回的用户友好消息
+
+**错误处理模式**:
+```javascript
+// 优先使用后端返回的消息
+const errorMsg = error.error?.message || error.message || '操作失败'
+this.$message.error(errorMsg)
+```
 
 ## 性能优化
 

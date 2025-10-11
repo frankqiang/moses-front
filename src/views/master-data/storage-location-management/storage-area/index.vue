@@ -1,13 +1,14 @@
 <!--
-文件名称: AreaManagement.vue
+文件名称: index.vue
 文件描述: 库区管理页面
 创建日期: 2025-01-20
 修改记录:
   - 2025-01-20: 初始创建
+  - 2025-01-20: 重构为独立页面
 -->
 
 <template>
-  <div class="area-management">
+  <div class="area-management app-container">
     <!-- 搜索表单 -->
     <area-search
       :search-params="searchParams"
@@ -66,7 +67,7 @@ import {
 import { debounce } from '@/utils'
 
 export default {
-  name: 'AreaManagement',
+  name: 'StorageAreaManagement',
   components: {
     AreaSearch,
     AreaTable,
@@ -261,10 +262,7 @@ export default {
 
 <style lang="scss" scoped>
 .area-management {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  padding: 16px;
 }
 </style>
 
