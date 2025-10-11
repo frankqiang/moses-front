@@ -207,7 +207,7 @@ export const asyncRoutes = [
   {
     path: '/inventory-management',
     component: Layout,
-    redirect: '/inventory-management/bin-stack-management',
+    redirect: '/inventory-management/bin-management',
     name: 'InventoryManagement',
     alwaysShow: true,
     meta: {
@@ -217,11 +217,21 @@ export const asyncRoutes = [
     },
     children: [
       {
-        path: 'bin-stack-management',
-        name: 'BinStackManagement',
-        component: () => import('@/views/inventory-management/bin-stack-management/index'),
+        path: 'bin-management',
+        name: 'BinManagement',
+        component: () => import('@/views/inventory-management/bin-management/index'),
         meta: {
-          title: '料框/料垛管理',
+          title: '料框管理',
+          icon: 'el-icon-box'
+          // 开发阶段：移除 roles 限制
+        }
+      },
+      {
+        path: 'stack-management',
+        name: 'StackManagement',
+        component: () => import('@/views/inventory-management/stack-management/index'),
+        meta: {
+          title: '料垛管理',
           icon: 'el-icon-postcard'
           // 开发阶段：移除 roles 限制
         }
