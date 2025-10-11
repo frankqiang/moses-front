@@ -8,8 +8,8 @@
 
 <template>
   <search-form
-    :fields="searchFields"
-    :initial-values="searchParams"
+    v-model="searchParams"
+    :items="searchFields"
     @search="handleSearch"
     @reset="handleReset"
   />
@@ -24,14 +24,13 @@ export default {
   components: {
     SearchForm
   },
-  props: {
-    searchParams: {
-      type: Object,
-      default: () => ({})
-    }
-  },
   data() {
     return {
+      searchParams: {
+        keyword: '',
+        areaType: '',
+        status: ''
+      },
       searchFields: [
         {
           type: 'input',

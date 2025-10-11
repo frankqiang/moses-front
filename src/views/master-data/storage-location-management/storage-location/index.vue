@@ -280,7 +280,7 @@ export default {
           this.formDrawerVisible = false
           this.fetchLocationList()
         } else if (this.formMode === 'edit') {
-          const { id, locationId, storageAreaId, locationType, ...updateData } = formData
+          const { ...updateData } = formData
           const response = await updateLocation(this.currentLocation.id, updateData)
           this.$message.success(response.message || '更新库位信息成功')
           this.formDrawerVisible = false

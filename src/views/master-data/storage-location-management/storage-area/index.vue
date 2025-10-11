@@ -11,7 +11,6 @@
   <div class="area-management app-container">
     <!-- 搜索表单 -->
     <area-search
-      :search-params="searchParams"
       @search="handleSearch"
       @reset="handleReset"
     />
