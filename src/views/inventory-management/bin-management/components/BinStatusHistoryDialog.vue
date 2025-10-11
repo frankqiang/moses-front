@@ -37,7 +37,7 @@
     <!-- 时间轴展示 -->
     <el-timeline v-if="historyList.length > 0" class="history-timeline">
       <el-timeline-item
-        v-for="(item, index) in historyList"
+        v-for="item in historyList"
         :key="item.id"
         :timestamp="formatDateTime(item.changedAt)"
         placement="top"
