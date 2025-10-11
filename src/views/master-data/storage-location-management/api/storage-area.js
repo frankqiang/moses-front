@@ -4,9 +4,12 @@
  * 创建日期: 2025-01-20
  * 修改记录:
  *   - 2025-01-20: 初始创建
+ *   - 2025-01-20: 添加BASE_URL常量
  */
 
 import service from '@/utils/request'
+
+const BASE_URL = '/mdm/storage-areas'
 
 /**
  * 创建库区
@@ -19,7 +22,7 @@ import service from '@/utils/request'
  */
 export function createStorageArea(data) {
   return service({
-    url: '/v1/mdm/storage-areas',
+    url: BASE_URL,
     method: 'post',
     data
   })
@@ -38,7 +41,7 @@ export function createStorageArea(data) {
  */
 export function getStorageAreas(params) {
   return service({
-    url: '/v1/mdm/storage-areas',
+    url: BASE_URL,
     method: 'get',
     params
   })
@@ -51,7 +54,7 @@ export function getStorageAreas(params) {
  */
 export function getStorageAreaById(areaId) {
   return service({
-    url: `/v1/mdm/storage-areas/${areaId}`,
+    url: `${BASE_URL}/${areaId}`,
     method: 'get'
   })
 }
@@ -67,7 +70,7 @@ export function getStorageAreaById(areaId) {
  */
 export function updateStorageArea(areaId, data) {
   return service({
-    url: `/v1/mdm/storage-areas/${areaId}`,
+    url: `${BASE_URL}/${areaId}`,
     method: 'patch',
     data
   })
@@ -79,7 +82,7 @@ export function updateStorageArea(areaId, data) {
  */
 export function getEnabledStorageAreas() {
   return service({
-    url: '/v1/mdm/storage-areas',
+    url: BASE_URL,
     method: 'get',
     params: {
       status: 'enabled',
