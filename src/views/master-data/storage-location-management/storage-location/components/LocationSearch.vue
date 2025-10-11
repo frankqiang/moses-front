@@ -8,8 +8,8 @@
 
 <template>
   <SearchForm
-    :search-items="searchItems"
-    :model="searchModel"
+    v-model="searchModel"
+    :items="searchItems"
     @search="handleSearch"
     @reset="handleReset"
   />
