@@ -66,7 +66,7 @@
                     v-if="field.prop === 'equipmentType'"
                     v-model="formData[field.prop]"
                     :placeholder="field.placeholder"
-                    :disabled="field.disabledOnEdit && formMode === 'update' || formMode === 'view' || loading"
+                    :disabled="field.disabledOnEdit && formMode === 'update' || formMode === 'view' || formLoading"
                     :clearable="field.clearable && formMode !== 'view'"
                     @change="handleEquipmentTypeChange"
                   >
@@ -83,7 +83,7 @@
                     v-else-if="field.prop === 'status'"
                     v-model="formData[field.prop]"
                     :placeholder="field.placeholder"
-                    :disabled="formMode === 'view' || loading"
+                    :disabled="formMode === 'view' || formLoading"
                     :clearable="field.clearable && formMode !== 'view'"
                   >
                     <el-option
@@ -99,13 +99,13 @@
                     :is="getFieldComponent(field)"
                     v-else-if="isDetailProp(field.prop)"
                     v-model="formData.detail[getDetailFieldKey(field.prop)]"
-                    v-bind="getFieldProps(field, scopedMode, loading)"
+                    v-bind="getFieldProps(field, formMode, formLoading)"
                   />
                   <component
                     :is="getFieldComponent(field)"
                     v-else
                     v-model="formData[field.prop]"
-                    v-bind="getFieldProps(field, scopedMode, loading)"
+                    v-bind="getFieldProps(field, formMode, formLoading)"
                   />
 
                   <!-- 字段提示 -->
@@ -143,7 +143,7 @@
                   <template v-if="field.type === 'key-value-editor'">
                     <KeyValueEditor
                       v-model="formData[field.prop]"
-                      :disabled="formMode === 'view' || loading"
+                      :disabled="formMode === 'view' || formLoading"
                       :placeholder="field.placeholder || '请添加控制参数'"
                     />
                     <div v-if="field.tooltip" class="field-tooltip">
@@ -158,13 +158,13 @@
                       :is="getFieldComponent(field)"
                       v-if="isDetailProp(field.prop)"
                       v-model="formData.detail[getDetailFieldKey(field.prop)]"
-                      v-bind="getFieldProps(field, scopedMode, loading)"
+                      v-bind="getFieldProps(field, formMode, formLoading)"
                     />
                     <component
                       :is="getFieldComponent(field)"
                       v-else
                       v-model="formData[field.prop]"
-                      v-bind="getFieldProps(field, scopedMode, loading)"
+                      v-bind="getFieldProps(field, formMode, formLoading)"
                     />
                     <div v-if="field.tooltip" class="field-tooltip">
                       <i class="el-icon-info" />
@@ -200,7 +200,7 @@
                   <component
                     :is="getFieldComponent(field)"
                     v-model="formData[field.prop]"
-                    v-bind="getFieldProps(field, scopedMode, loading)"
+                    v-bind="getFieldProps(field, formMode, formLoading)"
                   />
                   <div v-if="field.tooltip" class="field-tooltip">
                     <i class="el-icon-info" />
@@ -244,7 +244,7 @@
                   <template v-if="field.type === 'key-value-editor'">
                     <KeyValueEditor
                       v-model="formData.detail[getDetailFieldKey(field.prop)]"
-                      :disabled="formMode === 'view' || loading"
+                      :disabled="formMode === 'view' || formLoading"
                       :placeholder="field.placeholder || '请添加控制参数'"
                     />
                   </template>
@@ -253,7 +253,7 @@
                     v-else-if="field.prop === 'detail.navigationType'"
                     v-model="formData.detail.navigationType"
                     :placeholder="field.placeholder"
-                    :disabled="formMode === 'view' || loading"
+                    :disabled="formMode === 'view' || formLoading"
                   >
                     <el-option
                       v-for="option in field.options"
@@ -267,7 +267,7 @@
                     :is="getFieldComponent(field)"
                     v-else
                     v-model="formData.detail[getDetailFieldKey(field.prop)]"
-                    v-bind="getFieldProps(field, scopedMode, loading)"
+                    v-bind="getFieldProps(field, formMode, formLoading)"
                   />
 
                   <div v-if="field.tooltip" class="field-tooltip">
@@ -299,7 +299,7 @@
                 type="textarea"
                 :rows="3"
                 :placeholder="formMode === 'view' ? '暂无备注' : '请输入备注信息，最多1000字符'"
-                :disabled="formMode === 'view' || loading"
+                :disabled="formMode === 'view' || formLoading"
                 :maxlength="1000"
                 show-word-limit
               />
