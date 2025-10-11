@@ -198,6 +198,16 @@ export const asyncRoutes = [
           icon: 'el-icon-goods'
           // 开发阶段：移除 roles 限制
         }
+      },
+      {
+        path: 'storage-location-management',
+        name: 'StorageLocationManagement',
+        component: () => import('@/views/master-data/storage-location-management/index'),
+        meta: {
+          title: '库位管理',
+          icon: 'el-icon-office-building'
+          // 开发阶段：移除 roles 限制
+        }
       }
       // 可以继续添加其他主数据管理路由...
     ]
