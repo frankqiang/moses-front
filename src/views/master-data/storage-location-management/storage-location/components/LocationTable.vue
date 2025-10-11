@@ -11,27 +11,25 @@
     <!-- 表格工具栏 -->
     <TableToolbar
       title="库位列表"
-      :enable-export="false"
+      :enable-create="true"
+      :enable-refresh="true"
       :enable-column-settings="true"
-      :visible-columns.sync="visibleColumns"
-      :all-columns="allTableColumns"
+      :column-options="allTableColumns"
+      :storage-key="'storage_location_visible_columns'"
+      :default-visible-columns="defaultVisibleColumns"
+      :enable-export="false"
+      @create="handleCreate"
       @refresh="handleRefresh"
+      @column-change="handleColumnChange"
     >
-      <template #actions>
-        <el-button
-          type="primary"
-          icon="el-icon-plus"
-          size="small"
-          @click="handleCreate"
-        >
-          创建库位
-        </el-button>
+      <template #toolbar-left>
+        <slot name="toolbar-buttons" />
       </template>
     </TableToolbar>
 
     <!-- 表格 -->
     <BaseTable
-      :columns="displayColumns"
+      :columns="visibleColumns"
       :data="tableData"
       :loading="loading"
       :pagination="pagination"
@@ -143,18 +141,14 @@ export default {
   },
   data() {
     return {
-      visibleColumns: LOCATION_TABLE_COLUMNS.map(col => col.prop),
-      statusConfig: OCCUPANCY_STATUS_CONFIG
+      statusConfig: OCCUPANCY_STATUS_CONFIG,
+      defaultVisibleColumns: LOCATION_TABLE_COLUMNS.map(col => col.prop),
+      visibleColumns: [...LOCATION_TABLE_COLUMNS]
     }
   },
   computed: {
     allTableColumns() {
       return LOCATION_TABLE_COLUMNS
-    },
-    displayColumns() {
-      return LOCATION_TABLE_COLUMNS.filter(col =>
-        this.visibleColumns.includes(col.prop)
-      )
     }
   },
   methods: {
@@ -281,6 +275,16 @@ export default {
      */
     handleSortChange(sort) {
       this.$emit('sort-change', sort)
+    },
+
+    /**
+     * 处理列变化
+     */
+    handleColumnChange(visibleColumnProps) {
+      // 根据可见列属性过滤显示的列
+      this.visibleColumns = LOCATION_TABLE_COLUMNS.filter(col =>
+        visibleColumnProps.includes(col.prop)
+      )
     }
   }
 }

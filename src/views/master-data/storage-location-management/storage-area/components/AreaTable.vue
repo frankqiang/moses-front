@@ -13,9 +13,13 @@
       :enable-create="true"
       :enable-refresh="true"
       :enable-column-settings="true"
+      :column-options="columns"
+      :storage-key="'storage_area_visible_columns'"
+      :default-visible-columns="defaultVisibleColumns"
       :enable-export="false"
       @create="handleCreate"
       @refresh="handleRefresh"
+      @column-change="handleColumnChange"
     >
       <template #custom-buttons>
         <slot name="toolbar-buttons" />
@@ -102,6 +106,7 @@ export default {
         prop: 'createdAt',
         order: 'descending'
       },
+      defaultVisibleColumns: STORAGE_AREA_TABLE_COLUMNS.map(col => col.prop),
       visibleColumns: []
     }
   },
@@ -181,6 +186,22 @@ export default {
       if (handler) {
         handler()
       }
+    },
+    handleColumnChange(visibleColumnProps) {
+      // 根据可见列更新显示的列
+      this.visibleColumns = this.columns
+        .filter(col => visibleColumnProps.includes(col.prop))
+        .map(col => {
+          if (col.prop === 'createdAt' || col.prop === 'updatedAt') {
+            return {
+              ...col,
+              formatter: (row, column, cellValue) => {
+                return cellValue ? parseTime(cellValue, '{y}-{m}-{d} {h}:{i}:{s}') : '-'
+              }
+            }
+          }
+          return col
+        })
     }
   }
 }
