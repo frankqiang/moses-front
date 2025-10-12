@@ -260,6 +260,53 @@ export const asyncRoutes = [
     ]
   },
 
+  // 生产管理模块
+  {
+    path: '/production-management',
+    component: Layout,
+    redirect: '/production-management/production-plan',
+    name: 'ProductionManagement',
+    alwaysShow: true,
+    meta: {
+      title: '生产管理',
+      icon: 'el-icon-s-operation'
+      // 开发阶段：移除 roles 限制
+    },
+    children: [
+      {
+        path: 'production-plan',
+        name: 'ProductionPlan',
+        component: () => import('@/views/production-management/production-plan-management/index'),
+        meta: {
+          title: '生产计划管理',
+          icon: 'el-icon-document'
+          // 开发阶段：移除 roles 限制
+        }
+      },
+      {
+        path: 'production-plan/:id',
+        name: 'ProductionPlanDetail',
+        component: () => import('@/views/production-management/production-plan-management/detail'),
+        meta: {
+          title: '生产计划详情',
+          activeMenu: '/production-management/production-plan'
+        },
+        hidden: true
+      },
+      {
+        path: 'production-plan-progress',
+        name: 'ProductionPlanProgress',
+        component: () => import('@/views/production-management/production-plan-management/progress-report'),
+        meta: {
+          title: '生产进度报表',
+          icon: 'el-icon-data-line'
+          // 开发阶段：移除 roles 限制
+        }
+      }
+      // 可以继续添加其他生产管理路由...
+    ]
+  },
+
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]

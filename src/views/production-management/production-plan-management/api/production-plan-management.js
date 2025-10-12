@@ -1,0 +1,224 @@
+/**
+ * 文件名称：production-plan-management.js
+ * 文件描述：生产计划管理API接口
+ * 创建日期：2025-01-21
+ * 修改记录：
+ *   - 2025-01-21: 初始创建
+ */
+
+import service from '@/utils/request'
+import { buildApiPath, API_ENDPOINTS } from '../constants/api-config'
+
+/**
+ * 查询生产计划列表
+ * @param {Object} params - 查询参数
+ * @returns {Promise} 返回Promise对象
+ */
+export function fetchPlanList(params = {}) {
+  // 处理日期范围参数
+  const queryParams = { ...params }
+
+  // 处理计划交期范围
+  if (params.deliveryDateRange && Array.isArray(params.deliveryDateRange)) {
+    queryParams.plannedDeliveryDateStart = params.deliveryDateRange[0]
+      ? `${params.deliveryDateRange[0]}T00:00:00.000Z`
+      : undefined
+    queryParams.plannedDeliveryDateEnd = params.deliveryDateRange[1]
+      ? `${params.deliveryDateRange[1]}T23:59:59.999Z`
+      : undefined
+    delete queryParams.deliveryDateRange
+  }
+
+  // 处理创建时间范围
+  if (params.createdDateRange && Array.isArray(params.createdDateRange)) {
+    queryParams.createdAtStart = params.createdDateRange[0]
+      ? `${params.createdDateRange[0]}T00:00:00.000Z`
+      : undefined
+    queryParams.createdAtEnd = params.createdDateRange[1]
+      ? `${params.createdDateRange[1]}T23:59:59.999Z`
+      : undefined
+    delete queryParams.createdDateRange
+  }
+
+  return service({
+    url: buildApiPath(API_ENDPOINTS.LIST),
+    method: 'get',
+    params: queryParams
+  })
+}
+
+/**
+ * 获取生产计划详情
+ * @param {string} planId - 计划ID
+ * @returns {Promise} 返回Promise对象
+ */
+export function fetchPlanDetail(planId) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.DETAIL, { planId }),
+    method: 'get'
+  })
+}
+
+/**
+ * 更新生产计划状态
+ * @param {string} planId - 计划ID
+ * @param {Object} data - 更新数据
+ * @returns {Promise} 返回Promise对象
+ */
+export function updatePlanStatus(planId, data) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.UPDATE_STATUS, { planId }),
+    method: 'patch',
+    data
+  })
+}
+
+/**
+ * 创建生产计划
+ * @param {Object} data - 计划数据
+ * @returns {Promise} 返回Promise对象
+ */
+export function createPlan(data) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.CREATE),
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 拆分生产计划
+ * @param {string} planId - 计划ID
+ * @param {Object} data - 拆分数据
+ * @returns {Promise} 返回Promise对象
+ */
+export function splitPlan(planId, data) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.SPLIT, { planId }),
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 合并生产计划
+ * @param {Object} data - 合并数据
+ * @returns {Promise} 返回Promise对象
+ */
+export function mergePlans(data) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.MERGE),
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 调整生产计划
+ * @param {string} planId - 计划ID
+ * @param {Object} data - 调整数据
+ * @returns {Promise} 返回Promise对象
+ */
+export function adjustPlan(planId, data) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.ADJUST, { planId }),
+    method: 'patch',
+    data
+  })
+}
+
+/**
+ * 批量导入生产计划
+ * @param {Object} data - 导入数据
+ * @returns {Promise} 返回Promise对象
+ */
+export function importPlans(data) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.IMPORT),
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 导出生产计划
+ * @param {Object} params - 导出参数
+ * @returns {Promise} 返回Promise对象
+ */
+export function exportPlans(params = {}) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.EXPORT),
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
+
+/**
+ * 获取生产计划进度报表
+ * @param {Object} params - 查询参数
+ * @returns {Promise} 返回Promise对象
+ */
+export function fetchProgressReport(params = {}) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.PROGRESS_REPORT),
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取生产计划审计日志
+ * @param {Object} params - 查询参数
+ * @returns {Promise} 返回Promise对象
+ */
+export function fetchAuditLogs(params = {}) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.AUDIT_LOGS),
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 评估生产计划可行性
+ * @param {string} planId - 计划ID
+ * @param {Object} params - 评估参数
+ * @returns {Promise} 返回Promise对象
+ */
+export function fetchFeasibility(planId, params = {}) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.FEASIBILITY, { planId }),
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 提交生产计划审批
+ * @param {string} planId - 计划ID
+ * @param {Object} data - 审批数据
+ * @returns {Promise} 返回Promise对象
+ */
+export function submitApproval(planId, data) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.APPROVAL_SUBMIT, { planId }),
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 获取生产计划审批记录
+ * @param {string} planId - 计划ID
+ * @param {Object} params - 查询参数
+ * @returns {Promise} 返回Promise对象
+ */
+export function fetchApprovalRequests(planId, params = {}) {
+  return service({
+    url: buildApiPath(API_ENDPOINTS.APPROVAL_REQUESTS, { planId }),
+    method: 'get',
+    params
+  })
+}
+
