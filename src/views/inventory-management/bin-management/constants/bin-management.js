@@ -7,27 +7,28 @@
  */
 
 // ==================== 料框状态枚举 ====================
-// 料框14种状态（基于接口文档：料框管理接口文档.md 第744-759行）
+// ⚠️ 重要：根据接口文档要求，状态值必须使用中文（接口文档第114行）
+// 常量名仍用英文便于代码引用，但值必须是中文
 export const BIN_STATUS = {
-  IDLE: 'IDLE', // 闲置
-  PENDING_ANNEALING_STORAGE: 'PENDING_ANNEALING_STORAGE', // 待入库退火
-  WAITING_ANNEALING: 'WAITING_ANNEALING', // 待退火
-  WAITING_PREPARATION: 'WAITING_PREPARATION', // 待备料
-  WAITING_LOADING: 'WAITING_LOADING', // 待装炉
-  LOADING: 'LOADING', // 装炉中
-  ANNEALING: 'ANNEALING', // 退火中
-  WAITING_UNLOAD: 'WAITING_UNLOAD', // 待出炉
-  ANNEALED: 'ANNEALED', // 已退火
-  WAITING_INSPECTION: 'WAITING_INSPECTION', // 待检验
-  INSPECTED_QUALIFIED: 'INSPECTED_QUALIFIED', // 已检验-合格
-  INSPECTED_UNQUALIFIED: 'INSPECTED_UNQUALIFIED', // 已检验-不合格
-  WAITING_OUTBOUND: 'WAITING_OUTBOUND', // 待出库
-  OUTBOUND: 'OUTBOUND' // 已出库
+  IDLE: '空闲',
+  PENDING_ANNEALING_STORAGE: '待入库退火',
+  WAITING_ANNEALING: '待退火',
+  WAITING_PREPARATION: '待备料',
+  WAITING_LOADING: '待装炉',
+  LOADING: '装炉中',
+  ANNEALING: '退火中',
+  WAITING_UNLOAD: '待出炉',
+  ANNEALED: '已退火',
+  WAITING_INSPECTION: '待检验',
+  INSPECTED_QUALIFIED: '已检验合格',
+  INSPECTED_UNQUALIFIED: '已检验不合格',
+  WAITING_OUTBOUND: '待出库',
+  OUTBOUND: '已出库'
 }
 
-// 料框状态显示文本映射
+// 料框状态显示文本映射（值已经是中文，直接返回即可）
 export const BIN_STATUS_TEXT_MAP = {
-  [BIN_STATUS.IDLE]: '闲置',
+  [BIN_STATUS.IDLE]: '空闲',
   [BIN_STATUS.PENDING_ANNEALING_STORAGE]: '待入库退火',
   [BIN_STATUS.WAITING_ANNEALING]: '待退火',
   [BIN_STATUS.WAITING_PREPARATION]: '待备料',
@@ -37,33 +38,33 @@ export const BIN_STATUS_TEXT_MAP = {
   [BIN_STATUS.WAITING_UNLOAD]: '待出炉',
   [BIN_STATUS.ANNEALED]: '已退火',
   [BIN_STATUS.WAITING_INSPECTION]: '待检验',
-  [BIN_STATUS.INSPECTED_QUALIFIED]: '已检验-合格',
-  [BIN_STATUS.INSPECTED_UNQUALIFIED]: '已检验-不合格',
+  [BIN_STATUS.INSPECTED_QUALIFIED]: '已检验合格',
+  [BIN_STATUS.INSPECTED_UNQUALIFIED]: '已检验不合格',
   [BIN_STATUS.WAITING_OUTBOUND]: '待出库',
   [BIN_STATUS.OUTBOUND]: '已出库'
 }
 
 // 料框状态标签类型映射（符合Element UI规范）
 export const BIN_STATUS_TYPE_MAP = {
-  [BIN_STATUS.IDLE]: 'info', // 闲置-信息
-  [BIN_STATUS.PENDING_ANNEALING_STORAGE]: 'warning', // 待入库退火-警告
-  [BIN_STATUS.WAITING_ANNEALING]: 'warning', // 待退火-警告
-  [BIN_STATUS.WAITING_PREPARATION]: 'warning', // 待备料-警告
-  [BIN_STATUS.WAITING_LOADING]: 'warning', // 待装炉-警告
-  [BIN_STATUS.LOADING]: '', // 装炉中-默认
-  [BIN_STATUS.ANNEALING]: '', // 退火中-默认
-  [BIN_STATUS.WAITING_UNLOAD]: 'warning', // 待出炉-警告
-  [BIN_STATUS.ANNEALED]: 'success', // 已退火-成功
-  [BIN_STATUS.WAITING_INSPECTION]: 'warning', // 待检验-警告
-  [BIN_STATUS.INSPECTED_QUALIFIED]: 'success', // 已检验-合格-成功
-  [BIN_STATUS.INSPECTED_UNQUALIFIED]: 'danger', // 已检验-不合格-危险
-  [BIN_STATUS.WAITING_OUTBOUND]: 'warning', // 待出库-警告
-  [BIN_STATUS.OUTBOUND]: 'info' // 已出库-信息
+  [BIN_STATUS.IDLE]: 'info',
+  [BIN_STATUS.PENDING_ANNEALING_STORAGE]: 'warning',
+  [BIN_STATUS.WAITING_ANNEALING]: 'warning',
+  [BIN_STATUS.WAITING_PREPARATION]: 'warning',
+  [BIN_STATUS.WAITING_LOADING]: 'warning',
+  [BIN_STATUS.LOADING]: '',
+  [BIN_STATUS.ANNEALING]: '',
+  [BIN_STATUS.WAITING_UNLOAD]: 'warning',
+  [BIN_STATUS.ANNEALED]: 'success',
+  [BIN_STATUS.WAITING_INSPECTION]: 'warning',
+  [BIN_STATUS.INSPECTED_QUALIFIED]: 'success',
+  [BIN_STATUS.INSPECTED_UNQUALIFIED]: 'danger',
+  [BIN_STATUS.WAITING_OUTBOUND]: 'warning',
+  [BIN_STATUS.OUTBOUND]: 'info'
 }
 
-// 料框状态选项（用于下拉选择）
+// 料框状态选项（用于下拉选择，value直接是中文值）
 export const BIN_STATUS_OPTIONS = Object.keys(BIN_STATUS).map(key => ({
-  value: BIN_STATUS[key],
+  value: BIN_STATUS[key], // 中文值，如："空闲"、"待退火"
   label: BIN_STATUS_TEXT_MAP[BIN_STATUS[key]]
 }))
 
@@ -93,27 +94,28 @@ export const STACK_STATUS_OPTIONS = Object.keys(STACK_STATUS).map(key => ({
 }))
 
 // ==================== 触发类型枚举 ====================
-// 料框状态变更触发类型（基于接口文档：料框管理接口文档.md 第1060-1065行）
+// ⚠️ 重要：根据接口文档要求，触发类型值必须使用中文（接口文档第135行）
+// 常量名仍用英文便于代码引用，但值必须是中文
 export const TRIGGER_TYPE = {
-  SCAN_CONFIRMATION: 'SCAN_CONFIRMATION', // 扫码确认
-  PLC_SIGNAL: 'PLC_SIGNAL', // PLC信号
-  LOGISTICS_TASK: 'LOGISTICS_TASK', // 物流任务
-  MANUAL_OPERATION: 'MANUAL_OPERATION', // 人工操作
-  SYSTEM_AUTO: 'SYSTEM_AUTO' // 系统自动
+  SCAN_CONFIRM: '扫码确认',
+  LOGISTICS_TASK: '物流任务',
+  PLC_SIGNAL: 'PLC信号',
+  SYSTEM_AUTO: '系统自动',
+  MANUAL_ADJUST: '人工调整'
 }
 
-// 触发类型显示文本映射
+// 触发类型显示文本映射（值已经是中文，直接返回即可）
 export const TRIGGER_TYPE_TEXT_MAP = {
-  [TRIGGER_TYPE.SCAN_CONFIRMATION]: '扫码确认',
-  [TRIGGER_TYPE.PLC_SIGNAL]: 'PLC信号',
+  [TRIGGER_TYPE.SCAN_CONFIRM]: '扫码确认',
   [TRIGGER_TYPE.LOGISTICS_TASK]: '物流任务',
-  [TRIGGER_TYPE.MANUAL_OPERATION]: '人工操作',
-  [TRIGGER_TYPE.SYSTEM_AUTO]: '系统自动'
+  [TRIGGER_TYPE.PLC_SIGNAL]: 'PLC信号',
+  [TRIGGER_TYPE.SYSTEM_AUTO]: '系统自动',
+  [TRIGGER_TYPE.MANUAL_ADJUST]: '人工调整'
 }
 
-// 触发类型选项（用于下拉选择）
+// 触发类型选项（用于下拉选择，value直接是中文值）
 export const TRIGGER_TYPE_OPTIONS = Object.keys(TRIGGER_TYPE).map(key => ({
-  value: TRIGGER_TYPE[key],
+  value: TRIGGER_TYPE[key], // 中文值，如："扫码确认"、"物流任务"
   label: TRIGGER_TYPE_TEXT_MAP[TRIGGER_TYPE[key]]
 }))
 

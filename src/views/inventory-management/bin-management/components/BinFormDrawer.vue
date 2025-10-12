@@ -167,11 +167,12 @@
                 style="width: 100%"
                 filterable
                 clearable
+                @change="handleLocationChange"
               >
                 <el-option
                   v-for="location in locationOptions"
                   :key="location.id"
-                  :label="`${location.locationId} - ${location.locationType}`"
+                  :label="location.label"
                   :value="location.id"
                 />
               </el-select>
@@ -221,8 +222,14 @@ import BaseDrawer from '@/components/Drawer'
 import { BIN_FORM_RULES, BIN_FORM_DEFAULTS } from '../constants/form-config'
 import { BIN_CODE_PATTERN } from '../constants/bin-management'
 import { registerBin, getBinDetail } from '../api/bin-management'
-import { getBinSpecList } from '@/api/master-data/bin-specification'
-import { getAllProductList } from '@/api/master-data/product-management'
+import {
+  getBinSpecificationOptions,
+  getProductOptions,
+  getLocationOptions,
+  getSpecificationById,
+  getProductById,
+  getLocationById
+} from '../utils/related-data'
 
 export default {
   name: 'BinFormDrawer',
@@ -256,9 +263,10 @@ export default {
       submitLoading: false,
       binSpecificationOptions: [],
       productOptions: [],
-      locationOptions: [], // 库位选项（暂时为空，后续实现）
+      locationOptions: [],
       selectedSpecification: null,
-      selectedProduct: null
+      selectedProduct: null,
+      selectedLocation: null
     }
   },
   computed: {
@@ -319,7 +327,8 @@ export default {
         // 加载下拉选项
         await Promise.all([
           this.loadBinSpecifications(),
-          this.loadProducts()
+          this.loadProducts(),
+          this.loadLocations()
         ])
 
         if (this.innerMode === 'create') {
@@ -332,14 +341,16 @@ export default {
 
           // 设置选中的规格和产品详细信息
           if (this.formData.binSpecificationId) {
-            this.selectedSpecification = this.binSpecificationOptions.find(
-              spec => spec.id === this.formData.binSpecificationId
+            this.selectedSpecification = getSpecificationById(
+              this.formData.binSpecificationId,
+              this.binSpecificationOptions
             ) || response.data.specification
           }
 
           if (this.formData.productId) {
-            this.selectedProduct = this.productOptions.find(
-              product => product.id === this.formData.productId
+            this.selectedProduct = getProductById(
+              this.formData.productId,
+              this.productOptions
             ) || response.data.product
           }
         }
@@ -360,8 +371,10 @@ export default {
      */
     async loadBinSpecifications() {
       try {
-        const response = await getBinSpecList({ status: '启用', limit: 1000 })
-        this.binSpecificationOptions = response.data?.results || []
+        this.binSpecificationOptions = await getBinSpecificationOptions({
+          status: '启用',
+          limit: 100 // 接口最大限制为100
+        })
       } catch (error) {
         console.error('加载料框规格失败:', error)
         this.binSpecificationOptions = []
@@ -373,11 +386,26 @@ export default {
      */
     async loadProducts() {
       try {
-        const response = await getAllProductList({ limit: 1000 })
-        this.productOptions = response.data?.results || []
+        this.productOptions = await getProductOptions({
+          limit: 100 // 接口最大限制为100
+        })
       } catch (error) {
         console.error('加载产品列表失败:', error)
         this.productOptions = []
+      }
+    },
+
+    /**
+     * 加载库位选项
+     */
+    async loadLocations() {
+      try {
+        this.locationOptions = await getLocationOptions({
+          limit: 100 // 接口最大限制为100
+        })
+      } catch (error) {
+        console.error('加载库位列表失败:', error)
+        this.locationOptions = []
       }
     },
 
@@ -428,6 +456,17 @@ export default {
         if (!BIN_CODE_PATTERN.test(this.formData.binCode)) {
           this.$message.warning('料框编号格式应为：LK-YYYYMMDD-XXXX，如：LK-20250110-0001')
         }
+      }
+    },
+
+    /**
+     * 库位选择变更处理
+     */
+    handleLocationChange(locationId) {
+      if (locationId) {
+        this.selectedLocation = getLocationById(locationId, this.locationOptions)
+      } else {
+        this.selectedLocation = null
       }
     },
 
@@ -526,12 +565,12 @@ export default {
         if (this.innerMode === 'create') {
           response = await registerBin(apiData)
           this.$message.success(response.message || '料框注册成功')
-          this.$emit('created', response.data)
+          this.$emit('success', response.data)
         } else if (this.innerMode === 'update') {
           // TODO: 后续实现更新料框接口时启用
           // response = await updateBin(this.binId, apiData)
           // this.$message.success(response.message || '料框更新成功')
-          // this.$emit('updated', response.data)
+          // this.$emit('success', response.data)
           this.$message.info('料框更新功能待实现')
         }
 

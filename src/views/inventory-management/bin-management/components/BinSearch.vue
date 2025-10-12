@@ -164,19 +164,11 @@ export default {
      */
     async loadBinSpecifications() {
       try {
-        // 调用主数据模块的料框规格接口，只获取启用状态的规格
-        const { fetchBinSpecificationList } = await import('@/views/master-data/bin-management/api/bin-specification')
-        const response = await fetchBinSpecificationList({
+        const { getBinSpecificationOptions } = await import('../utils/related-data')
+        this.binSpecificationOptions = await getBinSpecificationOptions({
           status: '启用',
-          limit: 100 // 获取前100个启用的规格
+          limit: 100
         })
-
-        if (response && response.data && response.data.results) {
-          this.binSpecificationOptions = response.data.results.map(item => ({
-            value: item.id,
-            label: `${item.specCode} - ${item.specName}`
-          }))
-        }
       } catch (error) {
         console.error('加载料框规格选项失败:', error)
         this.binSpecificationOptions = []

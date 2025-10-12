@@ -27,7 +27,7 @@
       @refresh="handleRefresh"
       @register="handleRegister"
       @view="handleView"
-      @update-status="handleUpdateStatus"
+      @change-status="handleUpdateStatus"
       @view-history="handleViewHistory"
     />
 
@@ -43,7 +43,7 @@
     <!-- 料框状态对话框 -->
     <bin-status-dialog
       :visible.sync="statusDialogVisible"
-      :bin="currentBin"
+      :bin-data="currentBin"
       @success="handleStatusUpdateSuccess"
     />
 

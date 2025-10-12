@@ -39,7 +39,7 @@
       <el-timeline-item
         v-for="item in historyList"
         :key="item.id"
-        :timestamp="formatDateTime(item.changedAt)"
+        :timestamp="formatDateTime(item.createdAt)"
         placement="top"
       >
         <el-card>

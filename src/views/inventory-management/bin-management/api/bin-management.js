@@ -86,7 +86,7 @@ export function getBinDetail(id) {
  * @param {string} id - 料框ID（UUID格式，必填）
  * @param {Object} data - 状态更新数据
  * @param {string} data.targetStatus - 目标状态（枚举值，必填）
- * @param {string} data.triggerType - 触发类型（枚举值：SCAN_CONFIRMATION、PLC_SIGNAL、LOGISTICS_TASK、MANUAL_OPERATION、SYSTEM_AUTO，必填）
+ * @param {string} data.triggerType - 触发类型（枚举值：SCAN_CONFIRM、LOGISTICS_TASK、PLC_SIGNAL、SYSTEM_AUTO、MANUAL_ADJUST，必填）
  * @param {string} [data.newLocationId] - 新位置ID（UUID格式，可选）
  * @param {string} [data.equipmentId] - 设备ID（UUID格式，可选）
  * @param {string} [data.remarks] - 备注（可选，最大500字符）

@@ -362,32 +362,44 @@ export default {
     },
 
     // ==================== 数据处理方法 ====================
-    // 获取规格名称
+    // 获取规格显示文本
     getSpecificationName(row) {
       if (!row) return ''
-      // 优先使用specification对象中的name字段
-      if (row.specification?.name) {
-        return row.specification.name
+
+      // 优先使用specification对象（包含完整的规格信息）
+      if (row.specification) {
+        const spec = row.specification
+        // 格式：规格代码 - 规格名称
+        if (spec.specCode) {
+          return spec.specName
+            ? `${spec.specCode} - ${spec.specName}`
+            : spec.specCode
+        }
+        // 降级：只有名称
+        if (spec.specName) {
+          return spec.specName
+        }
       }
-      // 其次使用specificationName字段
-      if (row.specificationName) {
-        return row.specificationName
-      }
-      // 最后使用规格ID
+
+      // 降级处理：直接显示binSpecificationId（UUID）
       return row.binSpecificationId || ''
     },
-    // 获取当前位置名称
+    // 获取当前位置显示文本
     getCurrentLocationName(row) {
       if (!row) return ''
-      // 优先使用currentLocation对象中的name字段
-      if (row.currentLocation?.name) {
-        return row.currentLocation.name
+
+      // 优先使用currentLocation对象（包含完整的位置信息）
+      if (row.currentLocation) {
+        const loc = row.currentLocation
+        // 格式：库位编码 - 库位类型名称
+        if (loc.locationId) {
+          return loc.locationTypeName
+            ? `${loc.locationId} - ${loc.locationTypeName}`
+            : loc.locationId
+        }
       }
-      // 其次使用locationName字段
-      if (row.locationName) {
-        return row.locationName
-      }
-      // 最后使用位置ID
+
+      // 降级处理：直接显示currentLocationId（UUID）
       return row.currentLocationId || ''
     },
     // 获取料垛编号
@@ -452,22 +464,17 @@ export default {
           action: 'view',
           icon: 'el-icon-view'
         },
-        {
-          text: '编辑',
-          action: 'edit',
-          icon: 'el-icon-edit'
-        },
+        // 注意：料框一旦注册，基本信息不可修改，只能变更状态
+        // 因此没有编辑按钮，如需修改请通过状态变更功能
         {
           text: '状态变更',
           action: 'change-status',
-          icon: 'el-icon-refresh',
-          type: 'warning'
+          icon: 'el-icon-refresh'
         },
         {
           text: '历史',
           action: 'view-history',
-          icon: 'el-icon-time',
-          type: 'info'
+          icon: 'el-icon-time'
         }
       ]
     },

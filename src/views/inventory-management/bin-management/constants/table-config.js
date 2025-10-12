@@ -230,7 +230,7 @@ export const STACK_TABLE_COLUMNS = [
   {
     prop: 'actions',
     label: '操作',
-    minWidth: 240,
+    minWidth: 350,
     fixed: 'right',
     slotName: 'actions',
     showOverflowTooltip: false
