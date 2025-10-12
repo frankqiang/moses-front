@@ -42,7 +42,7 @@
       </el-form-item>
 
       <!-- 手动输入料框ID -->
-      <el-form-item v-if="selectMode === 'manual'" label="料框ID列表" prop="binIdsInput">
+      <el-form-item v-if="selectMode === 'manual'" label="料框ID列表">
         <el-input
           v-model="binIdsInput"
           type="textarea"
@@ -116,9 +116,9 @@
           >
             <el-table-column type="index" label="序号" width="60" align="center" />
             <el-table-column prop="binCode" label="料框编号" min-width="160" align="center" show-overflow-tooltip />
-            <el-table-column label="料框规格" min-width="140" align="center">
+            <el-table-column label="料框规格" min-width="140" align="center" show-overflow-tooltip>
               <template slot-scope="{ row }">
-                <span>{{ row.specification ? row.specification.specificationCode : row.binSpecificationId }}</span>
+                <span>{{ row.specification ? row.specification.specCode : row.binSpecificationId }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="productCode" label="产品代码" min-width="160" align="left" show-overflow-tooltip />
@@ -130,10 +130,14 @@
             </el-table-column>
             <el-table-column label="状态" min-width="120" align="center">
               <template slot-scope="{ row }">
-                <status-tag :status="row.status" :config="binStatusConfig" />
+                <status-tag
+                  :status="row.status"
+                  :text-map="binStatusConfig.textMap"
+                  :type-map="binStatusConfig.typeMap"
+                />
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="150" align="center" fixed="right">
+            <el-table-column label="操作" width="220" align="center" fixed="right">
               <template slot-scope="{ row, $index }">
                 <el-button
                   type="text"
@@ -277,19 +281,6 @@ export default {
       }
     }
 
-    // 料框ID输入验证
-    const validateBinIdsInput = (rule, value, callback) => {
-      if (this.selectMode === 'table') {
-        callback()
-        return
-      }
-      if (this.selectedBins.length < 2) {
-        callback(new Error('至少需要选择2个料框进行组垛'))
-      } else {
-        callback()
-      }
-    }
-
     return {
       dialogVisible: false,
       submitting: false,
@@ -302,9 +293,6 @@ export default {
       formRules: {
         stackCode: [
           { validator: validateStackCode, trigger: 'blur' }
-        ],
-        binIdsInput: [
-          { validator: validateBinIdsInput, trigger: 'blur' }
         ]
       },
       selectedBins: [], // 已选择的料框列表
@@ -450,7 +438,7 @@ export default {
         }
       } catch (error) {
         console.error('加载料框详情失败:', error)
-        this.$message.error('加载料框信息失败，请重试')
+        // 错误处理由request拦截器统一处理
       } finally {
         loading.close()
       }

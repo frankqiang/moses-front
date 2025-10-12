@@ -69,13 +69,14 @@ export const BIN_STATUS_OPTIONS = Object.keys(BIN_STATUS).map(key => ({
 }))
 
 // ==================== 料垛状态枚举 ====================
-// 料垛2种状态（基于接口文档：料垛管理接口文档.md 第487-489行）
+// ⚠️ 重要：根据接口变更通知，料垛状态值必须使用中文
+// 常量名仍用英文便于代码引用，但值必须是中文
 export const STACK_STATUS = {
-  ACTIVE: 'ACTIVE', // 活动中
-  DESTACKED: 'DESTACKED' // 已拆垛
+  ACTIVE: '活动中', // 活动中
+  DESTACKED: '已拆垛' // 已拆垛
 }
 
-// 料垛状态显示文本映射
+// 料垛状态显示文本映射（值已经是中文，直接返回即可）
 export const STACK_STATUS_TEXT_MAP = {
   [STACK_STATUS.ACTIVE]: '活动中',
   [STACK_STATUS.DESTACKED]: '已拆垛'
@@ -87,9 +88,9 @@ export const STACK_STATUS_TYPE_MAP = {
   [STACK_STATUS.DESTACKED]: 'info' // 已拆垛-信息
 }
 
-// 料垛状态选项（用于下拉选择）
+// 料垛状态选项（用于下拉选择，value直接是中文值）
 export const STACK_STATUS_OPTIONS = Object.keys(STACK_STATUS).map(key => ({
-  value: STACK_STATUS[key],
+  value: STACK_STATUS[key], // 中文值，如："活动中"、"已拆垛"
   label: STACK_STATUS_TEXT_MAP[STACK_STATUS[key]]
 }))
 

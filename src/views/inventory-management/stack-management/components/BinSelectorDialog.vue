@@ -77,9 +77,9 @@
         :selectable="checkBinSelectable"
       />
       <el-table-column prop="binCode" label="料框编号" min-width="160" align="center" show-overflow-tooltip />
-      <el-table-column label="料框规格" min-width="140" align="center">
+      <el-table-column label="料框规格" min-width="140" align="center" show-overflow-tooltip>
         <template slot-scope="{ row }">
-          <span>{{ row.specification ? row.specification.specificationCode : row.binSpecificationId }}</span>
+          <span>{{ row.specification ? row.specification.specCode : row.binSpecificationId }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="productCode" label="产品代码" min-width="160" align="left" show-overflow-tooltip />
@@ -91,7 +91,11 @@
       </el-table-column>
       <el-table-column label="状态" min-width="120" align="center">
         <template slot-scope="{ row }">
-          <status-tag :status="row.status" :config="binStatusConfig" />
+          <status-tag
+            :status="row.status"
+            :text-map="binStatusConfig.textMap"
+            :type-map="binStatusConfig.typeMap"
+          />
         </template>
       </el-table-column>
       <el-table-column label="所属料垛" min-width="160" align="center" show-overflow-tooltip>

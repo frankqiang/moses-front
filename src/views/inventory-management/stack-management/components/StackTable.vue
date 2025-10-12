@@ -407,8 +407,7 @@ export default {
         {
           text: '成员料框',
           action: 'view-bins',
-          icon: 'el-icon-files',
-          type: 'info'
+          icon: 'el-icon-files'
         }
       ]
 
@@ -417,8 +416,7 @@ export default {
         buttons.push({
           text: '拆垛',
           action: 'destack',
-          icon: 'el-icon-delete',
-          type: 'danger'
+          icon: 'el-icon-delete'
         })
       }
 

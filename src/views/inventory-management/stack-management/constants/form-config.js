@@ -8,7 +8,8 @@
 
 import {
   STACK_CODE_PATTERN,
-  STACK_CODE_FORMAT
+  STACK_CODE_FORMAT,
+  STACK_STATUS_OPTIONS
 } from './stack-management'
 
 // ==================== 料垛搜索表单配置 ====================
@@ -18,10 +19,7 @@ export const STACK_SEARCH_FORM_CONFIG = [
     prop: 'status',
     label: '料垛状态',
     placeholder: '请选择料垛状态',
-    options: [
-      { value: 'ACTIVE', label: '活动中' },
-      { value: 'DESTACKED', label: '已拆垛' }
-    ],
+    options: STACK_STATUS_OPTIONS, // 使用常量，值为中文
     clearable: true,
     priority: 'primary'
   },

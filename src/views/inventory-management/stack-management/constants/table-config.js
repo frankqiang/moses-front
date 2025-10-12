@@ -151,3 +151,11 @@ export const STACK_TABLE_TOOLBAR_CONFIG = {
   }
 }
 
+// ==================== 完整表格配置（统一导出） ====================
+export const STACK_TABLE_CONFIG = {
+  columns: STACK_TABLE_COLUMNS,
+  defaultVisibleColumns: STACK_DEFAULT_VISIBLE_COLUMNS,
+  statusConfig: STACK_STATUS_TAG_CONFIG,
+  toolbarConfig: STACK_TABLE_TOOLBAR_CONFIG
+}
+

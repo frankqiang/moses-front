@@ -92,7 +92,8 @@
       <el-table-column
         prop="binCode"
         label="料框编号"
-        width="180"
+        min-width="180"
+        align="center"
         show-overflow-tooltip
       >
         <template slot-scope="{ row }">
@@ -108,27 +109,29 @@
       </el-table-column>
 
       <el-table-column
-        prop="binSpecificationId"
         label="料框规格"
-        width="150"
+        min-width="150"
+        align="center"
         show-overflow-tooltip
       >
         <template slot-scope="{ row }">
-          {{ (row.specification && row.specification.specName) || (row.specification && row.specification.specCode) || '-' }}
+          {{ (row.specification && row.specification.specCode) || (row.specification && row.specification.specName) || '-' }}
         </template>
       </el-table-column>
 
       <el-table-column
         prop="productCode"
         label="产品代码"
-        width="200"
+        min-width="200"
+        align="left"
         show-overflow-tooltip
       />
 
       <el-table-column
         prop="batchNumber"
         label="批次号"
-        width="150"
+        min-width="150"
+        align="center"
         show-overflow-tooltip
       >
         <template slot-scope="{ row }">
@@ -137,26 +140,25 @@
       </el-table-column>
 
       <el-table-column
-        prop="weight"
         label="重量(kg)"
-        width="120"
+        min-width="120"
         align="right"
       >
         <template slot-scope="{ row }">
-          {{ row.weight || 0 }}
+          {{ row.weight ? row.weight.toFixed(3) : '-' }}
         </template>
       </el-table-column>
 
       <el-table-column
-        prop="status"
         label="料框状态"
-        width="150"
+        min-width="120"
         align="center"
       >
         <template slot-scope="{ row }">
           <status-tag
             :status="row.status"
-            :status-config="binStatusConfig"
+            :text-map="binStatusConfig.textMap"
+            :type-map="binStatusConfig.typeMap"
           />
         </template>
       </el-table-column>
@@ -164,7 +166,8 @@
       <el-table-column
         prop="registeredAt"
         label="注册时间"
-        width="160"
+        min-width="180"
+        align="center"
         show-overflow-tooltip
       >
         <template slot-scope="{ row }">
@@ -174,7 +177,7 @@
 
       <el-table-column
         label="操作"
-        width="100"
+        width="120"
         align="center"
         fixed="right"
       >

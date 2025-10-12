@@ -66,7 +66,14 @@ export function getStackDetail(id) {
  * @param {string} id - 料垛ID（UUID格式，必填）
  * @param {Object} data - 拆垛数据
  * @param {string} [data.remarks] - 拆垛原因（可选，最大500字符）
- * @returns {Promise<Object>} 返回拆垛结果（包含stackId、stackCode、affectedBinCount）
+ * @returns {Promise<Object>} 返回拆垛结果
+ * @returns {Object} response.data - 拆垛结果数据
+ * @returns {string} response.data.stackId - 料垛ID
+ * @returns {string} response.data.stackCode - 料垛编号
+ * @returns {number} response.data.destackedBinCount - 本次拆垛的料框数量
+ * @returns {number} response.data.remainingBinCount - 剩余的料框数量（部分拆垛时）
+ * @returns {Array<string>} response.data.destackedBinCodes - 拆垛的料框编号列表
+ * @returns {boolean} response.data.isFullDestack - 是否完全拆垛
  */
 export function destackStack(id, data) {
   return service({

@@ -42,7 +42,7 @@
     <!-- 组垛对话框 -->
     <stack-dialog
       :visible.sync="stackDialogVisible"
-      @stacked="handleStackSuccess"
+      @created="handleStackSuccess"
     />
 
     <!-- 拆垛确认对话框 -->
@@ -58,6 +58,14 @@
       :stack="currentStack"
       @bin-updated="handleBinUpdated"
     />
+
+    <!-- 料垛详情抽屉 -->
+    <stack-detail-drawer
+      :visible.sync="stackDetailDrawerVisible"
+      :stack-id="currentStackId"
+      @view-bins="handleViewBinsFromDetail"
+      @destack="handleDestackFromDetail"
+    />
   </div>
 </template>
 
@@ -67,6 +75,7 @@ import StackTable from './components/StackTable.vue'
 import StackDialog from './components/StackDialog.vue'
 import DestackDialog from './components/DestackDialog.vue'
 import StackBinsDialog from './components/StackBinsDialog.vue'
+import StackDetailDrawer from './components/StackDetailDrawer.vue'
 import { debounce } from '@/utils'
 import { getStackList } from './api'
 import { DEFAULT_PAGINATION, DEFAULT_SORT } from './constants'
@@ -79,7 +88,8 @@ export default {
     StackTable,
     StackDialog,
     DestackDialog,
-    StackBinsDialog
+    StackBinsDialog,
+    StackDetailDrawer
   },
 
   data() {
@@ -107,8 +117,12 @@ export default {
       destackDialogVisible: false,
       // 料垛成员料框对话框可见性
       stackBinsDialogVisible: false,
+      // 料垛详情抽屉可见性
+      stackDetailDrawerVisible: false,
       // 当前操作的料垛对象
       currentStack: null,
+      // 当前查看的料垛ID
+      currentStackId: '',
       // 选中的行数据
       selectedRows: []
     }
@@ -248,8 +262,8 @@ export default {
      * 查看
      */
     handleView(stack) {
-      // 可以实现料垛详情查看
-      console.log('查看料垛详情:', stack)
+      this.currentStackId = stack.id
+      this.stackDetailDrawerVisible = true
     },
 
     /**
@@ -258,6 +272,22 @@ export default {
     handleViewBins(stack) {
       this.currentStack = stack
       this.stackBinsDialogVisible = true
+    },
+
+    /**
+     * 从详情抽屉查看成员料框
+     */
+    handleViewBinsFromDetail(stack) {
+      this.currentStack = stack
+      this.stackBinsDialogVisible = true
+    },
+
+    /**
+     * 从详情抽屉拆垛
+     */
+    handleDestackFromDetail(stack) {
+      this.currentStack = stack
+      this.destackDialogVisible = true
     },
 
     /**

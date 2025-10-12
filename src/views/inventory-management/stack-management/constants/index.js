@@ -15,6 +15,9 @@ export * from './api-config'
 // 表单配置
 export * from './form-config'
 
+// 表格配置
+export * from './table-config'
+
 // 消息配置
 export * from './messages-config'
 

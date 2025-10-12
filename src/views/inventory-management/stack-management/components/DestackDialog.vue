@@ -56,9 +56,10 @@
       >
         <template slot="default">
           <ul class="impact-list">
-            <li>拆垛后，料垛状态将变更为"已拆垛"（DESTACKED）</li>
-            <li>拆垛后，所有成员料框将恢复独立状态</li>
-            <li>拆垛后，料框的料垛关联关系将被解除</li>
+            <li>拆垛后，料垛状态将变更为"已拆垛"</li>
+            <li>拆垛后，{{ stackInfo.binCount }} 个成员料框将恢复独立状态</li>
+            <li>拆垛后，料框的料垛关联关系（stackId）将被清空</li>
+            <li>拆垛操作将记录拆垛时间和操作员信息</li>
             <li><strong>拆垛操作不可逆，请谨慎操作</strong></li>
           </ul>
         </template>
@@ -200,10 +201,17 @@ export default {
           const response = await destackStack(this.stack.id, data)
 
           if (response.success) {
-            // 显示成功消息，包含受影响的料框数量
+            // 显示成功消息，包含拆垛的料框数量
             const message = response.message || '拆垛成功'
-            const affectedBinCount = response.data?.affectedBinCount || 0
-            this.$message.success(`${message}，共影响 ${affectedBinCount} 个料框`)
+            const destackedBinCount = response.data?.destackedBinCount || 0
+            const isFullDestack = response.data?.isFullDestack !== false
+
+            if (isFullDestack) {
+              this.$message.success(`${message}，共拆解 ${destackedBinCount} 个料框`)
+            } else {
+              const remainingBinCount = response.data?.remainingBinCount || 0
+              this.$message.success(`${message}，已拆解 ${destackedBinCount} 个料框，剩余 ${remainingBinCount} 个`)
+            }
 
             this.$emit('destacked', response.data)
             this.handleClose()
