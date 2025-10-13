@@ -354,19 +354,33 @@ export default {
         if (response.data) {
           const approvals = response.data.approvals || []
           // 处理数据，将 requester 和 approver 对象展开
-          this.approvalList = approvals.map(approval => ({
-            ...approval,
-            requesterName: approval.requester ? approval.requester.name : '-',
-            approverName: approval.approver ? approval.approver.name : '-',
-            // 添加默认的 requiredPermissions（如果后端没有返回）
-            requiredPermissions: approval.requiredPermissions || ['prod.production-plan.approval'],
+          this.approvalList = approvals.map(approval => {
             // 构建 metadata 对象（如果后端没有返回）
-            metadata: approval.metadata || {
-              planNumber: (this.planData && this.planData.planNumber) || '',
-              previousStatus: approval.previousStatus || '',
-              targetStatus: approval.requestedAction || ''
+            const metadata = approval.metadata || {}
+
+            // 补充缺失的 metadata 字段
+            if (!metadata.planNumber) {
+              metadata.planNumber = (this.planData && this.planData.planNumber) || ''
             }
-          }))
+            if (!metadata.targetStatus) {
+              metadata.targetStatus = approval.requestedAction || ''
+            }
+            // previousStatus 从计划数据推断
+            if (!metadata.previousStatus) {
+              // 对于待审批的，取当前计划状态
+              // 对于已处理的，尝试从审批时的计划状态推断
+              metadata.previousStatus = (this.planData && this.planData.status) || ''
+            }
+
+            return {
+              ...approval,
+              requesterName: approval.requester ? approval.requester.name : '-',
+              approverName: approval.approver ? approval.approver.name : '-',
+              // 添加默认的 requiredPermissions（如果后端没有返回）
+              requiredPermissions: approval.requiredPermissions || ['prod.production-plan.approval'],
+              metadata
+            }
+          })
 
           // 分页信息
           const pagination = response.data.pagination || {}
