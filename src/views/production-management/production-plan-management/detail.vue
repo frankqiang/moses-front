@@ -110,7 +110,8 @@
         <el-tab-pane label="审批记录" name="approvals">
           <approval-records
             :plan-id="planId"
-            :loading="loading"
+            :plan-data="planData"
+            @approval-processed="handleApprovalProcessed"
           />
         </el-tab-pane>
       </el-tabs>
@@ -436,6 +437,13 @@ export default {
      */
     handleEvaluate() {
       this.$refs.feasibilityDialog.open(this.planData)
+    },
+
+    /**
+     * 审批处理成功后刷新详情
+     */
+    async handleApprovalProcessed() {
+      await this.fetchDetail()
     }
   }
 }

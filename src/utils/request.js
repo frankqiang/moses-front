@@ -445,7 +445,7 @@ function isAuthError(errorCode) {
     'AUTH_003', // INVALID_TOKEN - 令牌无效
     'AUTH_004', // TOKEN_MALFORMED - 令牌格式错误
     'AUTH_005', // TOKEN_BLACKLISTED - 令牌被加入黑名单
-    'AUTH_006', // INSUFFICIENT_PERMISSIONS - 权限不足
+    // 'AUTH_006', // INSUFFICIENT_PERMISSIONS - 权限不足（不应跳转登录）
     'AUTH_030', // SESSION_EXPIRED - 会话过期
     'AUTH_031', // SESSION_INVALID - 会话无效
     'AUTH_032', // REFRESH_TOKEN_EXPIRED - 刷新令牌过期
@@ -453,7 +453,8 @@ function isAuthError(errorCode) {
   ]
 
   // 2. 处理通用认证失效错误码（向下兼容）
-  const commonAuthFailureCodes = ['UNAUTHORIZED', 'TOKEN_EXPIRED', 'INVALID_TOKEN', 'FORBIDDEN']
+  // 注意：FORBIDDEN (403) 是权限不足，不应该跳转登录
+  const commonAuthFailureCodes = ['UNAUTHORIZED', 'TOKEN_EXPIRED', 'INVALID_TOKEN']
 
   return authFailureCodes.includes(errorCode) || commonAuthFailureCodes.includes(errorCode)
 }
@@ -661,7 +662,15 @@ function handleCommonErrors(errorData, status, response) {
     return true // 已处理
   }
 
-  // 5. HTTP状态码错误 - 统一处理
+  // 5. 权限不足错误 (403) - 统一处理
+  // 注意：权限不足不应跳转登录，只显示错误提示
+  if (status === 403 || errorCode === 'AUTH_006' || errorCode === 'AUTH_009' || errorCode === 'FORBIDDEN') {
+    const permissionMessage = errorMessage || '权限不足，无法执行此操作'
+    showErrorMessage(permissionMessage, 'warning', 5000)
+    return false // 传递给业务层，允许业务代码进行特殊处理
+  }
+
+  // 6. HTTP状态码错误 - 统一处理
   if (status >= 500) {
     const serverErrorMessage = errorMessage || '服务器异常，请稍后重试'
     showErrorMessage(serverErrorMessage, 'error', 5000)

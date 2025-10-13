@@ -165,7 +165,8 @@ import { createRouting, updateRouting, checkRoutingCodeUnique } from '../api'
 import { ROUTING_TYPE_OPTIONS, ROUTING_STATUS_CONFIG, getRoutingTypeRule } from '../constants'
 import { cloneDeep, debounce } from '@/utils' // 导入 debounce
 import { v4 as uuidv4 } from 'uuid'
-import { getAllProductList } from '@/api/master-data/product-management'
+// 从铝箔产品管理模块获取产品数据
+import { fetchFoilProductList } from '@/views/master-data/aluminum-foil-product-management/api/aluminum-foil-product-management'
 
 export default {
   name: 'RoutingFormDrawer',
@@ -570,15 +571,18 @@ export default {
       if (query && query.trim() !== '') {
         this.productLoading = true
         try {
-          const res = await getAllProductList({
+          // 构建查询参数，确保 search 不为空
+          const params = {
             search: query.trim(),
-            limit: 50 // 限制返回数量，提升性能
-          })
-          this.productOptions = (res.data && res.data.items) || []
+            limit: 100, // 限制返回数量，提升性能
+            page: 1
+          }
+          const res = await fetchFoilProductList(params)
+          this.productOptions = (res.data && res.data.results) || []
         } catch (error) {
           console.error('搜索产品失败:', error)
           this.productOptions = []
-          this.$message.error('搜索产品失败，请重试')
+          this.$message.error(error.message || '搜索产品失败，请重试')
         } finally {
           this.productLoading = false
         }
@@ -600,13 +604,17 @@ export default {
       try {
         // 加载所有已选产品（包括无效的），用于状态检查
         const searchQuery = this.formData.applicableProducts.join(',')
-        const res = await getAllProductList({
-          search: searchQuery,
+        // 只有当 searchQuery 不为空时才传递 search 参数
+        const params = {
           limit: 100,
-          includeInactive: true // 包含无效产品以便检查状态
-        })
+          page: 1
+        }
+        if (searchQuery && searchQuery.trim()) {
+          params.search = searchQuery.trim()
+        }
+        const res = await fetchFoilProductList(params)
 
-        const allProducts = res.data?.items || []
+        const allProducts = res.data?.results || []
         const validProducts = []
         const invalidProducts = []
         const missingProducts = []
@@ -653,13 +661,17 @@ export default {
     async validateSelectedProducts() {
       try {
         const searchQuery = this.formData.applicableProducts.join(',')
-        const res = await getAllProductList({
-          search: searchQuery,
+        // 只有当 searchQuery 不为空时才传递 search 参数
+        const params = {
           limit: 100,
-          includeInactive: true
-        })
+          page: 1
+        }
+        if (searchQuery && searchQuery.trim()) {
+          params.search = searchQuery.trim()
+        }
+        const res = await fetchFoilProductList(params)
 
-        const allProducts = res.data?.items || []
+        const allProducts = res.data?.results || []
         const invalidProducts = []
         const missingProducts = []
 

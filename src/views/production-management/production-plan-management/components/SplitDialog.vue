@@ -374,7 +374,8 @@
 
 <script>
 import { splitPlan } from '../api'
-import { getProcessTemplateList } from '@/api/master-data/product-management'
+// 从工艺参数管理模块获取工艺模板数据
+import { fetchProcessTemplateList } from '@/views/master-data/process-parameter-management/api/process-parameter-management'
 import { PLAN_STATUS } from '../constants'
 
 export default {
@@ -501,14 +502,33 @@ export default {
      */
     async loadProcessTemplates() {
       try {
-        const response = await getProcessTemplateList()
-        if (response.success && response.data && response.data.results) {
-          this.processTemplateOptions = response.data.results.filter(
-            item => item.status === 'effective'
-          )
+        const response = await fetchProcessTemplateList({
+          status: '生效', // 只获取生效状态的工艺模板（中文状态值）
+          limit: 100,
+          page: 1
+        })
+
+        // 检查响应数据结构 - API 返回的字段是 templates，不是 results
+        let templates = []
+        if (response && response.data && response.data.templates) {
+          templates = response.data.templates
+        } else if (response && response.templates) {
+          templates = response.templates
+        }
+
+        if (templates && templates.length > 0) {
+          this.processTemplateOptions = templates.map(template => ({
+            id: template.id,
+            code: template.templateCode,
+            name: template.templateName,
+            status: template.status
+          }))
+        } else {
+          this.processTemplateOptions = []
         }
       } catch (error) {
         console.error('加载工艺模板失败:', error)
+        this.$message.error(error.message || '加载工艺模板失败')
       }
     },
 

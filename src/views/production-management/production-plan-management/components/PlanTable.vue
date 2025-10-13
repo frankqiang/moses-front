@@ -26,6 +26,13 @@
       @column-change="handleToolbarColumnChange"
     >
       <template #toolbar-left>
+        <!-- 操作按钮组 -->
+        <action-buttons
+          :buttons="toolbarButtons"
+          mode="normal"
+          @click="handleToolbarAction"
+        />
+
         <!-- 视图切换 -->
         <div class="plan-table__view-switch">
           <el-radio-group v-model="currentFormat" size="small" @change="handleFormatChange">
@@ -274,6 +281,24 @@ export default {
     formatOptions() {
       return OUTPUT_FORMAT_OPTIONS
     },
+    toolbarButtons() {
+      return [
+        {
+          action: 'create',
+          text: '创建生产计划',
+          type: 'primary',
+          icon: 'el-icon-plus',
+          size: 'small'
+        },
+        {
+          action: 'import',
+          text: '批量导入',
+          type: 'default',
+          icon: 'el-icon-upload2',
+          size: 'small'
+        }
+      ]
+    },
     tablePagination() {
       if (!this.pagination) {
         return null
@@ -300,7 +325,7 @@ export default {
         : this.defaultVisibleColumns
 
       return this.columnOptions
-        .filter((column) => visibleProps.includes(column.prop) || column.prop === 'actions')
+        .filter((column) => visibleProps.includes(column.prop))
     }
   },
   watch: {
@@ -321,6 +346,18 @@ export default {
     handleToolbarColumnChange(columns) {
       this.handleColumnChange(columns)
       this.$emit('column-change', columns)
+    },
+    handleToolbarAction(action) {
+      switch (action.action) {
+        case 'create':
+          this.$emit('create')
+          break
+        case 'import':
+          this.$emit('import')
+          break
+        default:
+          console.warn('未处理的工具栏操作:', action)
+      }
     },
     handleSelectionChange(selection) {
       this.selectedRows = selection
@@ -382,8 +419,7 @@ export default {
         buttons.push({
           text: '状态变更',
           action: 'change-status',
-          icon: 'el-icon-refresh',
-          type: 'primary'
+          icon: 'el-icon-refresh'
         })
       }
 
@@ -392,8 +428,7 @@ export default {
         buttons.push({
           text: '确认',
           action: 'confirm',
-          icon: 'el-icon-check',
-          type: 'success'
+          icon: 'el-icon-check'
         })
       }
 
@@ -402,8 +437,7 @@ export default {
         buttons.push({
           text: '提交审批',
           action: 'submit-approval',
-          icon: 'el-icon-s-promotion',
-          type: 'warning'
+          icon: 'el-icon-s-promotion'
         })
       }
 
@@ -416,8 +450,7 @@ export default {
         buttons.push({
           text: '取消',
           action: 'cancel',
-          icon: 'el-icon-close',
-          type: 'danger'
+          icon: 'el-icon-close'
         })
       }
 
@@ -505,6 +538,10 @@ export default {
 
   &__toolbar {
     display: flex;
+
+    ::v-deep .action-buttons {
+      margin-right: 16px;
+    }
   }
 
   &__view-switch {

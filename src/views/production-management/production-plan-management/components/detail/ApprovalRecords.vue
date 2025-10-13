@@ -75,8 +75,11 @@
               <el-descriptions-item label="审批人姓名">
                 {{ row.approverName || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="审批时间">
-                {{ formatTime(row.approvedAt) }}
+              <el-descriptions-item label="提交时间">
+                {{ formatTime(row.requestedAt) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="审批决定时间">
+                {{ formatTime(row.decidedAt) }}
               </el-descriptions-item>
               <el-descriptions-item label="审批意见">
                 {{ row.decisionRemarks || '-' }}
@@ -85,14 +88,17 @@
                 {{ row.remarks || '-' }}
               </el-descriptions-item>
               <el-descriptions-item label="要求的权限" :span="2">
-                <el-tag
-                  v-for="(permission, index) in row.requiredPermissions"
-                  :key="index"
-                  size="mini"
-                  style="margin: 2px"
-                >
-                  {{ permission }}
-                </el-tag>
+                <template v-if="row.requiredPermissions && row.requiredPermissions.length > 0">
+                  <el-tag
+                    v-for="(permission, index) in row.requiredPermissions"
+                    :key="index"
+                    size="mini"
+                    style="margin: 2px"
+                  >
+                    {{ permission }}
+                  </el-tag>
+                </template>
+                <span v-else>-</span>
               </el-descriptions-item>
               <el-descriptions-item label="元数据" :span="2">
                 <pre class="metadata-pre">{{ formatMetadata(row.metadata) }}</pre>
@@ -138,12 +144,23 @@
 
       <el-table-column
         prop="remarks"
-        label="审批说明"
-        min-width="180"
+        label="申请说明"
+        min-width="150"
         show-overflow-tooltip
       >
         <template slot-scope="{ row }">
           {{ row.remarks || '-' }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        prop="decisionRemarks"
+        label="审批意见"
+        min-width="150"
+        show-overflow-tooltip
+      >
+        <template slot-scope="{ row }">
+          {{ row.decisionRemarks || '-' }}
         </template>
       </el-table-column>
 
@@ -158,20 +175,42 @@
 
       <el-table-column
         label="操作"
-        width="120"
+        width="200"
         align="center"
         fixed="right"
       >
         <template slot-scope="{ row }">
+          <!-- 批准按钮 -->
+          <el-button
+            v-if="canApproveApproval(row)"
+            type="text"
+            size="small"
+            style="color: #67C23A"
+            @click="handleApprove(row)"
+          >
+            批准
+          </el-button>
+          <!-- 驳回按钮 -->
+          <el-button
+            v-if="canRejectApproval(row)"
+            type="text"
+            size="small"
+            style="color: #F56C6C"
+            @click="handleReject(row)"
+          >
+            驳回
+          </el-button>
+          <!-- 取消按钮 -->
           <el-button
             v-if="canCancelApproval(row)"
             type="text"
             size="small"
-            @click="handleCancelApproval(row)"
+            style="color: #E6A23C"
+            @click="handleCancel(row)"
           >
-            撤销审批
+            取消
           </el-button>
-          <span v-else>-</span>
+          <span v-if="!canApproveApproval(row) && !canRejectApproval(row) && !canCancelApproval(row)">-</span>
         </template>
       </el-table-column>
     </el-table>
@@ -195,25 +234,54 @@
       description="暂无审批记录"
       :image-size="100"
     />
+
+    <!-- 批准审批对话框 -->
+    <approval-approve-dialog
+      ref="approveDialog"
+      @success="handleApprovalSuccess"
+    />
+
+    <!-- 驳回审批对话框 -->
+    <approval-reject-dialog
+      ref="rejectDialog"
+      @success="handleApprovalSuccess"
+    />
+
+    <!-- 取消审批对话框 -->
+    <approval-cancel-dialog
+      ref="cancelDialog"
+      @success="handleApprovalSuccess"
+    />
   </div>
 </template>
 
 <script>
 import { parseTime } from '@/utils'
-import { fetchApprovalRequests, updatePlanStatus } from '../../api'
+import { fetchApprovalRequests } from '../../api'
 import {
   APPROVAL_STATUS_MAP,
   APPROVAL_STATUS_TYPE_MAP,
   APPROVAL_STATUS_OPTIONS
 } from '../../constants'
-import { getErrorMessage } from '../../constants'
+import ApprovalApproveDialog from '../ApprovalApproveDialog.vue'
+import ApprovalRejectDialog from '../ApprovalRejectDialog.vue'
+import ApprovalCancelDialog from '../ApprovalCancelDialog.vue'
 
 export default {
   name: 'ApprovalRecords',
+  components: {
+    ApprovalApproveDialog,
+    ApprovalRejectDialog,
+    ApprovalCancelDialog
+  },
   props: {
     planId: {
       type: String,
       required: true
+    },
+    planData: {
+      type: Object,
+      default: () => ({})
     }
   },
   data() {
@@ -282,9 +350,27 @@ export default {
 
         const response = await fetchApprovalRequests(this.planId, params)
 
-        if (response.success && response.data) {
-          this.approvalList = response.data.results || []
-          this.totalResults = response.data.totalResults || 0
+        // API 返回的字段是 approvals，不是 results
+        if (response.data) {
+          const approvals = response.data.approvals || []
+          // 处理数据，将 requester 和 approver 对象展开
+          this.approvalList = approvals.map(approval => ({
+            ...approval,
+            requesterName: approval.requester ? approval.requester.name : '-',
+            approverName: approval.approver ? approval.approver.name : '-',
+            // 添加默认的 requiredPermissions（如果后端没有返回）
+            requiredPermissions: approval.requiredPermissions || ['prod.production-plan.approval'],
+            // 构建 metadata 对象（如果后端没有返回）
+            metadata: approval.metadata || {
+              planNumber: (this.planData && this.planData.planNumber) || '',
+              previousStatus: approval.previousStatus || '',
+              targetStatus: approval.requestedAction || ''
+            }
+          }))
+
+          // 分页信息
+          const pagination = response.data.pagination || {}
+          this.totalResults = pagination.total || 0
         } else {
           this.approvalList = []
           this.totalResults = 0
@@ -335,48 +421,56 @@ export default {
     },
 
     /**
-     * 判断是否可以撤销审批
+     * 判断是否可以批准审批
+     */
+    canApproveApproval(row) {
+      // 待审批状态且不是申请人本人
+      return row.status === 'PENDING' && row.requesterId !== this.currentUserId
+    },
+
+    /**
+     * 判断是否可以驳回审批
+     */
+    canRejectApproval(row) {
+      // 待审批状态且不是申请人本人
+      return row.status === 'PENDING' && row.requesterId !== this.currentUserId
+    },
+
+    /**
+     * 判断是否可以取消审批
      */
     canCancelApproval(row) {
-      // 只有待审批状态且为申请人本人时可撤销
+      // 只有待审批状态且为申请人本人时可取消
       return row.status === 'PENDING' && row.requesterId === this.currentUserId
     },
 
     /**
-     * 撤销审批
+     * 批准审批
      */
-    async handleCancelApproval(row) {
-      try {
-        await this.$confirm('确定要撤销此审批申请吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
+    handleApprove(row) {
+      this.$refs.approveDialog.open(row)
+    },
 
-        this.loading = true
+    /**
+     * 驳回审批
+     */
+    handleReject(row) {
+      this.$refs.rejectDialog.open(row)
+    },
 
-        // 调用状态更新接口，将状态从PENDING_APPROVAL改回CONFIRMED
-        const response = await updatePlanStatus(this.planId, {
-          targetStatus: 'CONFIRMED',
-          changeDescription: '撤销审批申请'
-        })
+    /**
+     * 取消审批
+     */
+    handleCancel(row) {
+      this.$refs.cancelDialog.open(row)
+    },
 
-        if (response.success) {
-          this.$message.success(response.message || '撤销审批成功')
-          this.fetchApprovals()
-          this.$emit('approval-cancelled')
-        } else {
-          this.$message.error(response.message || '撤销审批失败')
-        }
-      } catch (error) {
-        if (error !== 'cancel') {
-          console.error('撤销审批失败:', error)
-          const errorMessage = getErrorMessage(error)
-          this.$message.error(errorMessage)
-        }
-      } finally {
-        this.loading = false
-      }
+    /**
+     * 审批操作成功后的处理
+     */
+    handleApprovalSuccess() {
+      this.fetchApprovals()
+      this.$emit('approval-processed')
     },
 
     /**

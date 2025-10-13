@@ -16,23 +16,6 @@
       @reset="handleReset"
     />
 
-    <!-- 操作按钮区 -->
-    <div class="toolbar-actions">
-      <el-button
-        type="primary"
-        icon="el-icon-plus"
-        @click="handleCreate"
-      >
-        创建生产计划
-      </el-button>
-      <el-button
-        icon="el-icon-upload2"
-        @click="handleImport"
-      >
-        批量导入
-      </el-button>
-    </div>
-
     <!-- 表格组件 -->
     <plan-table
       ref="planTable"
@@ -51,6 +34,8 @@
       @sort-change="handleSortChange"
       @refresh="handleRefresh"
       @format-change="handleFormatChange"
+      @create="handleCreate"
+      @import="handleImport"
       @view="handleView"
       @change-status="handleChangeStatus"
       @confirm="handleConfirm"
@@ -574,23 +559,9 @@ export default {
 .production-plan-management {
   padding: 20px;
 
-  .toolbar-actions {
-    margin-bottom: 16px;
-
-    .el-button {
-      margin-right: 12px;
-    }
-  }
-
   // 响应式设计
   @media (max-width: 768px) {
     padding: 10px;
-
-    .toolbar-actions {
-      .el-button {
-        margin-bottom: 8px;
-      }
-    }
   }
 }
 </style>

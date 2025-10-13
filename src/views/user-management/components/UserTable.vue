@@ -183,7 +183,7 @@ export default {
     visibleTableColumns() {
       // 先过滤可见的列，然后应用格式化
       const visibleColumns = TABLE_COLUMNS.filter(column =>
-        this.internalVisibleColumns.includes(column.prop) || column.prop === 'actions'
+        this.internalVisibleColumns.includes(column.prop)
       )
 
       // 应用格式化逻辑

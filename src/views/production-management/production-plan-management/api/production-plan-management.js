@@ -7,7 +7,7 @@
  */
 
 import service from '@/utils/request'
-import { buildApiPath, API_ENDPOINTS } from '../constants/api-config'
+import { buildApiPath, API_ENDPOINTS, buildApprovalCenterPath, APPROVAL_CENTER_ENDPOINTS } from '../constants/api-config'
 
 /**
  * 查询生产计划列表
@@ -219,6 +219,53 @@ export function fetchApprovalRequests(planId, params = {}) {
     url: buildApiPath(API_ENDPOINTS.APPROVAL_REQUESTS, { planId }),
     method: 'get',
     params
+  })
+}
+
+/**
+ * 批准审批请求
+ * @param {string} approvalId - 审批请求ID
+ * @param {Object} data - 审批数据
+ * @param {string} [data.decisionRemarks] - 审批意见
+ * @param {Array<string>} data.requiredPermissions - 审批所需权限
+ * @returns {Promise} 返回Promise对象
+ */
+export function approveApproval(approvalId, data) {
+  return service({
+    url: buildApprovalCenterPath(APPROVAL_CENTER_ENDPOINTS.APPROVE, { approvalId }),
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 驳回审批请求
+ * @param {string} approvalId - 审批请求ID
+ * @param {Object} data - 审批数据
+ * @param {string} data.decisionRemarks - 驳回原因（必填）
+ * @param {Array<string>} data.requiredPermissions - 审批所需权限
+ * @returns {Promise} 返回Promise对象
+ */
+export function rejectApproval(approvalId, data) {
+  return service({
+    url: buildApprovalCenterPath(APPROVAL_CENTER_ENDPOINTS.REJECT, { approvalId }),
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 取消审批请求
+ * @param {string} approvalId - 审批请求ID
+ * @param {Object} data - 取消数据
+ * @param {string} [data.cancelRemarks] - 取消原因
+ * @returns {Promise} 返回Promise对象
+ */
+export function cancelApproval(approvalId, data = {}) {
+  return service({
+    url: buildApprovalCenterPath(APPROVAL_CENTER_ENDPOINTS.CANCEL, { approvalId }),
+    method: 'post',
+    data
   })
 }
 

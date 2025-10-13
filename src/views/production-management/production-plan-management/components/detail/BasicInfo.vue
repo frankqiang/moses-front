@@ -59,20 +59,23 @@
                 />
               </el-select>
               <status-tag
-                v-else
+                v-else-if="planData.planPriority"
                 :status="planData.planPriority"
-                :status-map="PLAN_PRIORITY_MAP"
+                :text-map="PLAN_PRIORITY_MAP"
                 :type-map="PLAN_PRIORITY_TYPE_MAP"
               />
+              <span v-else class="info-value">-</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="计划状态">
               <status-tag
+                v-if="planData.status"
                 :status="planData.status"
-                :status-map="PLAN_STATUS_MAP"
+                :text-map="PLAN_STATUS_MAP"
                 :type-map="PLAN_STATUS_TYPE_MAP"
               />
+              <span v-else class="info-value">-</span>
               <el-tag v-if="planData.isFrozen" type="danger" size="small" style="margin-left: 8px">
                 已冻结
               </el-tag>

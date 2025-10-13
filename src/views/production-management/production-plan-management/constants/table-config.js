@@ -112,7 +112,7 @@ export const TABLE_COLUMNS = [
   {
     prop: 'actions',
     label: '操作',
-    minWidth: 200,
+    minWidth: 300,
     fixed: 'right',
     slotName: 'actions'
   }
@@ -132,7 +132,8 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   'planPriority',
   'status',
   'currentProgressPercentage',
-  'createdAt'
+  'createdAt',
+  'actions' // 操作列默认显示，但用户可以通过列设置隐藏
 ]
 
 // 状态配置
@@ -158,6 +159,6 @@ export const TABLE_TOOLBAR_CONFIG = {
   enableExport: false,
   enableColumnSettings: true,
   enableBatchActions: false,
-  refreshFeedbackMode: 'silent'
+  refreshFeedbackMode: 'none' // 静默模式：不显示任何反馈提示
 }
 

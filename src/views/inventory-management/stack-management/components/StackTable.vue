@@ -263,7 +263,7 @@ export default {
         : this.defaultVisibleColumns
 
       return this.columnOptions
-        .filter((column) => visibleProps.includes(column.prop) || column.prop === 'actions')
+        .filter((column) => visibleProps.includes(column.prop))
         .map((column) => {
           if (column.prop === 'stackedAt' || column.prop === 'updatedAt') {
             return {
