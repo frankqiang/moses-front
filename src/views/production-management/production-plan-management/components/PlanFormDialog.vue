@@ -43,7 +43,7 @@
                 style="width: 100%"
               >
                 <el-option
-                  v-for="item in sourceOptions"
+                  v-for="item in planSourceOptions"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value"
@@ -61,7 +61,7 @@
                 style="width: 100%"
               >
                 <el-option
-                  v-for="item in priorityOptions"
+                  v-for="item in planPriorityOptions"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value"
@@ -255,7 +255,7 @@
 
 <script>
 import { createPlan } from '../api'
-import { PLAN_SOURCE_OPTIONS, PLAN_PRIORITY_OPTIONS } from '../constants'
+import dictionaryMixin from '@/mixins/dictionaryMixin'
 // 从铝箔产品管理模块获取产品数据
 import { fetchFoilProductList } from '@/views/master-data/aluminum-foil-product-management/api/aluminum-foil-product-management'
 // 从工艺参数管理模块获取工艺模板数据
@@ -263,6 +263,7 @@ import { fetchProcessTemplateList } from '@/views/master-data/process-parameter-
 
 export default {
   name: 'PlanFormDialog',
+  mixins: [dictionaryMixin],
   data() {
     // 验证计划交期必须晚于当前时间
     const validateDeliveryDate = (rule, value, callback) => {
@@ -333,9 +334,7 @@ export default {
           return time.getTime() < Date.now() - 8.64e7 // 减去一天的毫秒数
         }
       },
-      // 选项数据
-      sourceOptions: PLAN_SOURCE_OPTIONS,
-      priorityOptions: PLAN_PRIORITY_OPTIONS,
+      // 选项数据（来源和优先级选项由 dictionaryMixin 提供）
       productOptions: [],
       processTemplateOptions: []
     }

@@ -4,15 +4,19 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-01-21: 标记为废弃，已迁移到 PlanSearch.vue 的计算属性中使用字典系统
+ *
+ * @deprecated 此配置文件已废弃
+ * 搜索表单配置已移至 PlanSearch.vue 的 searchFormConfig computed 属性
+ * 使用字典系统动态获取选项，确保前后端数据一致性
  */
 
-import {
-  PLAN_STATUS_OPTIONS,
-  PLAN_SOURCE_OPTIONS,
-  PLAN_PRIORITY_OPTIONS
-} from './production-plan-management'
+/* eslint-disable */
 
-// 搜索表单配置
+/**
+ * @deprecated 已废弃：搜索表单配置已迁移到组件内部使用字典系统
+ * 请在 PlanSearch.vue 中使用 searchFormConfig computed 属性
+ */
 export const SEARCH_FORM_CONFIG = [
   {
     prop: 'search',
@@ -27,7 +31,7 @@ export const SEARCH_FORM_CONFIG = [
     label: '状态',
     type: 'select',
     placeholder: '请选择计划状态',
-    options: PLAN_STATUS_OPTIONS,
+    options: [], // 已废弃，使用字典系统
     priority: 'primary',
     clearable: true
   },
@@ -36,7 +40,7 @@ export const SEARCH_FORM_CONFIG = [
     label: '来源',
     type: 'select',
     placeholder: '请选择计划来源',
-    options: PLAN_SOURCE_OPTIONS,
+    options: [], // 已废弃，使用字典系统
     priority: 'advanced',
     clearable: true
   },
@@ -45,7 +49,7 @@ export const SEARCH_FORM_CONFIG = [
     label: '优先级',
     type: 'select',
     placeholder: '请选择计划优先级',
-    options: PLAN_PRIORITY_OPTIONS,
+    options: [], // 已废弃，使用字典系统
     priority: 'advanced',
     clearable: true
   },

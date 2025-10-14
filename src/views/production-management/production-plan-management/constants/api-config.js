@@ -25,7 +25,9 @@ export const API_ENDPOINTS = {
   AUDIT_LOGS: '/audit-logs',
   FEASIBILITY: '/:planId/feasibility',
   APPROVAL_SUBMIT: '/:planId/approval/submit',
-  APPROVAL_REQUESTS: '/:planId/approval/requests'
+  APPROVAL_REQUESTS: '/:planId/approval/requests',
+  DICTIONARIES: '/dictionaries',
+  DICTIONARY_BY_TYPE: '/dictionaries/:type'
 }
 
 // 审批中心 API 基础路径

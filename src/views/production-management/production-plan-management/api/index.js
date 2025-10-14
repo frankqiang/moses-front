@@ -7,4 +7,5 @@
  */
 
 export * from './production-plan-management'
+export * from './dictionaries'
 

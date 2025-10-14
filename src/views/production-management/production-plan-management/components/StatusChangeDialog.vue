@@ -110,8 +110,8 @@
 </template>
 
 <script>
+import dictionaryMixin from '@/mixins/dictionaryMixin'
 import {
-  PLAN_STATUS_MAP,
   PLAN_STATUS_TYPE_MAP,
   STATUS_TRANSITION_RULES,
   CRITICAL_STATUS_CHANGES
@@ -122,6 +122,7 @@ import { submitPlanOperation } from '../utils/submission-manager'
 
 export default {
   name: 'StatusChangeDialog',
+  mixins: [dictionaryMixin],
   data() {
     return {
       visible: false,
@@ -154,7 +155,7 @@ export default {
       const availableStatusCodes = STATUS_TRANSITION_RULES[this.currentStatus] || []
       return availableStatusCodes.map(code => ({
         value: code,
-        label: PLAN_STATUS_MAP[code] || code
+        label: this.getPlanStatusLabel(code)
       }))
     },
     // 是否需要审批
@@ -235,7 +236,7 @@ export default {
         // 构建请求数据
         const requestData = {
           targetStatus: this.formData.targetStatus,
-          changeDescription: this.formData.changeDescription || `变更状态从${PLAN_STATUS_MAP[this.currentStatus]}到${PLAN_STATUS_MAP[this.formData.targetStatus]}`
+          changeDescription: this.formData.changeDescription || `变更状态从${this.getPlanStatusLabel(this.currentStatus)}到${this.getPlanStatusLabel(this.formData.targetStatus)}`
         }
 
         // 如果是取消状态，添加取消原因
@@ -316,7 +317,7 @@ export default {
      * 获取状态文本
      */
     getStatusText(status) {
-      return PLAN_STATUS_MAP[status] || status
+      return this.getPlanStatusLabel(status)
     },
 
     /**

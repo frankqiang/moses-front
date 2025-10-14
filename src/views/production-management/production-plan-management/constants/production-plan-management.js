@@ -4,18 +4,22 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-01-21: 废弃中文映射和选项，改用字典系统
+ *
+ * ⚠️ 重要说明：
+ * - 枚举值常量（PLAN_STATUS等）保留用于代码判断
+ * - 中文映射（*_MAP）和选项（*_OPTIONS）已废弃
+ * - 请使用字典系统获取中文标签和选项：
+ *   import dictionaryMixin from '@/mixins/dictionaryMixin'
+ *   然后使用 this.getPlanStatusLabel(status) 和 this.planStatusOptions
  */
+
+// ========== 枚举值常量（保留用于代码判断） ==========
 
 // 计划来源
 export const PLAN_SOURCE = {
   ERP: 'ERP',
   MANUAL: 'MANUAL'
-}
-
-// 计划来源映射（中文）
-export const PLAN_SOURCE_MAP = {
-  ERP: 'ERP系统',
-  MANUAL: '手工创建'
 }
 
 // 计划状态
@@ -30,17 +34,34 @@ export const PLAN_STATUS = {
   CANCELLED: 'CANCELLED'
 }
 
-// 计划状态映射（中文）
-export const PLAN_STATUS_MAP = {
-  RECEIVED: '已接收',
-  CONFIRMED: '已确认',
-  PENDING_APPROVAL: '待审批',
-  PARTIALLY_RELEASED: '部分下达',
-  RELEASED: '已下达',
-  IN_PROGRESS: '执行中',
-  COMPLETED: '已完成',
-  CANCELLED: '已取消'
+// 计划优先级
+export const PLAN_PRIORITY = {
+  LOW: 'LOW',
+  NORMAL: 'NORMAL',
+  HIGH: 'HIGH',
+  URGENT: 'URGENT'
 }
+
+// 子批次状态
+export const ITEM_STATUS = {
+  DRAFT: 'DRAFT',
+  READY_FOR_SCHEDULING: 'READY_FOR_SCHEDULING',
+  SCHEDULED: 'SCHEDULED',
+  RELEASED: 'RELEASED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED'
+}
+
+// 审批状态
+export const APPROVAL_STATUS = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED'
+}
+
+// ========== UI样式映射（保留用于前端展示） ==========
 
 // 计划状态颜色映射
 export const PLAN_STATUS_TYPE_MAP = {
@@ -54,22 +75,6 @@ export const PLAN_STATUS_TYPE_MAP = {
   CANCELLED: 'danger'
 }
 
-// 计划优先级
-export const PLAN_PRIORITY = {
-  LOW: 'LOW',
-  NORMAL: 'NORMAL',
-  HIGH: 'HIGH',
-  URGENT: 'URGENT'
-}
-
-// 计划优先级映射（中文）
-export const PLAN_PRIORITY_MAP = {
-  LOW: '低',
-  NORMAL: '普通',
-  HIGH: '高',
-  URGENT: '紧急'
-}
-
 // 计划优先级颜色映射
 export const PLAN_PRIORITY_TYPE_MAP = {
   LOW: 'info',
@@ -78,23 +83,24 @@ export const PLAN_PRIORITY_TYPE_MAP = {
   URGENT: 'danger'
 }
 
-// 计划状态选项（用于筛选）
-export const PLAN_STATUS_OPTIONS = Object.entries(PLAN_STATUS_MAP).map(([value, label]) => ({
-  value,
-  label
-}))
+// 子批次状态颜色映射
+export const ITEM_STATUS_TYPE_MAP = {
+  DRAFT: 'info',
+  READY_FOR_SCHEDULING: 'warning',
+  SCHEDULED: 'primary',
+  RELEASED: 'success',
+  IN_PROGRESS: '',
+  COMPLETED: 'success',
+  CANCELLED: 'danger'
+}
 
-// 计划来源选项（用于筛选）
-export const PLAN_SOURCE_OPTIONS = Object.entries(PLAN_SOURCE_MAP).map(([value, label]) => ({
-  value,
-  label
-}))
-
-// 计划优先级选项（用于筛选）
-export const PLAN_PRIORITY_OPTIONS = Object.entries(PLAN_PRIORITY_MAP).map(([value, label]) => ({
-  value,
-  label
-}))
+// 审批状态颜色映射
+export const APPROVAL_STATUS_TYPE_MAP = {
+  PENDING: 'warning',
+  APPROVED: 'success',
+  REJECTED: 'danger',
+  CANCELLED: 'info'
+}
 
 // 默认分页配置
 export const DEFAULT_PAGINATION = {
@@ -120,41 +126,7 @@ export const OUTPUT_FORMAT_OPTIONS = [
 // 自动刷新间隔（毫秒）
 export const AUTO_REFRESH_INTERVAL = 30000 // 30秒
 
-// 子批次状态
-export const ITEM_STATUS = {
-  DRAFT: 'DRAFT',
-  READY_FOR_SCHEDULING: 'READY_FOR_SCHEDULING',
-  SCHEDULED: 'SCHEDULED',
-  IN_PROGRESS: 'IN_PROGRESS',
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED'
-}
-
-// 子批次状态映射（中文）
-export const ITEM_STATUS_MAP = {
-  DRAFT: '草稿',
-  READY_FOR_SCHEDULING: '待排程',
-  SCHEDULED: '已排程',
-  IN_PROGRESS: '执行中',
-  COMPLETED: '已完成',
-  CANCELLED: '已取消'
-}
-
-// 子批次状态颜色映射
-export const ITEM_STATUS_TYPE_MAP = {
-  DRAFT: 'info',
-  READY_FOR_SCHEDULING: 'warning',
-  SCHEDULED: 'primary',
-  IN_PROGRESS: '',
-  COMPLETED: 'success',
-  CANCELLED: 'danger'
-}
-
-// 子批次状态选项（用于筛选）
-export const ITEM_STATUS_OPTIONS = Object.entries(ITEM_STATUS_MAP).map(([value, label]) => ({
-  value,
-  label
-}))
+// ========== 业务规则配置（保留用于业务逻辑） ==========
 
 // 状态流转规则 - 定义从当前状态可以转换到哪些目标状态
 export const STATUS_TRANSITION_RULES = {
@@ -171,15 +143,68 @@ export const STATUS_TRANSITION_RULES = {
 // 关键状态变更（需要审批）
 export const CRITICAL_STATUS_CHANGES = ['RELEASED', 'CANCELLED']
 
-// 审批状态
-export const APPROVAL_STATUS = {
-  PENDING: 'PENDING',
-  APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED',
-  CANCELLED: 'CANCELLED'
-}
+// ========== 废弃的常量（使用字典系统替代） ==========
 
-// 审批状态映射（中文）
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * import dictionaryMixin from '@/mixins/dictionaryMixin'
+ * 然后使用: this.getPlanStatusLabel(status)
+ */
+export const PLAN_STATUS_MAP = {}
+
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * import dictionaryMixin from '@/mixins/dictionaryMixin'
+ * 然后使用: this.planStatusOptions
+ */
+export const PLAN_STATUS_OPTIONS = []
+
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * import dictionaryMixin from '@/mixins/dictionaryMixin'
+ * 然后使用: this.getPlanSourceLabel(source)
+ */
+export const PLAN_SOURCE_MAP = {}
+
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * import dictionaryMixin from '@/mixins/dictionaryMixin'
+ * 然后使用: this.planSourceOptions
+ */
+export const PLAN_SOURCE_OPTIONS = []
+
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * import dictionaryMixin from '@/mixins/dictionaryMixin'
+ * 然后使用: this.getPlanPriorityLabel(priority)
+ */
+export const PLAN_PRIORITY_MAP = {}
+
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * import dictionaryMixin from '@/mixins/dictionaryMixin'
+ * 然后使用: this.planPriorityOptions
+ */
+export const PLAN_PRIORITY_OPTIONS = []
+
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * import dictionaryMixin from '@/mixins/dictionaryMixin'
+ * 然后使用: this.getPlanItemStatusLabel(status)
+ */
+export const ITEM_STATUS_MAP = {}
+
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * import dictionaryMixin from '@/mixins/dictionaryMixin'
+ * 然后使用: this.planItemStatusOptions
+ */
+export const ITEM_STATUS_OPTIONS = []
+
+/**
+ * @deprecated 已废弃：审批状态标签请从后端获取
+ * TODO: 待后端提供审批状态字典接口后使用字典系统
+ */
 export const APPROVAL_STATUS_MAP = {
   PENDING: '待审批',
   APPROVED: '已通过',
@@ -187,15 +212,10 @@ export const APPROVAL_STATUS_MAP = {
   CANCELLED: '已取消'
 }
 
-// 审批状态颜色映射
-export const APPROVAL_STATUS_TYPE_MAP = {
-  PENDING: 'warning',
-  APPROVED: 'success',
-  REJECTED: 'danger',
-  CANCELLED: 'info'
-}
-
-// 审批状态选项（用于筛选）
+/**
+ * @deprecated 已废弃：审批状态选项请从后端获取
+ * TODO: 待后端提供审批状态字典接口后使用字典系统
+ */
 export const APPROVAL_STATUS_OPTIONS = Object.entries(APPROVAL_STATUS_MAP).map(([value, label]) => ({
   value,
   label

@@ -4,13 +4,11 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-01-21: STATUS_CONFIG等配置已废弃，请使用字典系统
  */
 
 import {
-  PLAN_STATUS_MAP,
   PLAN_STATUS_TYPE_MAP,
-  PLAN_SOURCE_MAP,
-  PLAN_PRIORITY_MAP,
   PLAN_PRIORITY_TYPE_MAP
 } from './production-plan-management'
 
@@ -136,20 +134,31 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   'actions' // 操作列默认显示，但用户可以通过列设置隐藏
 ]
 
-// 状态配置
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * 在组件中使用: this.getPlanStatusLabel(status) 获取文本
+ * 使用 PLAN_STATUS_TYPE_MAP 获取颜色类型
+ */
 export const STATUS_CONFIG = {
-  textMap: PLAN_STATUS_MAP,
+  textMap: {}, // 废弃，使用字典系统
   typeMap: PLAN_STATUS_TYPE_MAP
 }
 
-// 来源配置
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * 在组件中使用: this.getPlanSourceLabel(source)
+ */
 export const SOURCE_CONFIG = {
-  textMap: PLAN_SOURCE_MAP
+  textMap: {} // 废弃，使用字典系统
 }
 
-// 优先级配置
+/**
+ * @deprecated 已废弃：请使用字典系统
+ * 在组件中使用: this.getPlanPriorityLabel(priority) 获取文本
+ * 使用 PLAN_PRIORITY_TYPE_MAP 获取颜色类型
+ */
 export const PRIORITY_CONFIG = {
-  textMap: PLAN_PRIORITY_MAP,
+  textMap: {}, // 废弃，使用字典系统
   typeMap: PLAN_PRIORITY_TYPE_MAP
 }
 

@@ -86,13 +86,14 @@
 <script>
 import { approveApproval } from '../api'
 import {
-  PLAN_STATUS_MAP,
   PLAN_STATUS_TYPE_MAP,
   getErrorMessage
 } from '../constants'
+import dictionaryMixin from '@/mixins/dictionaryMixin'
 
 export default {
   name: 'ApprovalApproveDialog',
+  mixins: [dictionaryMixin],
   props: {
     // 生产计划数据 - 用于显示实际的计划编号和状态
     planData: {
@@ -233,7 +234,7 @@ export default {
      * 获取状态文本
      */
     getStatusText(status) {
-      return PLAN_STATUS_MAP[status] || status || '-'
+      return this.getPlanStatusLabel(status) || '-'
     },
 
     /**

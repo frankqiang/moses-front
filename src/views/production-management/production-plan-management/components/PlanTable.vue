@@ -184,12 +184,10 @@ import TableToolbar from '@/components/TableToolbar'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
+import dictionaryMixin from '@/mixins/dictionaryMixin'
 import {
   TABLE_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
-  STATUS_CONFIG,
-  SOURCE_CONFIG,
-  PRIORITY_CONFIG,
   TABLE_TOOLBAR_CONFIG
 } from '../constants/table-config'
 import {
@@ -197,7 +195,9 @@ import {
   OUTPUT_FORMAT_OPTIONS,
   OUTPUT_FORMAT,
   AUTO_REFRESH_INTERVAL,
-  PLAN_STATUS
+  PLAN_STATUS,
+  PLAN_STATUS_TYPE_MAP,
+  PLAN_PRIORITY_TYPE_MAP
 } from '../constants/production-plan-management'
 
 export default {
@@ -208,7 +208,7 @@ export default {
     StatusTag,
     ActionButtons
   },
-  mixins: [columnSettingsMixin],
+  mixins: [columnSettingsMixin, dictionaryMixin],
   props: {
     data: {
       type: Array,
@@ -264,13 +264,40 @@ export default {
       return DEFAULT_VISIBLE_COLUMNS
     },
     statusConfig() {
-      return STATUS_CONFIG
+      // 使用字典动态生成状态配置
+      const textMap = {}
+      if (this.planStatusOptions) {
+        this.planStatusOptions.forEach(option => {
+          textMap[option.value] = option.label
+        })
+      }
+      return {
+        textMap,
+        typeMap: PLAN_STATUS_TYPE_MAP
+      }
     },
     sourceConfig() {
-      return SOURCE_CONFIG
+      // 使用字典动态生成来源配置
+      const textMap = {}
+      if (this.planSourceOptions) {
+        this.planSourceOptions.forEach(option => {
+          textMap[option.value] = option.label
+        })
+      }
+      return { textMap }
     },
     priorityConfig() {
-      return PRIORITY_CONFIG
+      // 使用字典动态生成优先级配置
+      const textMap = {}
+      if (this.planPriorityOptions) {
+        this.planPriorityOptions.forEach(option => {
+          textMap[option.value] = option.label
+        })
+      }
+      return {
+        textMap,
+        typeMap: PLAN_PRIORITY_TYPE_MAP
+      }
     },
     toolbarProps() {
       return {

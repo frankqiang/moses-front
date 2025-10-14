@@ -117,9 +117,11 @@
 
 <script>
 import { parseTime } from '@/utils'
+import dictionaryMixin from '@/mixins/dictionaryMixin'
 
 export default {
   name: 'ItemsTable',
+  mixins: [dictionaryMixin],
   props: {
     items: {
       type: Array,
@@ -134,21 +136,13 @@ export default {
     return {
       sortProp: 'sequence',
       sortOrder: 'ascending',
-      // 子批次状态映射
-      itemStatusMap: {
-        DRAFT: '草稿',
-        READY_FOR_SCHEDULING: '待排程',
-        SCHEDULED: '已排程',
-        READY_FOR_EXECUTION: '待执行',
-        IN_PROGRESS: '执行中',
-        COMPLETED: '已完成',
-        CANCELLED: '已取消'
-      },
+      // UI样式映射（保留用于标签颜色）
       itemStatusTypeMap: {
         DRAFT: 'info',
         READY_FOR_SCHEDULING: 'warning',
         SCHEDULED: 'primary',
         READY_FOR_EXECUTION: 'warning',
+        RELEASED: 'success',
         IN_PROGRESS: 'success',
         COMPLETED: 'success',
         CANCELLED: 'danger'
@@ -182,10 +176,10 @@ export default {
     },
 
     /**
-     * 获取状态文本
+     * 获取状态文本（使用字典系统）
      */
     getStatusText(status) {
-      return this.itemStatusMap[status] || status || '-'
+      return this.getPlanItemStatusLabel(status) || '-'
     },
 
     /**

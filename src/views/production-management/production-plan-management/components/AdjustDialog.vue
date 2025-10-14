@@ -50,6 +50,7 @@
                 :step="1"
                 controls-position="right"
                 style="width: 100%"
+                @change="handleDemandQuantityChange"
               />
             </el-form-item>
           </el-col>
@@ -61,7 +62,7 @@
                 style="width: 100%"
               >
                 <el-option
-                  v-for="item in priorityOptions"
+                  v-for="item in planPriorityOptions"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value"
@@ -107,6 +108,15 @@
           <el-tooltip content="调整子批次后会自动校验总重量是否与主计划需求数量一致" placement="top">
             <i class="el-icon-question" />
           </el-tooltip>
+          <el-button
+            v-if="needAutoSync"
+            type="text"
+            size="small"
+            style="margin-left: 10px"
+            @click="handleAutoSyncWeight"
+          >
+            <i class="el-icon-refresh" /> 自动同步重量
+          </el-button>
         </div>
         <el-table
           :data="formData.planItems"
@@ -135,8 +145,8 @@
             </template>
           </el-table-column>
           <el-table-column
-            label="预计数量"
-            width="120"
+            label="预计数量(卷/件)"
+            width="150"
           >
             <template slot-scope="{ row }">
               <el-input-number
@@ -182,10 +192,11 @@
 
 <script>
 import { adjustPlan } from '../api'
-import { PLAN_PRIORITY_OPTIONS } from '../constants'
+import dictionaryMixin from '@/mixins/dictionaryMixin'
 
 export default {
   name: 'AdjustDialog',
+  mixins: [dictionaryMixin],
   props: {
     planData: {
       type: Object,
@@ -215,17 +226,6 @@ export default {
           { required: true, message: '请输入变更描述', trigger: 'blur' },
           { max: 500, message: '变更描述最多500个字符', trigger: 'blur' }
         ]
-      },
-      priorityOptions: PLAN_PRIORITY_OPTIONS,
-      // 子批次状态映射
-      itemStatusMap: {
-        DRAFT: '草稿',
-        READY_FOR_SCHEDULING: '待排程',
-        SCHEDULED: '已排程',
-        READY_FOR_EXECUTION: '待执行',
-        IN_PROGRESS: '执行中',
-        COMPLETED: '已完成',
-        CANCELLED: '已取消'
       }
     }
   },
@@ -257,9 +257,13 @@ export default {
       const diff = this.weightDifference.toFixed(3)
 
       if (this.weightDifference <= 0.5) {
-        return `子批次总重量(${total}吨)与需求数量(${demand}吨)一致，误差${diff}吨（允许范围内）`
+        return `✅ 校验通过：子批次总重量 ${total}吨 与需求数量 ${demand}吨 一致（误差 ${diff}吨，在±0.5吨容差范围内）`
       }
-      return `子批次总重量(${total}吨)与需求数量(${demand}吨)不一致，误差${diff}吨（超出允许范围0.5吨）`
+      return `❌ 校验失败：子批次总重量 ${total}吨 与需求数量 ${demand}吨 相差 ${diff}吨，超出允许的±0.5吨容差范围。请点击"自动同步重量"或手动调整各批次重量。`
+    },
+    needAutoSync() {
+      // 当有子批次且重量不一致时显示自动同步按钮
+      return this.hasItems && this.weightValidationStatus === 'error'
     }
   },
   methods: {
@@ -337,8 +341,8 @@ export default {
 
           // 如果有子批次调整
           if (this.hasItems) {
-            requestData.planItems = this.formData.planItems.map(item => ({
-              itemId: item.id,
+            requestData.items = this.formData.planItems.map(item => ({
+              id: item.id,
               plannedWeight: item.plannedWeight,
               plannedQuantity: item.plannedQuantity
             }))
@@ -367,7 +371,73 @@ export default {
      * 获取子批次状态文本
      */
     getItemStatusText(status) {
-      return this.itemStatusMap[status] || status || '-'
+      return this.getPlanItemStatusLabel(status) || '-'
+    },
+
+    /**
+     * 需求数量变更时的处理
+     */
+    handleDemandQuantityChange(newValue) {
+      // 如果有子批次且重量不一致，提示用户同步
+      if (this.hasItems && this.weightDifference > 0.5) {
+        this.$message.warning('需求数量已变更，请同步调整子批次重量或点击"自动同步重量"按钮')
+      }
+    },
+
+    /**
+     * 自动同步子批次重量
+     * 将主计划需求数量按比例分配到各子批次
+     */
+    handleAutoSyncWeight() {
+      if (!this.hasItems || !this.formData.demandQuantity) {
+        return
+      }
+
+      this.$confirm(
+        '自动同步将按原有比例重新分配子批次重量，是否继续？',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).then(() => {
+        const totalDemand = this.formData.demandQuantity
+        const itemCount = this.formData.planItems.length
+
+        if (itemCount === 1) {
+          // 如果只有一个子批次，直接赋值
+          this.formData.planItems[0].plannedWeight = totalDemand
+        } else {
+          // 多个子批次，按原有比例分配
+          const originalTotal = this.totalItemsWeight
+          if (originalTotal > 0) {
+            // 按原有比例分配
+            this.formData.planItems.forEach(item => {
+              const ratio = (item.plannedWeight || 0) / originalTotal
+              item.plannedWeight = parseFloat((totalDemand * ratio).toFixed(3))
+            })
+          } else {
+            // 如果原始总重量为0，平均分配
+            const avgWeight = parseFloat((totalDemand / itemCount).toFixed(3))
+            this.formData.planItems.forEach((item, index) => {
+              if (index === itemCount - 1) {
+                // 最后一个批次用总量减去前面的总和，避免精度误差
+                const others = this.formData.planItems
+                  .slice(0, -1)
+                  .reduce((sum, i) => sum + i.plannedWeight, 0)
+                item.plannedWeight = parseFloat((totalDemand - others).toFixed(3))
+              } else {
+                item.plannedWeight = avgWeight
+              }
+            })
+          }
+        }
+
+        this.$message.success('子批次重量已自动同步')
+      }).catch(() => {
+        // 用户取消
+      })
     }
   }
 }

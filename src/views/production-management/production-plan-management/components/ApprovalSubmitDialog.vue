@@ -127,14 +127,15 @@
 
 <script>
 import {
-  PLAN_STATUS_MAP,
   PLAN_STATUS_TYPE_MAP
 } from '../constants'
 import { submitApproval } from '../api'
 import { withRetry, createApprovalErrorHandler } from '../utils/approval-error-handler'
+import dictionaryMixin from '@/mixins/dictionaryMixin'
 
 export default {
   name: 'ApprovalSubmitDialog',
+  mixins: [dictionaryMixin],
   data() {
     return {
       visible: false,
@@ -227,7 +228,7 @@ export default {
         const response = await withRetry(
           () => submitApproval(this.planData.id, {
             targetStatus: this.formData.targetStatus,
-            remarks: this.formData.remarks || `申请将生产计划状态变更为${PLAN_STATUS_MAP[this.formData.targetStatus]}`,
+            remarks: this.formData.remarks || `申请将生产计划状态变更为${this.getPlanStatusLabel(this.formData.targetStatus)}`,
             requiredPermissions: this.formData.requiredPermissions
           }),
           {
@@ -288,7 +289,7 @@ export default {
      * 获取状态文本
      */
     getStatusText(status) {
-      return PLAN_STATUS_MAP[status] || status
+      return this.getPlanStatusLabel(status)
     },
 
     /**

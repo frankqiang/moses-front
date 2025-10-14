@@ -35,6 +35,13 @@ router.beforeEach(async(to, from, next) => {
         //   sessionManager.init()
         // }
 
+        // 确保字典数据已加载（异步，不阻塞路由）
+        if (!store.state.dictionary.loaded && !store.state.dictionary.loading) {
+          store.dispatch('dictionary/loadProductionPlanDictionaries').catch(err => {
+            console.error('加载字典数据失败:', err)
+          })
+        }
+
         // 检查是否已经生成动态路由，并且角色没有变化
         const hasRoutes = store.getters.routesGenerated
         const currentRoles = store.getters.roles
@@ -92,6 +99,8 @@ router.beforeEach(async(to, from, next) => {
 
           // 获取用户信息成功后启动会话管理器
           sessionManager.init()
+
+          // 字典数据在用户信息获取成功后会在上面的逻辑中加载，这里不重复调用
 
           // hack method to ensure that addRoutes is complete
           // set the replace: true, so the navigation will not leave a history record
