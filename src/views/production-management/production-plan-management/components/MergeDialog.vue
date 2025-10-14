@@ -278,35 +278,23 @@
 
 <script>
 import { fetchPlanList, mergePlans } from '../api'
+import dictionaryMixin from '@/mixins/dictionaryMixin'
 import {
   PLAN_STATUS,
-  PLAN_STATUS_MAP,
   PLAN_STATUS_TYPE_MAP,
   ITEM_STATUS,
-  ITEM_STATUS_MAP,
   ITEM_STATUS_TYPE_MAP,
   getErrorMessage
 } from '../constants'
 
 export default {
   name: 'MergeDialog',
+  mixins: [dictionaryMixin],
   data() {
     return {
       visible: false,
       loading: false,
       submitting: false,
-
-      // 允许作为目标的计划状态
-      allowedTargetStatuses: [
-        { value: PLAN_STATUS.CONFIRMED, label: PLAN_STATUS_MAP[PLAN_STATUS.CONFIRMED] },
-        { value: PLAN_STATUS.READY_FOR_SCHEDULING, label: PLAN_STATUS_MAP[PLAN_STATUS.READY_FOR_SCHEDULING] }
-      ],
-
-      // 允许合并的子批次状态
-      allowedItemStatuses: [
-        { value: ITEM_STATUS.DRAFT, label: ITEM_STATUS_MAP[ITEM_STATUS.DRAFT] },
-        { value: ITEM_STATUS.READY_FOR_SCHEDULING, label: ITEM_STATUS_MAP[ITEM_STATUS.READY_FOR_SCHEDULING] }
-      ],
 
       // 目标计划相关
       targetPlanList: [],
@@ -345,6 +333,26 @@ export default {
         this.selectedItems.length > 0 &&
         !this.processTemplateError
       )
+    },
+
+    /**
+     * 允许作为目标的计划状态选项（使用字典）
+     */
+    allowedTargetStatuses() {
+      return [
+        { value: PLAN_STATUS.CONFIRMED, label: this.getPlanStatusLabel(PLAN_STATUS.CONFIRMED) },
+        { value: PLAN_STATUS.READY_FOR_SCHEDULING, label: this.getPlanStatusLabel(PLAN_STATUS.READY_FOR_SCHEDULING) }
+      ]
+    },
+
+    /**
+     * 允许合并的子批次状态选项（使用字典）
+     */
+    allowedItemStatuses() {
+      return [
+        { value: ITEM_STATUS.DRAFT, label: this.getPlanItemStatusLabel(ITEM_STATUS.DRAFT) },
+        { value: ITEM_STATUS.READY_FOR_SCHEDULING, label: this.getPlanItemStatusLabel(ITEM_STATUS.READY_FOR_SCHEDULING) }
+      ]
     }
   },
   methods: {
@@ -604,7 +612,7 @@ export default {
      * 获取状态文本
      */
     getStatusText(status) {
-      return PLAN_STATUS_MAP[status] || status
+      return this.getPlanStatusLabel(status)
     },
 
     /**
@@ -618,7 +626,7 @@ export default {
      * 获取子批次状态文本
      */
     getItemStatusText(status) {
-      return ITEM_STATUS_MAP[status] || status
+      return this.getPlanItemStatusLabel(status)
     },
 
     /**

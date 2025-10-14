@@ -30,23 +30,6 @@
           提交审批
         </el-button>
         <el-button
-          v-if="!editMode && !planData.isFrozen"
-          type="primary"
-          icon="el-icon-edit"
-          @click="handleEdit"
-        >
-          编辑
-        </el-button>
-        <el-button
-          v-if="editMode"
-          type="primary"
-          :loading="saveLoading"
-          @click="handleSave"
-        >
-          保存
-        </el-button>
-        <el-button v-if="editMode" @click="handleCancelEdit">取消</el-button>
-        <el-button
           v-if="canSplit"
           icon="el-icon-share"
           @click="handleSplit"
@@ -95,8 +78,6 @@
           <basic-info
             ref="basicInfo"
             :plan-data="planData"
-            :edit-mode="editMode"
-            @update="handleUpdateBasicInfo"
           />
         </el-tab-pane>
 
@@ -178,7 +159,7 @@ import MergeDialog from './components/MergeDialog.vue'
 import StatusChangeDialog from './components/StatusChangeDialog.vue'
 import ApprovalSubmitDialog from './components/ApprovalSubmitDialog.vue'
 import FeasibilityDialog from './components/FeasibilityDialog.vue'
-import { fetchPlanDetail, adjustPlan } from './api'
+import { fetchPlanDetail } from './api'
 import { getErrorMessage } from './constants'
 
 export default {
@@ -204,11 +185,7 @@ export default {
         changeLogs: []
       },
       loading: false,
-      editMode: false,
-      saveLoading: false,
-      activeTab: 'basic',
-      // 编辑前的备份数据
-      originalData: null
+      activeTab: 'basic'
     }
   },
   computed: {
@@ -218,30 +195,30 @@ export default {
     canChangeStatus() {
       // 除已完成和已取消外的其他状态，且未冻结，可以进行状态变更
       const excludedStatuses = ['COMPLETED', 'CANCELLED']
-      return !this.planData.isFrozen && !this.editMode && !excludedStatuses.includes(this.planData.status)
+      return !this.planData.isFrozen && !excludedStatuses.includes(this.planData.status)
     },
     canSubmitApproval() {
       // 只有已确认状态且未冻结的计划可提交审批
-      return !this.planData.isFrozen && !this.editMode && this.planData.status === 'CONFIRMED'
+      return !this.planData.isFrozen && this.planData.status === 'CONFIRMED'
     },
     canSplit() {
       // 已冻结的计划不允许拆分，只有已确认或待排程状态的计划可拆分
       const allowedStatuses = ['CONFIRMED', 'READY_FOR_SCHEDULING']
-      return !this.planData.isFrozen && !this.editMode && allowedStatuses.includes(this.planData.status)
+      return !this.planData.isFrozen && allowedStatuses.includes(this.planData.status)
     },
     canAdjust() {
       // 已冻结的计划不允许调整
-      return !this.planData.isFrozen && !this.editMode
+      return !this.planData.isFrozen
     },
     canMerge() {
       // 已冻结的计划不允许合并，只有已确认或待排程状态的计划可合并
       const allowedStatuses = ['CONFIRMED', 'READY_FOR_SCHEDULING']
-      return !this.planData.isFrozen && !this.editMode && allowedStatuses.includes(this.planData.status)
+      return !this.planData.isFrozen && allowedStatuses.includes(this.planData.status)
     },
     canEvaluate() {
       // 已确认及之后的状态可以进行可行性评估
       const allowedStatuses = ['CONFIRMED', 'PENDING_APPROVAL', 'RELEASED', 'PARTIALLY_RELEASED', 'IN_PROGRESS']
-      return !this.editMode && allowedStatuses.includes(this.planData.status)
+      return allowedStatuses.includes(this.planData.status)
     }
   },
   created() {
@@ -294,84 +271,6 @@ export default {
      */
     handleBack() {
       this.$router.push('/production-management/production-plan')
-    },
-
-    /**
-     * 进入编辑模式
-     */
-    handleEdit() {
-      if (this.planData.isFrozen) {
-        this.$message.warning('计划已冻结，不允许编辑')
-        return
-      }
-      // 备份原始数据
-      this.originalData = JSON.parse(JSON.stringify(this.planData))
-      this.editMode = true
-    },
-
-    /**
-     * 取消编辑
-     */
-    handleCancelEdit() {
-      // 恢复原始数据
-      if (this.originalData) {
-        this.planData = JSON.parse(JSON.stringify(this.originalData))
-        this.originalData = null
-      }
-      this.editMode = false
-    },
-
-    /**
-     * 保存编辑
-     */
-    async handleSave() {
-      try {
-        // 验证表单
-        const valid = await this.$refs.basicInfo.validate()
-        if (!valid) {
-          this.$message.error('请填写完整的表单信息')
-          return
-        }
-
-        this.saveLoading = true
-
-        // 获取修改后的数据
-        const updatedData = this.$refs.basicInfo.getFormData()
-
-        // 调用调整接口
-        const response = await adjustPlan(this.planId, {
-          demandQuantity: updatedData.demandQuantity,
-          plannedDeliveryDate: updatedData.plannedDeliveryDate,
-          planPriority: updatedData.planPriority,
-          customerName: updatedData.customerName,
-          customerCode: updatedData.customerCode,
-          specificRequirements: updatedData.specificRequirements,
-          changeDescription: '编辑生产计划基本信息'
-        })
-
-        if (response.success) {
-          this.$message.success(response.message || '保存成功')
-          this.editMode = false
-          this.originalData = null
-          // 重新加载详情
-          await this.fetchDetail()
-        } else {
-          this.$message.error(response.message || '保存失败')
-        }
-      } catch (error) {
-        console.error('保存失败:', error)
-        const errorMessage = getErrorMessage(error)
-        this.$message.error(errorMessage)
-      } finally {
-        this.saveLoading = false
-      }
-    },
-
-    /**
-     * 更新基本信息（来自子组件）
-     */
-    handleUpdateBasicInfo(updatedData) {
-      Object.assign(this.planData, updatedData)
     },
 
     /**

@@ -1,95 +1,84 @@
 /**
  * 文件名称：BasicInfo.vue
- * 文件描述：生产计划基本信息组件（支持展示和编辑模式）
+ * 文件描述：生产计划基本信息组件（只读展示）
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-01-21: 删除编辑模式，改为只读展示
  */
 
 <template>
   <div class="basic-info">
-    <el-form
-      ref="form"
-      :model="formData"
-      :rules="editMode ? formRules : {}"
-      label-width="140px"
-      class="info-form"
-    >
+    <div class="info-form">
       <!-- 计划基本信息 -->
       <div class="info-section">
         <div class="section-title">计划基本信息</div>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="计划编号">
+            <div class="info-item">
+              <span class="info-label">计划编号：</span>
               <span class="info-value">{{ planData.planNumber || '-' }}</span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="外部订单号">
+            <div class="info-item">
+              <span class="info-label">外部订单号：</span>
               <span class="info-value">{{ planData.externalOrderNumber || '-' }}</span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="计划来源">
+            <div class="info-item">
+              <span class="info-label">计划来源：</span>
               <span class="info-value">{{ getSourceText(planData.source) }}</span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="ERP同步批次号">
+            <div class="info-item">
+              <span class="info-label">ERP同步批次号：</span>
               <span class="info-value">{{ planData.erpSyncBatchNo || '-' }}</span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="计划优先级" prop="planPriority">
-              <el-select
-                v-if="editMode"
-                v-model="formData.planPriority"
-                placeholder="请选择计划优先级"
-                style="width: 100%"
-              >
-                <el-option
-                  v-for="item in priorityOptions"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
+            <div class="info-item">
+              <span class="info-label">计划优先级：</span>
               <status-tag
-                v-else-if="planData.planPriority"
+                v-if="planData.planPriority"
                 :status="planData.planPriority"
-                :text-map="PLAN_PRIORITY_MAP"
+                :text-map="planPriorityTextMap"
                 :type-map="PLAN_PRIORITY_TYPE_MAP"
               />
               <span v-else class="info-value">-</span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="计划状态">
+            <div class="info-item">
+              <span class="info-label">计划状态：</span>
               <status-tag
                 v-if="planData.status"
                 :status="planData.status"
-                :text-map="PLAN_STATUS_MAP"
+                :text-map="planStatusTextMap"
                 :type-map="PLAN_STATUS_TYPE_MAP"
               />
               <span v-else class="info-value">-</span>
               <el-tag v-if="planData.isFrozen" type="danger" size="small" style="margin-left: 8px">
                 已冻结
               </el-tag>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="完成进度">
+            <div class="info-item">
+              <span class="info-label">完成进度：</span>
               <el-progress
                 :percentage="planData.currentProgressPercentage || 0"
                 :color="getProgressColor(planData.currentProgressPercentage)"
               />
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
       </div>
@@ -99,56 +88,42 @@
         <div class="section-title">产品信息</div>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="产品编码">
+            <div class="info-item">
+              <span class="info-label">产品编码：</span>
               <span class="info-value">{{ planData.productCode || '-' }}</span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="产品名称">
+            <div class="info-item">
+              <span class="info-label">产品名称：</span>
               <span class="info-value">{{ planData.productName || '-' }}</span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="需求数量" prop="demandQuantity">
-              <el-input-number
-                v-if="editMode"
-                v-model="formData.demandQuantity"
-                :min="0.001"
-                :max="9999999.999"
-                :precision="3"
-                :step="1"
-                controls-position="right"
-                style="width: 100%"
-              />
-              <span v-else class="info-value">
+            <div class="info-item">
+              <span class="info-label">需求数量：</span>
+              <span class="info-value">
                 {{ planData.demandQuantity }}{{ planData.demandUnit }}
               </span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="需求单位">
+            <div class="info-item">
+              <span class="info-label">需求单位：</span>
               <span class="info-value">{{ planData.demandUnit || '-' }}</span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="计划交期" prop="plannedDeliveryDate">
-              <el-date-picker
-                v-if="editMode"
-                v-model="formData.plannedDeliveryDate"
-                type="datetime"
-                placeholder="请选择计划交期"
-                format="yyyy-MM-dd HH:mm:ss"
-                value-format="yyyy-MM-ddTHH:mm:ss.sssZ"
-                style="width: 100%"
-              />
-              <span v-else class="info-value">
+            <div class="info-item">
+              <span class="info-label">计划交期：</span>
+              <span class="info-value">
                 {{ formatTime(planData.plannedDeliveryDate) }}
               </span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
       </div>
@@ -158,44 +133,24 @@
         <div class="section-title">客户信息</div>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="客户名称" prop="customerName">
-              <el-input
-                v-if="editMode"
-                v-model="formData.customerName"
-                placeholder="请输入客户名称"
-                maxlength="100"
-                clearable
-              />
-              <span v-else class="info-value">{{ planData.customerName || '-' }}</span>
-            </el-form-item>
+            <div class="info-item">
+              <span class="info-label">客户名称：</span>
+              <span class="info-value">{{ planData.customerName || '-' }}</span>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="客户编码" prop="customerCode">
-              <el-input
-                v-if="editMode"
-                v-model="formData.customerCode"
-                placeholder="请输入客户编码"
-                maxlength="50"
-                clearable
-              />
-              <span v-else class="info-value">{{ planData.customerCode || '-' }}</span>
-            </el-form-item>
+            <div class="info-item">
+              <span class="info-label">客户编码：</span>
+              <span class="info-value">{{ planData.customerCode || '-' }}</span>
+            </div>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
-            <el-form-item label="特殊要求" prop="specificRequirements">
-              <el-input
-                v-if="editMode"
-                v-model="formData.specificRequirements"
-                type="textarea"
-                :rows="3"
-                placeholder="请输入特殊要求"
-                maxlength="1000"
-                show-word-limit
-              />
-              <span v-else class="info-value">{{ planData.specificRequirements || '-' }}</span>
-            </el-form-item>
+            <div class="info-item">
+              <span class="info-label">特殊要求：</span>
+              <span class="info-value">{{ planData.specificRequirements || '-' }}</span>
+            </div>
           </el-col>
         </el-row>
       </div>
@@ -205,28 +160,32 @@
         <div class="section-title">工艺与设备配置</div>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="默认工艺模板">
+            <div class="info-item">
+              <span class="info-label">默认工艺模板：</span>
               <span class="info-value">{{ planData.defaultProcessTemplateId || '-' }}</span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="工艺模板关联类型">
+            <div class="info-item">
+              <span class="info-label">工艺模板关联类型：</span>
               <span class="info-value">
                 {{ getProcessLinkTypeText(planData.processTemplateLinkType) }}
               </span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="优选设备">
+            <div class="info-item">
+              <span class="info-label">优选设备：</span>
               <span class="info-value">{{ planData.preferredEquipmentId || '-' }}</span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="设备关联类型">
+            <div class="info-item">
+              <span class="info-label">设备关联类型：</span>
               <span class="info-value">{{ planData.equipmentLinkType || '-' }}</span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
       </div>
@@ -236,62 +195,66 @@
         <div class="section-title">时间信息</div>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="创建时间">
+            <div class="info-item">
+              <span class="info-label">创建时间：</span>
               <span class="info-value">{{ formatTime(planData.createdAt) }}</span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="更新时间">
+            <div class="info-item">
+              <span class="info-label">更新时间：</span>
               <span class="info-value">{{ formatTime(planData.updatedAt) }}</span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="确认时间">
+            <div class="info-item">
+              <span class="info-label">确认时间：</span>
               <span class="info-value">{{ formatTime(planData.confirmedAt) }}</span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="下达时间">
+            <div class="info-item">
+              <span class="info-label">下达时间：</span>
               <span class="info-value">{{ formatTime(planData.releasedAt) }}</span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="完成时间">
+            <div class="info-item">
+              <span class="info-label">完成时间：</span>
               <span class="info-value">{{ formatTime(planData.completedAt) }}</span>
-            </el-form-item>
+            </div>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="取消时间">
+            <div class="info-item">
+              <span class="info-label">取消时间：</span>
               <span class="info-value">{{ formatTime(planData.cancelledAt) }}</span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
         <el-row v-if="planData.cancelReason">
           <el-col :span="24">
-            <el-form-item label="取消原因">
+            <div class="info-item">
+              <span class="info-label">取消原因：</span>
               <span class="info-value">{{ planData.cancelReason }}</span>
-            </el-form-item>
+            </div>
           </el-col>
         </el-row>
       </div>
-    </el-form>
+    </div>
   </div>
 </template>
 
 <script>
 import StatusTag from '@/components/StatusTag'
 import { parseTime } from '@/utils'
+import dictionaryMixin from '@/mixins/dictionaryMixin'
 import {
-  PLAN_SOURCE_MAP,
-  PLAN_STATUS_MAP,
   PLAN_STATUS_TYPE_MAP,
-  PLAN_PRIORITY_MAP,
-  PLAN_PRIORITY_TYPE_MAP,
-  PLAN_PRIORITY_OPTIONS
+  PLAN_PRIORITY_TYPE_MAP
 } from '../../constants'
 
 export default {
@@ -299,93 +262,42 @@ export default {
   components: {
     StatusTag
   },
+  mixins: [dictionaryMixin],
   props: {
     planData: {
       type: Object,
       required: true
-    },
-    editMode: {
-      type: Boolean,
-      default: false
     }
   },
   data() {
     return {
-      PLAN_STATUS_MAP,
       PLAN_STATUS_TYPE_MAP,
-      PLAN_PRIORITY_MAP,
-      PLAN_PRIORITY_TYPE_MAP,
-      priorityOptions: PLAN_PRIORITY_OPTIONS,
-      formData: {
-        demandQuantity: null,
-        plannedDeliveryDate: '',
-        planPriority: '',
-        customerName: '',
-        customerCode: '',
-        specificRequirements: ''
-      },
-      formRules: {
-        demandQuantity: [
-          { required: true, message: '请输入需求数量', trigger: 'blur' },
-          { type: 'number', min: 0.001, message: '需求数量必须大于0', trigger: 'blur' }
-        ],
-        plannedDeliveryDate: [
-          { required: true, message: '请选择计划交期', trigger: 'change' }
-        ],
-        customerName: [
-          { max: 100, message: '客户名称最多100个字符', trigger: 'blur' }
-        ],
-        customerCode: [
-          { max: 50, message: '客户编码最多50个字符', trigger: 'blur' }
-        ],
-        specificRequirements: [
-          { max: 1000, message: '特殊要求最多1000个字符', trigger: 'blur' }
-        ]
-      }
+      PLAN_PRIORITY_TYPE_MAP
     }
   },
-  watch: {
-    planData: {
-      handler(newVal) {
-        if (newVal) {
-          this.initFormData()
-        }
-      },
-      immediate: true
+  computed: {
+    // 计划状态文本映射（从字典生成，用于 StatusTag 组件）
+    planStatusTextMap() {
+      const map = {}
+      if (this.planStatusOptions) {
+        this.planStatusOptions.forEach(option => {
+          map[option.value] = option.label
+        })
+      }
+      return map
+    },
+    // 计划优先级文本映射（从字典生成，用于 StatusTag 组件）
+    planPriorityTextMap() {
+      const map = {}
+      if (this.planPriorityOptions) {
+        this.planPriorityOptions.forEach(option => {
+          map[option.value] = option.label
+        })
+      }
+      return map
     }
   },
   methods: {
-    /**
-     * 初始化表单数据
-     */
-    initFormData() {
-      this.formData = {
-        demandQuantity: this.planData.demandQuantity,
-        plannedDeliveryDate: this.planData.plannedDeliveryDate,
-        planPriority: this.planData.planPriority,
-        customerName: this.planData.customerName || '',
-        customerCode: this.planData.customerCode || '',
-        specificRequirements: this.planData.specificRequirements || ''
-      }
-    },
-
-    /**
-     * 验证表单
-     */
-    validate() {
-      return new Promise((resolve) => {
-        this.$refs.form.validate((valid) => {
-          resolve(valid)
-        })
-      })
-    },
-
-    /**
-     * 获取表单数据
-     */
-    getFormData() {
-      return { ...this.formData }
-    },
 
     /**
      * 格式化时间
@@ -398,7 +310,7 @@ export default {
      * 获取来源文本
      */
     getSourceText(source) {
-      return PLAN_SOURCE_MAP[source] || source || '-'
+      return this.getPlanSourceLabel(source) || '-'
     },
 
     /**
@@ -454,12 +366,38 @@ export default {
     line-height: 32px;
   }
 
-  ::v-deep .el-form-item {
+  .info-item {
+    display: flex;
+    align-items: flex-start;
     margin-bottom: 16px;
-  }
+    min-height: 32px;
 
-  ::v-deep .el-form-item__label {
-    font-weight: 500;
+    .info-label {
+      width: 140px;
+      font-weight: 500;
+      color: #606266;
+      text-align: right;
+      padding-right: 12px;
+      line-height: 32px;
+      flex-shrink: 0;
+    }
+
+    .info-value {
+      color: #606266;
+      line-height: 32px;
+      flex: 1;
+    }
+
+    // 进度条特殊处理
+    .el-progress {
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    // 状态标签特殊处理
+    .status-tag, .el-tag {
+      margin-top: 4px;
+    }
   }
 }
 </style>
