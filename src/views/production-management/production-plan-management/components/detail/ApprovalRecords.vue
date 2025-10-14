@@ -238,18 +238,21 @@
     <!-- 批准审批对话框 -->
     <approval-approve-dialog
       ref="approveDialog"
+      :plan-data="planData"
       @success="handleApprovalSuccess"
     />
 
     <!-- 驳回审批对话框 -->
     <approval-reject-dialog
       ref="rejectDialog"
+      :plan-data="planData"
       @success="handleApprovalSuccess"
     />
 
     <!-- 取消审批对话框 -->
     <approval-cancel-dialog
       ref="cancelDialog"
+      :plan-data="planData"
       @success="handleApprovalSuccess"
     />
   </div>
@@ -353,9 +356,16 @@ export default {
         // API 返回的字段是 approvals，不是 results
         if (response.data) {
           const approvals = response.data.approvals || []
+
+          // 调试日志：检查后端是否返回 metadata
+          if (approvals.length > 0) {
+            console.log('📋 审批记录示例数据:', approvals[0])
+            console.log('📋 metadata字段:', approvals[0].metadata)
+          }
+
           // 处理数据，将 requester 和 approver 对象展开
           this.approvalList = approvals.map(approval => {
-            // 构建 metadata 对象（如果后端没有返回）
+            // 使用后端返回的 metadata，或构建默认值
             const metadata = approval.metadata || {}
 
             // 补充缺失的 metadata 字段
@@ -363,13 +373,29 @@ export default {
               metadata.planNumber = (this.planData && this.planData.planNumber) || ''
             }
             if (!metadata.targetStatus) {
+              // 目标状态就是 requestedAction
               metadata.targetStatus = approval.requestedAction || ''
             }
-            // previousStatus 从计划数据推断
             if (!metadata.previousStatus) {
-              // 对于待审批的，取当前计划状态
-              // 对于已处理的，尝试从审批时的计划状态推断
-              metadata.previousStatus = (this.planData && this.planData.status) || ''
+              // previousStatus 推断逻辑：
+              // 对于待审批的请求，previousStatus 应该是提交审批前的状态
+              // 通常：下达操作的 previousStatus 是 CONFIRMED
+              //       取消操作的 previousStatus 可能是 CONFIRMED、RELEASED 等
+              // 如果当前计划状态是 PENDING_APPROVAL，说明审批未处理，可以推断
+              if (this.planData && this.planData.status === 'PENDING_APPROVAL') {
+                // 根据目标状态推断原始状态
+                if (approval.requestedAction === 'RELEASED') {
+                  metadata.previousStatus = 'CONFIRMED'
+                } else if (approval.requestedAction === 'CANCELLED') {
+                  metadata.previousStatus = 'CONFIRMED' // 通常是从已确认状态取消
+                } else {
+                  metadata.previousStatus = ''
+                }
+              } else {
+                // 如果计划状态已经不是 PENDING_APPROVAL，说明审批已处理
+                // 无法准确推断 previousStatus，保持为空
+                metadata.previousStatus = ''
+              }
             }
 
             return {

@@ -80,6 +80,7 @@ import {
   SUCCESS_MESSAGES,
   getErrorMessage
 } from './constants'
+import { withRetry, createApprovalErrorHandler } from './utils/approval-error-handler'
 
 export default {
   name: 'ProductionPlanManagement',
@@ -315,10 +316,26 @@ export default {
 
         this.loading = true
 
-        const response = await updatePlanStatus(plan.id, {
-          targetStatus: PLAN_STATUS.CONFIRMED,
-          changeDescription: '确认生产计划'
-        })
+        const response = await withRetry(
+          () => updatePlanStatus(plan.id, {
+            targetStatus: PLAN_STATUS.CONFIRMED,
+            changeDescription: '确认生产计划'
+          }),
+          {
+            maxRetries: 3,
+            context: {
+              operation: 'confirm',
+              planId: plan.id
+            },
+            onApprovalDetailsView: (approvalId) => {
+              // 查看审批详情
+              console.log('查看审批详情:', approvalId)
+            },
+            onRefreshData: () => {
+              this.fetchListSafe()
+            }
+          }
+        )
 
         if (response.success) {
           this.$message.success(response.message || SUCCESS_MESSAGES.CONFIRM)
@@ -330,8 +347,18 @@ export default {
       } catch (error) {
         if (error !== 'cancel') {
           console.error('确认计划失败:', error)
-          const errorMessage = getErrorMessage(error)
-          this.$message.error(errorMessage)
+          // 如果错误没有被处理，使用默认处理
+          if (!error.handled) {
+            const errorHandler = createApprovalErrorHandler({
+              onRefreshData: () => {
+                this.fetchListSafe()
+              }
+            })
+            await errorHandler.handleError(error, {
+              operation: 'confirm',
+              planId: plan.id
+            })
+          }
         }
       } finally {
         this.loading = false
@@ -387,11 +414,27 @@ export default {
 
         this.loading = true
 
-        // 提交待审批状态
-        const response = await updatePlanStatus(plan.id, {
-          targetStatus: PLAN_STATUS.PENDING_APPROVAL,
-          changeDescription: '提交生产计划审批'
-        })
+        // 使用带重试机制的审批提交
+        const response = await withRetry(
+          () => updatePlanStatus(plan.id, {
+            targetStatus: PLAN_STATUS.PENDING_APPROVAL,
+            changeDescription: '提交生产计划审批'
+          }),
+          {
+            maxRetries: 3,
+            context: {
+              operation: 'submitApproval',
+              planId: plan.id
+            },
+            onApprovalDetailsView: (approvalId) => {
+              // 查看审批详情
+              console.log('查看审批详情:', approvalId)
+            },
+            onRefreshData: () => {
+              this.fetchListSafe()
+            }
+          }
+        )
 
         if (response.success) {
           this.$message.success(response.message || SUCCESS_MESSAGES.SUBMIT_APPROVAL)
@@ -403,8 +446,18 @@ export default {
       } catch (error) {
         if (error !== 'cancel') {
           console.error('提交审批失败:', error)
-          const errorMessage = getErrorMessage(error)
-          this.$message.error(errorMessage)
+          // 如果错误没有被处理，使用默认处理
+          if (!error.handled) {
+            const errorHandler = createApprovalErrorHandler({
+              onRefreshData: () => {
+                this.fetchListSafe()
+              }
+            })
+            await errorHandler.handleError(error, {
+              operation: 'submitApproval',
+              planId: plan.id
+            })
+          }
         }
       } finally {
         this.loading = false
@@ -436,11 +489,27 @@ export default {
 
         this.loading = true
 
-        const response = await updatePlanStatus(plan.id, {
-          targetStatus: PLAN_STATUS.CANCELLED,
-          cancelReason: cancelReason.trim(),
-          changeDescription: '取消生产计划'
-        })
+        const response = await withRetry(
+          () => updatePlanStatus(plan.id, {
+            targetStatus: PLAN_STATUS.CANCELLED,
+            cancelReason: cancelReason.trim(),
+            changeDescription: '取消生产计划'
+          }),
+          {
+            maxRetries: 3,
+            context: {
+              operation: 'cancel',
+              planId: plan.id
+            },
+            onApprovalDetailsView: (approvalId) => {
+              // 查看审批详情
+              console.log('查看审批详情:', approvalId)
+            },
+            onRefreshData: () => {
+              this.fetchListSafe()
+            }
+          }
+        )
 
         if (response.success) {
           this.$message.success(response.message || SUCCESS_MESSAGES.CANCEL)
@@ -452,8 +521,18 @@ export default {
       } catch (error) {
         if (error !== 'cancel') {
           console.error('取消计划失败:', error)
-          const errorMessage = getErrorMessage(error)
-          this.$message.error(errorMessage)
+          // 如果错误没有被处理，使用默认处理
+          if (!error.handled) {
+            const errorHandler = createApprovalErrorHandler({
+              onRefreshData: () => {
+                this.fetchListSafe()
+              }
+            })
+            await errorHandler.handleError(error, {
+              operation: 'cancel',
+              planId: plan.id
+            })
+          }
         }
       } finally {
         this.loading = false

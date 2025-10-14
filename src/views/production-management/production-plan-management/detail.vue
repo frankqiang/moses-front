@@ -77,6 +77,16 @@
       </div>
     </div>
 
+    <!-- 审批状态显示 -->
+    <approval-status-banner
+      v-if="planId && planData.planNumber"
+      :plan-id="planId"
+      :plan-number="planData.planNumber"
+      @view-approval-detail="handleViewApprovalDetail"
+      @approval-cancelled="handleApprovalCancelled"
+      @approval-status-change="handleApprovalStatusChange"
+    />
+
     <!-- 加载状态 -->
     <div v-loading="loading" class="detail-content">
       <el-tabs v-model="activeTab" type="border-card">
@@ -161,6 +171,7 @@ import BasicInfo from './components/detail/BasicInfo.vue'
 import ItemsTable from './components/detail/ItemsTable.vue'
 import ChangeLogsTimeline from './components/detail/ChangeLogsTimeline.vue'
 import ApprovalRecords from './components/detail/ApprovalRecords.vue'
+import ApprovalStatusBanner from './components/ApprovalStatusBanner.vue'
 import AdjustDialog from './components/AdjustDialog.vue'
 import SplitDialog from './components/SplitDialog.vue'
 import MergeDialog from './components/MergeDialog.vue'
@@ -177,6 +188,7 @@ export default {
     ItemsTable,
     ChangeLogsTimeline,
     ApprovalRecords,
+    ApprovalStatusBanner,
     AdjustDialog,
     SplitDialog,
     MergeDialog,
@@ -444,6 +456,36 @@ export default {
      */
     async handleApprovalProcessed() {
       await this.fetchDetail()
+    },
+
+    /**
+     * 查看审批详情
+     */
+    handleViewApprovalDetail(approval) {
+      // 切换到审批记录Tab并高亮对应的审批
+      this.activeTab = 'approvals'
+
+      // 可以进一步实现高亮显示特定审批的逻辑
+      this.$nextTick(() => {
+        console.log('查看审批详情:', approval)
+      })
+    },
+
+    /**
+     * 审批被撤销后刷新详情
+     */
+    async handleApprovalCancelled(approval) {
+      console.log('审批已撤销:', approval)
+      await this.fetchDetail()
+    },
+
+    /**
+     * 审批状态发生变化
+     */
+    handleApprovalStatusChange(statusInfo) {
+      console.log('审批状态变化:', statusInfo)
+      // 可以在这里处理状态变化的相关逻辑
+      // 比如更新页面标题、发送通知等
     }
   }
 }

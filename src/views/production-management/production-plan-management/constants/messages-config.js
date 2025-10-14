@@ -27,6 +27,11 @@ export const ERROR_MESSAGES = {
   PRODUCTION_PLAN_QUERY_FAILED: '查询生产计划失败，请稍后重试',
   PRODUCTION_PLAN_TRANSACTION_FAILED: '操作失败，请稍后重试',
 
+  // 审批相关错误 - 2025年10月13日新增（更新为实际错误码）
+  BIZ_030: '该资源存在待处理的审批请求',
+  BIZ_031: '审批请求提交冲突，可能有其他用户同时操作，请稍后重试',
+  BIZ_032: '操作已被批准，无需重复提交',
+
   // 权限错误
   UNAUTHORIZED: '未授权，请重新登录',
   FORBIDDEN: '无权限执行此操作',

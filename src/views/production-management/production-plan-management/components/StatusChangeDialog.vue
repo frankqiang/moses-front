@@ -117,7 +117,8 @@ import {
   CRITICAL_STATUS_CHANGES
 } from '../constants'
 import { updatePlanStatus } from '../api'
-import { getErrorMessage } from '../constants'
+import { withRetry, createApprovalErrorHandler } from '../utils/approval-error-handler'
+import { submitPlanOperation } from '../utils/submission-manager'
 
 export default {
   name: 'StatusChangeDialog',
@@ -242,8 +243,37 @@ export default {
           requestData.cancelReason = this.formData.cancelReason
         }
 
-        // 调用状态更新接口
-        const response = await updatePlanStatus(this.planId, requestData)
+        // 使用防重复提交机制和带重试机制的API调用
+        const response = await submitPlanOperation(
+          () => withRetry(
+            () => updatePlanStatus(this.planId, requestData),
+            {
+              maxRetries: 3,
+              context: {
+                operation: 'updateStatus',
+                planId: this.planId,
+                targetStatus: this.formData.targetStatus
+              },
+              onApprovalDetailsView: (approvalId) => {
+                // 查看审批详情的逻辑
+                this.$emit('view-approval', approvalId)
+              },
+              onCancelApproval: (approvalId) => {
+                // 撤销审批的逻辑
+                this.$emit('cancel-approval', approvalId)
+              },
+              onRefreshData: () => {
+                // 刷新数据的逻辑
+                this.$emit('refresh-data')
+              },
+              onRetry: (attempt, error) => {
+                console.log(`状态更新重试第${attempt}次:`, error.response?.data?.error?.code)
+              }
+            }
+          ),
+          this.planId,
+          `updateStatus_${this.formData.targetStatus}`
+        )
 
         if (response.success) {
           this.$message.success(response.message || '状态变更成功')
@@ -254,8 +284,21 @@ export default {
         }
       } catch (error) {
         console.error('状态变更失败:', error)
-        const errorMessage = getErrorMessage(error)
-        this.$message.error(errorMessage)
+        // 如果错误没有被处理，使用默认处理
+        if (!error.handled) {
+          const errorHandler = createApprovalErrorHandler({
+            onApprovalDetailsView: (approvalId) => {
+              this.$emit('view-approval', approvalId)
+            },
+            onRefreshData: () => {
+              this.$emit('refresh-data')
+            }
+          })
+          await errorHandler.handleError(error, {
+            operation: 'updateStatus',
+            planId: this.planId
+          })
+        }
       } finally {
         this.loading = false
       }

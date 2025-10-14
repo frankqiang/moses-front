@@ -93,6 +93,13 @@ import {
 
 export default {
   name: 'ApprovalApproveDialog',
+  props: {
+    // 生产计划数据 - 用于显示实际的计划编号和状态
+    planData: {
+      type: Object,
+      default: () => ({})
+    }
+  },
   data() {
     return {
       visible: false,
@@ -110,22 +117,32 @@ export default {
   },
   computed: {
     planNumber() {
-      return (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.planNumber) || '-'
+      // 优先使用实际计划数据中的计划编号
+      return this.planData.planNumber ||
+             (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.planNumber) || '-'
     },
     previousStatusText() {
-      const status = (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.previousStatus) || ''
+      // 优先使用实际计划数据中的状态作为当前状态
+      const status = this.planData.status ||
+                    (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.previousStatus) || ''
       return this.getStatusText(status)
     },
     previousStatusType() {
-      const status = (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.previousStatus) || ''
+      // 优先使用实际计划数据中的状态作为当前状态
+      const status = this.planData.status ||
+                    (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.previousStatus) || ''
       return this.getStatusType(status)
     },
     targetStatusText() {
-      const status = (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.targetStatus) || ''
+      // 目标状态优先从审批数据的requestedAction获取，其次从metadata获取
+      const status = (this.approvalData && this.approvalData.requestedAction) ||
+                    (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.targetStatus) || ''
       return this.getStatusText(status)
     },
     targetStatusType() {
-      const status = (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.targetStatus) || ''
+      // 目标状态优先从审批数据的requestedAction获取，其次从metadata获取
+      const status = (this.approvalData && this.approvalData.requestedAction) ||
+                    (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.targetStatus) || ''
       return this.getStatusType(status)
     }
   },

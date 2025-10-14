@@ -131,7 +131,7 @@ import {
   PLAN_STATUS_TYPE_MAP
 } from '../constants'
 import { submitApproval } from '../api'
-import { getErrorMessage } from '../constants'
+import { withRetry, createApprovalErrorHandler } from '../utils/approval-error-handler'
 
 export default {
   name: 'ApprovalSubmitDialog',
@@ -223,12 +223,37 @@ export default {
 
         this.loading = true
 
-        // 调用审批提交接口
-        const response = await submitApproval(this.planData.id, {
-          targetStatus: this.formData.targetStatus,
-          remarks: this.formData.remarks || `申请将生产计划状态变更为${PLAN_STATUS_MAP[this.formData.targetStatus]}`,
-          requiredPermissions: this.formData.requiredPermissions
-        })
+        // 使用带重试机制的审批提交
+        const response = await withRetry(
+          () => submitApproval(this.planData.id, {
+            targetStatus: this.formData.targetStatus,
+            remarks: this.formData.remarks || `申请将生产计划状态变更为${PLAN_STATUS_MAP[this.formData.targetStatus]}`,
+            requiredPermissions: this.formData.requiredPermissions
+          }),
+          {
+            maxRetries: 3,
+            context: {
+              operation: 'submitApproval',
+              planId: this.planData.id,
+              targetStatus: this.formData.targetStatus
+            },
+            onApprovalDetailsView: (approvalId) => {
+              // 查看审批详情的逻辑
+              this.$emit('view-approval', approvalId)
+            },
+            onCancelApproval: (approvalId) => {
+              // 撤销审批的逻辑
+              this.$emit('cancel-approval', approvalId)
+            },
+            onRefreshData: () => {
+              // 刷新数据的逻辑
+              this.$emit('refresh-data')
+            },
+            onRetry: (attempt, error) => {
+              console.log(`审批提交重试第${attempt}次:`, error.response?.data?.error?.code)
+            }
+          }
+        )
 
         if (response.success) {
           this.$message.success(response.message || '审批提交成功')
@@ -239,8 +264,21 @@ export default {
         }
       } catch (error) {
         console.error('审批提交失败:', error)
-        const errorMessage = getErrorMessage(error)
-        this.$message.error(errorMessage)
+        // 如果错误没有被处理，使用默认处理
+        if (!error.handled) {
+          const errorHandler = createApprovalErrorHandler({
+            onApprovalDetailsView: (approvalId) => {
+              this.$emit('view-approval', approvalId)
+            },
+            onRefreshData: () => {
+              this.$emit('refresh-data')
+            }
+          })
+          await errorHandler.handleError(error, {
+            operation: 'submitApproval',
+            planId: this.planData.id
+          })
+        }
       } finally {
         this.loading = false
       }
