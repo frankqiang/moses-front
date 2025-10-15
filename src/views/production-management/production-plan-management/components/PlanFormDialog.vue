@@ -255,7 +255,7 @@
 
 <script>
 import { createPlan } from '../api'
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../mixins/dictionary'
 // 从铝箔产品管理模块获取产品数据
 import { fetchFoilProductList } from '@/views/master-data/aluminum-foil-product-management/api/aluminum-foil-product-management'
 // 从工艺参数管理模块获取工艺模板数据

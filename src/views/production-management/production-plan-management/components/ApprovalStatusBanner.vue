@@ -52,8 +52,8 @@
           <el-button
             size="mini"
             icon="el-icon-refresh"
-            @click="refreshApprovalStatus"
             :loading="loading"
+            @click="refreshApprovalStatus"
           >
             刷新状态
           </el-button>
@@ -138,12 +138,6 @@ export default {
       return this.$store.state.user?.id || null
     }
   },
-  mounted() {
-    this.startPolling()
-  },
-  beforeDestroy() {
-    this.stopPolling()
-  },
   watch: {
     planId: {
       handler(newVal, oldVal) {
@@ -153,6 +147,12 @@ export default {
       },
       immediate: true
     }
+  },
+  mounted() {
+    this.startPolling()
+  },
+  beforeDestroy() {
+    this.stopPolling()
   },
   methods: {
     /**

@@ -10,7 +10,6 @@
 import {
   SEGMENT_TYPES,
   SEGMENT_TYPE_OPTIONS,
-  ATMOSPHERE_TYPE_OPTIONS,
   FAN_MODE_OPTIONS,
   SEGMENT_FIELD_LIMITS,
   ATMOSPHERE_FIELD_LIMITS,
@@ -157,7 +156,7 @@ export const ATMOSPHERE_FORM_FIELDS = [
     prop: 'atmosphereType',
     label: '气氛类型',
     required: true,
-    options: ATMOSPHERE_TYPE_OPTIONS,
+    options: [], // ⚠️ 需在组件中通过 mixin 的 this.atmosphereTypeOptions 动态赋值
     dynamicDisabled: ({ status }) => READONLY_VERSION_STATUSES.includes(status),
     rules: [{ required: true, message: '请选择气氛类型', trigger: 'change' }]
   },

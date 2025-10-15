@@ -89,7 +89,7 @@ import {
   PLAN_STATUS_TYPE_MAP,
   getErrorMessage
 } from '../constants'
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../mixins/dictionary'
 
 export default {
   name: 'ApprovalApproveDialog',

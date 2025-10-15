@@ -184,7 +184,7 @@ import TableToolbar from '@/components/TableToolbar'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
 import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../mixins/dictionary'
 import {
   TABLE_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,

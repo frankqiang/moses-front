@@ -245,12 +245,13 @@
 <script>
 import {
   ATMOSPHERE_TYPES,
-  ATMOSPHERE_TYPE_OPTIONS,
   ATMOSPHERE_FIELD_LIMITS
 } from '../constants/process-parameter-management'
+import dictionaryMixin from '../mixins/dictionary'
 
 export default {
   name: 'AtmosphereEditor',
+  mixins: [dictionaryMixin],
   props: {
     value: {
       type: Array,
@@ -264,7 +265,6 @@ export default {
   data() {
     return {
       atmospheres: [],
-      atmosphereTypeOptions: ATMOSPHERE_TYPE_OPTIONS,
       fieldLimits: ATMOSPHERE_FIELD_LIMITS
     }
   },

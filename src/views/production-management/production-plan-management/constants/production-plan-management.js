@@ -10,7 +10,7 @@
  * - 枚举值常量（PLAN_STATUS等）保留用于代码判断
  * - 中文映射（*_MAP）和选项（*_OPTIONS）已废弃
  * - 请使用字典系统获取中文标签和选项：
- *   import dictionaryMixin from '@/mixins/dictionaryMixin'
+ *   import dictionaryMixin from '../mixins/dictionary'
  *   然后使用 this.getPlanStatusLabel(status) 和 this.planStatusOptions
  */
 
@@ -58,7 +58,9 @@ export const APPROVAL_STATUS = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
+  WITHDRAWN: 'WITHDRAWN',
+  EXPIRED: 'EXPIRED'
 }
 
 // ========== UI样式映射（保留用于前端展示） ==========
@@ -99,7 +101,9 @@ export const APPROVAL_STATUS_TYPE_MAP = {
   PENDING: 'warning',
   APPROVED: 'success',
   REJECTED: 'danger',
-  CANCELLED: 'info'
+  CANCELLED: 'info',
+  WITHDRAWN: 'info',
+  EXPIRED: 'danger'
 }
 
 // 默认分页配置
@@ -143,81 +147,39 @@ export const STATUS_TRANSITION_RULES = {
 // 关键状态变更（需要审批）
 export const CRITICAL_STATUS_CHANGES = ['RELEASED', 'CANCELLED']
 
-// ========== 废弃的常量（使用字典系统替代） ==========
+// ========== 说明：已废弃的常量 ==========
 
 /**
- * @deprecated 已废弃：请使用字典系统
- * import dictionaryMixin from '@/mixins/dictionaryMixin'
- * 然后使用: this.getPlanStatusLabel(status)
+ * ⚠️ 以下常量已全部废弃，请使用字典系统替代
+ *
+ * 使用方式：
+ * 1. 在组件中引入 mixin
+ *    import dictionaryMixin from '../mixins/dictionary'
+ *
+ * 2. 注册 mixin
+ *    export default {
+ *      mixins: [dictionaryMixin],
+ *      async created() {
+ *        await this.loadProductionPlanDictionary()
+ *      }
+ *    }
+ *
+ * 3. 使用字典方法
+ *    - 获取标签：this.getPlanStatusLabel(status)
+ *    - 获取选项：this.planStatusOptions
+ *    - 获取审批状态标签：this.getApprovalStatusLabel(status)
+ *    - 获取审批状态选项：this.approvalStatusOptions
+ *
+ * 📋 已废弃常量列表（已移除）：
+ * - PLAN_STATUS_MAP → 使用 this.getPlanStatusLabel(status)
+ * - PLAN_STATUS_OPTIONS → 使用 this.planStatusOptions
+ * - PLAN_SOURCE_MAP → 使用 this.getPlanSourceLabel(source)
+ * - PLAN_SOURCE_OPTIONS → 使用 this.planSourceOptions
+ * - PLAN_PRIORITY_MAP → 使用 this.getPlanPriorityLabel(priority)
+ * - PLAN_PRIORITY_OPTIONS → 使用 this.planPriorityOptions
+ * - ITEM_STATUS_MAP → 使用 this.getPlanItemStatusLabel(status)
+ * - ITEM_STATUS_OPTIONS → 使用 this.planItemStatusOptions
+ * - APPROVAL_STATUS_MAP → 使用 this.getApprovalStatusLabel(status)
+ * - APPROVAL_STATUS_OPTIONS → 使用 this.approvalStatusOptions
  */
-export const PLAN_STATUS_MAP = {}
-
-/**
- * @deprecated 已废弃：请使用字典系统
- * import dictionaryMixin from '@/mixins/dictionaryMixin'
- * 然后使用: this.planStatusOptions
- */
-export const PLAN_STATUS_OPTIONS = []
-
-/**
- * @deprecated 已废弃：请使用字典系统
- * import dictionaryMixin from '@/mixins/dictionaryMixin'
- * 然后使用: this.getPlanSourceLabel(source)
- */
-export const PLAN_SOURCE_MAP = {}
-
-/**
- * @deprecated 已废弃：请使用字典系统
- * import dictionaryMixin from '@/mixins/dictionaryMixin'
- * 然后使用: this.planSourceOptions
- */
-export const PLAN_SOURCE_OPTIONS = []
-
-/**
- * @deprecated 已废弃：请使用字典系统
- * import dictionaryMixin from '@/mixins/dictionaryMixin'
- * 然后使用: this.getPlanPriorityLabel(priority)
- */
-export const PLAN_PRIORITY_MAP = {}
-
-/**
- * @deprecated 已废弃：请使用字典系统
- * import dictionaryMixin from '@/mixins/dictionaryMixin'
- * 然后使用: this.planPriorityOptions
- */
-export const PLAN_PRIORITY_OPTIONS = []
-
-/**
- * @deprecated 已废弃：请使用字典系统
- * import dictionaryMixin from '@/mixins/dictionaryMixin'
- * 然后使用: this.getPlanItemStatusLabel(status)
- */
-export const ITEM_STATUS_MAP = {}
-
-/**
- * @deprecated 已废弃：请使用字典系统
- * import dictionaryMixin from '@/mixins/dictionaryMixin'
- * 然后使用: this.planItemStatusOptions
- */
-export const ITEM_STATUS_OPTIONS = []
-
-/**
- * @deprecated 已废弃：审批状态标签请从后端获取
- * TODO: 待后端提供审批状态字典接口后使用字典系统
- */
-export const APPROVAL_STATUS_MAP = {
-  PENDING: '待审批',
-  APPROVED: '已通过',
-  REJECTED: '已驳回',
-  CANCELLED: '已取消'
-}
-
-/**
- * @deprecated 已废弃：审批状态选项请从后端获取
- * TODO: 待后端提供审批状态字典接口后使用字典系统
- */
-export const APPROVAL_STATUS_OPTIONS = Object.entries(APPROVAL_STATUS_MAP).map(([value, label]) => ({
-  value,
-  label
-}))
 

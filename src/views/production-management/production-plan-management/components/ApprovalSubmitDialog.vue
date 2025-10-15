@@ -131,7 +131,7 @@ import {
 } from '../constants'
 import { submitApproval } from '../api'
 import { withRetry, createApprovalErrorHandler } from '../utils/approval-error-handler'
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../mixins/dictionary'
 
 export default {
   name: 'ApprovalSubmitDialog',

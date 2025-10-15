@@ -4,16 +4,22 @@
  * 创建日期：2025-09-29
  * 修改记录：
  *   - 2025-09-29: 初始创建，覆盖TASK002 P0阶段搜索项
+ *   - 2025-10-15: 重构为工厂函数，使用后端字典API替代硬编码枚举
  */
 
-import {
-  TEMPLATE_STATUS_OPTIONS,
-  VERSION_STATUS_OPTIONS,
-  DEFAULT_SORT
-} from './process-parameter-management'
+import { DEFAULT_SORT } from './process-parameter-management'
 
-// 搜索表单配置 - 对接 SearchForm 全局组件
-export const SEARCH_FORM_CONFIG = [
+/**
+ * 搜索表单配置工厂函数
+ * @param {Object} dictionaries - 字典选项对象
+ * @param {Array} dictionaries.templateStatusOptions - 模板状态选项（从后端字典获取）
+ * @param {Array} dictionaries.versionStatusOptions - 版本状态选项（从后端字典获取）
+ * @returns {Array} 搜索表单配置数组
+ */
+export const createSearchFormConfig = ({
+  templateStatusOptions = [],
+  versionStatusOptions = []
+} = {}) => [
   {
     type: 'input',
     prop: 'keyword',
@@ -29,7 +35,7 @@ export const SEARCH_FORM_CONFIG = [
     prop: 'status',
     label: '模板状态',
     placeholder: '请选择模板状态',
-    options: TEMPLATE_STATUS_OPTIONS,
+    options: templateStatusOptions,
     clearable: true,
     priority: 'primary'
   },
@@ -38,7 +44,7 @@ export const SEARCH_FORM_CONFIG = [
     prop: 'versionStatus',
     label: '版本状态',
     placeholder: '请选择版本状态（注：接口暂不支持，仅前端收集）',
-    options: VERSION_STATUS_OPTIONS,
+    options: versionStatusOptions,
     clearable: true,
     priority: 'primary',
     disabled: true // 接口暂不支持，禁用此字段

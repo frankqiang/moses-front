@@ -19,7 +19,7 @@
             style="width: 150px"
           >
             <el-option
-              v-for="option in statusOptions"
+              v-for="option in planStatusOptions"
               :key="option.value"
               :label="option.label"
               :value="option.value"
@@ -35,7 +35,7 @@
             style="width: 120px"
           >
             <el-option
-              v-for="option in priorityOptions"
+              v-for="option in planPriorityOptions"
               :key="option.value"
               :label="option.label"
               :value="option.value"
@@ -316,17 +316,17 @@ import StatusTag from '@/components/StatusTag'
 import { parseTime } from '@/utils'
 import { fetchProgressReport } from './api'
 import {
-  PLAN_STATUS_OPTIONS,
-  PLAN_PRIORITY_OPTIONS,
-  STATUS_CONFIG,
-  getErrorMessage
+  STATUS_CONFIG
 } from './constants'
+import { getErrorMessage } from './constants/messages-config'
+import dictionaryMixin from './mixins/dictionary'
 
 export default {
   name: 'ProgressReport',
   components: {
     StatusTag
   },
+  mixins: [dictionaryMixin],
   data() {
     return {
       loading: false,
@@ -337,9 +337,9 @@ export default {
         productCode: '',
         deliveryDateRange: null
       },
-      // 状态和优先级选项
-      statusOptions: PLAN_STATUS_OPTIONS,
-      priorityOptions: PLAN_PRIORITY_OPTIONS,
+      // 状态和优先级选项 - 从字典mixin获取
+      // statusOptions: this.planStatusOptions
+      // priorityOptions: this.planPriorityOptions
       statusConfig: STATUS_CONFIG,
       // 报表数据
       reportData: [],
@@ -363,7 +363,10 @@ export default {
       return this.reportData.filter(item => this.getDelayStatus(item) === 'danger').length
     }
   },
-  created() {
+  async created() {
+    // 加载字典
+    await this.loadProductionPlanDictionary()
+    // 加载报表数据
     this.fetchReport()
   },
   methods: {

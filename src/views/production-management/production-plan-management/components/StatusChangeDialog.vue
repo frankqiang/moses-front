@@ -110,7 +110,7 @@
 </template>
 
 <script>
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../mixins/dictionary'
 import {
   PLAN_STATUS_TYPE_MAP,
   STATUS_TRANSITION_RULES,

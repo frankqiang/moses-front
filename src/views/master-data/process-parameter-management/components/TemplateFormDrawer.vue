@@ -236,11 +236,11 @@ import {
 import { TEMPLATE_STATUS } from '../constants/process-parameter-management'
 import { MESSAGE_FALLBACKS } from '../constants/messages-config'
 import {
-  fetchProductOptions,
   createProcessTemplate,
   getProcessTemplateDetail,
   updateProcessTemplateVersion
 } from '../api'
+import { getProductionProductOptions } from '@/api/master-data'
 
 const NUMBER_RANGE_COMPONENT = 'template-number-range'
 
@@ -542,7 +542,7 @@ export default {
     },
     async fetchInitialProductOptions() {
       try {
-        const response = await fetchProductOptions({ limit: this.productPagination.limit })
+        const response = await getProductionProductOptions({ limit: this.productPagination.limit })
         this.productOptions = response.data.options || []
         this.productPagination.totalPages = response.data.pagination.totalPages
       } catch (error) {
@@ -556,7 +556,7 @@ export default {
       this.productKeyword = keyword
       this.productPagination.page = 1
       try {
-        const response = await fetchProductOptions({ keyword, limit: this.productPagination.limit })
+        const response = await getProductionProductOptions({ keyword, limit: this.productPagination.limit })
         this.productOptions = response.data.options
         this.productPagination.totalPages = response.data.pagination.totalPages
       } catch (error) {
@@ -570,7 +570,7 @@ export default {
       }
       const nextPage = this.productPagination.page + 1
       try {
-        const response = await fetchProductOptions({
+        const response = await getProductionProductOptions({
           keyword: this.productKeyword,
           page: nextPage,
           limit: this.productPagination.limit

@@ -262,10 +262,9 @@
 import { parseTime } from '@/utils'
 import { fetchApprovalRequests } from '../../api'
 import {
-  APPROVAL_STATUS_MAP,
-  APPROVAL_STATUS_TYPE_MAP,
-  APPROVAL_STATUS_OPTIONS
+  APPROVAL_STATUS_TYPE_MAP
 } from '../../constants'
+import dictionaryMixin from '../../mixins/dictionary'
 import ApprovalApproveDialog from '../ApprovalApproveDialog.vue'
 import ApprovalRejectDialog from '../ApprovalRejectDialog.vue'
 import ApprovalCancelDialog from '../ApprovalCancelDialog.vue'
@@ -277,6 +276,7 @@ export default {
     ApprovalRejectDialog,
     ApprovalCancelDialog
   },
+  mixins: [dictionaryMixin],
   props: {
     planId: {
       type: String,
@@ -301,8 +301,8 @@ export default {
         page: 1,
         limit: 10
       },
-      // 审批状态选项
-      approvalStatusOptions: APPROVAL_STATUS_OPTIONS,
+      // 审批状态选项 - 从字典mixin获取
+      // approvalStatusOptions 通过 mixin 提供
       // 操作类型映射
       actionMap: {
         RELEASED: '下达',
@@ -330,6 +330,10 @@ export default {
       },
       immediate: true
     }
+  },
+  async created() {
+    // 加载字典
+    await this.loadProductionPlanDictionary()
   },
   methods: {
     /**
@@ -517,7 +521,7 @@ export default {
      * 获取状态文本
      */
     getStatusText(status) {
-      return APPROVAL_STATUS_MAP[status] || status || '-'
+      return this.getApprovalStatusLabel(status) || status || '-'
     },
 
     /**

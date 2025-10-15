@@ -4,11 +4,14 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-10-15: 添加工艺模板模块字典支持
  */
 
-import { getAllDictionaries } from '@/views/production-management/production-plan-management/api'
+import { getAllDictionaries as getProductionPlanDictionaries } from '@/views/production-management/production-plan-management/api'
+import { getAllDictionaries as getProcessTemplateDictionaries } from '@/views/master-data/process-parameter-management/api'
 
 const CACHE_KEY = 'app_dictionaries_cache'
+const PROCESS_TEMPLATE_CACHE_KEY = 'processTemplateDictionaries'
 const CACHE_VALIDITY_HOURS = 24 // 缓存有效期24小时
 
 const state = {
@@ -23,9 +26,19 @@ const state = {
     changeTypes: {},
     operationSources: {}
   },
+  // 工艺模板相关字典
+  processTemplate: {
+    templateStatuses: {},
+    templateVersionStatuses: {},
+    atmosphereTypes: {},
+    circulationFanSpeeds: {},
+    controlModes: {}
+  },
   // 字典加载状态
   loaded: false,
-  loading: false
+  loading: false,
+  processTemplateLoaded: false,
+  processTemplateLoading: false
 }
 
 const mutations = {
@@ -41,11 +54,26 @@ const mutations = {
       operationSources: dictionaries.operationSources || {}
     }
   },
+  SET_PROCESS_TEMPLATE_DICTIONARIES(state, dictionaries) {
+    state.processTemplate = {
+      templateStatuses: dictionaries.templateStatuses || {},
+      templateVersionStatuses: dictionaries.templateVersionStatuses || {},
+      atmosphereTypes: dictionaries.atmosphereTypes || {},
+      circulationFanSpeeds: dictionaries.circulationFanSpeeds || {},
+      controlModes: dictionaries.controlModes || {}
+    }
+  },
   SET_LOADED(state, loaded) {
     state.loaded = loaded
   },
   SET_LOADING(state, loading) {
     state.loading = loading
+  },
+  SET_PROCESS_TEMPLATE_LOADED(state, loaded) {
+    state.processTemplateLoaded = loaded
+  },
+  SET_PROCESS_TEMPLATE_LOADING(state, loading) {
+    state.processTemplateLoading = loading
   }
 }
 
@@ -74,7 +102,7 @@ const actions = {
     // 从服务器加载
     try {
       commit('SET_LOADING', true)
-      const response = await getAllDictionaries()
+      const response = await getProductionPlanDictionaries()
 
       if (response.success && response.data) {
         commit('SET_PRODUCTION_PLAN_DICTIONARIES', response.data)
@@ -110,6 +138,56 @@ const actions = {
   },
 
   /**
+   * 加载工艺模板字典
+   * @param {boolean} forceRefresh - 是否强制刷新（忽略缓存）
+   */
+  async loadProcessTemplateDictionaries({ commit, state }, forceRefresh = false) {
+    // 如果已加载且不强制刷新，直接返回
+    if (state.processTemplateLoaded && !forceRefresh) {
+      return
+    }
+
+    // 检查缓存
+    if (!forceRefresh) {
+      const cachedData = getProcessTemplateCachedDictionaries()
+      if (cachedData) {
+        commit('SET_PROCESS_TEMPLATE_DICTIONARIES', cachedData)
+        commit('SET_PROCESS_TEMPLATE_LOADED', true)
+        console.log('[Dictionary] 工艺模板字典从缓存加载')
+        return
+      }
+    }
+
+    // 从服务器加载
+    try {
+      commit('SET_PROCESS_TEMPLATE_LOADING', true)
+      const response = await getProcessTemplateDictionaries()
+
+      if (response.success && response.data) {
+        commit('SET_PROCESS_TEMPLATE_DICTIONARIES', response.data)
+        commit('SET_PROCESS_TEMPLATE_LOADED', true)
+
+        // 保存到缓存
+        saveProcessTemplateDictionariesToCache(response.data)
+        console.log('[Dictionary] 工艺模板字典从服务器加载')
+      } else {
+        console.error('[Dictionary] 加载工艺模板字典失败:', response)
+      }
+    } catch (error) {
+      console.error('[Dictionary] 加载工艺模板字典异常:', error)
+      // 加载失败时尝试使用缓存
+      const cachedData = getProcessTemplateCachedDictionaries(true) // 忽略有效期
+      if (cachedData) {
+        commit('SET_PROCESS_TEMPLATE_DICTIONARIES', cachedData)
+        commit('SET_PROCESS_TEMPLATE_LOADED', true)
+        console.warn('[Dictionary] 加载失败，使用过期缓存')
+      }
+    } finally {
+      commit('SET_PROCESS_TEMPLATE_LOADING', false)
+    }
+  },
+
+  /**
    * 调试：测试后端接口（强制调用，忽略缓存）
    */
   async debugTestAPI({ commit }) {
@@ -117,7 +195,7 @@ const actions = {
 
     try {
       commit('SET_LOADING', true)
-      const response = await getAllDictionaries()
+      const response = await getProductionPlanDictionaries()
 
       console.log('📡 [Dictionary Debug] 接口响应:', response)
 
@@ -259,6 +337,103 @@ const getters = {
       value: key,
       label: dict.labels[key]
     }))
+  },
+
+  // ============ 工艺模板相关 getters ============
+
+  /**
+   * 获取工艺模板状态标签
+   */
+  getTemplateStatusLabel: (state) => (status) => {
+    return state.processTemplate.templateStatuses?.labels?.[status] || status
+  },
+
+  /**
+   * 获取工艺模板版本状态标签
+   */
+  getTemplateVersionStatusLabel: (state) => (status) => {
+    return state.processTemplate.templateVersionStatuses?.labels?.[status] || status
+  },
+
+  /**
+   * 获取保护气氛类型标签
+   */
+  getAtmosphereTypeLabel: (state) => (type) => {
+    return state.processTemplate.atmosphereTypes?.labels?.[type] || type
+  },
+
+  /**
+   * 获取循环风机速度标签
+   */
+  getCirculationFanSpeedLabel: (state) => (speed) => {
+    return state.processTemplate.circulationFanSpeeds?.labels?.[speed] || speed
+  },
+
+  /**
+   * 获取控温方式标签
+   */
+  getControlModeLabel: (state) => (mode) => {
+    return state.processTemplate.controlModes?.labels?.[mode] || mode
+  },
+
+  /**
+   * 获取工艺模板状态选项（用于下拉框）
+   */
+  templateStatusOptions: (state) => {
+    const dict = state.processTemplate.templateStatuses
+    if (!dict.values || !dict.labels) return []
+    return Object.keys(dict.values).map(key => ({
+      value: key,
+      label: dict.labels[key]
+    }))
+  },
+
+  /**
+   * 获取工艺模板版本状态选项（用于下拉框）
+   */
+  templateVersionStatusOptions: (state) => {
+    const dict = state.processTemplate.templateVersionStatuses
+    if (!dict.values || !dict.labels) return []
+    return Object.keys(dict.values).map(key => ({
+      value: key,
+      label: dict.labels[key]
+    }))
+  },
+
+  /**
+   * 获取保护气氛类型选项（用于下拉框）
+   */
+  atmosphereTypeOptions: (state) => {
+    const dict = state.processTemplate.atmosphereTypes
+    if (!dict.values || !dict.labels) return []
+    return Object.keys(dict.values).map(key => ({
+      value: key,
+      label: dict.labels[key]
+    }))
+  },
+
+  /**
+   * 获取循环风机速度选项（用于下拉框）
+   */
+  circulationFanSpeedOptions: (state) => {
+    const dict = state.processTemplate.circulationFanSpeeds
+    if (!dict.values || !dict.labels) return []
+    return Object.keys(dict.values).map(key => ({
+      value: key,
+      label: dict.labels[key]
+    }))
+  },
+
+  /**
+   * 获取控温方式选项（用于下拉框）
+   */
+  controlModeOptions: (state) => {
+    const dict = state.processTemplate.controlModes
+    if (!dict.values || !dict.labels) return []
+    return Object.keys(dict.values).map(key => ({
+      value: key,
+      label: dict.labels[key]
+    }))
   }
 }
 
@@ -322,6 +497,62 @@ function saveDictionariesToCache(data) {
     console.log('[Dictionary] 缓存已保存（新格式）')
   } catch (error) {
     console.error('[Dictionary] 保存缓存失败:', error)
+  }
+}
+
+/**
+ * 从缓存获取工艺模板字典数据
+ * @param {boolean} ignoreExpiry - 是否忽略有效期
+ * @returns {Object|null}
+ */
+function getProcessTemplateCachedDictionaries(ignoreExpiry = false) {
+  try {
+    const cached = localStorage.getItem(PROCESS_TEMPLATE_CACHE_KEY)
+
+    if (!cached) {
+      return null
+    }
+
+    const cacheData = JSON.parse(cached)
+
+    // 检查格式（包含timestamp）
+    if (cacheData.data && cacheData.timestamp) {
+      // 检查有效期
+      if (!ignoreExpiry) {
+        const now = Date.now()
+        const validityMs = CACHE_VALIDITY_HOURS * 60 * 60 * 1000
+
+        if (now - cacheData.timestamp > validityMs) {
+          console.log('[Dictionary] 工艺模板字典缓存已过期')
+          return null
+        }
+      }
+
+      return cacheData.data
+    }
+
+    return null
+  } catch (error) {
+    console.error('[Dictionary] 读取工艺模板字典缓存失败:', error)
+    return null
+  }
+}
+
+/**
+ * 保存工艺模板字典数据到缓存
+ * @param {Object} data - 字典数据
+ */
+function saveProcessTemplateDictionariesToCache(data) {
+  try {
+    const cacheData = {
+      data,
+      timestamp: Date.now(),
+      version: '1.0'
+    }
+    localStorage.setItem(PROCESS_TEMPLATE_CACHE_KEY, JSON.stringify(cacheData))
+    console.log('[Dictionary] 工艺模板字典缓存已保存')
+  } catch (error) {
+    console.error('[Dictionary] 保存工艺模板字典缓存失败:', error)
   }
 }
 

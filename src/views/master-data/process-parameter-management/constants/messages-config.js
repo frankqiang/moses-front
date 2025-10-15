@@ -17,6 +17,7 @@ export const MESSAGE_FALLBACKS = {
   voidVersion: '版本作废成功',
   activateVersion: '版本已快速生效',
   copyTemplate: '复制模板成功',
+  createVersion: '创建新版本成功',
   saveSegments: '温度段参数保存成功',
   saveAtmosphere: '保护气氛参数保存成功',
   saveFanSettings: '循环风机参数保存成功'

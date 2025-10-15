@@ -55,36 +55,27 @@
         >
           <header class="template-usage-dialog__section-header">
             <h4>{{ item.title }}</h4>
-            <el-tag size="mini" type="info">{{ item.count }} 条</el-tag>
+            <el-tag size="mini" :type="item.count > 0 ? 'warning' : 'success'">
+              {{ item.count }} 条
+            </el-tag>
           </header>
-          <div v-if="item.count" class="template-usage-dialog__tags">
-            <OverflowTagsPopover
-              :data="item.data"
-              :max-show="3"
-              :label-key="'label'"
-              :tag-formatter="formatTagLabel"
-              :popover-width="420"
-              placement="top"
-              size="mini"
-            >
-              <template #popover-item="{ item: refItem }">
-                <div class="template-usage-dialog__tag-item">
-                  <div class="template-usage-dialog__tag-main">
-                    <span class="template-usage-dialog__tag-code">{{ refItem.label }}</span>
-                    <StatusTag
-                      v-if="refItem.status"
-                      :status="refItem.status"
-                      :text-map="referenceStatusMap"
-                      :type-map="referenceStatusTypeMap"
-                      size="mini"
-                    />
-                  </div>
-                  <div v-if="refItem.extra" class="template-usage-dialog__tag-extra">
-                    {{ refItem.extra }}
-                  </div>
-                </div>
-              </template>
-            </OverflowTagsPopover>
+          <div v-if="item.count > 0" class="template-usage-dialog__content">
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="总引用数">
+                <el-tag type="warning" size="mini">{{ item.count }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item v-if="item.activeCount !== null" label="活跃引用数">
+                <el-tag type="danger" size="mini">{{ item.activeCount }}</el-tag>
+              </el-descriptions-item>
+            </el-descriptions>
+            <el-alert
+              type="info"
+              :closable="false"
+              :title="`该模板被 ${item.count} 个${item.title.replace('引用', '').replace('关联', '')}引用`"
+              description="详细的引用列表信息需联系生产计划管理员查看"
+              show-icon
+              style="margin-top: 12px;"
+            />
           </div>
           <el-alert
             v-else
@@ -108,15 +99,13 @@
 <script>
 import Drawer from '@/components/Drawer'
 import StatusTag from '@/components/StatusTag'
-import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import { TEMPLATE_STATUS_CONFIG } from '../constants/process-parameter-management'
 
 export default {
   name: 'TemplateUsageDialog',
   components: {
     Drawer,
-    StatusTag,
-    OverflowTagsPopover
+    StatusTag
   },
   props: {
     visible: {
@@ -164,36 +153,31 @@ export default {
     },
     usageSections() {
       const usageData = this.usage || {}
+      // 根据接口文档 v2.0，usage 数据结构为：
+      // {
+      //   productionPlans: { count, activeCount },
+      //   productionPlanItems: { count, activeCount },
+      //   products: { count },
+      //   isInUse: boolean
+      // }
       return [
         {
           key: 'plans',
-          title: '生产计划',
-          count: (usageData.planReferences || []).length,
-          data: (usageData.planReferences || []).map(item => ({
-            label: item.planNumber || item.id,
-            status: item.status,
-            extra: item.comment || ''
-          }))
+          title: '生产计划引用',
+          count: (usageData.productionPlans && usageData.productionPlans.count) || 0,
+          activeCount: (usageData.productionPlans && usageData.productionPlans.activeCount) || 0
         },
         {
           key: 'planItems',
-          title: '生产计划项',
-          count: (usageData.planItemReferences || []).length,
-          data: (usageData.planItemReferences || []).map(item => ({
-            label: item.planItemNumber || item.id,
-            status: item.status,
-            extra: item.processStage || ''
-          }))
+          title: '生产计划项引用',
+          count: (usageData.productionPlanItems && usageData.productionPlanItems.count) || 0,
+          activeCount: (usageData.productionPlanItems && usageData.productionPlanItems.activeCount) || 0
         },
         {
           key: 'products',
-          title: '关联铝箔产品',
-          count: (usageData.productReferences || []).length,
-          data: (usageData.productReferences || []).map(item => ({
-            label: `${item.productCode || item.id}`,
-            status: item.lifecycleStatus,
-            extra: item.productName
-          }))
+          title: '关联产品',
+          count: (usageData.products && usageData.products.count) || 0,
+          activeCount: null // 产品没有 activeCount
         }
       ]
     },
@@ -201,30 +185,7 @@ export default {
       if (!this.usage) {
         return 0
       }
-      if (typeof this.usage.totalReferenceCount === 'number') {
-        return this.usage.totalReferenceCount
-      }
       return this.usageSections.reduce((total, section) => total + section.count, 0)
-    },
-    referenceStatusMap() {
-      return {
-        在产: '在产',
-        停产: '停产',
-        下达: '已下达',
-        草稿: '草稿',
-        待审批: '待审批',
-        完成: '完成'
-      }
-    },
-    referenceStatusTypeMap() {
-      return {
-        在产: 'success',
-        停产: 'danger',
-        下达: 'warning',
-        草稿: 'info',
-        待审批: 'warning',
-        完成: 'success'
-      }
     }
   },
   watch: {
@@ -242,13 +203,6 @@ export default {
     handleClose() {
       this.internalVisible = false
       this.$emit('close')
-    },
-    formatTagLabel(item) {
-      if (!item) {
-        return '-'
-      }
-      const statusText = item.status ? `（${item.status}）` : ''
-      return `${item.label}${statusText}`
     }
   }
 }
@@ -303,30 +257,10 @@ export default {
   color: #303133;
 }
 
-.template-usage-dialog__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.template-usage-dialog__tag-item {
+.template-usage-dialog__content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 180px;
-}
-
-.template-usage-dialog__tag-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #1f2d3d;
-  font-weight: 500;
-}
-
-.template-usage-dialog__tag-extra {
-  font-size: 12px;
-  color: #909399;
+  gap: 12px;
 }
 
 .template-usage-dialog__footer {

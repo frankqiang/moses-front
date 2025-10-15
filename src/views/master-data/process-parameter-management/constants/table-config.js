@@ -4,17 +4,42 @@
  * 创建日期：2025-09-29
  * 修改记录：
  *   - 2025-09-29: 初始创建，对齐TASK002 P0阶段列表配置要求
+ *   - 2025-10-15: 重构为工厂函数，textMap使用字典API，typeMap保留前端定义
  */
 
 import {
-  TEMPLATE_STATUS_CONFIG,
-  VERSION_STATUS_CONFIG,
   COLUMN_SETTINGS_ID,
   SEGMENT_COLOR_MAP
 } from './process-parameter-management'
 
-// 表格列配置 - 对接 BaseTable 组件
-export const TABLE_COLUMNS = [
+// 状态 Tag 样式映射（前端UI逻辑，保留硬编码）
+const TEMPLATE_STATUS_TYPE_MAP = {
+  '草稿': 'info',
+  '待审批': 'warning',
+  '生效': 'success',
+  '历史': 'default'
+}
+
+const VERSION_STATUS_TYPE_MAP = {
+  '草稿': 'info',
+  '待审批': 'warning',
+  '生效': 'success',
+  '历史': 'default',
+  '驳回': 'danger',
+  '作废': 'info'
+}
+
+/**
+ * 表格列配置工厂函数
+ * @param {Object} dictionaries - 字典对象
+ * @param {Object} dictionaries.templateStatusLabels - 模板状态标签映射（从后端字典获取）
+ * @param {Object} dictionaries.versionStatusLabels - 版本状态标签映射（从后端字典获取）
+ * @returns {Array} 表格列配置数组
+ */
+export const createTableColumns = ({
+  templateStatusLabels = {},
+  versionStatusLabels = {}
+} = {}) => [
   {
     columnId: 'templateCode',
     prop: 'templateCode',
@@ -43,8 +68,8 @@ export const TABLE_COLUMNS = [
     align: 'center',
     type: 'status',
     slotName: 'templateStatus',
-    textMap: TEMPLATE_STATUS_CONFIG.textMap,
-    typeMap: TEMPLATE_STATUS_CONFIG.typeMap,
+    textMap: templateStatusLabels,
+    typeMap: TEMPLATE_STATUS_TYPE_MAP,
     tagSize: 'small'
   },
   {
@@ -98,8 +123,8 @@ export const TABLE_COLUMNS = [
     align: 'center',
     type: 'status',
     slotName: 'latestVersionStatus',
-    textMap: VERSION_STATUS_CONFIG.textMap,
-    typeMap: VERSION_STATUS_CONFIG.typeMap,
+    textMap: versionStatusLabels,
+    typeMap: VERSION_STATUS_TYPE_MAP,
     tagSize: 'small'
   },
   {

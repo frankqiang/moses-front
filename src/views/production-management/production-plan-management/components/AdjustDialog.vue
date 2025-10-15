@@ -192,7 +192,7 @@
 
 <script>
 import { adjustPlan } from '../api'
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../mixins/dictionary'
 
 export default {
   name: 'AdjustDialog',

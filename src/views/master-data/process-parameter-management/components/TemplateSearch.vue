@@ -25,14 +25,16 @@
 
 <script>
 import SearchForm from '@/components/SearchForm'
-import { SEARCH_FORM_CONFIG, DEFAULT_PAGINATION, DEFAULT_SORT } from '../constants'
-import { fetchProductOptions } from '../api'
+import { createSearchFormConfig, DEFAULT_PAGINATION, DEFAULT_SORT } from '../constants'
+import { getProductionProductOptions } from '@/api/master-data'
+import dictionaryMixin from '../mixins/dictionary'
 
 export default {
   name: 'TemplateSearch',
   components: {
     SearchForm
   },
+  mixins: [dictionaryMixin],
   props: {
     // 控制组件loading状态
     loading: {
@@ -47,8 +49,6 @@ export default {
   },
   data() {
     return {
-      // 搜索表单配置（深拷贝以便动态修改options）
-      searchFormConfig: JSON.parse(JSON.stringify(SEARCH_FORM_CONFIG)),
       // 搜索参数
       searchParams: {
         keyword: '',
@@ -69,6 +69,15 @@ export default {
       },
       // 产品选项列表
       productOptions: []
+    }
+  },
+  computed: {
+    // 搜索表单配置（使用字典API动态生成）
+    searchFormConfig() {
+      return createSearchFormConfig({
+        templateStatusOptions: this.templateStatusOptions,
+        versionStatusOptions: this.templateVersionStatusOptions
+      })
     }
   },
   watch: {
@@ -114,10 +123,10 @@ export default {
      */
     async loadProductOptions() {
       try {
-        const response = await fetchProductOptions({ keyword: '', limit: 100 })
+        const response = await getProductionProductOptions({ limit: 100 })
         this.productOptions = response.data.options.map(product => ({
           value: product.id,
-          label: `${product.productCode} - ${product.productName}`,
+          label: product.label,
           disabled: product.lifecycleStatus !== '量产'
         }))
 

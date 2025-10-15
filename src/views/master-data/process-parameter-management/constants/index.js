@@ -28,3 +28,6 @@ export * from './messages-config'
 // 图表配置
 export * from './chart-config'
 
+// 校验规则（TASK11 P0阶段）
+export * from './validation-rules'
+

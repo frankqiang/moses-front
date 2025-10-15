@@ -14,31 +14,24 @@ export const TEMPLATE_STATUS = {
   HISTORY: '历史'
 }
 
-// 模板状态选项 - SearchForm/筛选使用
-export const TEMPLATE_STATUS_OPTIONS = [
-  { value: TEMPLATE_STATUS.DRAFT, label: '草稿' },
-  { value: TEMPLATE_STATUS.PENDING, label: '待审批' },
-  { value: TEMPLATE_STATUS.ACTIVE, label: '生效' },
-  { value: TEMPLATE_STATUS.HISTORY, label: '历史' }
-]
+// ========================================
+// ⚠️ 注意：模板状态和版本状态的选项已迁移到字典API
+// 使用方式：mixins: [dictionaryMixin]
+// 可用属性：this.templateStatusOptions, this.templateVersionStatusOptions
+// ========================================
 
-// 模板状态 Tag 配置
+// 模板状态 Tag 配置（样式映射，保留前端定义）
 export const TEMPLATE_STATUS_CONFIG = {
-  textMap: {
-    [TEMPLATE_STATUS.DRAFT]: '草稿',
-    [TEMPLATE_STATUS.PENDING]: '待审批',
-    [TEMPLATE_STATUS.ACTIVE]: '生效',
-    [TEMPLATE_STATUS.HISTORY]: '历史'
-  },
+  textMap: {}, // 已废弃，使用字典API的labels
   typeMap: {
-    [TEMPLATE_STATUS.DRAFT]: 'info',
-    [TEMPLATE_STATUS.PENDING]: 'warning',
-    [TEMPLATE_STATUS.ACTIVE]: 'success',
-    [TEMPLATE_STATUS.HISTORY]: 'default'
+    '草稿': 'info',
+    '待审批': 'warning',
+    '生效': 'success',
+    '历史': 'default'
   }
 }
 
-// 版本状态枚举
+// 版本状态枚举（业务逻辑常量，保留）
 export const VERSION_STATUS = {
   DRAFT: '草稿',
   PENDING: '待审批',
@@ -47,16 +40,6 @@ export const VERSION_STATUS = {
   REJECTED: '驳回',
   VOIDED: '作废'
 }
-
-// 版本状态选项
-export const VERSION_STATUS_OPTIONS = [
-  { value: VERSION_STATUS.DRAFT, label: '草稿' },
-  { value: VERSION_STATUS.PENDING, label: '待审批' },
-  { value: VERSION_STATUS.ACTIVE, label: '生效' },
-  { value: VERSION_STATUS.HISTORY, label: '历史' },
-  { value: VERSION_STATUS.REJECTED, label: '驳回' },
-  { value: VERSION_STATUS.VOIDED, label: '作废' }
-]
 
 export const EDITABLE_VERSION_STATUSES = [
   VERSION_STATUS.DRAFT,
@@ -70,23 +53,16 @@ export const READONLY_VERSION_STATUSES = [
   VERSION_STATUS.VOIDED
 ]
 
-// 版本状态 Tag 配置
+// 版本状态 Tag 配置（样式映射，保留前端定义）
 export const VERSION_STATUS_CONFIG = {
-  textMap: {
-    [VERSION_STATUS.DRAFT]: '草稿',
-    [VERSION_STATUS.PENDING]: '待审批',
-    [VERSION_STATUS.ACTIVE]: '生效',
-    [VERSION_STATUS.HISTORY]: '历史',
-    [VERSION_STATUS.REJECTED]: '驳回',
-    [VERSION_STATUS.VOIDED]: '作废'
-  },
+  textMap: {}, // 已废弃，使用字典API的labels
   typeMap: {
-    [VERSION_STATUS.DRAFT]: 'info',
-    [VERSION_STATUS.PENDING]: 'warning',
-    [VERSION_STATUS.ACTIVE]: 'success',
-    [VERSION_STATUS.HISTORY]: 'default',
-    [VERSION_STATUS.REJECTED]: 'danger',
-    [VERSION_STATUS.VOIDED]: 'info'
+    '草稿': 'info',
+    '待审批': 'warning',
+    '生效': 'success',
+    '历史': 'default',
+    '驳回': 'danger',
+    '作废': 'info'
   }
 }
 
@@ -114,13 +90,8 @@ export const ATMOSPHERE_TYPES = {
   OTHER: '其他'
 }
 
-export const ATMOSPHERE_TYPE_OPTIONS = [
-  { value: ATMOSPHERE_TYPES.NITROGEN, label: '纯氮气' },
-  { value: ATMOSPHERE_TYPES.HYDROGEN_NITROGEN, label: '氢氮混合气' },
-  { value: ATMOSPHERE_TYPES.ARGON, label: '氩气' },
-  { value: ATMOSPHERE_TYPES.NITROGEN_HYDROGEN, label: '氮氢混合气' },
-  { value: ATMOSPHERE_TYPES.OTHER, label: '其他' }
-]
+// ⚠️ ATMOSPHERE_TYPE_OPTIONS 已迁移到字典API
+// 使用方式：mixins: [dictionaryMixin]，可用属性：this.atmosphereTypeOptions
 
 // 风机运行模式（预留与后端对齐）
 export const FAN_MODES = {
@@ -246,4 +217,113 @@ export const VERSION_COMPARE_SECTIONS = [
   { key: 'atmosphereSettings', label: '保护气氛差异' },
   { key: 'fanSettings', label: '循环风机差异' }
 ]
+
+// ==================== v2.0 架构：12段工艺参数配置 ====================
+
+// 循环风机速度枚举 (v2.0)
+export const CIRCULATION_FAN_SPEED = {
+  LOW: '低速',
+  MEDIUM: '中速',
+  HIGH: '高速'
+}
+
+export const CIRCULATION_FAN_SPEED_OPTIONS = [
+  { value: CIRCULATION_FAN_SPEED.LOW, label: '低速' },
+  { value: CIRCULATION_FAN_SPEED.MEDIUM, label: '中速' },
+  { value: CIRCULATION_FAN_SPEED.HIGH, label: '高速' }
+]
+
+// 预设模板类型标签
+export const PRESET_TEMPLATE_LABELS = {
+  standard: '标准退火模板',
+  quick: '快速退火模板',
+  blank: '空白模板'
+}
+
+/**
+ * 生成12段工艺参数的辅助函数
+ * @param {Object} config - 配置对象，包含各段的参数
+ * @returns {Array} 12段参数数组
+ */
+function generate12Segments(config) {
+  return Array.from({ length: 12 }, (_, index) => {
+    const order = index + 1
+    const segment = config[order] || {}
+    return {
+      segmentOrder: order,
+      controlMode: '定时定温',
+      furnaceTemperature: segment.furnaceTemperature || 0,
+      materialTemperature: segment.materialTemperature || 0,
+      timeSet: segment.timeSet || 0,
+      runTime: null,
+      circulationFanSpeed: segment.circulationFanSpeed || CIRCULATION_FAN_SPEED.LOW,
+      negativePressureFan: segment.negativePressureFan || 0,
+      cleaningFan: segment.cleaningFan || 0,
+      cleaningTime: segment.cleaningTime || 0
+    }
+  })
+}
+
+// 预设模板：标准退火工艺（适用于1100/8011合金）
+const STANDARD_ANNEALING_CONFIG = {
+  1: { furnaceTemperature: 100, materialTemperature: 90, timeSet: 0.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.LOW, negativePressureFan: 10, cleaningFan: 5, cleaningTime: 10 },
+  2: { furnaceTemperature: 200, materialTemperature: 180, timeSet: 1.0, circulationFanSpeed: CIRCULATION_FAN_SPEED.LOW, negativePressureFan: 15, cleaningFan: 10, cleaningTime: 15 },
+  3: { furnaceTemperature: 300, materialTemperature: 280, timeSet: 1.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 20, cleaningFan: 15, cleaningTime: 20 },
+  4: { furnaceTemperature: 400, materialTemperature: 380, timeSet: 2.0, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 25, cleaningFan: 20, cleaningTime: 25 },
+  5: { furnaceTemperature: 450, materialTemperature: 430, timeSet: 2.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 30, cleaningFan: 25, cleaningTime: 30 },
+  6: { furnaceTemperature: 450, materialTemperature: 430, timeSet: 3.0, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 30, cleaningFan: 25, cleaningTime: 30 },
+  7: { furnaceTemperature: 400, materialTemperature: 380, timeSet: 2.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 25, cleaningFan: 20, cleaningTime: 25 },
+  8: { furnaceTemperature: 350, materialTemperature: 330, timeSet: 2.0, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 20, cleaningFan: 15, cleaningTime: 20 },
+  9: { furnaceTemperature: 300, materialTemperature: 280, timeSet: 1.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.LOW, negativePressureFan: 15, cleaningFan: 10, cleaningTime: 15 },
+  10: { furnaceTemperature: 250, materialTemperature: 230, timeSet: 1.0, circulationFanSpeed: CIRCULATION_FAN_SPEED.LOW, negativePressureFan: 10, cleaningFan: 10, cleaningTime: 10 },
+  11: { furnaceTemperature: 150, materialTemperature: 140, timeSet: 0.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.LOW, negativePressureFan: 10, cleaningFan: 5, cleaningTime: 10 },
+  12: { furnaceTemperature: 80, materialTemperature: 75, timeSet: 0.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.LOW, negativePressureFan: 5, cleaningFan: 5, cleaningTime: 5 }
+}
+
+// 预设模板：快速退火工艺（缩短保温时间）
+const QUICK_ANNEALING_CONFIG = {
+  1: { furnaceTemperature: 150, materialTemperature: 140, timeSet: 0.3, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 15, cleaningFan: 10, cleaningTime: 10 },
+  2: { furnaceTemperature: 250, materialTemperature: 230, timeSet: 0.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 20, cleaningFan: 15, cleaningTime: 15 },
+  3: { furnaceTemperature: 350, materialTemperature: 330, timeSet: 0.8, circulationFanSpeed: CIRCULATION_FAN_SPEED.HIGH, negativePressureFan: 25, cleaningFan: 20, cleaningTime: 20 },
+  4: { furnaceTemperature: 420, materialTemperature: 400, timeSet: 1.0, circulationFanSpeed: CIRCULATION_FAN_SPEED.HIGH, negativePressureFan: 30, cleaningFan: 25, cleaningTime: 25 },
+  5: { furnaceTemperature: 450, materialTemperature: 430, timeSet: 1.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.HIGH, negativePressureFan: 35, cleaningFan: 30, cleaningTime: 30 },
+  6: { furnaceTemperature: 450, materialTemperature: 430, timeSet: 1.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.HIGH, negativePressureFan: 35, cleaningFan: 30, cleaningTime: 30 },
+  7: { furnaceTemperature: 420, materialTemperature: 400, timeSet: 1.2, circulationFanSpeed: CIRCULATION_FAN_SPEED.HIGH, negativePressureFan: 30, cleaningFan: 25, cleaningTime: 25 },
+  8: { furnaceTemperature: 350, materialTemperature: 330, timeSet: 1.0, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 25, cleaningFan: 20, cleaningTime: 20 },
+  9: { furnaceTemperature: 280, materialTemperature: 260, timeSet: 0.8, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 20, cleaningFan: 15, cleaningTime: 15 },
+  10: { furnaceTemperature: 200, materialTemperature: 185, timeSet: 0.5, circulationFanSpeed: CIRCULATION_FAN_SPEED.MEDIUM, negativePressureFan: 15, cleaningFan: 10, cleaningTime: 10 },
+  11: { furnaceTemperature: 120, materialTemperature: 110, timeSet: 0.3, circulationFanSpeed: CIRCULATION_FAN_SPEED.LOW, negativePressureFan: 10, cleaningFan: 5, cleaningTime: 10 },
+  12: { furnaceTemperature: 60, materialTemperature: 55, timeSet: 0.2, circulationFanSpeed: CIRCULATION_FAN_SPEED.LOW, negativePressureFan: 5, cleaningFan: 5, cleaningTime: 5 }
+}
+
+// 预设模板集合
+export const PRESET_TEMPLATES = {
+  standard: generate12Segments(STANDARD_ANNEALING_CONFIG),
+  quick: generate12Segments(QUICK_ANNEALING_CONFIG),
+  blank: generate12Segments({}) // 空白模板：所有段初始值为0
+}
+
+// v2.0 12段参数字段限制
+export const SEGMENT_V2_FIELD_LIMITS = {
+  segmentOrder: { min: 1, max: 12, step: 1 },
+  furnaceTemperature: { min: 0, max: 1500, step: 10, precision: 2, unit: '℃' },
+  materialTemperature: { min: 0, max: 1500, step: 10, precision: 2, unit: '℃' },
+  timeSet: { min: 0, max: 999, step: 0.5, precision: 2, unit: 'h' },
+  negativePressureFan: { min: 0, max: 100, step: 5, precision: 2, unit: 'Hz' },
+  cleaningFan: { min: 0, max: 100, step: 5, precision: 2, unit: 'Hz' },
+  cleaningTime: { min: 0, max: 999, step: 5, precision: 2, unit: 'min' }
+}
+
+// v2.0 12段参数字段中文标签（用于版本对比）
+export const SEGMENT_FIELD_LABELS = {
+  controlMode: '控温方式',
+  furnaceTemperature: '炉温设置',
+  materialTemperature: '料温设置',
+  timeSet: '时间设置',
+  runTime: '运行时间',
+  circulationFanSpeed: '循环风机速度',
+  negativePressureFan: '负压风机频率',
+  cleaningFan: '吹洗风机频率',
+  cleaningTime: '吹洗时间'
+}
 

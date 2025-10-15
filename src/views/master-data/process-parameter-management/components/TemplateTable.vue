@@ -181,10 +181,11 @@ import ActionButtons from '@/components/ActionButtons'
 import OverflowTagsPopover from '@/components/OverflowTagsPopover'
 import TableToolbar from '@/components/TableToolbar'
 import {
-  TABLE_COLUMNS,
+  createTableColumns,
   DEFAULT_VISIBLE_COLUMNS,
   TABLE_COLUMN_SETTINGS_ID
 } from '../constants'
+import dictionaryMixin from '../mixins/dictionary'
 import {
   TEMPLATE_STATUS_CONFIG,
   VERSION_STATUS_CONFIG,
@@ -200,6 +201,7 @@ export default {
     OverflowTagsPopover,
     TableToolbar
   },
+  mixins: [dictionaryMixin],
   props: {
     // 表格数据
     data: {
@@ -269,8 +271,6 @@ export default {
       selectedRows: [],
       // 列设置存储键
       columnSettingsKey: TABLE_COLUMN_SETTINGS_ID,
-      // 可配置列选项（排除操作列，操作列始终显示）
-      columnOptions: TABLE_COLUMNS.filter(col => col.columnId !== 'versionActions'),
       // 批量操作Loading状态
       batchLoading: false,
       // 批量操作加载状态管理
@@ -278,6 +278,17 @@ export default {
     }
   },
   computed: {
+    // 完整表格列配置（使用字典API动态生成）
+    fullTableColumns() {
+      return createTableColumns({
+        templateStatusLabels: this.templateStatusLabels,
+        versionStatusLabels: this.versionStatusLabels
+      })
+    },
+    // 可配置列选项（排除操作列）
+    columnOptions() {
+      return this.fullTableColumns.filter(col => col.columnId !== 'versionActions')
+    },
     // 模板状态配置
     templateStatusConfig() {
       return TEMPLATE_STATUS_CONFIG
@@ -308,7 +319,7 @@ export default {
     },
     // 表格列配置 - 根据可见列过滤，操作列始终显示
     tableColumns() {
-      return TABLE_COLUMNS.filter(col =>
+      return this.fullTableColumns.filter(col =>
         this.visibleColumns.includes(col.columnId) || col.columnId === 'versionActions'
       )
     },

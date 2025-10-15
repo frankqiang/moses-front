@@ -1,22 +1,34 @@
 <!--
 文件名称：TemperatureCurveViewer.vue
-文件描述：工艺模板温度曲线可视化组件，支持段数据渲染、报警区提示、自定义校验与多版本对比
+文件描述：工艺模板参数可视化组件，支持多种图表类型展示（温度曲线、时间分布、风机参数）
 创建日期：2025-09-30
 修改记录：
   - 2025-09-30: 初始创建，完成TASK007 P0阶段与P1第6-8项需求
+  - 2025-10-15: 重构支持多种图表类型切换，完成TASK09 P0+P1第5项需求
 -->
 
 <template>
   <section class="temperature-curve-viewer">
     <header class="temperature-curve-viewer__header">
       <div class="temperature-curve-viewer__title">
-        <h4>温度曲线</h4>
-        <p>基于版本参数自动渲染升温/保温/降温曲线，支持报警区提示与多版本对比</p>
+        <h4>{{ currentChartTitle }}</h4>
+        <p>{{ currentChartDescription }}</p>
       </div>
       <div class="temperature-curve-viewer__actions">
+        <!-- 图表类型切换 -->
+        <el-radio-group
+          v-model="chartType"
+          size="mini"
+          class="temperature-curve-viewer__chart-type"
+        >
+          <el-radio-button label="temperature">温度曲线</el-radio-button>
+          <el-radio-button label="time">时间分布</el-radio-button>
+          <el-radio-button label="fan">风机参数</el-radio-button>
+        </el-radio-group>
+
         <el-tooltip
           effect="dark"
-          content="导出当前曲线截图"
+          content="导出当前图表截图"
           placement="top"
         >
           <el-button
@@ -45,7 +57,7 @@
         </el-tooltip>
 
         <el-select
-          v-if="comparisonSeries.length"
+          v-if="comparisonSeries.length && chartType === 'temperature'"
           v-model="activeComparisonId"
           placeholder="选择对比版本"
           size="mini"
@@ -62,6 +74,7 @@
         </el-select>
 
         <el-switch
+          v-if="chartType === 'temperature'"
           v-model="showAlarmZones"
           active-text="显示报警区"
           inactive-text="隐藏报警区"
@@ -127,13 +140,14 @@
 
 <script>
 import * as echarts from 'echarts/core'
-import { LineChart } from 'echarts/charts'
+import { LineChart, PieChart, BarChart } from 'echarts/charts'
 import {
   TooltipComponent,
   GridComponent,
   LegendComponent,
   MarkLineComponent,
-  MarkAreaComponent
+  MarkAreaComponent,
+  DataZoomComponent
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import debounce from 'lodash/debounce'
@@ -149,11 +163,14 @@ import {
 
 echarts.use([
   LineChart,
+  PieChart,
+  BarChart,
   TooltipComponent,
   GridComponent,
   LegendComponent,
   MarkLineComponent,
   MarkAreaComponent,
+  DataZoomComponent,
   CanvasRenderer
 ])
 
@@ -184,6 +201,7 @@ export default {
   data() {
     return {
       chartInstance: null,
+      chartType: 'temperature', // temperature, time, fan
       showAlarmZones: true,
       activeComparisonId: '',
       errorMessage: '',
@@ -191,6 +209,22 @@ export default {
     }
   },
   computed: {
+    currentChartTitle() {
+      const titles = {
+        temperature: '温度曲线',
+        time: '时间分布图',
+        fan: '风机参数图'
+      }
+      return titles[this.chartType] || '工艺参数图'
+    },
+    currentChartDescription() {
+      const descriptions = {
+        temperature: '展示12段工艺参数的炉温和料温变化趋势',
+        time: '展示各段时间占比和分布情况',
+        fan: '展示循环风机、负压风机、吹洗风机的频率变化'
+      }
+      return descriptions[this.chartType] || ''
+    },
     hasData() {
       return Array.isArray(this.segments) && this.segments.length > 0
     },
@@ -283,6 +317,9 @@ export default {
     }
   },
   watch: {
+    chartType() {
+      this.renderChart()
+    },
     segments: {
       deep: true,
       handler() {
@@ -445,13 +482,228 @@ export default {
       }
 
       try {
-        const baseSeriesData = this.buildSeriesData(this.segments)
-        const option = this.composeOption(baseSeriesData)
+        let option = null
+        switch (this.chartType) {
+          case 'temperature':
+            option = this.buildTemperatureOption()
+            break
+          case 'time':
+            option = this.buildTimeOption()
+            break
+          case 'fan':
+            option = this.buildFanOption()
+            break
+          default:
+            option = this.buildTemperatureOption()
+        }
         this.chartInstance.setOption(option, true)
         this.errorMessage = ''
       } catch (error) {
         console.error('[TemperatureCurveViewer] render chart failed', error)
-        this.errorMessage = '温度曲线渲染失败，请检查输入数据'
+        this.errorMessage = '图表渲染失败，请检查输入数据'
+      }
+    },
+
+    // 构建温度曲线图配置
+    buildTemperatureOption() {
+      const baseSeriesData = this.buildSeriesData(this.segments)
+      return this.composeOption(baseSeriesData)
+    },
+
+    // 构建时间分布图配置
+    buildTimeOption() {
+      if (!this.hasData) {
+        return this.buildEmptyOption()
+      }
+
+      const sorted = [...this.segments].sort((a, b) => (a.segmentOrder || 0) - (b.segmentOrder || 0))
+      const totalTime = sorted.reduce((sum, seg) => sum + (Number(seg.timeSet) || 0), 0)
+
+      const pieData = sorted.map(seg => ({
+        name: `段${seg.segmentOrder}`,
+        value: Number(seg.timeSet) || 0,
+        segmentOrder: seg.segmentOrder,
+        percentage: totalTime > 0 ? ((Number(seg.timeSet) || 0) / totalTime * 100).toFixed(1) : 0
+      }))
+
+      return {
+        grid: {
+          left: 60,
+          right: 60,
+          top: 60,
+          bottom: 60
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: params => {
+            const data = params.data || {}
+            return [
+              `${params.marker}${params.name}`,
+              `时间：${data.value}小时`,
+              `占比：${data.percentage}%`
+            ].join('<br/>')
+          }
+        },
+        legend: {
+          orient: 'vertical',
+          right: 10,
+          top: 'center',
+          data: pieData.map(item => item.name)
+        },
+        series: [
+          {
+            name: '时间分布',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: {
+              borderRadius: 10,
+              borderColor: '#fff',
+              borderWidth: 2
+            },
+            label: {
+              show: true,
+              formatter: '{b}\n{d}%'
+            },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: 14,
+                fontWeight: 'bold'
+              }
+            },
+            labelLine: {
+              show: true
+            },
+            data: pieData,
+            color: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc', '#d4ec59', '#8dc1a9', '#759aa0']
+          }
+        ]
+      }
+    },
+
+    // 构建风机参数图配置
+    buildFanOption() {
+      if (!this.hasData) {
+        return this.buildEmptyOption()
+      }
+
+      const sorted = [...this.segments].sort((a, b) => (a.segmentOrder || 0) - (b.segmentOrder || 0))
+      const xData = sorted.map(seg => `段${seg.segmentOrder}`)
+
+      // 循环风机速度转换为数值（低速=30, 中速=50, 高速=70）
+      const circulationFanData = sorted.map(seg => {
+        const speed = seg.circulationFanSpeed || '低速'
+        const speedMap = { '低速': 30, '中速': 50, '高速': 70 }
+        return speedMap[speed] || 30
+      })
+
+      const negativePressureFanData = sorted.map(seg => Number(seg.negativePressureFan) || 0)
+      const cleaningFanData = sorted.map(seg => Number(seg.cleaningFan) || 0)
+
+      return {
+        grid: {
+          left: 60,
+          right: 60,
+          top: 80,
+          bottom: 60
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          },
+          formatter: params => {
+            if (!Array.isArray(params) || params.length === 0) {
+              return ''
+            }
+            const segmentIndex = params[0].dataIndex
+            const segment = sorted[segmentIndex]
+            const lines = params.map(item => {
+              let valueStr = `${item.value}`
+              if (item.seriesName === '循环风机速度') {
+                valueStr = segment.circulationFanSpeed || '低速'
+              } else {
+                valueStr = `${item.value} Hz`
+              }
+              return `${item.marker}${item.seriesName}：${valueStr}`
+            })
+            return `${params[0].name}<br/>${lines.join('<br/')}`
+          }
+        },
+        legend: {
+          top: 10,
+          data: ['循环风机速度', '负压风机', '吹洗风机']
+        },
+        xAxis: {
+          type: 'category',
+          data: xData,
+          axisLabel: {
+            color: '#666'
+          }
+        },
+        yAxis: {
+          type: 'value',
+          name: '频率 (Hz)',
+          min: 0,
+          max: 100,
+          axisLabel: {
+            color: '#666',
+            formatter: '{value} Hz'
+          }
+        },
+        dataZoom: [
+          {
+            type: 'slider',
+            show: true,
+            xAxisIndex: [0],
+            start: 0,
+            end: 100,
+            bottom: 10
+          }
+        ],
+        series: [
+          {
+            name: '循环风机速度',
+            type: 'bar',
+            data: circulationFanData,
+            itemStyle: {
+              color: '#5470c6'
+            },
+            barGap: 0
+          },
+          {
+            name: '负压风机',
+            type: 'bar',
+            data: negativePressureFanData,
+            itemStyle: {
+              color: '#91cc75'
+            }
+          },
+          {
+            name: '吹洗风机',
+            type: 'bar',
+            data: cleaningFanData,
+            itemStyle: {
+              color: '#fac858'
+            }
+          }
+        ]
+      }
+    },
+
+    // 构建空数据提示配置
+    buildEmptyOption() {
+      return {
+        title: {
+          text: '暂无数据',
+          left: 'center',
+          top: 'middle',
+          textStyle: {
+            color: '#909399',
+            fontSize: 16
+          }
+        }
       }
     },
 
@@ -599,6 +851,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .temperature-curve-viewer__title h4 {
@@ -618,6 +871,13 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+.temperature-curve-viewer__chart-type {
+  ::v-deep .el-radio-button__inner {
+    padding: 7px 15px;
+  }
 }
 
 .temperature-curve-viewer__comparison-select {

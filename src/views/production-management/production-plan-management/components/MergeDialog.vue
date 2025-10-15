@@ -278,7 +278,7 @@
 
 <script>
 import { fetchPlanList, mergePlans } from '../api'
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../mixins/dictionary'
 import {
   PLAN_STATUS,
   PLAN_STATUS_TYPE_MAP,

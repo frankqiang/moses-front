@@ -251,7 +251,7 @@
 <script>
 import StatusTag from '@/components/StatusTag'
 import { parseTime } from '@/utils'
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../../mixins/dictionary'
 import {
   PLAN_STATUS_TYPE_MAP,
   PLAN_PRIORITY_TYPE_MAP

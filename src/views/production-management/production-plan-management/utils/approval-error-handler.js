@@ -7,7 +7,7 @@
  */
 
 import { MessageBox, Message } from 'element-ui'
-import { ERROR_MESSAGES } from '../constants'
+import { getErrorMessage as getErrorMsg } from '../constants/messages-config'
 
 /**
  * 延迟函数
@@ -211,42 +211,8 @@ export class ApprovalErrorHandler {
    * @returns {string} 错误消息
    */
   getErrorMessage(error) {
-    if (!error) {
-      return ERROR_MESSAGES.UNKNOWN_ERROR
-    }
-
-    // 优先使用后端返回的错误消息
-    if (error.response?.data?.error?.message) {
-      return error.response.data.error.message
-    }
-
-    // 根据错误码匹配
-    if (error.response?.data?.error?.code) {
-      const errorCode = error.response.data.error.code
-      return ERROR_MESSAGES[errorCode] || ERROR_MESSAGES.UNKNOWN_ERROR
-    }
-
-    // 根据HTTP状态码处理
-    if (error.response?.status) {
-      const status = error.response.status
-      if (status === 401) {
-        return ERROR_MESSAGES.UNAUTHORIZED
-      }
-      if (status === 403) {
-        return ERROR_MESSAGES.FORBIDDEN
-      }
-      if (status === 404) {
-        return ERROR_MESSAGES.PRODUCTION_PLAN_NOT_FOUND
-      }
-    }
-
-    // 网络错误
-    if (error.message === 'Network Error') {
-      return ERROR_MESSAGES.NETWORK_ERROR
-    }
-
-    // 使用错误消息或默认消息
-    return error.message || ERROR_MESSAGES.UNKNOWN_ERROR
+    // 使用统一的错误消息处理函数
+    return getErrorMsg(error)
   }
 }
 

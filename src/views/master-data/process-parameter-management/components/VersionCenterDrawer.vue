@@ -60,7 +60,7 @@
             >
               <el-option label="全部状态" value="ALL" />
               <el-option
-                v-for="option in versionStatusOptions"
+                v-for="option in templateVersionStatusOptions"
                 :key="option.value"
                 :label="option.label"
                 :value="option.value"
@@ -437,9 +437,9 @@ import {
 import {
   TEMPLATE_STATUS_CONFIG,
   VERSION_STATUS_CONFIG,
-  VERSION_STATUS,
-  VERSION_STATUS_OPTIONS
+  VERSION_STATUS
 } from '../constants/process-parameter-management'
+import dictionaryMixin from '../mixins/dictionary'
 
 const DEFAULT_VERSION_SORT = 'createdAt:desc'
 
@@ -453,6 +453,7 @@ export default {
     TemperatureCurveViewer,
     VersionComparePanel
   },
+  mixins: [dictionaryMixin],
   props: {
     visible: {
       type: Boolean,
@@ -552,9 +553,7 @@ export default {
     versionStatusConfig() {
       return VERSION_STATUS_CONFIG
     },
-    versionStatusOptions() {
-      return VERSION_STATUS_OPTIONS
-    },
+    // versionStatusOptions 已由 mixin 提供（templateVersionStatusOptions）
     selectedVersion() {
       if (!this.selectedVersionId) {
         return null

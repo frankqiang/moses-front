@@ -38,7 +38,27 @@
       @retry="fetchTemplateList"
     />
 
-    <!-- 模板表单抽屉 -->
+    <!-- 模板创建抽屉 (v2.0架构) -->
+    <TemplateCreateDrawer
+      v-if="createDrawer.visible"
+      :visible.sync="createDrawer.visible"
+      @success="handleCreateSuccess"
+      @close="handleCreateClose"
+      @cancel="handleCreateClose"
+    />
+
+    <!-- 模板编辑抽屉 (v2.0架构) -->
+    <TemplateEditDrawer
+      v-if="editDrawer.visible"
+      :visible.sync="editDrawer.visible"
+      :template-id="editDrawer.templateId"
+      :version-id="editDrawer.versionId"
+      @success="handleEditSuccess"
+      @close="handleEditClose"
+      @cancel="handleEditClose"
+    />
+
+    <!-- 模板表单抽屉 (旧架构，保留兼容) -->
     <TemplateFormDrawer
       v-if="formDrawer.visible"
       :key="`${formDrawer.templateId || 'new'}-${formDrawer.mode}-${formDrawer.versionId || ''}`"
@@ -49,6 +69,18 @@
       :initial-data="formDrawer.initialData"
       @success="handleFormSuccess"
       @close="handleFormClose"
+    />
+
+    <!-- 工艺模板详情抽屉 (v2.0架构) -->
+    <TemplateDetailDrawer
+      v-if="detailDrawer.visible"
+      :visible.sync="detailDrawer.visible"
+      :template-id="detailDrawer.templateId"
+      @close="handleDetailDrawerClose"
+      @edit="handleEditFromDetail"
+      @copy="handleCopyFromDetail"
+      @create-version="handleCreateVersionFromDetail"
+      @deleted="handleTemplateDeleted"
     />
 
     <!-- 版本中心抽屉 -->
@@ -122,7 +154,10 @@
 <script>
 import TemplateSearch from './components/TemplateSearch.vue'
 import TemplateTable from './components/TemplateTable.vue'
+import TemplateCreateDrawer from './components/TemplateCreateDrawer.vue'
+import TemplateEditDrawer from './components/TemplateEditDrawer.vue'
 import TemplateFormDrawer from './components/TemplateFormDrawer.vue'
+import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue'
 import VersionCenterDrawer from './components/VersionCenterDrawer.vue'
 import TemperatureCurveViewer from './components/TemperatureCurveViewer.vue'
 import CopyTemplateDialog from './components/CopyTemplateDialog.vue'
@@ -161,7 +196,10 @@ export default {
   components: {
     TemplateSearch,
     TemplateTable,
+    TemplateCreateDrawer,
+    TemplateEditDrawer,
     TemplateFormDrawer,
+    TemplateDetailDrawer,
     VersionCenterDrawer,
     TemperatureCurveViewer,
     CopyTemplateDialog,
@@ -191,12 +229,24 @@ export default {
           icon: 'el-icon-plus'
         }
       ],
+      createDrawer: {
+        visible: false
+      },
+      editDrawer: {
+        visible: false,
+        templateId: '',
+        versionId: ''
+      },
       formDrawer: {
         visible: false,
         mode: 'create',
         templateId: '',
         versionId: '',
         initialData: {}
+      },
+      detailDrawer: {
+        visible: false,
+        templateId: ''
       },
       versionDrawer: {
         visible: false,
@@ -238,8 +288,20 @@ export default {
     this.initFromRoute()
     this.debouncedFetch = debounce(this.fetchTemplateList, 150)
     this.fetchTemplateList()
+    // 加载枚举字典
+    this.loadDictionaries()
   },
   methods: {
+    /**
+     * 加载枚举字典
+     */
+    loadDictionaries() {
+      this.$store.dispatch('dictionary/loadProcessTemplateDictionaries')
+        .catch(error => {
+          console.error('[工艺参数管理] 加载枚举字典失败:', error)
+        })
+    },
+
     initFromRoute() {
       const { query } = this.$route
       if (query && Object.keys(query).length) {
@@ -376,13 +438,37 @@ export default {
     },
 
     handleCreateTemplate() {
-      this.formDrawer = {
-        visible: true,
-        mode: 'create',
-        templateId: '',
-        versionId: '',
-        initialData: {}
+      this.createDrawer.visible = true
+    },
+
+    handleCreateSuccess(template) {
+      // 创建成功后跳转到详情页面
+      this.createDrawer.visible = false
+      this.$message.success('创建工艺模板成功')
+      // 刷新列表
+      this.fetchTemplateList()
+      // 跳转到详情页面（版本中心）
+      if (template && template.id) {
+        this.$nextTick(() => {
+          this.openVersionDrawer(template.id)
+        })
       }
+    },
+
+    handleCreateClose() {
+      this.createDrawer.visible = false
+    },
+
+    handleEditSuccess(template) {
+      // 编辑成功后刷新列表
+      this.editDrawer.visible = false
+      this.fetchTemplateList()
+    },
+
+    handleEditClose() {
+      this.editDrawer.visible = false
+      this.editDrawer.templateId = ''
+      this.editDrawer.versionId = ''
     },
 
     handleToolbarAction(action) {
@@ -406,7 +492,42 @@ export default {
     },
 
     handleViewDetail({ templateId }) {
-      this.openVersionDrawer(templateId)
+      this.openDetailDrawer(templateId)
+    },
+
+    openDetailDrawer(templateId) {
+      this.detailDrawer = {
+        visible: true,
+        templateId
+      }
+    },
+
+    handleDetailDrawerClose() {
+      this.detailDrawer.visible = false
+      this.detailDrawer.templateId = ''
+    },
+
+    handleEditFromDetail({ templateId, versionId }) {
+      // 从详情页面打开编辑
+      this.detailDrawer.visible = false
+      this.openEditTemplate(templateId, versionId)
+    },
+
+    handleCopyFromDetail({ templateId, version }) {
+      // 从详情页面打开复制
+      this.detailDrawer.visible = false
+      this.handleCopyTemplate({ id: templateId }, version)
+    },
+
+    handleCreateVersionFromDetail({ templateId }) {
+      // 从详情页面打开创建新版本
+      this.detailDrawer.visible = false
+      this.openCreateVersion({ id: templateId })
+    },
+
+    handleTemplateDeleted() {
+      // 模板被删除后刷新列表
+      this.fetchTemplateList()
     },
 
     handleTableAction({ action, template, version }) {
@@ -446,23 +567,33 @@ export default {
       }
     },
 
-    async openEditTemplate(template) {
-      try {
-        this.loading.form = true
-        const response = await getProcessTemplateDetail(template.id)
-        const data = (response && response.data) || {}
-        this.formDrawer = {
-          visible: true,
-          mode: 'update',
-          templateId: data.id || template.id,
-          versionId: (data.latestVersion && data.latestVersion.id) || (template.latestVersion && template.latestVersion.id) || '',
-          initialData: data
-        }
-      } catch (error) {
-        console.error('[ProcessParameterManagement] openEditTemplate failed', error)
-        this.$message.error((error && error.message) || '获取模板详情失败')
-      } finally {
-        this.loading.form = false
+    openEditTemplate(templateIdOrObject, versionId = '') {
+      // 支持两种调用方式：
+      // 1. openEditTemplate(template) - 从表格操作调用
+      // 2. openEditTemplate(templateId, versionId) - 从详情页面调用
+      let templateId = templateIdOrObject
+      let targetVersionId = versionId
+
+      if (typeof templateIdOrObject === 'object' && templateIdOrObject.id) {
+        // 第一种方式：传入template对象
+        templateId = templateIdOrObject.id
+        targetVersionId = templateIdOrObject.latestVersion?.id || ''
+      }
+
+      if (!templateId) {
+        this.$message.error('缺少模板ID')
+        return
+      }
+
+      if (!targetVersionId) {
+        this.$message.error('缺少版本ID')
+        return
+      }
+
+      this.editDrawer = {
+        visible: true,
+        templateId,
+        versionId: targetVersionId
       }
     },
 

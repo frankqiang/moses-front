@@ -20,7 +20,7 @@
 
 <script>
 import SearchForm from '@/components/SearchForm'
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../mixins/dictionary'
 import {
   DEFAULT_PAGINATION,
   DEFAULT_SORT

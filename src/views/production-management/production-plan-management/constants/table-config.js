@@ -54,7 +54,7 @@ export const TABLE_COLUMNS = [
   {
     prop: 'demandQuantity',
     label: '需求数量',
-    minWidth: 100,
+    minWidth: 120,
     sortable: 'custom',
     align: 'right',
     slotName: 'demandQuantity'

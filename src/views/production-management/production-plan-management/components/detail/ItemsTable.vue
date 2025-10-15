@@ -117,7 +117,7 @@
 
 <script>
 import { parseTime } from '@/utils'
-import dictionaryMixin from '@/mixins/dictionaryMixin'
+import dictionaryMixin from '../../mixins/dictionary'
 
 export default {
   name: 'ItemsTable',

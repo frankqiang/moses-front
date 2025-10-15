@@ -76,10 +76,9 @@ import {
   DEFAULT_PAGINATION,
   DEFAULT_SORT,
   OUTPUT_FORMAT,
-  PLAN_STATUS,
-  SUCCESS_MESSAGES,
-  getErrorMessage
+  PLAN_STATUS
 } from './constants'
+import { getErrorMessage, getSuccessMessage } from './constants/messages-config'
 import { withRetry, createApprovalErrorHandler } from './utils/approval-error-handler'
 
 export default {
@@ -121,6 +120,8 @@ export default {
   created() {
     // 创建防抖搜索函数
     this.debouncedFetchList = debounce(this.fetchListSafe, 300)
+    // 加载枚举字典
+    this.loadDictionaries()
     // 从路由查询参数恢复搜索状态
     this.restoreSearchFromRoute()
     // 页面初始化时加载列表
@@ -132,6 +133,16 @@ export default {
     next()
   },
   methods: {
+    /**
+     * 加载枚举字典
+     */
+    loadDictionaries() {
+      this.$store.dispatch('dictionary/loadProductionPlanDictionaries')
+        .catch(error => {
+          console.error('[生产计划管理] 加载枚举字典失败:', error)
+        })
+    },
+
     /**
      * 安全加载生产计划列表（不抛出异常）
      */
@@ -338,7 +349,7 @@ export default {
         )
 
         if (response.success) {
-          this.$message.success(response.message || SUCCESS_MESSAGES.CONFIRM)
+          this.$message.success(getSuccessMessage(response, '确认计划成功'))
           // 刷新列表
           await this.fetchList()
         } else {
@@ -437,7 +448,7 @@ export default {
         )
 
         if (response.success) {
-          this.$message.success(response.message || SUCCESS_MESSAGES.SUBMIT_APPROVAL)
+          this.$message.success(getSuccessMessage(response, '提交审批成功'))
           // 刷新列表
           await this.fetchList()
         } else {
@@ -512,7 +523,7 @@ export default {
         )
 
         if (response.success) {
-          this.$message.success(response.message || SUCCESS_MESSAGES.CANCEL)
+          this.$message.success(getSuccessMessage(response, '取消计划成功'))
           // 刷新列表
           await this.fetchList()
         } else {

@@ -8,7 +8,6 @@
 
 import {
   TEMPLATE_STATUS,
-  TEMPLATE_STATUS_OPTIONS,
   TEMPLATE_CODE_HINT,
   SEGMENT_TYPES,
   DEFAULT_SEGMENT_TEMPLATE
@@ -63,7 +62,7 @@ export const TEMPLATE_FORM_FIELDS = [
     prop: 'status',
     label: '模板状态',
     placeholder: '请选择模板状态',
-    options: TEMPLATE_STATUS_OPTIONS,
+    options: [], // ⚠️ 需在组件中通过 mixin 的 this.templateStatusOptions 动态赋值
     required: true,
     defaultValue: TEMPLATE_STATUS.DRAFT,
     rules: [{ required: true, message: '请选择模板状态', trigger: 'change' }],

@@ -529,11 +529,11 @@ import { cloneDeep, debounce } from 'lodash'
 import {
   SEGMENT_TYPES,
   SEGMENT_TYPE_OPTIONS,
-  ATMOSPHERE_TYPE_OPTIONS,
   FAN_MODE_OPTIONS,
   DEFAULT_SEGMENT_TEMPLATE
 } from '../constants/process-parameter-management'
 import TemperatureCurveViewer from './TemperatureCurveViewer.vue'
+import dictionaryMixin from '../mixins/dictionary'
 
 const DEFAULT_ATMOSPHERE = () => ({
   atmosphereType: '',
@@ -561,6 +561,7 @@ export default {
   components: {
     TemperatureCurveViewer
   },
+  mixins: [dictionaryMixin],
   props: {
     templateId: {
       type: String,
@@ -605,9 +606,7 @@ export default {
     segmentTypeOptions() {
       return SEGMENT_TYPE_OPTIONS
     },
-    atmosphereTypeOptions() {
-      return ATMOSPHERE_TYPE_OPTIONS
-    },
+    // atmosphereTypeOptions 已由 mixin 提供
     fanModeOptions() {
       return FAN_MODE_OPTIONS
     },
