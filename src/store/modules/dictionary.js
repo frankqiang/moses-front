@@ -1,699 +1,192 @@
 /**
  * 文件名称：dictionary.js
- * 文件描述：枚举字典Vuex模块 - 统一管理所有模块的枚举字典
+ * 文件描述：字典模块主入口 - 协调管理所有业务模块的字典
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
  *   - 2025-10-15: 添加工艺模板模块字典支持
+ *   - 2025-10-16: 重构为模块化架构，拆分各业务模块到独立文件
+ *
+ * ==================== 模块化架构说明 ====================
+ *
+ * 本文件作为字典模块的主入口，负责：
+ * 1. 注册各业务模块的字典子模块（通过 Vuex modules）
+ * 2. 提供向后兼容的 getters（代理到子模块）
+ * 3. 保持旧版 API 的可用性
+ *
+ * 【目录结构】
+ * src/store/modules/
+ * ├── dictionary.js              # 主入口（本文件）
+ * └── dictionary/                # 字典子模块目录
+ *     ├── productionPlan.js     # 生产计划字典
+ *     ├── processTemplate.js    # 工艺模板字典
+ *     ├── tpm.js                # TPM字典
+ *     └── ...                   # 其他模块字典
+ *
+ * 【使用方式】
+ *
+ * 1. 新版模块化方式（推荐）：
+ * ```javascript
+ * // 加载字典
+ * await this.$store.dispatch('dictionary/productionPlan/loadDictionaries')
+ *
+ * // 获取数据
+ * const label = this.$store.getters['dictionary/productionPlan/getPlanStatusLabel']('草稿')
+ * const options = this.$store.getters['dictionary/productionPlan/planStatusOptions']
+ * ```
+ *
+ * 2. 旧版方式（保持兼容）：
+ * ```javascript
+ * // 仍然可用
+ * const label = this.$store.getters['dictionary/getPlanStatusLabel']('草稿')
+ * ```
+ *
+ * 【扩展新模块】
+ * 1. 在 dictionary/ 目录下创建新的模块文件
+ * 2. 在本文件的 modules 中注册
+ * 3. 无需修改其他代码，自动支持模块化访问
  */
 
-import { getAllDictionaries as getProductionPlanDictionaries } from '@/views/production-management/production-plan-management/api'
-import { getAllDictionaries as getProcessTemplateDictionaries } from '@/views/master-data/process-parameter-management/api'
-
-const CACHE_KEY = 'app_dictionaries_cache'
-const PROCESS_TEMPLATE_CACHE_KEY = 'processTemplateDictionaries'
-const CACHE_VALIDITY_HOURS = 24 // 缓存有效期24小时
+import productionPlan from './dictionary/productionPlan/index'
+import processTemplate from './dictionary/processTemplate/index'
+import tpm from './dictionary/tpm/index'
 
 const state = {
-  // 生产计划相关字典
-  productionPlan: {
-    planStatuses: {},
-    planItemStatuses: {},
-    planPriorities: {},
-    planSources: {},
-    processTemplateLinkTypes: {},
-    equipmentLinkTypes: {},
-    changeTypes: {},
-    operationSources: {}
-  },
-  // 工艺模板相关字典
-  processTemplate: {
-    templateStatuses: {},
-    templateVersionStatuses: {},
-    atmosphereTypes: {},
-    circulationFanSpeeds: {},
-    controlModes: {}
-  },
-  // 通用模块字典存储
-  modules: {},
-  // 字典加载状态
-  loaded: false,
-  loading: false,
-  processTemplateLoaded: false,
-  processTemplateLoading: false
+  // 主模块不再存储具体数据，只做协调
+  // 所有数据都在子模块中管理
 }
 
 const mutations = {
-  SET_PRODUCTION_PLAN_DICTIONARIES(state, dictionaries) {
-    state.productionPlan = {
-      planStatuses: dictionaries.planStatuses || {},
-      planItemStatuses: dictionaries.planItemStatuses || {},
-      planPriorities: dictionaries.planPriorities || {},
-      planSources: dictionaries.planSources || {},
-      processTemplateLinkTypes: dictionaries.processTemplateLinkTypes || {},
-      equipmentLinkTypes: dictionaries.equipmentLinkTypes || {},
-      changeTypes: dictionaries.changeTypes || {},
-      operationSources: dictionaries.operationSources || {}
-    }
-  },
-  SET_PROCESS_TEMPLATE_DICTIONARIES(state, dictionaries) {
-    state.processTemplate = {
-      templateStatuses: dictionaries.templateStatuses || {},
-      templateVersionStatuses: dictionaries.templateVersionStatuses || {},
-      atmosphereTypes: dictionaries.atmosphereTypes || {},
-      circulationFanSpeeds: dictionaries.circulationFanSpeeds || {},
-      controlModes: dictionaries.controlModes || {}
-    }
-  },
-  // 通用模块字典设置
-  SET_MODULE_DICTIONARIES(state, { moduleName, dictionaries }) {
-    state.modules = {
-      ...state.modules,
-      [moduleName]: dictionaries
-    }
-  },
-  SET_LOADED(state, loaded) {
-    state.loaded = loaded
-  },
-  SET_LOADING(state, loading) {
-    state.loading = loading
-  },
-  SET_PROCESS_TEMPLATE_LOADED(state, loaded) {
-    state.processTemplateLoaded = loaded
-  },
-  SET_PROCESS_TEMPLATE_LOADING(state, loading) {
-    state.processTemplateLoading = loading
-  }
+  // 主模块不需要 mutations
 }
 
 const actions = {
   /**
-   * 通用：加载模块字典
-   * @param {string} moduleName - 模块名称
-   * @param {Function} apiFunction - API函数
-   * @param {string} cacheKey - 缓存键
-   * @param {boolean} forceRefresh - 是否强制刷新（忽略缓存）
+   * 加载所有模块字典（可选功能）
    */
-  async loadModuleDictionaries({ commit, state }, { moduleName, apiFunction, cacheKey, forceRefresh = false }) {
-    console.log(`[Dictionary] 开始加载模块 "${moduleName}" 的字典数据`)
-
-    // 检查是否已加载
-    if (state.modules[moduleName] && !forceRefresh) {
-      console.log(`[Dictionary] 模块 "${moduleName}" 字典已加载，跳过`)
-      return
-    }
-
-    // 检查缓存
-    if (!forceRefresh) {
-      const cachedData = getModuleCachedDictionaries(cacheKey)
-      if (cachedData) {
-        commit('SET_MODULE_DICTIONARIES', { moduleName, dictionaries: cachedData })
-        console.log(`[Dictionary] 模块 "${moduleName}" 字典从缓存加载`)
-        return
-      }
-    }
-
-    // 从服务器加载
-    try {
-      console.log(`[Dictionary] 从服务器加载模块 "${moduleName}" 字典...`)
-      const response = await apiFunction()
-
-      if (response.success && response.data) {
-        commit('SET_MODULE_DICTIONARIES', { moduleName, dictionaries: response.data })
-
-        // 保存到缓存
-        saveModuleDictionariesToCache(cacheKey, response.data)
-        console.log(`[Dictionary] 模块 "${moduleName}" 字典从服务器加载成功`)
-      } else {
-        console.error(`[Dictionary] 模块 "${moduleName}" 字典加载失败:`, response)
-      }
-    } catch (error) {
-      console.error(`[Dictionary] 模块 "${moduleName}" 字典加载异常:`, error)
-
-      // 加载失败时尝试使用缓存
-      const cachedData = getModuleCachedDictionaries(cacheKey, true) // 忽略有效期
-      if (cachedData) {
-        commit('SET_MODULE_DICTIONARIES', { moduleName, dictionaries: cachedData })
-        console.warn(`[Dictionary] 模块 "${moduleName}" 加载失败，使用过期缓存`)
-      }
-    }
+  async loadAll({ dispatch }) {
+    const modules = ['productionPlan', 'processTemplate', 'tpm']
+    await Promise.all(modules.map(module => dispatch(`${module}/loadDictionaries`)))
+    console.log('[Dictionary] 所有模块字典加载完成')
   },
 
   /**
-   * 加载生产计划字典
-   * @param {boolean} forceRefresh - 是否强制刷新（忽略缓存）
+   * 清除所有模块缓存（可选功能）
    */
-  async loadProductionPlanDictionaries({ commit, state }, forceRefresh = false) {
-    // 如果已加载且不强制刷新，直接返回
-    if (state.loaded && !forceRefresh) {
-      return
-    }
-
-    // 检查缓存
-    if (!forceRefresh) {
-      const cachedData = getCachedDictionaries()
-      if (cachedData) {
-        commit('SET_PRODUCTION_PLAN_DICTIONARIES', cachedData)
-        commit('SET_LOADED', true)
-        console.log('[Dictionary] 从缓存加载字典数据')
-        return
-      }
-    }
-
-    // 从服务器加载
-    try {
-      commit('SET_LOADING', true)
-      const response = await getProductionPlanDictionaries()
-
-      if (response.success && response.data) {
-        commit('SET_PRODUCTION_PLAN_DICTIONARIES', response.data)
-        commit('SET_LOADED', true)
-
-        // 保存到缓存
-        saveDictionariesToCache(response.data)
-        console.log('[Dictionary] 从服务器加载字典数据')
-      } else {
-        console.error('[Dictionary] 加载字典失败:', response)
-      }
-    } catch (error) {
-      console.error('[Dictionary] 加载字典异常:', error)
-      // 加载失败时尝试使用缓存
-      const cachedData = getCachedDictionaries(true) // 忽略有效期
-      if (cachedData) {
-        commit('SET_PRODUCTION_PLAN_DICTIONARIES', cachedData)
-        commit('SET_LOADED', true)
-        console.warn('[Dictionary] 加载失败，使用过期缓存')
-      }
-    } finally {
-      commit('SET_LOADING', false)
-    }
-  },
-
-  /**
-   * 清除字典缓存
-   */
-  clearDictionaryCache({ commit }) {
-    localStorage.removeItem(CACHE_KEY)
-    commit('SET_LOADED', false)
-    console.log('[Dictionary] 清除字典缓存')
-  },
-
-  /**
-   * 加载工艺模板字典
-   * @param {boolean} forceRefresh - 是否强制刷新（忽略缓存）
-   */
-  async loadProcessTemplateDictionaries({ commit, state }, forceRefresh = false) {
-    // 如果已加载且不强制刷新，直接返回
-    if (state.processTemplateLoaded && !forceRefresh) {
-      return
-    }
-
-    // 检查缓存
-    if (!forceRefresh) {
-      const cachedData = getProcessTemplateCachedDictionaries()
-      if (cachedData) {
-        commit('SET_PROCESS_TEMPLATE_DICTIONARIES', cachedData)
-        commit('SET_PROCESS_TEMPLATE_LOADED', true)
-        console.log('[Dictionary] 工艺模板字典从缓存加载')
-        return
-      }
-    }
-
-    // 从服务器加载
-    try {
-      commit('SET_PROCESS_TEMPLATE_LOADING', true)
-      const response = await getProcessTemplateDictionaries()
-
-      if (response.success && response.data) {
-        commit('SET_PROCESS_TEMPLATE_DICTIONARIES', response.data)
-        commit('SET_PROCESS_TEMPLATE_LOADED', true)
-
-        // 保存到缓存
-        saveProcessTemplateDictionariesToCache(response.data)
-        console.log('[Dictionary] 工艺模板字典从服务器加载')
-      } else {
-        console.error('[Dictionary] 加载工艺模板字典失败:', response)
-      }
-    } catch (error) {
-      console.error('[Dictionary] 加载工艺模板字典异常:', error)
-      // 加载失败时尝试使用缓存
-      const cachedData = getProcessTemplateCachedDictionaries(true) // 忽略有效期
-      if (cachedData) {
-        commit('SET_PROCESS_TEMPLATE_DICTIONARIES', cachedData)
-        commit('SET_PROCESS_TEMPLATE_LOADED', true)
-        console.warn('[Dictionary] 加载失败，使用过期缓存')
-      }
-    } finally {
-      commit('SET_PROCESS_TEMPLATE_LOADING', false)
-    }
-  },
-
-  /**
-   * 调试：测试后端接口（强制调用，忽略缓存）
-   */
-  async debugTestAPI({ commit }) {
-    console.log('🧪 [Dictionary Debug] 开始测试后端接口...')
-
-    try {
-      commit('SET_LOADING', true)
-      const response = await getProductionPlanDictionaries()
-
-      console.log('📡 [Dictionary Debug] 接口响应:', response)
-
-      if (response.success && response.data) {
-        // 检查数据结构
-        console.log('🔍 [Dictionary Debug] 数据结构检查:')
-
-        Object.keys(response.data).forEach(key => {
-          const dict = response.data[key]
-          console.log(`   ${key}:`, {
-            hasValues: !!dict.values,
-            hasLabels: !!dict.labels,
-            valuesCount: dict.values ? Object.keys(dict.values).length : 0,
-            labelsCount: dict.labels ? Object.keys(dict.labels).length : 0
-          })
-        })
-
-        // 测试存储和获取
-        commit('SET_PRODUCTION_PLAN_DICTIONARIES', response.data)
-        commit('SET_LOADED', true)
-        saveDictionariesToCache(response.data)
-
-        console.log('✅ [Dictionary Debug] 接口测试成功，数据已更新')
-
-        return response.data
-      } else {
-        console.error('❌ [Dictionary Debug] 接口返回失败:', response)
-        return null
-      }
-    } catch (error) {
-      console.error('❌ [Dictionary Debug] 接口调用异常:', error)
-      return null
-    } finally {
-      commit('SET_LOADING', false)
-    }
+  clearAllCaches({ dispatch }) {
+    const modules = ['productionPlan', 'processTemplate', 'tpm']
+    modules.forEach(module => dispatch(`${module}/clearCache`))
+    console.log('[Dictionary] 所有模块缓存已清除')
   }
 }
 
 const getters = {
-  /**
-   * 通用：获取模块字典
-   */
-  getModuleDictionaries: (state) => (moduleName) => {
-    return state.modules[moduleName] || {}
+  // ==================== 向后兼容的 Getters ====================
+  // 代理到子模块，保持旧版 API 可用
+
+  // ============ 生产计划模块 ============
+  getPlanStatusLabel: (state, getters, rootState, rootGetters) => (status) => {
+    return rootGetters['dictionary/productionPlan/getPlanStatusLabel'](status)
   },
 
-  /**
-   * 通用：检查模块字典是否已加载
-   */
-  isModuleLoaded: (state) => (moduleName) => {
-    return !!state.modules[moduleName]
+  getPlanItemStatusLabel: (state, getters, rootState, rootGetters) => (status) => {
+    return rootGetters['dictionary/productionPlan/getPlanItemStatusLabel'](status)
   },
 
-  /**
-   * 获取计划状态标签
-   */
-  getPlanStatusLabel: (state) => (status) => {
-    return state.productionPlan.planStatuses?.labels?.[status] || status
+  getPlanPriorityLabel: (state, getters, rootState, rootGetters) => (priority) => {
+    return rootGetters['dictionary/productionPlan/getPlanPriorityLabel'](priority)
   },
 
-  /**
-   * 获取子批次状态标签
-   */
-  getPlanItemStatusLabel: (state) => (status) => {
-    return state.productionPlan.planItemStatuses?.labels?.[status] || status
+  getPlanSourceLabel: (state, getters, rootState, rootGetters) => (source) => {
+    return rootGetters['dictionary/productionPlan/getPlanSourceLabel'](source)
   },
 
-  /**
-   * 获取计划优先级标签
-   */
-  getPlanPriorityLabel: (state) => (priority) => {
-    return state.productionPlan.planPriorities?.labels?.[priority] || priority
+  getProcessTemplateLinkTypeLabel: (state, getters, rootState, rootGetters) => (type) => {
+    return rootGetters['dictionary/productionPlan/getProcessTemplateLinkTypeLabel'](type)
   },
 
-  /**
-   * 获取计划来源标签
-   */
-  getPlanSourceLabel: (state) => (source) => {
-    return state.productionPlan.planSources?.labels?.[source] || source
+  getEquipmentLinkTypeLabel: (state, getters, rootState, rootGetters) => (type) => {
+    return rootGetters['dictionary/productionPlan/getEquipmentLinkTypeLabel'](type)
   },
 
-  /**
-   * 获取工艺模板关联类型标签
-   */
-  getProcessTemplateLinkTypeLabel: (state) => (type) => {
-    return state.productionPlan.processTemplateLinkTypes?.labels?.[type] || type
+  getChangeTypeLabel: (state, getters, rootState, rootGetters) => (type) => {
+    return rootGetters['dictionary/productionPlan/getChangeTypeLabel'](type)
   },
 
-  /**
-   * 获取设备关联类型标签
-   */
-  getEquipmentLinkTypeLabel: (state) => (type) => {
-    return state.productionPlan.equipmentLinkTypes?.labels?.[type] || type
+  getOperationSourceLabel: (state, getters, rootState, rootGetters) => (source) => {
+    return rootGetters['dictionary/productionPlan/getOperationSourceLabel'](source)
   },
 
-  /**
-   * 获取变更类型标签
-   */
-  getChangeTypeLabel: (state) => (type) => {
-    return state.productionPlan.changeTypes?.labels?.[type] || type
+  planStatusOptions: (state, getters, rootState, rootGetters) => {
+    return rootGetters['dictionary/productionPlan/planStatusOptions']
   },
 
-  /**
-   * 获取操作来源标签
-   */
-  getOperationSourceLabel: (state) => (source) => {
-    return state.productionPlan.operationSources?.labels?.[source] || source
+  planItemStatusOptions: (state, getters, rootState, rootGetters) => {
+    return rootGetters['dictionary/productionPlan/planItemStatusOptions']
   },
 
-  /**
-   * 获取计划状态选项（用于下拉框）
-   */
-  planStatusOptions: (state) => {
-    const dict = state.productionPlan.planStatuses
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
-      value: key,
-      label: dict.labels[key]
-    }))
+  planPriorityOptions: (state, getters, rootState, rootGetters) => {
+    return rootGetters['dictionary/productionPlan/planPriorityOptions']
   },
 
-  /**
-   * 获取子批次状态选项（用于下拉框）
-   */
-  planItemStatusOptions: (state) => {
-    const dict = state.productionPlan.planItemStatuses
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
-      value: key,
-      label: dict.labels[key]
-    }))
+  planSourceOptions: (state, getters, rootState, rootGetters) => {
+    return rootGetters['dictionary/productionPlan/planSourceOptions']
   },
 
-  /**
-   * 获取计划优先级选项（用于下拉框）
-   */
-  planPriorityOptions: (state) => {
-    const dict = state.productionPlan.planPriorities
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
-      value: key,
-      label: dict.labels[key]
-    }))
+  // ============ 工艺模板模块 ============
+  getTemplateStatusLabel: (state, getters, rootState, rootGetters) => (status) => {
+    return rootGetters['dictionary/processTemplate/getTemplateStatusLabel'](status)
   },
 
-  /**
-   * 获取计划来源选项（用于下拉框）
-   */
-  planSourceOptions: (state) => {
-    const dict = state.productionPlan.planSources
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
-      value: key,
-      label: dict.labels[key]
-    }))
+  getTemplateVersionStatusLabel: (state, getters, rootState, rootGetters) => (status) => {
+    return rootGetters['dictionary/processTemplate/getTemplateVersionStatusLabel'](status)
   },
 
-  // ============ 工艺模板相关 getters ============
-
-  /**
-   * 获取工艺模板状态标签
-   */
-  getTemplateStatusLabel: (state) => (status) => {
-    return state.processTemplate.templateStatuses?.labels?.[status] || status
+  getAtmosphereTypeLabel: (state, getters, rootState, rootGetters) => (type) => {
+    return rootGetters['dictionary/processTemplate/getAtmosphereTypeLabel'](type)
   },
 
-  /**
-   * 获取工艺模板版本状态标签
-   */
-  getTemplateVersionStatusLabel: (state) => (status) => {
-    return state.processTemplate.templateVersionStatuses?.labels?.[status] || status
+  getCirculationFanSpeedLabel: (state, getters, rootState, rootGetters) => (speed) => {
+    return rootGetters['dictionary/processTemplate/getCirculationFanSpeedLabel'](speed)
   },
 
-  /**
-   * 获取保护气氛类型标签
-   */
-  getAtmosphereTypeLabel: (state) => (type) => {
-    return state.processTemplate.atmosphereTypes?.labels?.[type] || type
+  getControlModeLabel: (state, getters, rootState, rootGetters) => (mode) => {
+    return rootGetters['dictionary/processTemplate/getControlModeLabel'](mode)
   },
 
-  /**
-   * 获取循环风机速度标签
-   */
-  getCirculationFanSpeedLabel: (state) => (speed) => {
-    return state.processTemplate.circulationFanSpeeds?.labels?.[speed] || speed
+  templateStatusOptions: (state, getters, rootState, rootGetters) => {
+    return rootGetters['dictionary/processTemplate/templateStatusOptions']
   },
 
-  /**
-   * 获取控温方式标签
-   */
-  getControlModeLabel: (state) => (mode) => {
-    return state.processTemplate.controlModes?.labels?.[mode] || mode
+  templateVersionStatusOptions: (state, getters, rootState, rootGetters) => {
+    return rootGetters['dictionary/processTemplate/templateVersionStatusOptions']
   },
 
-  /**
-   * 获取工艺模板状态选项（用于下拉框）
-   */
-  templateStatusOptions: (state) => {
-    const dict = state.processTemplate.templateStatuses
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
-      value: key,
-      label: dict.labels[key]
-    }))
+  atmosphereTypeOptions: (state, getters, rootState, rootGetters) => {
+    return rootGetters['dictionary/processTemplate/atmosphereTypeOptions']
   },
 
-  /**
-   * 获取工艺模板版本状态选项（用于下拉框）
-   */
-  templateVersionStatusOptions: (state) => {
-    const dict = state.processTemplate.templateVersionStatuses
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
-      value: key,
-      label: dict.labels[key]
-    }))
+  circulationFanSpeedOptions: (state, getters, rootState, rootGetters) => {
+    return rootGetters['dictionary/processTemplate/circulationFanSpeedOptions']
   },
 
-  /**
-   * 获取保护气氛类型选项（用于下拉框）
-   */
-  atmosphereTypeOptions: (state) => {
-    const dict = state.processTemplate.atmosphereTypes
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
-      value: key,
-      label: dict.labels[key]
-    }))
-  },
-
-  /**
-   * 获取循环风机速度选项（用于下拉框）
-   */
-  circulationFanSpeedOptions: (state) => {
-    const dict = state.processTemplate.circulationFanSpeeds
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
-      value: key,
-      label: dict.labels[key]
-    }))
-  },
-
-  /**
-   * 获取控温方式选项（用于下拉框）
-   */
-  controlModeOptions: (state) => {
-    const dict = state.processTemplate.controlModes
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
-      value: key,
-      label: dict.labels[key]
-    }))
+  controlModeOptions: (state, getters, rootState, rootGetters) => {
+    return rootGetters['dictionary/processTemplate/controlModeOptions']
   }
-}
 
-/**
- * 从缓存获取字典数据
- * @param {boolean} ignoreExpiry - 是否忽略有效期
- * @returns {Object|null}
- */
-function getCachedDictionaries(ignoreExpiry = false) {
-  try {
-    const cached = localStorage.getItem(CACHE_KEY)
-
-    if (!cached) {
-      return null
-    }
-
-    const cacheData = JSON.parse(cached)
-
-    // 检查新格式（包含timestamp）
-    if (cacheData.data && cacheData.timestamp) {
-      // 检查有效期
-      if (!ignoreExpiry) {
-        const now = Date.now()
-        const validityMs = CACHE_VALIDITY_HOURS * 60 * 60 * 1000
-
-        if (now - cacheData.timestamp > validityMs) {
-          console.log('[Dictionary] 缓存已过期')
-          return null
-        }
-      }
-
-      return cacheData.data
-    }
-
-    // 兼容旧格式（直接数据），同时清理旧的timestamp key
-    localStorage.removeItem('app_dictionaries_timestamp')
-    console.log('[Dictionary] 检测到旧格式缓存，已清理')
-    return null
-  } catch (error) {
-    console.error('[Dictionary] 读取缓存失败:', error)
-    return null
-  }
-}
-
-/**
- * 保存字典数据到缓存
- * @param {Object} data - 字典数据
- */
-function saveDictionariesToCache(data) {
-  try {
-    const cacheData = {
-      data,
-      timestamp: Date.now(),
-      version: '1.0'
-    }
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData))
-
-    // 清理旧的timestamp key（如果存在）
-    localStorage.removeItem('app_dictionaries_timestamp')
-
-    console.log('[Dictionary] 缓存已保存（新格式）')
-  } catch (error) {
-    console.error('[Dictionary] 保存缓存失败:', error)
-  }
-}
-
-/**
- * 从缓存获取工艺模板字典数据
- * @param {boolean} ignoreExpiry - 是否忽略有效期
- * @returns {Object|null}
- */
-function getProcessTemplateCachedDictionaries(ignoreExpiry = false) {
-  try {
-    const cached = localStorage.getItem(PROCESS_TEMPLATE_CACHE_KEY)
-
-    if (!cached) {
-      return null
-    }
-
-    const cacheData = JSON.parse(cached)
-
-    // 检查格式（包含timestamp）
-    if (cacheData.data && cacheData.timestamp) {
-      // 检查有效期
-      if (!ignoreExpiry) {
-        const now = Date.now()
-        const validityMs = CACHE_VALIDITY_HOURS * 60 * 60 * 1000
-
-        if (now - cacheData.timestamp > validityMs) {
-          console.log('[Dictionary] 工艺模板字典缓存已过期')
-          return null
-        }
-      }
-
-      return cacheData.data
-    }
-
-    return null
-  } catch (error) {
-    console.error('[Dictionary] 读取工艺模板字典缓存失败:', error)
-    return null
-  }
-}
-
-/**
- * 保存工艺模板字典数据到缓存
- * @param {Object} data - 字典数据
- */
-function saveProcessTemplateDictionariesToCache(data) {
-  try {
-    const cacheData = {
-      data,
-      timestamp: Date.now(),
-      version: '1.0'
-    }
-    localStorage.setItem(PROCESS_TEMPLATE_CACHE_KEY, JSON.stringify(cacheData))
-    console.log('[Dictionary] 工艺模板字典缓存已保存')
-  } catch (error) {
-    console.error('[Dictionary] 保存工艺模板字典缓存失败:', error)
-  }
-}
-
-/**
- * 从缓存获取通用模块字典数据
- * @param {string} cacheKey - 缓存键
- * @param {boolean} ignoreExpiry - 是否忽略有效期
- * @returns {Object|null}
- */
-function getModuleCachedDictionaries(cacheKey, ignoreExpiry = false) {
-  try {
-    const cached = localStorage.getItem(cacheKey)
-
-    if (!cached) {
-      return null
-    }
-
-    const cacheData = JSON.parse(cached)
-
-    // 检查格式（包含timestamp）
-    if (cacheData.data && cacheData.timestamp) {
-      // 检查有效期
-      if (!ignoreExpiry) {
-        const now = Date.now()
-        const validityMs = CACHE_VALIDITY_HOURS * 60 * 60 * 1000
-
-        if (now - cacheData.timestamp > validityMs) {
-          console.log(`[Dictionary] 缓存 "${cacheKey}" 已过期`)
-          return null
-        }
-      }
-
-      return cacheData.data
-    }
-
-    return null
-  } catch (error) {
-    console.error(`[Dictionary] 读取缓存 "${cacheKey}" 失败:`, error)
-    return null
-  }
-}
-
-/**
- * 保存通用模块字典数据到缓存
- * @param {string} cacheKey - 缓存键
- * @param {Object} data - 字典数据
- */
-function saveModuleDictionariesToCache(cacheKey, data) {
-  try {
-    const cacheData = {
-      data,
-      timestamp: Date.now(),
-      version: '1.0'
-    }
-    localStorage.setItem(cacheKey, JSON.stringify(cacheData))
-    console.log(`[Dictionary] 缓存 "${cacheKey}" 已保存`)
-  } catch (error) {
-    console.error(`[Dictionary] 保存缓存 "${cacheKey}" 失败:`, error)
-  }
+  // 注意：TPM 模块使用新的 dictionaryBase mixin，不需要在这里代理
+  // TPM 通过 this.$store.getters['dictionary/tpm/xxx'] 访问
 }
 
 export default {
   namespaced: true,
+  modules: {
+    productionPlan,
+    processTemplate,
+    tpm
+  },
   state,
   mutations,
   actions,
   getters
 }
-
