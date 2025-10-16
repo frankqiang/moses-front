@@ -297,16 +297,16 @@ export async function fetchProcessTemplateVersions(templateId, params = {}) {
 
   const { data, message, meta } = response
 
-  // 根据v2.0接口文档，后端返回格式为：data.template 和 data.versions（数组）
+  // 根据v2.0接口文档，后端返回格式为：data.template 和 data.versions.results（对象包含results数组和分页信息）
   return {
     data: {
       template: data?.template || null,
-      versions: data?.versions || [],
+      versions: data?.versions?.results || [],
       pagination: {
-        page: data?.page ?? params.page ?? 1,
-        limit: data?.limit ?? params.limit ?? 10,
-        totalPages: data?.totalPages ?? 0,
-        totalResults: data?.totalResults ?? 0
+        page: data?.versions?.page ?? params.page ?? 1,
+        limit: data?.versions?.limit ?? params.limit ?? 10,
+        totalPages: data?.versions?.totalPages ?? 0,
+        totalResults: data?.versions?.totalResults ?? 0
       }
     },
     message,

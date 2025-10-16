@@ -150,6 +150,7 @@ import TemperatureCurveViewer from './components/TemperatureCurveViewer.vue'
 import CopyTemplateDialog from './components/CopyTemplateDialog.vue'
 import TemplateUsageDialog from './components/TemplateUsageDialog.vue'
 import DangerOperationConfirmDialog from './components/DangerOperationConfirmDialog.vue'
+import processTemplateDictionaryMixin from './mixins/dictionary'
 import {
   fetchProcessTemplateList,
   deleteProcessTemplate,
@@ -192,6 +193,7 @@ export default {
     TemplateUsageDialog,
     DangerOperationConfirmDialog
   },
+  mixins: [processTemplateDictionaryMixin],
   data() {
     return {
       initialSearchParams: {},
@@ -272,13 +274,14 @@ export default {
   },
   methods: {
     /**
-     * 加载枚举字典
+     * 加载枚举字典（使用 mixin 提供的方法）
      */
-    loadDictionaries() {
-      this.$store.dispatch('dictionary/loadProcessTemplateDictionaries')
-        .catch(error => {
-          console.error('[工艺参数管理] 加载枚举字典失败:', error)
-        })
+    async loadDictionaries() {
+      try {
+        await this.loadProcessTemplateDictionary()
+      } catch (error) {
+        console.error('[工艺参数管理] 加载枚举字典失败:', error)
+      }
     },
 
     initFromRoute() {

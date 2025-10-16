@@ -5,6 +5,7 @@
 修改记录：
   - 2025-09-30: 初始创建，完成TASK007 P0阶段与P1第6-8项需求
   - 2025-10-15: 重构支持多种图表类型切换，完成TASK09 P0+P1第5项需求
+  - 2025-10-16: 全面重构兼容v2.0版本数据结构（12段工艺参数）
 -->
 
 <template>
@@ -122,12 +123,12 @@
         </section>
 
         <section
-          v-if="comparisonSeries.length"
+          v-if="activeComparisonId && comparisonSeries.length"
           class="temperature-curve-viewer__section"
         >
           <h5>对比版本</h5>
           <ul class="temperature-curve-viewer__comparison-list">
-            <li v-for="item in comparisonSeries" :key="item.id">
+            <li v-for="item in comparisonSeries.filter(i => i.id === activeComparisonId)" :key="item.id">
               <span class="comparison-dot" :style="{ backgroundColor: item.color }" />
               <span class="comparison-label" :title="item.label">{{ item.label }}</span>
             </li>
@@ -147,14 +148,13 @@ import {
   LegendComponent,
   MarkLineComponent,
   MarkAreaComponent,
-  DataZoomComponent
+  DataZoomComponent,
+  GraphicComponent
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
 import {
-  TEMPERATURE_CHART_CONFIG,
-  SEGMENT_COLOR_MAP,
   TEMPERATURE_COMPARISON_COLORS,
   TEMPERATURE_ALARM_ZONES,
   DEVICE_CAPABILITY_ZONES,
@@ -171,6 +171,7 @@ echarts.use([
   MarkLineComponent,
   MarkAreaComponent,
   DataZoomComponent,
+  GraphicComponent,
   CanvasRenderer
 ])
 
@@ -219,7 +220,7 @@ export default {
     },
     currentChartDescription() {
       const descriptions = {
-        temperature: '展示12段工艺参数的炉温和料温变化趋势',
+        temperature: '展示12段工艺参数的炉温和料温变化趋势（v2.0版本）',
         time: '展示各段时间占比和分布情况',
         fan: '展示循环风机、负压风机、吹洗风机的频率变化'
       }
@@ -260,8 +261,8 @@ export default {
             id: 'no-data',
             type: 'warning',
             color: '#E6A23C',
-            message: '尚未配置温度段，无法生成曲线',
-            suggestion: '请在版本参数中至少配置一个温度段'
+            message: '尚未配置工艺段参数，无法生成曲线',
+            suggestion: '请在版本参数中配置12段工艺参数'
           }
         ]
       }
@@ -269,44 +270,85 @@ export default {
       const messages = []
       const sortedSegments = [...this.segments].sort((a, b) => (a.segmentOrder || 0) - (b.segmentOrder || 0))
 
+      // v2.0版本：固定12段检查
+      if (sortedSegments.length !== 12) {
+        messages.push({
+          id: 'segment-count',
+          type: 'danger',
+          color: '#F56C6C',
+          message: `工艺段数量不符合要求，当前${sortedSegments.length}段，应为12段`,
+          suggestion: 'v2.0版本要求固定12段工艺参数配置'
+        })
+      }
+
       sortedSegments.forEach((segment, index) => {
-        if (!segment.segmentType) {
+        const segmentNum = segment.segmentOrder || (index + 1)
+
+        // 检查炉温
+        if (segment.furnaceTemperature === null || segment.furnaceTemperature === undefined) {
           messages.push({
-            id: `segment-${index}-type`,
+            id: `segment-${segmentNum}-furnace-temp`,
             type: 'danger',
             color: '#F56C6C',
-            message: `温度段#${index + 1} 未指定段类型`,
-            suggestion: '请在“段类型”列选择升温/保温/降温/快速冷却'
-          })
-        }
-        if (segment.targetTemperature === null || segment.targetTemperature === undefined) {
-          messages.push({
-            id: `segment-${index}-temperature`,
-            type: 'danger',
-            color: '#F56C6C',
-            message: `温度段#${index + 1} 缺少目标温度`,
-            suggestion: '目标温度为必填项，请补充精确值'
-          })
-        }
-        if (!segment.duration) {
-          messages.push({
-            id: `segment-${index}-duration`,
-            type: 'warning',
-            color: '#E6A23C',
-            message: `温度段#${index + 1} 未填写持续时间`,
-            suggestion: '建议根据工艺要求指定持续时间（分钟）'
+            message: `工艺段#${segmentNum} 缺少炉温设置`,
+            suggestion: '炉温设置为必填项，范围0-1500℃'
           })
         }
 
+        // 检查料温
+        if (segment.materialTemperature === null || segment.materialTemperature === undefined) {
+          messages.push({
+            id: `segment-${segmentNum}-material-temp`,
+            type: 'danger',
+            color: '#F56C6C',
+            message: `工艺段#${segmentNum} 缺少料温设置`,
+            suggestion: '料温设置为必填项，范围0-1500℃'
+          })
+        }
+
+        // 检查料温不能高于炉温
+        if (segment.materialTemperature > segment.furnaceTemperature) {
+          messages.push({
+            id: `segment-${segmentNum}-temp-relation`,
+            type: 'danger',
+            color: '#F56C6C',
+            message: `工艺段#${segmentNum} 料温(${segment.materialTemperature}℃)高于炉温(${segment.furnaceTemperature}℃)`,
+            suggestion: '料温必须低于或等于炉温'
+          })
+        }
+
+        // 检查时间设置
+        if (!segment.timeSet && segment.timeSet !== 0) {
+          messages.push({
+            id: `segment-${segmentNum}-time`,
+            type: 'warning',
+            color: '#E6A23C',
+            message: `工艺段#${segmentNum} 未填写时间设置`,
+            suggestion: '建议根据工艺要求指定时间设置（小时）'
+          })
+        }
+
+        // 检查循环风机速度
+        if (!segment.circulationFanSpeed) {
+          messages.push({
+            id: `segment-${segmentNum}-fan-speed`,
+            type: 'warning',
+            color: '#E6A23C',
+            message: `工艺段#${segmentNum} 未设置循环风机速度`,
+            suggestion: '请选择低速/中速/高速'
+          })
+        }
+
+        // 检查炉温变化幅度
         if (index > 0) {
           const prev = sortedSegments[index - 1]
-          const delta = Math.abs((segment.targetTemperature || 0) - (prev.targetTemperature || 0))
+          const delta = Math.abs((segment.furnaceTemperature || 0) - (prev.furnaceTemperature || 0))
           if (delta >= TEMPERATURE_SUDDEN_DROP_THRESHOLD) {
             messages.push({
-              id: `segment-${index}-jump`,
+              id: `segment-${segmentNum}-furnace-jump`,
               type: 'warning',
               color: '#E6A23C',
-              message: `温度段#${index} 与 #${index + 1} 之间温度变化幅度为 ${delta}°C`,
+              message: `工艺段#${index} 与 #${segmentNum} 之间炉温变化幅度为 ${delta}°C`,
               suggestion: '请确认是否符合设备能力与材料安全要求'
             })
           }
@@ -330,12 +372,11 @@ export default {
       deep: true,
       handler() {
         const series = this.comparisonSeries
+        // 如果当前选中的对比版本已经不存在了，则清空选择
         if (this.activeComparisonId && !series.some(item => item.id === this.activeComparisonId)) {
           this.activeComparisonId = ''
         }
-        if (!this.activeComparisonId && series.length) {
-          this.activeComparisonId = series[0].id
-        }
+        // 移除自动选择第一个版本的逻辑，让用户主动选择
         this.renderChart()
       }
     },
@@ -386,28 +427,32 @@ export default {
       }
     },
 
-    buildSeriesData(segmentList, color) {
+    buildSeriesData(segmentList, tempType = 'furnace', color) {
       if (!Array.isArray(segmentList) || !segmentList.length) {
         return []
       }
       const sorted = [...segmentList].sort((a, b) => (a.segmentOrder || 0) - (b.segmentOrder || 0))
-      let accumulatedMinutes = 0
+      let accumulatedHours = 0
       const points = []
+
       sorted.forEach(segment => {
-        const duration = Number(segment.duration) || 0
-        const targetTemp = Number(segment.targetTemperature)
+        const timeSet = Number(segment.timeSet) || 0
+        const temp = tempType === 'furnace'
+          ? Number(segment.furnaceTemperature)
+          : Number(segment.materialTemperature)
+
         if (points.length === 0) {
           points.push({
-            time: accumulatedMinutes,
-            value: targetTemp,
+            time: accumulatedHours,
+            value: temp,
             ...segment
           })
         }
 
-        accumulatedMinutes += duration
+        accumulatedHours += timeSet
         points.push({
-          time: accumulatedMinutes,
-          value: targetTemp,
+          time: accumulatedHours,
+          value: temp,
           ...segment
         })
       })
@@ -416,10 +461,12 @@ export default {
         name: `段#${point.segmentOrder}`,
         value: [point.time, point.value],
         segmentOrder: point.segmentOrder,
-        segmentType: point.segmentType,
-        targetTemperature: point.targetTemperature,
-        duration: point.duration,
-        color: color || SEGMENT_COLOR_MAP[point.segmentType] || '#409EFF'
+        controlMode: point.controlMode,
+        furnaceTemperature: point.furnaceTemperature,
+        materialTemperature: point.materialTemperature,
+        timeSet: point.timeSet,
+        circulationFanSpeed: point.circulationFanSpeed,
+        color: color || '#409EFF'
       }))
     },
 
@@ -453,24 +500,72 @@ export default {
       if (!target) {
         return []
       }
+
+      // 为对比版本的炉温和料温生成不同色调的颜色
+      const furnaceColor = target.color // 炉温使用原色
+      const materialColor = this.adjustColorBrightness(target.color, 40) // 料温使用加亮的颜色
+
       return [
         {
-          name: target.label,
+          name: `${target.label} - 炉温`,
           type: 'line',
           smooth: false,
           symbol: 'circle',
           symbolSize: 6,
           lineStyle: {
             width: 2,
-            color: target.color,
+            color: furnaceColor,
             type: 'dashed'
           },
           itemStyle: {
-            color: target.color
+            color: furnaceColor
           },
-          data: this.buildSeriesData(target.segments, target.color)
+          data: this.buildSeriesData(target.segments, 'furnace', furnaceColor)
+        },
+        {
+          name: `${target.label} - 料温`,
+          type: 'line',
+          smooth: false,
+          symbol: 'diamond',
+          symbolSize: 6,
+          lineStyle: {
+            width: 2,
+            color: materialColor,
+            type: 'dotted'
+          },
+          itemStyle: {
+            color: materialColor
+          },
+          data: this.buildSeriesData(target.segments, 'material', materialColor)
         }
       ]
+    },
+
+    // 调整颜色亮度的辅助方法
+    adjustColorBrightness(color, percent) {
+      // 将十六进制颜色转换为RGB
+      const hex = color.replace('#', '')
+      const r = parseInt(hex.substring(0, 2), 16)
+      const g = parseInt(hex.substring(2, 4), 16)
+      const b = parseInt(hex.substring(4, 6), 16)
+
+      // 调整亮度
+      const adjust = (value) => {
+        const adjusted = value + (255 - value) * (percent / 100)
+        return Math.min(255, Math.max(0, Math.round(adjusted)))
+      }
+
+      const newR = adjust(r)
+      const newG = adjust(g)
+      const newB = adjust(b)
+
+      // 转回十六进制
+      const toHex = (value) => {
+        const hex = value.toString(16)
+        return hex.length === 1 ? '0' + hex : hex
+      }
+
+      return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`
     },
 
     renderChart() {
@@ -506,8 +601,9 @@ export default {
 
     // 构建温度曲线图配置
     buildTemperatureOption() {
-      const baseSeriesData = this.buildSeriesData(this.segments)
-      return this.composeOption(baseSeriesData)
+      const furnaceTempData = this.buildSeriesData(this.segments, 'furnace')
+      const materialTempData = this.buildSeriesData(this.segments, 'material')
+      return this.composeOption(furnaceTempData, materialTempData)
     },
 
     // 构建时间分布图配置
@@ -550,6 +646,35 @@ export default {
           top: 'center',
           data: pieData.map(item => item.name)
         },
+        // 在圆环中心显示总时长
+        graphic: [
+          {
+            type: 'text',
+            z: 100,
+            left: 'center',
+            top: 'middle',
+            style: {
+              text: `${totalTime.toFixed(1)}\nh`,
+              textAlign: 'center',
+              fill: '#1f2d3d',
+              fontSize: 32,
+              fontWeight: 'bold',
+              lineHeight: 40,
+              rich: {
+                num: {
+                  fontSize: 40,
+                  fontWeight: 'bold',
+                  fill: '#1f2d3d'
+                },
+                unit: {
+                  fontSize: 16,
+                  fill: '#909399',
+                  fontWeight: 'normal'
+                }
+              }
+            }
+          }
+        ],
         series: [
           {
             name: '时间分布',
@@ -582,7 +707,7 @@ export default {
       }
     },
 
-    // 构建风机参数图配置
+    // 构建风机参数图配置（双Y轴）
     buildFanOption() {
       if (!this.hasData) {
         return this.buildEmptyOption()
@@ -591,11 +716,11 @@ export default {
       const sorted = [...this.segments].sort((a, b) => (a.segmentOrder || 0) - (b.segmentOrder || 0))
       const xData = sorted.map(seg => `段${seg.segmentOrder}`)
 
-      // 循环风机速度转换为数值（低速=30, 中速=50, 高速=70）
+      // 循环风机速度转换为百分比（低速=33%, 中速=67%, 高速=100%）
       const circulationFanData = sorted.map(seg => {
         const speed = seg.circulationFanSpeed || '低速'
-        const speedMap = { '低速': 30, '中速': 50, '高速': 70 }
-        return speedMap[speed] || 30
+        const speedMap = { '低速': 33, '中速': 67, '高速': 100 }
+        return speedMap[speed] || 33
       })
 
       const negativePressureFanData = sorted.map(seg => Number(seg.negativePressureFan) || 0)
@@ -604,7 +729,7 @@ export default {
       return {
         grid: {
           left: 60,
-          right: 60,
+          right: 80,
           top: 80,
           bottom: 60
         },
@@ -620,7 +745,7 @@ export default {
             const segmentIndex = params[0].dataIndex
             const segment = sorted[segmentIndex]
             const lines = params.map(item => {
-              let valueStr = `${item.value}`
+              let valueStr = ''
               if (item.seriesName === '循环风机速度') {
                 valueStr = segment.circulationFanSpeed || '低速'
               } else {
@@ -642,16 +767,43 @@ export default {
             color: '#666'
           }
         },
-        yAxis: {
-          type: 'value',
-          name: '频率 (Hz)',
-          min: 0,
-          max: 100,
-          axisLabel: {
-            color: '#666',
-            formatter: '{value} Hz'
+        yAxis: [
+          {
+            type: 'value',
+            name: '循环风机速度',
+            min: 0,
+            max: 100,
+            position: 'left',
+            axisLabel: {
+              color: '#666',
+              formatter: value => {
+                if (value <= 33) return '低速'
+                if (value <= 67) return '中速'
+                return '高速'
+              }
+            },
+            splitLine: {
+              show: true,
+              lineStyle: {
+                color: '#E5E5E5'
+              }
+            }
+          },
+          {
+            type: 'value',
+            name: '频率 (Hz)',
+            min: 0,
+            max: 100,
+            position: 'right',
+            axisLabel: {
+              color: '#666',
+              formatter: '{value} Hz'
+            },
+            splitLine: {
+              show: false
+            }
           }
-        },
+        ],
         dataZoom: [
           {
             type: 'slider',
@@ -666,6 +818,7 @@ export default {
           {
             name: '循环风机速度',
             type: 'bar',
+            yAxisIndex: 0,
             data: circulationFanData,
             itemStyle: {
               color: '#5470c6'
@@ -675,6 +828,7 @@ export default {
           {
             name: '负压风机',
             type: 'bar',
+            yAxisIndex: 1,
             data: negativePressureFanData,
             itemStyle: {
               color: '#91cc75'
@@ -683,6 +837,7 @@ export default {
           {
             name: '吹洗风机',
             type: 'bar',
+            yAxisIndex: 1,
             data: cleaningFanData,
             itemStyle: {
               color: '#fac858'
@@ -707,61 +862,116 @@ export default {
       }
     },
 
-    composeOption(seriesData) {
-      const legendItems = ['当前版本']
+    composeOption(furnaceTempData, materialTempData) {
+      const legendItems = ['炉温', '料温']
       const comparisonLabel = this.getActiveComparisonLabel()
       if (comparisonLabel) {
-        legendItems.push(comparisonLabel)
+        legendItems.push(`${comparisonLabel} - 炉温`, `${comparisonLabel} - 料温`)
       }
 
       const option = {
-        grid: { ...TEMPERATURE_CHART_CONFIG.grid },
+        grid: {
+          top: 32,
+          left: 50,
+          right: 50,
+          bottom: 32
+        },
         tooltip: {
-          ...TEMPERATURE_CHART_CONFIG.tooltip,
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            crossStyle: {
+              color: '#999'
+            }
+          },
           formatter: params => {
             if (!Array.isArray(params) || params.length === 0) {
               return ''
             }
-            const lines = params.map(item => {
-              const data = item.data || {}
-              return [
-                `${item.marker}${item.seriesName}`,
-                `段序号：${data.segmentOrder || '-'}`,
-                `段类型：${data.segmentType || '-'}`,
-                `目标温度：${data.targetTemperature ?? '-'} °C`,
-                `累计时间：${data.value ? data.value[0] : '-'} 分钟`
-              ].join('<br/>')
-            })
-            return lines.join('<br/><br/>')
+            const point = params[0]
+            const data = point.data || {}
+            return [
+              `<b>工艺段 #${data.segmentOrder || '-'}</b>`,
+              `控温方式：${data.controlMode || '-'}`,
+              `炉温设置：${data.furnaceTemperature ?? '-'} °C`,
+              `料温设置：${data.materialTemperature ?? '-'} °C`,
+              `时间设置：${data.timeSet ?? '-'} 小时`,
+              `累计时间：${data.value ? data.value[0].toFixed(2) : '-'} 小时`,
+              `循环风机：${data.circulationFanSpeed || '-'}`
+            ].join('<br/>')
           }
         },
         legend: {
           top: 0,
           data: legendItems
         },
-        xAxis: { ...TEMPERATURE_CHART_CONFIG.xAxis },
-        yAxis: { ...TEMPERATURE_CHART_CONFIG.yAxis }
+        xAxis: {
+          type: 'value',
+          name: '时间 (小时)',
+          boundaryGap: false,
+          min: 0,
+          axisLabel: {
+            color: '#666',
+            formatter: '{value} h'
+          }
+        },
+        yAxis: {
+          type: 'value',
+          name: '温度 (°C)',
+          min: -100,
+          max: 1500,
+          axisLabel: {
+            color: '#666',
+            formatter: '{value} °C'
+          }
+        }
       }
 
-      const baseSeries = {
-        name: '当前版本',
+      // 炉温曲线
+      const furnaceSeries = {
+        name: '炉温',
         type: 'line',
         smooth: false,
         symbol: 'circle',
         symbolSize: 8,
         lineStyle: {
-          width: 3
+          width: 3,
+          color: '#E74C3C'
         },
         itemStyle: {
-          color: params => params.data?.color || '#409EFF'
+          color: '#E74C3C'
         },
-        areaStyle: TEMPERATURE_CHART_CONFIG.series.areaStyle,
-        data: seriesData
+        areaStyle: {
+          opacity: 0.08,
+          color: '#E74C3C'
+        },
+        data: furnaceTempData
+      }
+
+      // 料温曲线
+      const materialSeries = {
+        name: '料温',
+        type: 'line',
+        smooth: false,
+        symbol: 'diamond',
+        symbolSize: 8,
+        lineStyle: {
+          width: 3,
+          color: '#3498DB'
+        },
+        itemStyle: {
+          color: '#3498DB'
+        },
+        areaStyle: {
+          opacity: 0.05,
+          color: '#3498DB'
+        },
+        data: materialTempData
       }
 
       const markAreas = this.buildMarkAreas()
       if (markAreas.length) {
-        baseSeries.markArea = {
+        furnaceSeries.markArea = {
           silent: true,
           data: markAreas
         }
@@ -769,17 +979,29 @@ export default {
 
       const comparisonSeries = this.buildComparisonSeries()
 
-      option.series = [baseSeries, ...comparisonSeries]
+      option.series = [furnaceSeries, materialSeries, ...comparisonSeries]
 
-      const times = seriesData.map(item => Number(item.value?.[0] || 0))
-      const temps = seriesData.map(item => Number(item.value?.[1] || 0))
+      // 自适应时间轴（包含对比版本数据）
+      let allTimes = [...furnaceTempData, ...materialTempData].map(item => Number(item.value?.[0] || 0))
+      // 包含对比版本的时间数据
+      comparisonSeries.forEach(series => {
+        if (series.data && series.data.length) {
+          allTimes = allTimes.concat(series.data.map(item => Number(item.value?.[0] || 0)))
+        }
+      })
+      const xMax = allTimes.length ? Math.max(...allTimes) : 0
+      option.xAxis.max = xMax > 0 ? xMax : 100
 
-      const xMax = times.length ? Math.max(...times) : 0
-      option.xAxis.max = xMax > 0 ? xMax : TEMPERATURE_CHART_CONFIG.xAxis.max
-
-      const yValues = temps.length ? temps : [TEMPERATURE_CHART_CONFIG.yAxis.min]
-      const yMax = Math.max(...yValues)
-      option.yAxis.max = Math.min(Math.max(yMax + 50, 200), TEMPERATURE_CHART_CONFIG.yAxis.max)
+      // 自适应温度轴（包含对比版本数据）
+      let allTemps = [...furnaceTempData, ...materialTempData].map(item => Number(item.value?.[1] || 0))
+      // 包含对比版本的温度数据
+      comparisonSeries.forEach(series => {
+        if (series.data && series.data.length) {
+          allTemps = allTemps.concat(series.data.map(item => Number(item.value?.[1] || 0)))
+        }
+      })
+      const yMax = allTemps.length ? Math.max(...allTemps) : 0
+      option.yAxis.max = Math.min(Math.max(yMax + 50, 200), 1500)
 
       return option
     },

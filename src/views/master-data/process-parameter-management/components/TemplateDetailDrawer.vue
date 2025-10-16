@@ -66,7 +66,7 @@
               :type-map="versionStatusConfig.typeMap"
               size="mini"
             />
-            <span v-else>-</span>
+            <el-tag v-else type="info" size="mini">暂无可用版本</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="适用合金牌号">
             {{ templateDetail.applicableAlloyGrades || '-' }}
@@ -90,6 +90,21 @@
             {{ templateDetail.description }}
           </el-descriptions-item>
         </el-descriptions>
+
+        <!-- 备用版本提示 -->
+        <el-alert
+          v-if="isViewingFallbackVersion"
+          title="当前查看历史版本"
+          type="warning"
+          :closable="false"
+          show-icon
+          style="margin-top: 16px;"
+        >
+          <template #default>
+            <p>该模板当前没有生效版本，正在查看历史版本 <strong>{{ currentVersion.versionNumber }}</strong>（状态：{{ currentVersion.status }}）。</p>
+            <p style="margin-top: 8px;">建议操作：创建新版本或激活其他版本以恢复正常使用。</p>
+          </template>
+        </el-alert>
 
         <!-- 适用产品列表 -->
         <div v-if="templateDetail.applicableProducts && templateDetail.applicableProducts.length" class="applicable-products">
@@ -291,7 +306,7 @@
                 placement="top"
                 :color="getVersionTimelineColor(version.status)"
               >
-                <el-card class="version-card" :class="{ 'is-current': version.id === currentVersion.id }">
+                <el-card class="version-card" :class="{ 'is-current': currentVersion && version.id === currentVersion.id }">
                   <div class="version-card-header">
                     <div class="version-info">
                       <span class="version-number">{{ version.versionNumber }}</span>
@@ -302,10 +317,10 @@
                         size="mini"
                       />
                       <el-tag v-if="version.isLatestVersion" type="primary" size="mini">最新</el-tag>
-                      <el-tag v-if="version.id === currentVersion.id" type="success" size="mini">当前查看</el-tag>
+                      <el-tag v-if="currentVersion && version.id === currentVersion.id" type="success" size="mini">当前查看</el-tag>
                     </div>
                     <el-button
-                      v-if="version.id !== currentVersion.id"
+                      v-if="!currentVersion || version.id !== currentVersion.id"
                       type="text"
                       size="mini"
                       @click="handleSwitchVersion(version)"
@@ -399,25 +414,27 @@
               <!-- 引用统计 -->
               <div class="usage-stats">
                 <div class="stat-card">
-                  <div class="stat-value">{{ usageInfo.usage.productionPlans.count || 0 }}</div>
+                  <div class="stat-value">{{ (usageInfo.usage && usageInfo.usage.planReferences && usageInfo.usage.planReferences.length) || 0 }}</div>
                   <div class="stat-label">生产计划引用</div>
-                  <div class="stat-detail">活跃：{{ usageInfo.usage.productionPlans.activeCount || 0 }}</div>
                 </div>
                 <div class="stat-card">
-                  <div class="stat-value">{{ usageInfo.usage.productionPlanItems.count || 0 }}</div>
+                  <div class="stat-value">{{ (usageInfo.usage && usageInfo.usage.planItemReferences && usageInfo.usage.planItemReferences.length) || 0 }}</div>
                   <div class="stat-label">计划项引用</div>
-                  <div class="stat-detail">活跃：{{ usageInfo.usage.productionPlanItems.activeCount || 0 }}</div>
                 </div>
                 <div class="stat-card">
-                  <div class="stat-value">{{ usageInfo.usage.products.count || 0 }}</div>
+                  <div class="stat-value">{{ (usageInfo.usage && usageInfo.usage.productReferences && usageInfo.usage.productReferences.length) || 0 }}</div>
                   <div class="stat-label">关联产品</div>
+                </div>
+                <div class="stat-card stat-card-total">
+                  <div class="stat-value">{{ (usageInfo.usage && usageInfo.usage.totalReferences) || 0 }}</div>
+                  <div class="stat-label">总引用数</div>
                 </div>
               </div>
 
               <!-- 引用状态 -->
               <el-alert
-                :title="usageInfo.usage.isInUse ? '该模板正在使用中，不可删除或禁用' : '该模板当前未被引用'"
-                :type="usageInfo.usage.isInUse ? 'warning' : 'success'"
+                :title="(usageInfo.usage && usageInfo.usage.totalReferences > 0) ? '该模板正在使用中，不可删除或禁用' : '该模板当前未被引用'"
+                :type="(usageInfo.usage && usageInfo.usage.totalReferences > 0) ? 'warning' : 'success'"
                 :closable="false"
                 show-icon
                 style="margin-top: 16px;"
@@ -613,6 +630,15 @@ export default {
       return VERSION_STATUS_CONFIG
     },
     // versionStatusOptions 已由 mixin 提供（templateVersionStatusOptions）
+
+    /**
+     * 是否正在查看备用版本（因为没有最新版本）
+     */
+    isViewingFallbackVersion() {
+      // 如果没有 latestVersion，但有 currentVersion，说明是从 versions 数组中选择的备用版本
+      return !this.templateDetail?.latestVersion && !!this.currentVersion
+    },
+
     segments() {
       if (!this.currentVersion || !this.currentVersion.segments) {
         return []
@@ -698,7 +724,7 @@ export default {
         })
       }
 
-      // 复制按钮
+      // 复制按钮（总是可用）
       buttons.push({
         action: 'copy',
         text: '复制',
@@ -706,13 +732,15 @@ export default {
         icon: 'el-icon-document-copy'
       })
 
-      // 创建新版本按钮
-      buttons.push({
-        action: 'createVersion',
-        text: '创建新版本',
-        type: 'default',
-        icon: 'el-icon-plus'
-      })
+      // 创建新版本按钮（生效和历史状态可创建新版本）
+      if (['生效', '历史'].includes(status)) {
+        buttons.push({
+          action: 'createVersion',
+          text: '创建新版本',
+          type: 'default',
+          icon: 'el-icon-plus'
+        })
+      }
 
       // 版本对比按钮（有多个版本时显示）
       if (this.versionHistory && this.versionHistory.length >= 2) {
@@ -724,8 +752,8 @@ export default {
         })
       }
 
-      // 快速生效按钮（非生效状态）
-      if (status !== '生效') {
+      // 快速生效按钮（仅草稿和驳回状态允许快速生效，跳过审批流程）
+      if (['草稿', '驳回'].includes(status)) {
         buttons.push({
           action: 'quickActivate',
           text: '快速生效',
@@ -735,7 +763,7 @@ export default {
       }
 
       // 删除按钮（非生效状态且未被引用）
-      if (this.templateDetail && this.templateDetail.status !== '生效' && this.usageInfo && !this.usageInfo.usage.isInUse) {
+      if (this.templateDetail && this.templateDetail.status !== '生效' && this.usageInfo && this.usageInfo.usage && !this.usageInfo.usage.isInUse) {
         buttons.push({
           action: 'delete',
           text: '删除',
@@ -765,9 +793,7 @@ export default {
     },
     activeTab(newTab) {
       // 切换到特定标签页时加载数据
-      if (newTab === 'versions' && !this.versionHistory.length) {
-        this.fetchVersionHistory()
-      } else if (newTab === 'usage' && !this.usageInfo) {
+      if (newTab === 'usage' && !this.usageInfo) {
         this.fetchUsageInfo()
       }
     }
@@ -789,12 +815,11 @@ export default {
 
         if (this.templateDetail) {
           // 设置当前版本为最新版本
-          this.currentVersion = this.templateDetail.latestVersion || null
+          // 如果 latestVersion 为 null，从 versions 数组中选择最新的历史版本
+          this.currentVersion = this.templateDetail.latestVersion || this.selectFallbackVersion()
 
-          // 如果当前标签是版本历史，则加载版本历史
-          if (this.activeTab === 'versions') {
-            await this.fetchVersionHistory()
-          }
+          // 从详情接口返回的数据中获取版本历史（避免额外请求）
+          this.versionHistory = this.templateDetail.versions || []
 
           // 如果当前标签是引用情况，则加载引用信息
           if (this.activeTab === 'usage') {
@@ -807,6 +832,43 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    /**
+     * 当 latestVersion 为 null 时，从 versions 数组中选择一个备用版本显示
+     * 优先级：生效 > 待审批 > 作废 > 草稿 > 驳回
+     * 同优先级按创建时间倒序
+     */
+    selectFallbackVersion() {
+      if (!this.templateDetail || !this.templateDetail.versions || !this.templateDetail.versions.length) {
+        return null
+      }
+
+      const versions = this.templateDetail.versions
+
+      // 定义状态优先级
+      const statusPriority = {
+        '生效': 1,
+        '待审批': 2,
+        '作废': 3,
+        '草稿': 4,
+        '驳回': 5
+      }
+
+      // 排序：优先级 > 创建时间倒序
+      const sortedVersions = [...versions].sort((a, b) => {
+        const priorityA = statusPriority[a.status] || 999
+        const priorityB = statusPriority[b.status] || 999
+
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB
+        }
+
+        // 同优先级按创建时间倒序
+        return new Date(b.createdAt) - new Date(a.createdAt)
+      })
+
+      return sortedVersions[0] || null
     },
 
     async fetchVersionHistory() {
@@ -869,11 +931,19 @@ export default {
     },
 
     handleHeaderAction({ action }) {
+      // 需要当前版本的操作
+      const needsCurrentVersion = ['edit', 'copy', 'submit', 'approve', 'reject', 'withdraw', 'void', 'quickActivate']
+
+      if (needsCurrentVersion.includes(action) && !this.currentVersion) {
+        this.$message.warning('暂无可用版本，无法执行此操作')
+        return
+      }
+
       switch (action) {
         case 'edit':
           this.$emit('edit', {
             templateId: this.templateId,
-            versionId: this.currentVersion ? this.currentVersion.id : ''
+            versionId: this.currentVersion.id
           })
           break
         case 'copy':
@@ -1017,6 +1087,11 @@ export default {
         return
       }
 
+      if (!this.currentVersion) {
+        this.$message.warning('暂无可用版本，无法导出')
+        return
+      }
+
       try {
         // 准备导出数据
         const exportData = this.segments.map(segment => ({
@@ -1055,6 +1130,11 @@ export default {
     handleExportApprovalRecords() {
       if (!this.approvalRecords || !this.approvalRecords.length) {
         this.$message.warning('暂无审批记录可导出')
+        return
+      }
+
+      if (!this.currentVersion) {
+        this.$message.warning('暂无可用版本，无法导出')
         return
       }
 
@@ -1103,13 +1183,8 @@ export default {
     },
 
     // 打开版本对比对话框
-    async handleOpenVersionCompareDialog() {
-      // 确保版本历史已加载
+    handleOpenVersionCompareDialog() {
       if (!this.versionHistory || this.versionHistory.length < 2) {
-        await this.fetchVersionHistory()
-      }
-
-      if (this.versionHistory.length < 2) {
         this.$message.warning('至少需要两个版本才能进行对比')
         return
       }
@@ -1118,12 +1193,7 @@ export default {
     },
 
     // 打开创建新版本对话框
-    async handleOpenCreateVersionDialog() {
-      // 确保版本历史已加载
-      if (!this.versionHistory || this.versionHistory.length === 0) {
-        await this.fetchVersionHistory()
-      }
-
+    handleOpenCreateVersionDialog() {
       this.createVersionDialog.visible = true
     },
 
@@ -1412,6 +1482,12 @@ export default {
 .stat-detail {
   font-size: 12px;
   opacity: 0.8;
+}
+
+.stat-card-total {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 16px rgba(245, 87, 108, 0.3);
 }
 
 .loading-container {
