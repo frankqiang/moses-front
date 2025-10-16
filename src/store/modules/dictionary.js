@@ -34,6 +34,8 @@ const state = {
     circulationFanSpeeds: {},
     controlModes: {}
   },
+  // 通用模块字典存储
+  modules: {},
   // 字典加载状态
   loaded: false,
   loading: false,
@@ -63,6 +65,13 @@ const mutations = {
       controlModes: dictionaries.controlModes || {}
     }
   },
+  // 通用模块字典设置
+  SET_MODULE_DICTIONARIES(state, { moduleName, dictionaries }) {
+    state.modules = {
+      ...state.modules,
+      [moduleName]: dictionaries
+    }
+  },
   SET_LOADED(state, loaded) {
     state.loaded = loaded
   },
@@ -78,6 +87,58 @@ const mutations = {
 }
 
 const actions = {
+  /**
+   * 通用：加载模块字典
+   * @param {string} moduleName - 模块名称
+   * @param {Function} apiFunction - API函数
+   * @param {string} cacheKey - 缓存键
+   * @param {boolean} forceRefresh - 是否强制刷新（忽略缓存）
+   */
+  async loadModuleDictionaries({ commit, state }, { moduleName, apiFunction, cacheKey, forceRefresh = false }) {
+    console.log(`[Dictionary] 开始加载模块 "${moduleName}" 的字典数据`)
+
+    // 检查是否已加载
+    if (state.modules[moduleName] && !forceRefresh) {
+      console.log(`[Dictionary] 模块 "${moduleName}" 字典已加载，跳过`)
+      return
+    }
+
+    // 检查缓存
+    if (!forceRefresh) {
+      const cachedData = getModuleCachedDictionaries(cacheKey)
+      if (cachedData) {
+        commit('SET_MODULE_DICTIONARIES', { moduleName, dictionaries: cachedData })
+        console.log(`[Dictionary] 模块 "${moduleName}" 字典从缓存加载`)
+        return
+      }
+    }
+
+    // 从服务器加载
+    try {
+      console.log(`[Dictionary] 从服务器加载模块 "${moduleName}" 字典...`)
+      const response = await apiFunction()
+
+      if (response.success && response.data) {
+        commit('SET_MODULE_DICTIONARIES', { moduleName, dictionaries: response.data })
+
+        // 保存到缓存
+        saveModuleDictionariesToCache(cacheKey, response.data)
+        console.log(`[Dictionary] 模块 "${moduleName}" 字典从服务器加载成功`)
+      } else {
+        console.error(`[Dictionary] 模块 "${moduleName}" 字典加载失败:`, response)
+      }
+    } catch (error) {
+      console.error(`[Dictionary] 模块 "${moduleName}" 字典加载异常:`, error)
+
+      // 加载失败时尝试使用缓存
+      const cachedData = getModuleCachedDictionaries(cacheKey, true) // 忽略有效期
+      if (cachedData) {
+        commit('SET_MODULE_DICTIONARIES', { moduleName, dictionaries: cachedData })
+        console.warn(`[Dictionary] 模块 "${moduleName}" 加载失败，使用过期缓存`)
+      }
+    }
+  },
+
   /**
    * 加载生产计划字典
    * @param {boolean} forceRefresh - 是否强制刷新（忽略缓存）
@@ -235,6 +296,20 @@ const actions = {
 }
 
 const getters = {
+  /**
+   * 通用：获取模块字典
+   */
+  getModuleDictionaries: (state) => (moduleName) => {
+    return state.modules[moduleName] || {}
+  },
+
+  /**
+   * 通用：检查模块字典是否已加载
+   */
+  isModuleLoaded: (state) => (moduleName) => {
+    return !!state.modules[moduleName]
+  },
+
   /**
    * 获取计划状态标签
    */
@@ -553,6 +628,64 @@ function saveProcessTemplateDictionariesToCache(data) {
     console.log('[Dictionary] 工艺模板字典缓存已保存')
   } catch (error) {
     console.error('[Dictionary] 保存工艺模板字典缓存失败:', error)
+  }
+}
+
+/**
+ * 从缓存获取通用模块字典数据
+ * @param {string} cacheKey - 缓存键
+ * @param {boolean} ignoreExpiry - 是否忽略有效期
+ * @returns {Object|null}
+ */
+function getModuleCachedDictionaries(cacheKey, ignoreExpiry = false) {
+  try {
+    const cached = localStorage.getItem(cacheKey)
+
+    if (!cached) {
+      return null
+    }
+
+    const cacheData = JSON.parse(cached)
+
+    // 检查格式（包含timestamp）
+    if (cacheData.data && cacheData.timestamp) {
+      // 检查有效期
+      if (!ignoreExpiry) {
+        const now = Date.now()
+        const validityMs = CACHE_VALIDITY_HOURS * 60 * 60 * 1000
+
+        if (now - cacheData.timestamp > validityMs) {
+          console.log(`[Dictionary] 缓存 "${cacheKey}" 已过期`)
+          return null
+        }
+      }
+
+      return cacheData.data
+    }
+
+    return null
+  } catch (error) {
+    console.error(`[Dictionary] 读取缓存 "${cacheKey}" 失败:`, error)
+    return null
+  }
+}
+
+/**
+ * 保存通用模块字典数据到缓存
+ * @param {string} cacheKey - 缓存键
+ * @param {Object} data - 字典数据
+ */
+function saveModuleDictionariesToCache(cacheKey, data) {
+  try {
+    const cacheData = {
+      data,
+      timestamp: Date.now(),
+      version: '1.0'
+    }
+    localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+    console.log(`[Dictionary] 缓存 "${cacheKey}" 已保存`)
+  } catch (error) {
+    console.error(`[Dictionary] 保存缓存 "${cacheKey}" 失败:`, error)
   }
 }
 
