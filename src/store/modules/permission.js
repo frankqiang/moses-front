@@ -239,7 +239,7 @@ export const asyncRoutes = [
       {
         path: 'maintenance-plans',
         name: 'MaintenancePlanList',
-        component: () => import('@/views/master-data/equipment-tpm-management/maintenance-plan/index'),
+        component: () => import('@/views/tpm-management/maintenance-plan/index'),
         meta: {
           title: '维护计划管理',
           icon: 'el-icon-date'
@@ -250,7 +250,7 @@ export const asyncRoutes = [
       {
         path: 'maintenance-plans/create',
         name: 'MaintenancePlanCreate',
-        component: () => import('@/views/master-data/equipment-tpm-management/maintenance-plan/create'),
+        component: () => import('@/views/tpm-management/maintenance-plan/create'),
         meta: {
           title: '创建维护计划',
           activeMenu: '/equipment-tpm/maintenance-plans'
@@ -262,7 +262,7 @@ export const asyncRoutes = [
       {
         path: 'maintenance-plans/:id',
         name: 'MaintenancePlanDetail',
-        component: () => import('@/views/master-data/equipment-tpm-management/maintenance-plan/detail'),
+        component: () => import('@/views/tpm-management/maintenance-plan/detail'),
         meta: {
           title: '维护计划详情',
           activeMenu: '/equipment-tpm/maintenance-plans'
@@ -274,7 +274,7 @@ export const asyncRoutes = [
       {
         path: 'maintenance-plans/:id/edit',
         name: 'MaintenancePlanEdit',
-        component: () => import('@/views/master-data/equipment-tpm-management/maintenance-plan/edit'),
+        component: () => import('@/views/tpm-management/maintenance-plan/edit'),
         meta: {
           title: '编辑维护计划',
           activeMenu: '/equipment-tpm/maintenance-plans'

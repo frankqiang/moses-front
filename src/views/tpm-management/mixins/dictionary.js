@@ -11,7 +11,7 @@
  * - 供TPM所有子模块使用（维护计划、维护任务、维护记录、设备故障等）
  *
  * 使用方式：
- * import tpmDictionaryMixin from '@/views/master-data/equipment-tpm-management/mixins/dictionary'
+ * import tpmDictionaryMixin from '@/views/tpm-management/mixins/dictionary'
  *
  * export default {
  *   mixins: [tpmDictionaryMixin],

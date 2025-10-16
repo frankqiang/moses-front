@@ -219,7 +219,7 @@ import MaintenanceTypeSelect from './MaintenanceTypeSelect.vue'
 import CycleConfigForm from './CycleConfigForm.vue'
 import StandardDurationInput from './StandardDurationInput.vue'
 import SparePartsTable from './SparePartsTable.vue'
-import tpmDictionaryMixin from '@/views/master-data/equipment-tpm-management/mixins/dictionary'
+import tpmDictionaryMixin from '@/views/tpm-management/mixins/dictionary'
 import { FORM_RULES } from '../constants'
 import {
   createMaintenancePlan,

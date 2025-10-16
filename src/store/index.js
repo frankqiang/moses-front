@@ -6,7 +6,7 @@ import settings from './modules/settings'
 import user from './modules/user'
 import permission from './modules/permission'
 import dictionary from './modules/dictionary'
-import maintenancePlan from './modules/mdm/tpm/maintenancePlan'
+import maintenancePlan from './modules/tpm/maintenancePlan'
 
 Vue.use(Vuex)
 

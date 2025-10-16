@@ -46,7 +46,7 @@ import { mapState, mapActions, mapGetters } from 'vuex'
 import MaintenancePlanSearch from './components/MaintenancePlanSearch.vue'
 import MaintenancePlanTable from './components/MaintenancePlanTable.vue'
 import MaintenancePlanFormDrawer from './components/MaintenancePlanFormDrawer.vue'
-import tpmDictionaryMixin from '@/views/master-data/equipment-tpm-management/mixins/dictionary'
+import tpmDictionaryMixin from '@/views/tpm-management/mixins/dictionary'
 import { handleApiError, showOperationSuccess, showConfirm } from './utils'
 
 export default {

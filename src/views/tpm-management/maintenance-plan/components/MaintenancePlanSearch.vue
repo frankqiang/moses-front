@@ -18,7 +18,7 @@
 
 <script>
 import SearchForm from '@/components/SearchForm'
-import tpmDictionaryMixin from '@/views/master-data/equipment-tpm-management/mixins/dictionary'
+import tpmDictionaryMixin from '@/views/tpm-management/mixins/dictionary'
 
 export default {
   name: 'MaintenancePlanSearch',

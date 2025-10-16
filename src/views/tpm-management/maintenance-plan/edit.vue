@@ -344,7 +344,7 @@ export default {
      */
     handleBack() {
       // 返回维护计划列表页面
-      this.$router.push('/master-data/equipment-tpm-management/maintenance-plan')
+      this.$router.push('/equipment-tpm/maintenance-plans')
     },
 
     /**

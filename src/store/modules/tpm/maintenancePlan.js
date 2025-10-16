@@ -13,7 +13,7 @@ import {
   updateMaintenancePlan,
   enableMaintenancePlan,
   disableMaintenancePlan
-} from '@/views/master-data/equipment-tpm-management/maintenance-plan/api'
+} from '@/views/tpm-management/maintenance-plan/api'
 
 const state = {
   // 列表数据
