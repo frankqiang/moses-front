@@ -855,6 +855,11 @@ export default {
       this.activeTab = 'overview'
 
       try {
+        // 确保字典已加载（用于状态筛选下拉框的显示）
+        if (!this.isProcessTemplateDictionaryLoaded()) {
+          await this.loadProcessTemplateDictionary()
+        }
+
         const [detailResponse] = await Promise.all([
           getProcessTemplateDetail(this.templateId),
           this.fetchVersionList({ reset: true })
@@ -888,19 +893,26 @@ export default {
       }
 
       try {
+        // 将英文枚举键转换为中文标签（接口要求中文值）
+        let statusParam = undefined
+        if (this.versionStatusFilter !== 'ALL') {
+          statusParam = this.getTemplateVersionStatusLabel(this.versionStatusFilter)
+        }
+
         const response = await fetchProcessTemplateVersions(this.templateId, {
           page: this.versionPagination.page,
           limit: this.versionPagination.limit,
           sortBy: DEFAULT_VERSION_SORT,
-          status: this.versionStatusFilter !== 'ALL' ? this.versionStatusFilter : undefined
+          status: statusParam
         })
 
-        const versions = response.data && response.data.versions
-        const list = (versions && versions.results) || []
+        // API 已经将 versions.results 提取为数组，直接使用
+        const list = response.data?.versions || []
+        const pagination = response.data?.pagination || {}
         this.versionPagination = {
-          page: versions?.page || this.versionPagination.page,
-          limit: versions?.limit || this.versionPagination.limit,
-          totalResults: versions?.totalResults || list.length
+          page: pagination.page || this.versionPagination.page,
+          limit: pagination.limit || this.versionPagination.limit,
+          totalResults: pagination.totalResults || list.length
         }
 
         if (reset) {
@@ -1095,12 +1107,26 @@ export default {
       this.versionList = []
       this.selectedVersionId = ''
       this.activeTab = 'overview'
+      this.versionStatusFilter = 'ALL' // 重置版本状态筛选器为"全部状态"
+      this.versionPagination = { page: 1, limit: 30, totalResults: 0 } // 重置分页信息
+      this.pendingActions = {} // 重置待处理操作状态
       this.loading = false
       this.versionsLoading = false
       this.saving = false
       this.pendingChanges = null
       this.showCurveViewer = false
       this.curveComparisonVersions = []
+      this.curveDeviceCapability = { min: 0, max: 1200 } // 重置曲线设备能力配置
+      // 重置创建新版本对话框状态
+      this.createNewVersionDialog = {
+        visible: false,
+        loading: false,
+        formData: {
+          newVersionNumber: '',
+          versionDescription: '',
+          copyFromVersionId: ''
+        }
+      }
     },
 
     formatVersionMeta(version) {

@@ -203,7 +203,7 @@ export default {
 
     /**
      * 格式化搜索参数
-     * 空值过滤、范围拆分、字符串去空格
+     * 空值过滤、范围拆分、字符串去空格、状态枚举转换
      */
     formatSearchParams(rawParams) {
       const params = { ...rawParams }
@@ -214,6 +214,14 @@ export default {
       }
       if (params.applicableAlloy) {
         params.applicableAlloy = params.applicableAlloy.trim().toUpperCase()
+      }
+
+      // 将英文枚举键转换为中文标签（接口要求中文值）
+      if (params.status) {
+        params.status = this.getTemplateStatusLabel(params.status)
+      }
+      if (params.versionStatus) {
+        params.versionStatus = this.getTemplateVersionStatusLabel(params.versionStatus)
       }
 
       // 移除空值字段（但保留数组、数字0等有效值）

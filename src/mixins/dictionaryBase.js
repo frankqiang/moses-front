@@ -23,13 +23,13 @@ export default {
   methods: {
     /**
      * 通用：获取字典标签
-     * @param {string} moduleName - 模块名称（如 'processTemplate', 'productionPlan'）
+     * @param {string} moduleName - 模块名称（如 'tpm', 'processTemplate', 'productionPlan'）
      * @param {string} dictType - 字典类型（如 'templateStatuses'）
-     * @param {string} value - 枚举值
-     * @returns {string} 标签文本（如果字典未加载，返回原值）
+     * @param {string} value - 枚举值（英文枚举键，如 'DRAFT'）
+     * @returns {string} 标签文本（中文标签，如 '草稿'）
      *
      * @example
-     * this.$getDictLabel('processTemplate', 'templateStatuses', '草稿')
+     * this.$getDictLabel('processTemplate', 'templateStatuses', 'DRAFT')
      * // 返回: "草稿"
      */
     $getDictLabel(moduleName, dictType, value) {
@@ -38,23 +38,23 @@ export default {
         return value || ''
       }
 
-      const state = this.$store.state.dictionary
+      // 新架构：从子模块获取数据
+      const moduleState = this.$store.state.dictionary[moduleName]
 
-      // 兼容新旧数据结构
-      const moduleData = state.modules?.[moduleName] || state[moduleName]
-
-      if (!moduleData) {
+      if (!moduleState) {
         console.warn(`[Dictionary] 模块 "${moduleName}" 字典未加载`)
         return value || ''
       }
 
-      const dict = moduleData[dictType]
+      const dict = moduleState[dictType]
       if (!dict) {
         console.warn(`[Dictionary] 字典类型 "${dictType}" 不存在于模块 "${moduleName}"`)
         return value || ''
       }
 
-      return dict.labels?.[value] || value || ''
+      // 修复：使用 values[value] 获取中文标签
+      // 因为 values 的结构是 { "DRAFT": "草稿" }，key 是英文枚举，value 是中文标签
+      return dict.values?.[value] || value || ''
     },
 
     /**
@@ -64,8 +64,8 @@ export default {
      * @returns {Array<{value: string, label: string}>} 选项数组
      *
      * @example
-     * this.$getDictOptions('processTemplate', 'templateStatuses')
-     * // 返回: [{ value: '草稿', label: '草稿' }, ...]
+     * this.$getDictOptions('tpm', 'planStatuses')
+     * // 返回: [{ value: 'DRAFT', label: '草稿' }, ...]
      */
     $getDictOptions(moduleName, dictType) {
       if (!moduleName || !dictType) {
@@ -73,50 +73,45 @@ export default {
         return []
       }
 
-      const state = this.$store.state.dictionary
+      // 新架构：从子模块获取数据
+      const moduleState = this.$store.state.dictionary[moduleName]
 
-      // 兼容新旧数据结构
-      const moduleData = state.modules?.[moduleName] || state[moduleName]
-
-      if (!moduleData) {
+      if (!moduleState) {
         console.warn(`[Dictionary] 模块 "${moduleName}" 字典未加载`)
         return []
       }
 
-      const dict = moduleData[dictType]
-      if (!dict || !dict.values || !dict.labels) {
+      const dict = moduleState[dictType]
+      if (!dict || !dict.values) {
         console.warn(`[Dictionary] 字典类型 "${dictType}" 数据不完整`)
         return []
       }
 
+      // 修复：使用 values[key] 获取中文标签，而不是 labels[key]
+      // 因为 values 的结构是 { "DRAFT": "草稿" }，key 是英文枚举，value 是中文标签
       return Object.keys(dict.values).map(key => ({
         value: key,
-        label: dict.labels[key] || key
+        label: dict.values[key] || key
       }))
     },
 
     /**
-     * 通用：加载模块字典
-     * @param {string} moduleName - 模块名称
-     * @param {Function} apiFunction - API 函数
-     * @param {string} cacheKey - localStorage 缓存键
+     * 通用：加载模块字典（新版模块化方式）
+     * @param {string} moduleName - 模块名称（tpm, productionPlan, processTemplate）
      * @returns {Promise<void>}
      *
      * @example
-     * await this.$loadDictionary('processTemplate', getAllDictionaries, 'processTemplateDictionaries')
+     * await this.$loadDictionary('tpm')
      */
-    async $loadDictionary(moduleName, apiFunction, cacheKey) {
-      if (!moduleName || !apiFunction || !cacheKey) {
-        console.error('[Dictionary] $loadDictionary: 缺少必需参数')
+    async $loadDictionary(moduleName) {
+      if (!moduleName) {
+        console.error('[Dictionary] $loadDictionary: 缺少 moduleName 参数')
         return
       }
 
       try {
-        await this.$store.dispatch('dictionary/loadModuleDictionaries', {
-          moduleName,
-          apiFunction,
-          cacheKey
-        })
+        // 新架构：直接调用子模块的 action
+        await this.$store.dispatch(`dictionary/${moduleName}/loadDictionaries`)
       } catch (error) {
         console.error(`[Dictionary] 加载模块 "${moduleName}" 字典失败:`, error)
       }
@@ -128,22 +123,14 @@ export default {
      * @returns {boolean}
      */
     $isDictionaryLoaded(moduleName) {
-      const state = this.$store.state.dictionary
+      // 新架构：检查子模块的 loaded 状态
+      const moduleState = this.$store.state.dictionary[moduleName]
 
-      // 兼容新旧数据结构
-      if (state.loaded?.[moduleName] !== undefined) {
-        return state.loaded[moduleName]
+      if (!moduleState) {
+        return false
       }
 
-      // 旧版兼容
-      if (moduleName === 'productionPlan') {
-        return state.loaded || false
-      }
-      if (moduleName === 'processTemplate') {
-        return state.processTemplateLoaded || false
-      }
-
-      return false
+      return moduleState.loaded || false
     }
   }
 }

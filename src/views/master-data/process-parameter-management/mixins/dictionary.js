@@ -1,20 +1,20 @@
 /**
  * 文件名称：dictionary.js
- * 文件描述：工艺参数管理模块字典 Mixin
- * 创建日期：2025-10-15
+ * 文件描述：工艺模板模块字典 Mixin
+ * 创建日期：2025-10-16
  * 修改记录：
- *   - 2025-10-15: 初始创建，从公共 mixin 迁移到模块私有
+ *   - 2025-10-16: 初始创建，从旧版迁移到模块化架构
  *
  * 说明：
  * - 继承自 dictionaryBase 提供的基础能力
  * - 封装工艺模板相关的便捷方法
- * - 仅供本模块内组件使用
+ * - 供工艺参数管理模块使用
  *
  * 使用方式：
- * import dictionaryMixin from '../mixins/dictionary'
+ * import processTemplateDictionaryMixin from './mixins/dictionary'
  *
  * export default {
- *   mixins: [dictionaryMixin],
+ *   mixins: [processTemplateDictionaryMixin],
  *   async created() {
  *     await this.loadProcessTemplateDictionary()
  *   }
@@ -22,10 +22,8 @@
  */
 
 import dictionaryBase from '@/mixins/dictionaryBase'
-import { getAllDictionaries } from '../api'
 
 const MODULE_NAME = 'processTemplate'
-const CACHE_KEY = 'processTemplateDictionaries'
 
 export default {
   mixins: [dictionaryBase],
@@ -42,12 +40,11 @@ export default {
 
     /**
      * 工艺模板状态标签映射（用于表格 textMap）
-     * @returns {Object} 键值对映射
+     * @returns {Object} 键值对映射 { "DRAFT": "草稿", ... }
      */
     templateStatusLabels() {
-      const state = this.$store.state.dictionary
-      const moduleData = state.modules?.[MODULE_NAME] || state[MODULE_NAME]
-      return moduleData?.templateStatuses?.labels || {}
+      const state = this.$store.state.dictionary.processTemplate
+      return state?.templateStatuses?.values || {}
     },
 
     // ============ 工艺模板版本状态 ============
@@ -61,15 +58,14 @@ export default {
 
     /**
      * 工艺模板版本状态标签映射（用于表格 textMap）
-     * @returns {Object} 键值对映射
+     * @returns {Object} 键值对映射 { "DRAFT": "草稿", ... }
      */
-    versionStatusLabels() {
-      const state = this.$store.state.dictionary
-      const moduleData = state.modules?.[MODULE_NAME] || state[MODULE_NAME]
-      return moduleData?.templateVersionStatuses?.labels || {}
+    templateVersionStatusLabels() {
+      const state = this.$store.state.dictionary.processTemplate
+      return state?.templateVersionStatuses?.values || {}
     },
 
-    // ============ 保护气氛类型选项 ============
+    // ============ 保护气氛类型 ============
     /**
      * 保护气氛类型选项（用于下拉框）
      * @returns {Array<{value: string, label: string}>}
@@ -78,7 +74,16 @@ export default {
       return this.$getDictOptions(MODULE_NAME, 'atmosphereTypes')
     },
 
-    // ============ 循环风机速度选项 ============
+    /**
+     * 保护气氛类型标签映射（用于表格 textMap）
+     * @returns {Object} 键值对映射 { "PURE_NITROGEN": "纯氮气", ... }
+     */
+    atmosphereTypeLabels() {
+      const state = this.$store.state.dictionary.processTemplate
+      return state?.atmosphereTypes?.values || {}
+    },
+
+    // ============ 循环风机速度 ============
     /**
      * 循环风机速度选项（用于下拉框）
      * @returns {Array<{value: string, label: string}>}
@@ -87,13 +92,31 @@ export default {
       return this.$getDictOptions(MODULE_NAME, 'circulationFanSpeeds')
     },
 
-    // ============ 控温方式选项 ============
+    /**
+     * 循环风机速度标签映射（用于表格 textMap）
+     * @returns {Object} 键值对映射 { "LOW": "低速", ... }
+     */
+    circulationFanSpeedLabels() {
+      const state = this.$store.state.dictionary.processTemplate
+      return state?.circulationFanSpeeds?.values || {}
+    },
+
+    // ============ 控温方式 ============
     /**
      * 控温方式选项（用于下拉框）
      * @returns {Array<{value: string, label: string}>}
      */
     controlModeOptions() {
       return this.$getDictOptions(MODULE_NAME, 'controlModes')
+    },
+
+    /**
+     * 控温方式标签映射（用于表格 textMap）
+     * @returns {Object} 键值对映射 { "TIME_TEMP": "定时定温", ... }
+     */
+    controlModeLabels() {
+      const state = this.$store.state.dictionary.processTemplate
+      return state?.controlModes?.values || {}
     }
   },
 
@@ -150,16 +173,16 @@ export default {
 
     // ============ 加载字典 ============
     /**
-     * 加载工艺模板字典
+     * 加载工艺模板模块字典
      * @returns {Promise<void>}
      */
     async loadProcessTemplateDictionary() {
-      await this.$loadDictionary(MODULE_NAME, getAllDictionaries, CACHE_KEY)
+      await this.$loadDictionary(MODULE_NAME)
     },
 
     // ============ 字典状态检查 ============
     /**
-     * 检查工艺模板字典是否已加载
+     * 检查工艺模板模块字典是否已加载
      * @returns {boolean}
      */
     isProcessTemplateDictionaryLoaded() {
@@ -167,4 +190,3 @@ export default {
     }
   }
 }
-
