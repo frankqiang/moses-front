@@ -58,19 +58,6 @@
       @cancel="handleEditClose"
     />
 
-    <!-- 模板表单抽屉 (旧架构，保留兼容) -->
-    <TemplateFormDrawer
-      v-if="formDrawer.visible"
-      :key="`${formDrawer.templateId || 'new'}-${formDrawer.mode}-${formDrawer.versionId || ''}`"
-      :visible.sync="formDrawer.visible"
-      :mode="formDrawer.mode"
-      :template-id="formDrawer.templateId"
-      :version-id="formDrawer.versionId"
-      :initial-data="formDrawer.initialData"
-      @success="handleFormSuccess"
-      @close="handleFormClose"
-    />
-
     <!-- 工艺模板详情抽屉 (v2.0架构) -->
     <TemplateDetailDrawer
       v-if="detailDrawer.visible"
@@ -90,6 +77,7 @@
       :template-id="versionDrawer.templateId"
       :version-id="versionDrawer.versionId"
       @close="handleVersionDrawerClose"
+      @edit-template="handleEditTemplateFromVersion"
       @approval-success="handleVersionActionSuccess"
       @parameters-saved="handleVersionParametersSaved"
       @version-created="handleVersionCreated"
@@ -156,7 +144,6 @@ import TemplateSearch from './components/TemplateSearch.vue'
 import TemplateTable from './components/TemplateTable.vue'
 import TemplateCreateDrawer from './components/TemplateCreateDrawer.vue'
 import TemplateEditDrawer from './components/TemplateEditDrawer.vue'
-import TemplateFormDrawer from './components/TemplateFormDrawer.vue'
 import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue'
 import VersionCenterDrawer from './components/VersionCenterDrawer.vue'
 import TemperatureCurveViewer from './components/TemperatureCurveViewer.vue'
@@ -198,7 +185,6 @@ export default {
     TemplateTable,
     TemplateCreateDrawer,
     TemplateEditDrawer,
-    TemplateFormDrawer,
     TemplateDetailDrawer,
     VersionCenterDrawer,
     TemperatureCurveViewer,
@@ -236,13 +222,6 @@ export default {
         visible: false,
         templateId: '',
         versionId: ''
-      },
-      formDrawer: {
-        visible: false,
-        mode: 'create',
-        templateId: '',
-        versionId: '',
-        initialData: {}
       },
       detailDrawer: {
         visible: false,
@@ -355,7 +334,6 @@ export default {
             ...item,
             latestVersion: item.latestVersion || null
           }))
-        console.log('[Index] Processed templates:', validTemplates.length, validTemplates)
         this.tableData = validTemplates
         this.pagination = {
           page: pagination.page || query.page || 1,
@@ -442,17 +420,11 @@ export default {
     },
 
     handleCreateSuccess(template) {
-      // 创建成功后跳转到详情页面
+      // 创建成功后关闭抽屉并刷新列表
       this.createDrawer.visible = false
-      this.$message.success('创建工艺模板成功')
+      // 消息提示已在TemplateCreateDrawer组件中处理
       // 刷新列表
       this.fetchTemplateList()
-      // 跳转到详情页面（版本中心）
-      if (template && template.id) {
-        this.$nextTick(() => {
-          this.openVersionDrawer(template.id)
-        })
-      }
     },
 
     handleCreateClose() {
@@ -476,19 +448,6 @@ export default {
       if (action === 'create') {
         this.handleCreateTemplate()
       }
-    },
-
-    handleFormSuccess() {
-      // 消息提示已在 TemplateFormDrawer 组件中处理（使用后端返回的 message）
-      this.formDrawer.visible = false
-      this.fetchTemplateList()
-    },
-
-    handleFormClose() {
-      this.formDrawer.visible = false
-      this.formDrawer.templateId = ''
-      this.formDrawer.versionId = ''
-      this.formDrawer.initialData = {}
     },
 
     handleViewDetail({ templateId }) {
@@ -525,6 +484,12 @@ export default {
       this.openCreateVersion({ id: templateId })
     },
 
+    handleEditTemplateFromVersion({ templateId, versionId }) {
+      // 从版本中心打开编辑抽屉
+      this.versionDrawer.visible = false
+      this.openEditTemplate(templateId, versionId)
+    },
+
     handleTemplateDeleted() {
       // 模板被删除后刷新列表
       this.fetchTemplateList()
@@ -532,6 +497,9 @@ export default {
 
     handleTableAction({ action, template, version }) {
       switch (action) {
+        case 'versionCenter':
+          this.openVersionCenter(template)
+          break
         case 'editTemplate':
           this.openEditTemplate(template)
           break
@@ -597,32 +565,40 @@ export default {
       }
     },
 
-    async openCreateVersion(template) {
-      // 打开版本中心抽屉，并触发创建新版本对话框
-      try {
-        // 先打开版本中心抽屉
-        this.versionDrawer = {
-          visible: true,
-          templateId: template.id,
-          versionId: ''
-        }
-
-        // 等待版本中心加载完成后，打开创建新版本对话框
-        this.$nextTick(() => {
-          // 延迟一下确保版本中心已初始化
-          setTimeout(() => {
-            const versionCenterDrawer = this.$children.find(
-              child => child.$options.name === 'VersionCenterDrawer'
-            )
-            if (versionCenterDrawer && versionCenterDrawer.openCreateNewVersionDialog) {
-              versionCenterDrawer.openCreateNewVersionDialog()
-            }
-          }, 300)
-        })
-      } catch (error) {
-        console.error('[ProcessParameterManagement] openCreateVersion failed', error)
-        this.$message.error((error && error.message) || '打开创建新版本失败')
+    /**
+     * 直接打开版本中心
+     */
+    openVersionCenter(template) {
+      if (!template || !template.id) {
+        this.$message.error('缺少模板ID')
+        return
       }
+
+      this.versionDrawer = {
+        visible: true,
+        templateId: template.id,
+        versionId: ''
+      }
+    },
+
+    /**
+     * 打开创建新版本（通过版本中心）
+     */
+    async openCreateVersion(template) {
+      // 先打开版本中心
+      this.openVersionCenter(template)
+
+      // 等待版本中心加载完成后，自动触发创建新版本对话框
+      this.$nextTick(() => {
+        setTimeout(() => {
+          const versionCenterDrawer = this.$children.find(
+            child => child.$options.name === 'VersionCenterDrawer'
+          )
+          if (versionCenterDrawer && versionCenterDrawer.openCreateNewVersionDialog) {
+            versionCenterDrawer.openCreateNewVersionDialog()
+          }
+        }, 300)
+      })
     },
 
     openVersionDrawer(templateId, versionId = '') {

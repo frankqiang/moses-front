@@ -185,38 +185,187 @@
 
           <el-tabs v-model="activeTab" type="border-card">
             <el-tab-pane label="版本概览" name="overview">
-              <el-descriptions
-                v-if="selectedVersion"
-                :column="2"
-                border
-                size="small"
-              >
-                <el-descriptions-item label="模板编码">
-                  {{ templateDetail.templateCode || '-' }}
-                </el-descriptions-item>
-                <el-descriptions-item label="模板状态">
-                  <StatusTag
-                    :status="templateDetail.status"
-                    :text-map="templateStatusConfig.textMap"
-                    :type-map="templateStatusConfig.typeMap"
-                    size="mini"
-                  />
-                </el-descriptions-item>
-                <el-descriptions-item label="版本状态">
-                  <StatusTag
-                    :status="selectedVersion.status"
-                    :text-map="versionStatusConfig.textMap"
-                    :type-map="versionStatusConfig.typeMap"
-                    size="mini"
-                  />
-                </el-descriptions-item>
-                <el-descriptions-item label="适用产品数量">
-                  {{ (templateDetail.applicableProducts || []).length || 0 }}
-                </el-descriptions-item>
-                <el-descriptions-item label="最新版本">
-                  {{ (templateDetail.latestVersion && templateDetail.latestVersion.versionNumber) || '-' }}
-                </el-descriptions-item>
-              </el-descriptions>
+              <div v-if="selectedVersion" class="template-overview">
+                <!-- 模板基本信息 -->
+                <div class="overview-section">
+                  <h4 class="overview-section__title">
+                    <i class="el-icon-document" />
+                    模板基本信息
+                  </h4>
+                  <el-descriptions :column="2" border size="small">
+                    <el-descriptions-item label="模板编码">
+                      {{ templateDetail.templateCode || '-' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="模板状态">
+                      <StatusTag
+                        :status="templateDetail.status"
+                        :text-map="templateStatusConfig.textMap"
+                        :type-map="templateStatusConfig.typeMap"
+                        size="mini"
+                      />
+                    </el-descriptions-item>
+                    <el-descriptions-item label="模板名称" :span="2">
+                      {{ templateDetail.templateName || '-' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item v-if="templateDetail.description" label="模板描述" :span="2">
+                      <div class="description-text">
+                        {{ templateDetail.description }}
+                      </div>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="创建时间">
+                      {{ formatDateTime(templateDetail.createdAt) }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="最后更新">
+                      {{ formatDateTime(templateDetail.updatedAt) }}
+                    </el-descriptions-item>
+                  </el-descriptions>
+                </div>
+
+                <!-- 版本信息 -->
+                <div class="overview-section">
+                  <h4 class="overview-section__title">
+                    <i class="el-icon-files" />
+                    版本信息
+                  </h4>
+                  <el-descriptions :column="2" border size="small">
+                    <el-descriptions-item label="当前版本">
+                      {{ selectedVersion.versionNumber || '-' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="版本状态">
+                      <StatusTag
+                        :status="selectedVersion.status"
+                        :text-map="versionStatusConfig.textMap"
+                        :type-map="versionStatusConfig.typeMap"
+                        size="mini"
+                      />
+                    </el-descriptions-item>
+                    <el-descriptions-item label="最新版本">
+                      {{ (templateDetail.latestVersion && templateDetail.latestVersion.versionNumber) || '-' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="是否为最新">
+                      <el-tag :type="selectedVersion.isLatestVersion ? 'success' : 'info'" size="mini">
+                        {{ selectedVersion.isLatestVersion ? '是' : '否' }}
+                      </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item v-if="selectedVersion.versionDescription" label="版本描述" :span="2">
+                      <div class="description-text">
+                        {{ selectedVersion.versionDescription }}
+                      </div>
+                    </el-descriptions-item>
+                  </el-descriptions>
+                </div>
+
+                <!-- 适用范围 -->
+                <div class="overview-section">
+                  <h4 class="overview-section__title">
+                    <i class="el-icon-setting" />
+                    适用范围
+                  </h4>
+                  <el-descriptions :column="2" border size="small">
+                    <el-descriptions-item label="适用合金牌号" :span="2">
+                      <div v-if="templateDetail.applicableAlloyGrades" class="alloy-grades">
+                        <el-tag
+                          v-for="(grade, index) in parseAlloyGrades(templateDetail.applicableAlloyGrades)"
+                          :key="index"
+                          size="small"
+                          type="primary"
+                          class="grade-tag"
+                        >
+                          {{ grade }}
+                        </el-tag>
+                      </div>
+                      <span v-else class="empty-value">未设置</span>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="适用厚度范围">
+                      <span v-if="templateDetail.applicableThicknessRange">
+                        {{ templateDetail.applicableThicknessRange }} mm
+                      </span>
+                      <span v-else class="empty-value">未设置</span>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="适用宽度范围">
+                      <span v-if="templateDetail.applicableWidthRange">
+                        {{ templateDetail.applicableWidthRange }} mm
+                      </span>
+                      <span v-else class="empty-value">未设置</span>
+                    </el-descriptions-item>
+                  </el-descriptions>
+                </div>
+
+                <!-- 适用产品列表 -->
+                <div v-if="templateDetail.applicableProducts && templateDetail.applicableProducts.length" class="overview-section">
+                  <h4 class="overview-section__title">
+                    <i class="el-icon-goods" />
+                    适用产品列表
+                    <span class="count-badge">{{ templateDetail.applicableProducts.length }}</span>
+                  </h4>
+                  <el-table
+                    :data="templateDetail.applicableProducts"
+                    border
+                    stripe
+                    size="small"
+                    :max-height="300"
+                  >
+                    <el-table-column prop="productCode" label="产品编码" width="200" />
+                    <el-table-column prop="productName" label="产品名称" min-width="180" />
+                    <el-table-column label="生命周期状态" width="120" align="center">
+                      <template #default="{ row }">
+                        <el-tag
+                          :type="getProductStatusType(row.lifecycleStatus)"
+                          size="mini"
+                        >
+                          {{ row.lifecycleStatus || '-' }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+
+                <!-- 统计信息 -->
+                <div class="overview-section">
+                  <h4 class="overview-section__title">
+                    <i class="el-icon-data-analysis" />
+                    统计信息
+                  </h4>
+                  <div class="stats-grid">
+                    <div class="stat-card">
+                      <div class="stat-card__icon" style="background: #ecf5ff; color: #409eff;">
+                        <i class="el-icon-folder-opened" />
+                      </div>
+                      <div class="stat-card__content">
+                        <div class="stat-card__value">{{ versionList.length }}</div>
+                        <div class="stat-card__label">总版本数</div>
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-card__icon" style="background: #f0f9ff; color: #67c23a;">
+                        <i class="el-icon-circle-check" />
+                      </div>
+                      <div class="stat-card__content">
+                        <div class="stat-card__value">{{ getVersionCountByStatus('生效') }}</div>
+                        <div class="stat-card__label">生效版本</div>
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-card__icon" style="background: #fef0f0; color: #f56c6c;">
+                        <i class="el-icon-document-copy" />
+                      </div>
+                      <div class="stat-card__content">
+                        <div class="stat-card__value">{{ getVersionCountByStatus('草稿') }}</div>
+                        <div class="stat-card__label">草稿版本</div>
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-card__icon" style="background: #fdf6ec; color: #e6a23c;">
+                        <i class="el-icon-time" />
+                      </div>
+                      <div class="stat-card__content">
+                        <div class="stat-card__value">{{ getVersionCountByStatus('待审批') }}</div>
+                        <div class="stat-card__label">待审批版本</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <el-empty v-else description="请选择版本" />
             </el-tab-pane>
 
@@ -274,13 +423,9 @@
                 :key="selectedVersion.id"
                 :template-id="templateId"
                 :version="selectedVersion"
-                :editable="isVersionEditable(selectedVersion)"
-                :saving="saving"
                 :comparison-versions="curveComparisonVersions"
                 :device-capability="curveDeviceCapability"
                 :force-refresh-key="selectedVersionId"
-                @save="handleParametersSave"
-                @change="handleParametersChange"
               />
               <el-empty
                 v-else
@@ -421,11 +566,9 @@ import VersionParametersPanel from './VersionParametersPanel.vue'
 import TemperatureCurveViewer from './TemperatureCurveViewer.vue'
 import VersionComparePanel from './VersionComparePanel.vue'
 import { parseTime } from '@/utils'
-import { cloneDeep } from 'lodash'
 import {
   getProcessTemplateDetail,
   fetchProcessTemplateVersions,
-  updateProcessTemplateVersion,
   submitProcessTemplateVersion,
   approveProcessTemplateVersion,
   rejectProcessTemplateVersion,
@@ -484,8 +627,6 @@ export default {
       },
       selectedVersionId: '',
       activeTab: 'overview',
-      saving: false,
-      pendingChanges: null,
       pendingActions: {},
       versionStatusFilter: 'ALL',
       showCurveViewer: false,
@@ -582,6 +723,19 @@ export default {
       }
       const version = this.selectedVersion
       const buttons = []
+
+      // 编辑按钮 - 草稿和驳回状态可编辑
+      if (this.canEdit(version)) {
+        buttons.push({
+          action: 'editVersion',
+          text: '编辑参数',
+          type: 'primary',
+          icon: 'el-icon-edit',
+          plain: true,
+          disabled: this.saving
+        })
+      }
+
       if (this.canSubmit(version)) {
         buttons.push({
           action: 'submitApproval',
@@ -742,12 +896,11 @@ export default {
         })
 
         const versions = response.data && response.data.versions
-        const list = (versions && versions.list) || []
-        const pagination = versions && versions.pagination
+        const list = (versions && versions.results) || []
         this.versionPagination = {
-          page: (pagination && pagination.page) || this.versionPagination.page,
-          limit: (pagination && pagination.limit) || this.versionPagination.limit,
-          totalResults: (pagination && pagination.totalResults) || list.length
+          page: versions?.page || this.versionPagination.page,
+          limit: versions?.limit || this.versionPagination.limit,
+          totalResults: versions?.totalResults || list.length
         }
 
         if (reset) {
@@ -866,146 +1019,6 @@ export default {
       this.$emit('close')
     },
 
-    async handleParametersSave(payload) {
-      if (!this.templateId || !this.selectedVersionId) {
-        return
-      }
-
-      // 过滤掉系统字段，只保留业务字段
-      const submitPayload = {
-        segments: this.cleanSegments(payload.segments || []),
-        atmosphereSettings: this.cleanAtmosphereSettings(payload.atmosphereSettings || []),
-        fanSettings: this.cleanFanSettings(payload.fanSettings || [])
-      }
-
-      this.saving = true
-      this.errorMessage = ''
-      try {
-        const response = await updateProcessTemplateVersion(
-          this.templateId,
-          this.selectedVersionId,
-          submitPayload
-        )
-
-        const updatedVersion = response.data
-        if (updatedVersion) {
-          this.applyUpdatedVersion(updatedVersion)
-        }
-
-        this.$message.success(response.message || '版本参数保存成功')
-        this.pendingChanges = null
-        this.$emit('parameters-saved', {
-          versionId: this.selectedVersionId,
-          templateId: this.templateId
-        })
-      } catch (error) {
-        console.error('[VersionCenterDrawer] handleParametersSave failed', error)
-        const message = (error && error.message) || '保存参数失败，请稍后重试'
-        this.errorMessage = message
-        this.$message.error(message)
-      } finally {
-        this.saving = false
-      }
-    },
-
-    /**
-     * 清理温度段数据，只保留业务字段
-     */
-    cleanSegments(segments) {
-      return segments.map(segment => {
-        const cleaned = {
-          segmentOrder: segment.segmentOrder,
-          segmentType: segment.segmentType,
-          targetTemperature: segment.targetTemperature,
-          duration: segment.duration
-        }
-
-        // 可选字段
-        if (segment.heatingRate !== null && segment.heatingRate !== undefined) {
-          cleaned.heatingRate = segment.heatingRate
-        }
-        if (segment.coolingRate !== null && segment.coolingRate !== undefined) {
-          cleaned.coolingRate = segment.coolingRate
-        }
-        if (segment.description) {
-          cleaned.description = segment.description
-        }
-
-        return cleaned
-      })
-    },
-
-    /**
-     * 清理保护气氛数据，只保留业务字段
-     */
-    cleanAtmosphereSettings(atmosphereSettings) {
-      return atmosphereSettings.map(atmosphere => {
-        const cleaned = {
-          atmosphereType: atmosphere.atmosphereType,
-          flowRate: atmosphere.flowRate
-        }
-
-        // 可选字段
-        if (atmosphere.flowRateMin !== null && atmosphere.flowRateMin !== undefined) {
-          cleaned.flowRateMin = atmosphere.flowRateMin
-        }
-        if (atmosphere.flowRateMax !== null && atmosphere.flowRateMax !== undefined) {
-          cleaned.flowRateMax = atmosphere.flowRateMax
-        }
-        if (atmosphere.pressure !== null && atmosphere.pressure !== undefined) {
-          cleaned.pressure = atmosphere.pressure
-        }
-        if (atmosphere.pressureMin !== null && atmosphere.pressureMin !== undefined) {
-          cleaned.pressureMin = atmosphere.pressureMin
-        }
-        if (atmosphere.pressureMax !== null && atmosphere.pressureMax !== undefined) {
-          cleaned.pressureMax = atmosphere.pressureMax
-        }
-        if (atmosphere.supportsHydrogen !== null && atmosphere.supportsHydrogen !== undefined) {
-          cleaned.supportsHydrogen = atmosphere.supportsHydrogen
-        }
-        if (atmosphere.description) {
-          cleaned.description = atmosphere.description
-        }
-
-        return cleaned
-      })
-    },
-
-    /**
-     * 清理风机参数数据，只保留业务字段
-     */
-    cleanFanSettings(fanSettings) {
-      return fanSettings.map(fan => {
-        const cleaned = {
-          frequency: fan.frequency
-        }
-
-        // 可选字段
-        if (fan.frequencyMin !== null && fan.frequencyMin !== undefined) {
-          cleaned.frequencyMin = fan.frequencyMin
-        }
-        if (fan.frequencyMax !== null && fan.frequencyMax !== undefined) {
-          cleaned.frequencyMax = fan.frequencyMax
-        }
-        if (fan.segmentOrder !== null && fan.segmentOrder !== undefined) {
-          cleaned.segmentOrder = fan.segmentOrder
-        }
-        if (fan.mode) {
-          cleaned.mode = fan.mode
-        }
-        if (fan.description) {
-          cleaned.description = fan.description
-        }
-
-        return cleaned
-      })
-    },
-
-    handleParametersChange(changes) {
-      this.pendingChanges = cloneDeep(changes)
-    },
-
     openCurveViewer() {
       if (!this.selectedVersion) {
         this.$message.info('请选择需要查看的版本')
@@ -1117,10 +1130,37 @@ export default {
       return actionMap[action] || '#409EFF'
     },
 
-    isVersionEditable(version) {
-      if (!version) return false
-      const editableStatuses = ['草稿', '驳回']
-      return editableStatuses.includes(version.status)
+    /**
+     * 解析合金牌号字符串为数组
+     */
+    parseAlloyGrades(gradesStr) {
+      if (!gradesStr) {
+        return []
+      }
+      return gradesStr.split(',').map(item => item.trim()).filter(Boolean)
+    },
+
+    /**
+     * 获取产品生命周期状态类型
+     */
+    getProductStatusType(status) {
+      const typeMap = {
+        '量产': 'success',
+        '在产': 'success',
+        '试产': 'warning',
+        '停产': 'danger'
+      }
+      return typeMap[status] || 'info'
+    },
+
+    /**
+     * 获取特定状态的版本数量
+     */
+    getVersionCountByStatus(status) {
+      if (!this.versionList || !this.versionList.length) {
+        return 0
+      }
+      return this.versionList.filter(v => v.status === status).length
     },
 
     applyUpdatedVersion(updatedVersion) {
@@ -1198,6 +1238,15 @@ export default {
         return
       }
 
+      // 编辑操作直接触发父组件的编辑事件
+      if (action === 'editVersion') {
+        this.$emit('edit-template', {
+          templateId: this.templateId,
+          versionId: this.selectedVersion.id
+        })
+        return
+      }
+
       const versionId = this.selectedVersion.id
       const templateId = this.templateId
       const currentStatus = this.selectedVersion.status
@@ -1264,6 +1313,11 @@ export default {
       } finally {
         this.toggleActionLoading(action, false)
       }
+    },
+
+    canEdit(version) {
+      // 草稿和驳回状态可以编辑参数
+      return [VERSION_STATUS.DRAFT, VERSION_STATUS.REJECTED].includes(version.status)
     },
 
     canSubmit(version) {
@@ -1648,5 +1702,145 @@ export default {
 
 ::v-deep(.el-descriptions) {
   background-color: #ffffff;
+}
+
+/* 版本概览新增样式 */
+.template-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.overview-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #ebeef5;
+}
+
+.overview-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f5f7fa;
+}
+
+.overview-section__title i {
+  font-size: 16px;
+  color: #409eff;
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: 8px;
+  background: #409eff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 10px;
+}
+
+.description-text {
+  line-height: 1.6;
+  color: #606266;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.empty-value {
+  color: #c0c4cc;
+  font-style: italic;
+}
+
+.alloy-grades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grade-tag {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-weight: 500;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f7f8fa;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card__icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 24px;
+}
+
+.stat-card__content {
+  flex: 1;
+}
+
+.stat-card__value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+  color: #303133;
+}
+
+.stat-card__label {
+  font-size: 13px;
+  color: #909399;
+  font-weight: 500;
+}
+
+/* 产品表格样式优化 */
+.overview-section ::v-deep(.el-table) {
+  margin-top: 0;
+}
+
+.overview-section ::v-deep(.el-table th) {
+  background-color: #fafafa;
+}
+
+/* 响应式优化 */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

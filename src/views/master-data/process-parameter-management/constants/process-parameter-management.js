@@ -139,7 +139,7 @@ export const COLUMN_SETTINGS_ID = 'process-parameter-template-columns'
 export const APPLICABLE_PRODUCT_DISPLAY_LIMIT = 2
 
 // 模板编码格式提示
-export const TEMPLATE_CODE_HINT = '建议采用“PT-合金-状态-特性”格式，如 PT-1100-H18-ANNEALING'
+export const TEMPLATE_CODE_HINT = '格式：PT-产品规格-工艺类型-版本标识，如 PT-AF1060-ANNEALING-V1'
 
 // 温度曲线基础颜色映射（供图表与表格重用）
 export const SEGMENT_COLOR_MAP = {

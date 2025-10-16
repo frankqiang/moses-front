@@ -24,11 +24,32 @@
       <div class="diff-list__columns">
         <div class="diff-list__column">
           <div class="diff-list__column-title">当前版本</div>
-          <pre class="diff-list__content">{{ formatDisplay(item.current) }}</pre>
+          <div class="diff-list__content">
+            <div
+              v-for="(value, key) in getFieldMap(item.current)"
+              :key="key"
+              class="diff-list__field"
+            >
+              <span class="diff-list__field-key">{{ key }}:</span>
+              <span class="diff-list__field-value">{{ value }}</span>
+            </div>
+            <div v-if="!item.current" class="diff-list__empty">-</div>
+          </div>
         </div>
         <div class="diff-list__column">
           <div class="diff-list__column-title">对比版本</div>
-          <pre class="diff-list__content">{{ formatDisplay(item.compare) }}</pre>
+          <div class="diff-list__content">
+            <div
+              v-for="(value, key) in getFieldMap(item.compare)"
+              :key="key"
+              class="diff-list__field"
+              :class="{ 'diff-list__field--changed': isFieldChanged(item, key) }"
+            >
+              <span class="diff-list__field-key">{{ key }}:</span>
+              <span class="diff-list__field-value">{{ value }}</span>
+            </div>
+            <div v-if="!item.compare" class="diff-list__empty">-</div>
+          </div>
         </div>
       </div>
     </div>
@@ -83,14 +104,73 @@ export default {
       }
       return `${this.itemTitle} #${index + 1}`
     },
-    formatDisplay(value) {
-      if (!value) {
-        return '-'
+
+    /**
+     * 获取对象的字段映射（用于显示）
+     * @param {Object} value - 对象值
+     * @returns {Object} 字段映射
+     */
+    getFieldMap(value) {
+      if (!value || typeof value !== 'object') {
+        return {}
       }
-      if (typeof value === 'string') {
-        return value
+
+      // 字段名称映射（中文显示）
+      const fieldLabels = {
+        segmentOrder: '段序号',
+        controlMode: '控制模式',
+        furnaceTemperature: '炉温(℃)',
+        materialTemperature: '料温(℃)',
+        timeSet: '时间设置(min)',
+        runTime: '运行时间(min)',
+        circulationFanSpeed: '循环风机转速(%)',
+        negativePressureFan: '负压风机(%)',
+        cleaningFan: '清洗风机(%)',
+        cleaningTime: '清洗时间(min)'
       }
-      return JSON.stringify(value, null, 2)
+
+      const result = {}
+      Object.keys(value).forEach(key => {
+        // 跳过元数据字段
+        if (['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'isDeleted'].includes(key)) {
+          return
+        }
+
+        const label = fieldLabels[key] || key
+        const val = value[key]
+        result[label] = val === null || val === undefined ? '-' : val
+      })
+
+      return result
+    },
+
+    /**
+     * 判断字段是否有变化（只高亮对比版本中变化的字段）
+     * @param {Object} item - 对比项
+     * @param {String} fieldLabel - 字段标签
+     * @returns {Boolean} 是否有变化
+     */
+    isFieldChanged(item, fieldLabel) {
+      if (!item.changed || !item.current || !item.compare) {
+        return false
+      }
+
+      // 字段名称反向映射
+      const fieldKeys = {
+        '段序号': 'segmentOrder',
+        '控制模式': 'controlMode',
+        '炉温(℃)': 'furnaceTemperature',
+        '料温(℃)': 'materialTemperature',
+        '时间设置(min)': 'timeSet',
+        '运行时间(min)': 'runTime',
+        '循环风机转速(%)': 'circulationFanSpeed',
+        '负压风机(%)': 'negativePressureFan',
+        '清洗风机(%)': 'cleaningFan',
+        '清洗时间(min)': 'cleaningTime'
+      }
+
+      const key = fieldKeys[fieldLabel] || fieldLabel
+      return item.current[key] !== item.compare[key]
     }
   }
 }
@@ -146,7 +226,38 @@ export default {
     font-size: 12px;
     line-height: 1.5;
     color: #303133;
-    white-space: pre-wrap;
+  }
+
+  &__field {
+    display: flex;
+    align-items: baseline;
+    padding: 4px 0;
+
+    &--changed {
+      background: rgba(230, 126, 34, 0.1);
+      margin: 0 -10px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 600;
+      color: #e67e22;
+    }
+  }
+
+  &__field-key {
+    flex-shrink: 0;
+    margin-right: 8px;
+    color: #909399;
+    font-weight: 500;
+    min-width: 130px;
+  }
+
+  &__field-value {
+    word-break: break-word;
+  }
+
+  &__empty {
+    color: #c0c4cc;
+    font-style: italic;
   }
 }
 </style>

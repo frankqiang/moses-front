@@ -55,10 +55,21 @@ export default {
   },
   methods: {
     getCellClass(row, prop) {
+      // 基础类名
+      const baseClass = 'diff-table__cell'
+
+      // 如果该行没有变化，直接返回基础类名
       if (!row.changed) {
-        return 'diff-table__cell'
+        return baseClass
       }
-      return `diff-table__cell diff-table__cell--changed diff-table__cell--${prop}`
+
+      // 如果该行有变化，只高亮对比版本（compare列）
+      if (prop === 'compare') {
+        return `${baseClass} diff-table__cell--changed diff-table__cell--${prop}`
+      }
+
+      // 其他列（label和current）不高亮
+      return baseClass
     }
   }
 }

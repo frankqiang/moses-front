@@ -828,7 +828,7 @@ export default {
 
         const response = await fetchProcessTemplateVersions(this.templateId, params)
         const versions = response.data?.versions
-        this.versionHistory = (versions && versions.list) || []
+        this.versionHistory = (versions && versions.results) || []
       } catch (error) {
         console.error('[TemplateDetailDrawer] fetchVersionHistory failed', error)
         this.$message.error(error.message || '获取版本历史失败')

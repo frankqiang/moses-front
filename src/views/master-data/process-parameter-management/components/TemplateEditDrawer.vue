@@ -29,7 +29,7 @@
 
     <div v-if="visibleProxy" class="template-edit-drawer__content">
       <!-- 版本状态提示 -->
-      <div v-if="currentTemplate" class="version-info-banner">
+      <div v-if="currentTemplate && currentVersion" class="version-info-banner">
         <div class="version-info">
           <span class="template-code">{{ currentTemplate.templateCode }}</span>
           <span class="version-number">{{ currentVersion.versionNumber }}</span>
@@ -43,7 +43,7 @@
         </div>
         <div class="edit-hint">
           <i class="el-icon-edit" />
-          <span>仅草稿和驳回状态允许编辑</span>
+          <span>{{ editModeHint }}</span>
         </div>
       </div>
 
@@ -69,7 +69,7 @@
                   <el-form-item label="模板编码" prop="templateCode">
                     <el-input
                       v-model="formData.templateCode"
-                      placeholder="如 TPL-AF-1100-STD"
+                      placeholder="如 PT-AF1060-ANNEALING-V1"
                       disabled
                       class="disabled-field"
                     />
@@ -83,7 +83,12 @@
                       placeholder="如 1100合金标准退火工艺"
                       clearable
                       maxlength="200"
+                      :disabled="!canEditTemplate"
+                      :class="{ 'disabled-field': !canEditTemplate }"
                     />
+                    <small v-if="!canEditTemplate" class="field-hint field-hint--warning">
+                      仅草稿或历史状态的模板允许修改模板名称
+                    </small>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -97,7 +102,12 @@
                       placeholder="可描述适用场景、退火炉、关键参数说明，最多2000字"
                       maxlength="2000"
                       show-word-limit
+                      :disabled="!canEditTemplate"
+                      :class="{ 'disabled-field': !canEditTemplate }"
                     />
+                    <small v-if="!canEditTemplate" class="field-hint field-hint--warning">
+                      仅草稿或历史状态的模板允许修改模板描述
+                    </small>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -108,6 +118,9 @@
               <header class="form-section__header">
                 <h3 class="form-section__title">适用范围</h3>
                 <span class="form-section__badge form-section__badge--optional">选填</span>
+                <small v-if="!canEditTemplate" class="field-hint field-hint--warning" style="margin-left: 12px;">
+                  仅草稿或历史状态的模板允许修改适用范围
+                </small>
               </header>
               <el-row :gutter="24">
                 <el-col :span="24">
@@ -123,6 +136,7 @@
                       collapse-tags-tooltip
                       placeholder="搜索并选择适用产品，支持多选"
                       class="full-width-select"
+                      :disabled="!canEditTemplate"
                     >
                       <el-option
                         v-for="product in productOptions"
@@ -147,6 +161,8 @@
                       placeholder="如 1100,8011，多个以逗号分隔"
                       clearable
                       maxlength="500"
+                      :disabled="!canEditTemplate"
+                      :class="{ 'disabled-field': !canEditTemplate }"
                       @input="handleAlloyGradesInput"
                     />
                   </el-form-item>
@@ -158,6 +174,8 @@
                       placeholder="如 0.005-0.1"
                       clearable
                       maxlength="50"
+                      :disabled="!canEditTemplate"
+                      :class="{ 'disabled-field': !canEditTemplate }"
                     />
                     <small class="field-hint">格式：最小值-最大值</small>
                   </el-form-item>
@@ -171,6 +189,8 @@
                       placeholder="如 500-1500"
                       clearable
                       maxlength="50"
+                      :disabled="!canEditTemplate"
+                      :class="{ 'disabled-field': !canEditTemplate }"
                     />
                     <small class="field-hint">格式：最小值-最大值</small>
                   </el-form-item>
@@ -198,7 +218,7 @@
                 <el-col :span="12">
                   <el-form-item label="版本状态" prop="versionStatus">
                     <el-input
-                      v-model="currentVersion.status"
+                      :value="currentVersion ? currentVersion.status : ''"
                       disabled
                       class="disabled-field"
                     />
@@ -275,6 +295,7 @@ import ProcessSegmentsEditor from './ProcessSegmentsEditor.vue'
 import { cloneDeep } from 'lodash'
 import { MESSAGE_FALLBACKS } from '../constants/messages-config'
 import {
+  updateProcessTemplate,
   updateProcessTemplateVersion,
   getProcessTemplateDetail
 } from '../api'
@@ -405,6 +426,17 @@ export default {
     },
     canEdit() {
       return this.currentVersion && ['草稿', '驳回'].includes(this.currentVersion.status)
+    },
+    canEditTemplate() {
+      // 仅草稿或历史状态允许修改模板级别信息
+      return this.currentTemplate && ['草稿', '历史'].includes(this.currentTemplate.status)
+    },
+    editModeHint() {
+      if (this.canEditTemplate) {
+        return '当前可编辑模板信息和版本信息'
+      } else {
+        return '当前仅可编辑版本信息（版本描述和工艺参数），模板信息不可修改'
+      }
     }
   },
   watch: {
@@ -443,7 +475,8 @@ export default {
 
         // 验证编辑权限
         if (!this.canEdit) {
-          this.errorMessage = `当前版本状态为"${this.currentVersion.status}"，仅草稿和驳回状态允许编辑`
+          const versionStatus = this.currentVersion ? this.currentVersion.status : '未知'
+          this.errorMessage = `当前版本状态为"${versionStatus}"，仅草稿和驳回状态允许编辑`
         }
       } catch (error) {
         console.error('[TemplateEditDrawer] initialize failed', error)
@@ -458,17 +491,32 @@ export default {
         const response = await getProcessTemplateDetail(this.templateId)
         const template = response.data
 
-        this.currentTemplate = template
-        this.currentVersion = template.latestVersion
+        console.log('[TemplateEditDrawer] 模板详情:', template)
+        console.log('[TemplateEditDrawer] 传入的 versionId:', this.versionId)
+        console.log('[TemplateEditDrawer] versions 列表:', template.versions)
+        console.log('[TemplateEditDrawer] latestVersion:', template.latestVersion)
 
-        // 验证版本ID是否匹配
-        if (this.currentVersion.id !== this.versionId) {
-          // 如果传入的versionId不是最新版本，需要从versions中找到对应版本
-          const targetVersion = template.versions?.find(v => v.id === this.versionId)
-          if (!targetVersion) {
-            throw new Error('指定的版本不存在')
+        this.currentTemplate = template
+
+        // 优先使用传入的 versionId 查找对应版本
+        if (this.versionId) {
+          // 先从 versions 列表中查找
+          let targetVersion = template.versions?.find(v => v.id === this.versionId)
+
+          // 如果 versions 中没找到，检查是否是 latestVersion
+          if (!targetVersion && template.latestVersion?.id === this.versionId) {
+            targetVersion = template.latestVersion
           }
+
+          if (!targetVersion) {
+            throw new Error(`指定的版本不存在: ${this.versionId}`)
+          }
+
+          console.log('[TemplateEditDrawer] 找到目标版本:', targetVersion)
           this.currentVersion = targetVersion
+        } else {
+          // 没有传入 versionId，使用 latestVersion
+          this.currentVersion = template.latestVersion
         }
 
         // 填充表单数据
@@ -480,9 +528,9 @@ export default {
           applicableAlloyGrades: template.applicableAlloyGrades || '',
           applicableThicknessRange: template.applicableThicknessRange || '',
           applicableWidthRange: template.applicableWidthRange || '',
-          versionNumber: this.currentVersion.versionNumber || '',
-          versionDescription: this.currentVersion.versionDescription || '',
-          segments: cloneDeep(this.currentVersion.segments || [])
+          versionNumber: this.currentVersion?.versionNumber || '',
+          versionDescription: this.currentVersion?.versionDescription || '',
+          segments: cloneDeep(this.currentVersion?.segments || [])
         }
 
         // 保存原始数据用于对比
@@ -649,21 +697,46 @@ export default {
       this.errorMessage = ''
 
       try {
-        const payload = this.transformPayload(this.formData)
+        const { templatePayload, versionPayload } = this.buildPayloads(this.formData)
 
-        console.log('[TemplateEditDrawer] 提交的 payload:', JSON.stringify(payload, null, 2))
+        const updateResults = []
 
-        const response = await updateProcessTemplateVersion(
-          this.templateId,
-          this.versionId,
-          payload
-        )
+        // 如果有模板级别字段的修改
+        if (Object.keys(templatePayload).length > 0) {
+          if (!this.canEditTemplate) {
+            this.$message.error('当前模板状态不允许修改模板级别信息（仅草稿或历史状态允许）')
+            this.submitting = false
+            return
+          }
 
-        const message = response.message || MESSAGE_FALLBACKS.updateTemplate
-        this.$message.success(message)
+          console.log('[TemplateEditDrawer] 调用更新模板接口', templatePayload)
+          const templateResponse = await updateProcessTemplate(this.templateId, templatePayload)
+          updateResults.push({
+            type: 'template',
+            message: templateResponse.message || '模板信息更新成功'
+          })
+        }
+
+        // 如果有版本级别字段的修改
+        if (Object.keys(versionPayload).length > 0) {
+          console.log('[TemplateEditDrawer] 调用更新版本接口', versionPayload)
+          const versionResponse = await updateProcessTemplateVersion(
+            this.templateId,
+            this.versionId,
+            versionPayload
+          )
+          updateResults.push({
+            type: 'version',
+            message: versionResponse.message || '版本信息更新成功'
+          })
+        }
+
+        // 合并成功消息
+        const successMessage = updateResults.map(r => r.message).join('；')
+        this.$message.success(successMessage || MESSAGE_FALLBACKS.updateTemplate)
 
         // 发送成功事件
-        this.$emit('success', response.data)
+        this.$emit('success', { templateId: this.templateId, versionId: this.versionId })
         this.visibleProxy = false
       } catch (error) {
         console.error('[TemplateEditDrawer] submit failed', error)
@@ -675,52 +748,87 @@ export default {
       }
     },
 
-    transformPayload(formData) {
-      const payload = {}
+    /**
+     * 构建模板和版本的 payload
+     * @returns {{ templatePayload: Object, versionPayload: Object }}
+     */
+    buildPayloads(formData) {
+      const templatePayload = {}
+      const versionPayload = {}
 
-      // 模板基本信息（模板编码不允许修改）
+      // 模板级别字段（所有版本共享的信息）
       if (formData.templateName !== this.originalData.templateName) {
-        payload.templateName = formData.templateName
+        templatePayload.templateName = formData.templateName
       }
 
       if (formData.description !== this.originalData.description) {
-        payload.description = formData.description
-      }
-
-      // 版本描述
-      if (formData.versionDescription !== this.originalData.versionDescription) {
-        payload.versionDescription = formData.versionDescription
+        templatePayload.description = formData.description
       }
 
       // 适用产品
       const currentProductIds = formData.applicableProductIds || []
       const originalProductIds = this.originalData.applicableProductIds || []
       if (JSON.stringify(currentProductIds.sort()) !== JSON.stringify(originalProductIds.sort())) {
-        payload.applicableProductIds = currentProductIds
+        templatePayload.applicableProductIds = currentProductIds
       }
 
       // 适用合金牌号
       if (formData.applicableAlloyGrades !== this.originalData.applicableAlloyGrades) {
-        payload.applicableAlloyGrades = formData.applicableAlloyGrades
+        templatePayload.applicableAlloyGrades = formData.applicableAlloyGrades
       }
 
-      // 适用范围
+      // 适用厚度范围
       if (formData.applicableThicknessRange !== this.originalData.applicableThicknessRange) {
-        payload.applicableThicknessRange = formData.applicableThicknessRange
+        templatePayload.applicableThicknessRange = formData.applicableThicknessRange
       }
 
+      // 适用宽度范围
       if (formData.applicableWidthRange !== this.originalData.applicableWidthRange) {
-        payload.applicableWidthRange = formData.applicableWidthRange
+        templatePayload.applicableWidthRange = formData.applicableWidthRange
+      }
+
+      // 版本级别字段（单个版本独有的信息）
+      if (formData.versionDescription !== this.originalData.versionDescription) {
+        versionPayload.versionDescription = formData.versionDescription
       }
 
       // 12段参数
       const currentSegments = formData.segments || []
       const originalSegments = this.originalData.segments || []
       if (JSON.stringify(currentSegments) !== JSON.stringify(originalSegments)) {
-        payload.segments = cloneDeep(currentSegments)
+        versionPayload.segments = this.cleanSegments(currentSegments)
       }
 
-      return payload
+      return {
+        templatePayload,
+        versionPayload
+      }
+    },
+
+    /**
+     * 清理segments数据，只保留接口要求的字段
+     */
+    cleanSegments(segments) {
+      return segments.map(segment => {
+        const cleaned = {
+          segmentOrder: segment.segmentOrder,
+          controlMode: segment.controlMode || '定时定温',
+          furnaceTemperature: segment.furnaceTemperature,
+          materialTemperature: segment.materialTemperature,
+          timeSet: segment.timeSet,
+          circulationFanSpeed: segment.circulationFanSpeed,
+          negativePressureFan: segment.negativePressureFan,
+          cleaningFan: segment.cleaningFan,
+          cleaningTime: segment.cleaningTime
+        }
+
+        // runTime是可选字段，只在有值时添加
+        if (segment.runTime !== null && segment.runTime !== undefined) {
+          cleaned.runTime = segment.runTime
+        }
+
+        return cleaned
+      })
     },
 
     isDataUnchanged() {
@@ -924,6 +1032,11 @@ export default {
   margin-top: 4px;
   color: #909399;
   font-size: 12px;
+}
+
+.field-hint--warning {
+  color: #e6a23c;
+  font-weight: 500;
 }
 
 .disabled-field {

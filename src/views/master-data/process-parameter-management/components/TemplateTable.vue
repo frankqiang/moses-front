@@ -386,6 +386,14 @@ export default {
         type: 'text'
       })
 
+      // 版本中心 - 总是可用，重要功能
+      buttons.push({
+        action: 'versionCenter',
+        text: '版本中心',
+        icon: 'el-icon-folder-opened',
+        type: 'text'
+      })
+
       // 编辑模板 - 草稿/驳回状态可编辑
       if (this.canEditTemplate(template, latestVersion)) {
         buttons.push({

@@ -109,19 +109,41 @@ export async function getProcessTemplateDetail(templateId) {
 }
 
 /**
- * 4. 更新工艺模板草稿/驳回版本
+ * 4. 更新工艺模板基本信息（模板级别）
+ * @param {string} templateId - 模板ID（UUID）
+ * @param {Object} payload - 更新参数
+ * @param {string} payload.templateName - 工艺模板名称（可选，最大200字符）
+ * @param {string} payload.description - 工艺模板描述（可选，最大2000字符）
+ * @param {Array<string>} payload.applicableProductIds - 适用产品ID列表（可选，UUID数组）
+ * @param {string} payload.applicableAlloyGrades - 适用合金牌号（可选，最大500字符）
+ * @param {string} payload.applicableThicknessRange - 适用厚度范围（可选，格式：0.005-0.1）
+ * @param {string} payload.applicableWidthRange - 适用宽度范围（可选，格式：500-1500）
+ * @returns {Promise<Object>} 返回更新后的模板详情
+ * @description 仅允许在模板状态为"草稿"或"历史"时调用，修改会影响该模板下的所有版本
+ */
+export async function updateProcessTemplate(templateId, payload) {
+  const response = await service({
+    url: `${BASE_URL}/${templateId}`,
+    method: 'patch',
+    data: payload
+  })
+
+  return {
+    data: response.data,
+    message: response.message,
+    meta: response.meta
+  }
+}
+
+/**
+ * 5. 更新工艺模板草稿/驳回版本（版本级别）
  * @param {string} templateId - 模板ID（UUID）
  * @param {string} versionId - 版本ID（UUID）
  * @param {Object} payload - 更新参数
- * @param {string} payload.templateName - 工艺模板名称（可选）
- * @param {string} payload.description - 工艺模板描述（可选）
- * @param {string} payload.versionDescription - 版本描述（可选）
- * @param {Array<string>} payload.applicableProductIds - 适用产品ID列表（可选）
- * @param {string} payload.applicableAlloyGrades - 适用合金牌号（可选）
- * @param {string} payload.applicableThicknessRange - 适用厚度范围（可选）
- * @param {string} payload.applicableWidthRange - 适用宽度范围（可选）
+ * @param {string} payload.versionDescription - 版本描述（可选，最大2000字符）
  * @param {Array<Object>} payload.segments - 12段工艺参数配置（可选，完整替换）
  * @returns {Promise<Object>} 返回更新后的版本详情
+ * @description v2.0.1版本变更：仅允许修改版本级别信息，不允许修改模板级别信息（如模板名称、适用产品等）
  */
 export async function updateProcessTemplateVersion(templateId, versionId, payload) {
   const response = await service({
@@ -138,7 +160,7 @@ export async function updateProcessTemplateVersion(templateId, versionId, payloa
 }
 
 /**
- * 5. 提交工艺模板版本审批
+ * 6. 提交工艺模板版本审批
  * @param {string} templateId - 模板ID（UUID）
  * @param {string} versionId - 版本ID（UUID）
  * @param {Object} payload - 提交参数
@@ -160,7 +182,7 @@ export async function submitProcessTemplateVersion(templateId, versionId, payloa
 }
 
 /**
- * 6. 审批通过工艺模板版本
+ * 7. 审批通过工艺模板版本
  * @param {string} templateId - 模板ID（UUID）
  * @param {string} versionId - 版本ID（UUID）
  * @param {Object} payload - 审批参数
@@ -184,7 +206,7 @@ export async function approveProcessTemplateVersion(templateId, versionId, paylo
 }
 
 /**
- * 7. 审批驳回工艺模板版本
+ * 8. 审批驳回工艺模板版本
  * @param {string} templateId - 模板ID（UUID）
  * @param {string} versionId - 版本ID（UUID）
  * @param {Object} payload - 驳回参数
@@ -206,7 +228,7 @@ export async function rejectProcessTemplateVersion(templateId, versionId, payloa
 }
 
 /**
- * 8. 撤回工艺模板版本审批
+ * 9. 撤回工艺模板版本审批
  * @param {string} templateId - 模板ID（UUID）
  * @param {string} versionId - 版本ID（UUID）
  * @param {Object} payload - 撤回参数
@@ -228,7 +250,7 @@ export async function withdrawProcessTemplateVersion(templateId, versionId, payl
 }
 
 /**
- * 9. 作废工艺模板版本
+ * 10. 作废工艺模板版本
  * @param {string} templateId - 模板ID（UUID）
  * @param {string} versionId - 版本ID（UUID）
  * @param {Object} payload - 作废参数
@@ -250,7 +272,7 @@ export async function voidProcessTemplateVersion(templateId, versionId, payload 
 }
 
 /**
- * 10. 查询工艺模板版本历史列表
+ * 11. 查询工艺模板版本历史列表
  * @param {string} templateId - 模板ID（UUID）
  * @param {Object} params - 查询参数
  * @param {string} params.status - 版本状态筛选（草稿/待审批/生效/历史/驳回/作废）
@@ -293,7 +315,7 @@ export async function fetchProcessTemplateVersions(templateId, params = {}) {
 }
 
 /**
- * 11. 对比工艺模板版本差异
+ * 12. 对比工艺模板版本差异
  * @param {string} templateId - 模板ID（UUID）
  * @param {Object} params - 对比参数
  * @param {string} params.baseVersionId - 基准版本ID（必填，UUID格式）
@@ -320,7 +342,7 @@ export async function compareProcessTemplateVersions(templateId, params) {
 }
 
 /**
- * 12. 复制工艺模板
+ * 13. 复制工艺模板
  * @param {string} templateId - 源模板ID（UUID）
  * @param {Object} payload - 复制参数
  * @param {string} payload.newTemplateCode - 新模板编码（必填，大写字母数字横线）
@@ -344,7 +366,7 @@ export async function copyProcessTemplate(templateId, payload) {
 }
 
 /**
- * 13. 创建工艺模板新版本
+ * 14. 创建工艺模板新版本
  * @param {string} templateId - 模板ID（UUID）
  * @param {Object} payload - 创建参数
  * @param {string} payload.newVersionNumber - 新版本号（必填，格式：v1.0或1.0）
@@ -367,7 +389,7 @@ export async function createNewVersion(templateId, payload) {
 }
 
 /**
- * 14. 快速生效工艺模板版本
+ * 15. 快速生效工艺模板版本
  * @param {string} templateId - 模板ID（UUID）
  * @param {string} versionId - 版本ID（UUID）
  * @param {Object} payload - 生效参数
@@ -391,7 +413,7 @@ export async function activateProcessTemplateVersion(templateId, versionId, payl
 }
 
 /**
- * 15. 查询工艺模板引用情况
+ * 16. 查询工艺模板引用情况
  * @param {string} templateId - 模板ID（UUID）
  * @returns {Promise<Object>} 返回引用统计信息
  */
@@ -409,7 +431,7 @@ export async function getProcessTemplateUsage(templateId) {
 }
 
 /**
- * 16. 删除工艺模板
+ * 17. 删除工艺模板
  * @param {string} templateId - 模板ID（UUID）
  * @returns {Promise<Object>} 返回删除结果
  */
@@ -431,6 +453,7 @@ export default {
   createProcessTemplate,
   fetchProcessTemplateList,
   getProcessTemplateDetail,
+  updateProcessTemplate,
   updateProcessTemplateVersion,
   submitProcessTemplateVersion,
   approveProcessTemplateVersion,

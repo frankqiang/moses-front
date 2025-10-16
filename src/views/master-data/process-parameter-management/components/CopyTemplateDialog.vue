@@ -54,13 +54,13 @@
       <el-form-item label="新模板编码" prop="newTemplateCode">
         <el-input
           v-model="formData.newTemplateCode"
-          placeholder="请输入新模板编码，如：PT-1100-H18-ANNEALING-V2"
+          placeholder="请输入新模板编码，如：PT-AF1060-ANNEALING-V2"
           maxlength="100"
           show-word-limit
           clearable
         />
         <small class="field-hint">
-          格式：PT-合金牌号-状态-工艺类型-版本标识，必须唯一
+          格式：PT-产品规格-工艺类型-版本标识，必须唯一
         </small>
       </el-form-item>
 

@@ -139,6 +139,7 @@
             size="mini"
             class="table-input-number"
             placeholder="0-999"
+            @change="handleParamChange"
           />
         </template>
       </el-table-column>
@@ -156,6 +157,7 @@
             size="mini"
             class="table-select"
             placeholder="选择"
+            @change="handleParamChange"
           >
             <el-option label="低速" value="低速" />
             <el-option label="中速" value="中速" />
@@ -182,6 +184,7 @@
             size="mini"
             class="table-input-number"
             placeholder="0-100"
+            @change="handleParamChange"
           />
         </template>
       </el-table-column>
@@ -204,6 +207,7 @@
             size="mini"
             class="table-input-number"
             placeholder="0-100"
+            @change="handleParamChange"
           />
         </template>
       </el-table-column>
@@ -226,6 +230,7 @@
             size="mini"
             class="table-input-number"
             placeholder="0-999"
+            @change="handleParamChange"
           />
         </template>
       </el-table-column>
@@ -254,7 +259,7 @@
 </template>
 
 <script>
-import { cloneDeep } from 'lodash'
+import { cloneDeep, debounce } from 'lodash'
 import {
   PRESET_TEMPLATES,
   PRESET_TEMPLATE_LABELS
@@ -290,13 +295,14 @@ export default {
           this.initializeBlankSegments()
         }
       }
-    },
-    segmentsData: {
-      deep: true,
-      handler(val) {
-        this.$emit('input', val)
-      }
     }
+    // ✅ 移除了深度监听，改为在具体修改方法中手动触发更新
+  },
+  created() {
+    // ✅ 创建防抖的更新函数，避免频繁触发
+    this.debouncedEmit = debounce(() => {
+      this.$emit('input', this.segmentsData)
+    }, 100)
   },
   methods: {
     /**
@@ -316,6 +322,8 @@ export default {
         cleaningTime: 0
       }))
       this.presetTemplate = 'blank'
+      // ✅ 手动触发更新
+      this.$emit('input', this.segmentsData)
     },
 
     /**
@@ -336,6 +344,8 @@ export default {
           this.segmentsData = cloneDeep(template)
           this.presetTemplate = templateType
           this.$message.success(`已应用${PRESET_TEMPLATE_LABELS[templateType]}`)
+          // ✅ 手动触发更新
+          this.$emit('input', this.segmentsData)
         }
       }).catch(() => {
         // 用户取消
@@ -351,6 +361,8 @@ export default {
         segment.materialTemperature = segment.furnaceTemperature
         this.$message.warning(`第${index + 1}段：料温已自动调整为炉温值`)
       }
+      // ✅ 手动触发更新（仅在炉温变化时）
+      this.$emit('input', this.segmentsData)
     },
 
     /**
@@ -362,6 +374,8 @@ export default {
         this.$message.error(`第${index + 1}段：料温不能高于炉温`)
         segment.materialTemperature = segment.furnaceTemperature
       }
+      // ✅ 手动触发更新（仅在料温变化时）
+      this.$emit('input', this.segmentsData)
     },
 
     /**
@@ -369,6 +383,14 @@ export default {
      */
     isMaterialTempInvalid(row) {
       return row.materialTemperature > row.furnaceTemperature
+    },
+
+    /**
+     * 通用的参数变化处理（使用防抖优化性能）
+     */
+    handleParamChange() {
+      // ✅ 使用防抖的更新函数，避免频繁触发
+      this.debouncedEmit()
     },
 
     /**

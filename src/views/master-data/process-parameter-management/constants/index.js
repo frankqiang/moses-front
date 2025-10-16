@@ -16,18 +16,12 @@ export * from './table-config'
 // 搜索配置
 export * from './search-config'
 
-// 模板表单配置
-export * from './template-form-config'
-
-// 版本表单配置
-export * from './version-form-config'
-
 // 消息配置
 export * from './messages-config'
 
 // 图表配置
 export * from './chart-config'
 
-// 校验规则（TASK11 P0阶段）
+// 校验规则
 export * from './validation-rules'
 

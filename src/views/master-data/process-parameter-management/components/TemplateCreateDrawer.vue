@@ -50,12 +50,12 @@
                   <el-form-item label="模板编码" prop="templateCode">
                     <el-input
                       v-model="formData.templateCode"
-                      placeholder="如 TPL-AF-1100-STD"
+                      placeholder="如 PT-AF1060-ANNEALING-V1"
                       clearable
                       maxlength="100"
                       @input="handleTemplateCodeInput"
                     />
-                    <small class="field-hint">仅包含大写字母、数字、横线</small>
+                    <small class="field-hint">格式：PT-产品规格-工艺类型-版本标识</small>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
@@ -100,11 +100,13 @@
                       filterable
                       remote
                       :remote-method="handleProductSearch"
+                      :loading="productLoading"
                       reserve-keyword
                       collapse-tags
                       collapse-tags-tooltip
                       placeholder="搜索并选择适用产品，支持多选"
                       class="full-width-select"
+                      @focus="handleProductSelectFocus"
                     >
                       <el-option
                         v-for="product in productOptions"
@@ -246,7 +248,6 @@
 <script>
 import Drawer from '@/components/Drawer'
 import ProcessSegmentsEditor from './ProcessSegmentsEditor.vue'
-import { cloneDeep } from 'lodash'
 import { MESSAGE_FALLBACKS } from '../constants/messages-config'
 import {
   createProcessTemplate
@@ -273,6 +274,7 @@ export default {
       submitting: false,
       errorMessage: '',
       drawerWidth: '1400px',
+      productLoading: false, // 产品选项加载状态
       formData: {
         templateCode: '',
         templateName: '',
@@ -421,21 +423,42 @@ export default {
 
     async fetchInitialProductOptions() {
       try {
+        this.productLoading = true
         const response = await getProductionProductOptions({ limit: 30 })
         this.productOptions = response.data.options || []
       } catch (error) {
         console.warn('[TemplateCreateDrawer] fetch products failed', error)
         this.$message.warning('适用产品选项加载失败，可稍后再试')
+      } finally {
+        this.productLoading = false
       }
     },
 
-    async handleProductSearch(keyword = '') {
+    /**
+     * 处理产品下拉框获得焦点事件
+     * 如果没有选项数据，则加载初始数据
+     */
+    handleProductSelectFocus() {
+      if (this.productOptions.length === 0 && !this.productLoading) {
+        this.fetchInitialProductOptions()
+      }
+    },
+
+    async handleProductSearch(keyword) {
       try {
-        const response = await getProductionProductOptions({ keyword, limit: 30 })
-        this.productOptions = response.data.options
+        this.productLoading = true
+        // 只在有关键词时传递keyword参数，避免传递空值
+        const params = { limit: 30 }
+        if (keyword && keyword.trim()) {
+          params.keyword = keyword.trim()
+        }
+        const response = await getProductionProductOptions(params)
+        this.productOptions = response.data.options || []
       } catch (error) {
         console.error('[TemplateCreateDrawer] product search failed', error)
         this.$message.error(error?.message || '搜索产品失败，请稍后重试')
+      } finally {
+        this.productLoading = false
       }
     },
 
@@ -594,7 +617,7 @@ export default {
 
       // 12段参数
       if (formData.segments && formData.segments.length === 12) {
-        payload.segments = cloneDeep(formData.segments)
+        payload.segments = this.cleanSegments(formData.segments)
       }
 
       // 如果没有segments，使用预设模板
@@ -603,6 +626,32 @@ export default {
       }
 
       return payload
+    },
+
+    /**
+     * 清理segments数据，只保留接口要求的字段
+     */
+    cleanSegments(segments) {
+      return segments.map(segment => {
+        const cleaned = {
+          segmentOrder: segment.segmentOrder,
+          controlMode: segment.controlMode || '定时定温',
+          furnaceTemperature: segment.furnaceTemperature,
+          materialTemperature: segment.materialTemperature,
+          timeSet: segment.timeSet,
+          circulationFanSpeed: segment.circulationFanSpeed,
+          negativePressureFan: segment.negativePressureFan,
+          cleaningFan: segment.cleaningFan,
+          cleaningTime: segment.cleaningTime
+        }
+
+        // runTime是可选字段，只在有值时添加
+        if (segment.runTime !== null && segment.runTime !== undefined) {
+          cleaned.runTime = segment.runTime
+        }
+
+        return cleaned
+      })
     },
 
     handleCancel() {

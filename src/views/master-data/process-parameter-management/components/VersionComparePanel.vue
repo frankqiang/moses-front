@@ -63,30 +63,12 @@
           />
         </el-collapse-item>
 
-        <el-collapse-item title="温度段配置" name="segments">
+        <el-collapse-item title="12段参数配置" name="segments">
           <DiffList
             :items="compareResult.segments"
             item-title="段序号"
             :highlight-mode="highlightMode"
             :format-item="formatSegment"
-          />
-        </el-collapse-item>
-
-        <el-collapse-item title="保护气氛配置" name="atmosphere">
-          <DiffList
-            :items="compareResult.atmosphereSettings"
-            item-title="气氛类型"
-            :highlight-mode="highlightMode"
-            :format-item="formatAtmosphere"
-          />
-        </el-collapse-item>
-
-        <el-collapse-item title="循环风机配置" name="fans">
-          <DiffList
-            :items="compareResult.fanSettings"
-            item-title="频率设定"
-            :highlight-mode="highlightMode"
-            :format-item="formatFan"
           />
         </el-collapse-item>
       </el-collapse>
@@ -125,8 +107,8 @@ export default {
       compareVersionId: '',
       compareResult: null,
       otherVersions: [],
-      activeSections: ['basic', 'segments', 'atmosphere', 'fans'],
-      highlightMode: 'diff'
+      activeSections: ['basic', 'segments'],
+      highlightMode: 'diff' // 默认仅显示差异
     }
   },
   computed: {
@@ -160,7 +142,7 @@ export default {
           page: 1,
           limit: 50
         })
-        const list = response.data?.versions?.list || []
+        const list = response.data?.versions?.results || []
         this.otherVersions = list.filter(item => item.id !== this.currentVersion.id)
         if (this.otherVersions.length) {
           this.compareVersionId = this.otherVersions[0].id
@@ -203,24 +185,34 @@ export default {
     transformCompareResult(raw) {
       if (!raw) return null
 
+      // 从 differences 中获取对比数据
+      const differences = raw.differences || {}
+      const versionInfoDiff = differences.versionInfo || {}
+
       const versionInfo = [
         {
           label: '版本号',
-          current: raw.baseVersion?.versionNumber,
-          compare: raw.compareVersion?.versionNumber,
-          changed: raw.versionInfo?.versionNumber?.changed
+          current: versionInfoDiff.base?.versionNumber || raw.baseVersion?.versionNumber,
+          compare: versionInfoDiff.compare?.versionNumber || raw.compareVersion?.versionNumber,
+          changed: versionInfoDiff.base?.versionNumber !== versionInfoDiff.compare?.versionNumber
         },
         {
           label: '版本状态',
-          current: raw.baseVersion?.status,
-          compare: raw.compareVersion?.status,
-          changed: raw.versionInfo?.status?.changed
+          current: versionInfoDiff.base?.status || raw.baseVersion?.status,
+          compare: versionInfoDiff.compare?.status || raw.compareVersion?.status,
+          changed: versionInfoDiff.base?.status !== versionInfoDiff.compare?.status
         },
         {
-          label: '生效时间',
-          current: this.formatDate(raw.baseVersion?.effectiveDate),
-          compare: this.formatDate(raw.compareVersion?.effectiveDate),
-          changed: raw.versionInfo?.effectiveDate?.changed
+          label: '版本描述',
+          current: versionInfoDiff.base?.versionDescription || raw.baseVersion?.versionDescription,
+          compare: versionInfoDiff.compare?.versionDescription || raw.compareVersion?.versionDescription,
+          changed: versionInfoDiff.base?.versionDescription !== versionInfoDiff.compare?.versionDescription
+        },
+        {
+          label: '创建时间',
+          current: this.formatDate(versionInfoDiff.base?.createdAt || raw.baseVersion?.createdAt),
+          compare: this.formatDate(versionInfoDiff.compare?.createdAt || raw.compareVersion?.createdAt),
+          changed: versionInfoDiff.base?.createdAt !== versionInfoDiff.compare?.createdAt
         }
       ]
 
@@ -229,11 +221,30 @@ export default {
         const baseList = section.base || []
         const compareList = section.compare || []
         const maxLength = Math.max(baseList.length, compareList.length)
+
+        // 需要对比的字段（排除元数据字段）
+        const compareFields = [
+          'segmentOrder', 'controlMode', 'furnaceTemperature', 'materialTemperature',
+          'timeSet', 'runTime', 'circulationFanSpeed', 'negativePressureFan',
+          'cleaningFan', 'cleaningTime'
+        ]
+
         for (let i = 0; i < maxLength; i += 1) {
+          const current = baseList[i] || null
+          const compare = compareList[i] || null
+
+          // 智能检测是否有实际差异（比较业务字段，忽略ID、时间戳等元数据）
+          let hasChange = false
+          if (current && compare) {
+            hasChange = compareFields.some(field => current[field] !== compare[field])
+          } else if (current || compare) {
+            hasChange = true // 一个有值一个没有，说明有差异
+          }
+
           results.push({
-            current: cloneDeep(baseList[i]) || null,
-            compare: cloneDeep(compareList[i]) || null,
-            changed: section.changed && section.changed[i]
+            current: cloneDeep(current),
+            compare: cloneDeep(compare),
+            changed: hasChange
           })
         }
         return results
@@ -241,25 +252,13 @@ export default {
 
       return {
         versionInfo,
-        segments: transformList(raw.segments),
-        atmosphereSettings: transformList(raw.atmosphereSettings),
-        fanSettings: transformList(raw.fanSettings)
+        segments: transformList(differences.segments || {})
       }
     },
 
     formatSegment(item) {
       if (!item) return '-'
-      return `段序号：${item.segmentOrder || '-'}，类型：${item.segmentType || '-'}`
-    },
-
-    formatAtmosphere(item) {
-      if (!item) return '-'
-      return `${item.atmosphereType || '-'}（流量：${item.flowRate || '-'} m³/h）`
-    },
-
-    formatFan(item) {
-      if (!item) return '-'
-      return `频率：${item.frequency || '-'} Hz，模式：${item.mode || '-'}`
+      return `第 ${item.segmentOrder} 段`
     },
 
     formatDate(value) {
