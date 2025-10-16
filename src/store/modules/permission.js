@@ -223,6 +223,69 @@ export const asyncRoutes = [
     ]
   },
 
+  // 设备TPM管理模块（独立菜单）
+  {
+    path: '/equipment-tpm',
+    component: Layout,
+    redirect: '/equipment-tpm/maintenance-plans',
+    name: 'EquipmentTPM',
+    alwaysShow: true,
+    meta: {
+      title: '设备TPM管理',
+      icon: 'el-icon-s-tools'
+      // 开发阶段：移除 roles 限制
+    },
+    children: [
+      {
+        path: 'maintenance-plans',
+        name: 'MaintenancePlanList',
+        component: () => import('@/views/master-data/equipment-tpm-management/maintenance-plan/index'),
+        meta: {
+          title: '维护计划管理',
+          icon: 'el-icon-date'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-plan.view
+        }
+      },
+      {
+        path: 'maintenance-plans/create',
+        name: 'MaintenancePlanCreate',
+        component: () => import('@/views/master-data/equipment-tpm-management/maintenance-plan/create'),
+        meta: {
+          title: '创建维护计划',
+          activeMenu: '/equipment-tpm/maintenance-plans'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-plan.manage
+        },
+        hidden: true
+      },
+      {
+        path: 'maintenance-plans/:id',
+        name: 'MaintenancePlanDetail',
+        component: () => import('@/views/master-data/equipment-tpm-management/maintenance-plan/detail'),
+        meta: {
+          title: '维护计划详情',
+          activeMenu: '/equipment-tpm/maintenance-plans'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-plan.view
+        },
+        hidden: true
+      },
+      {
+        path: 'maintenance-plans/:id/edit',
+        name: 'MaintenancePlanEdit',
+        component: () => import('@/views/master-data/equipment-tpm-management/maintenance-plan/edit'),
+        meta: {
+          title: '编辑维护计划',
+          activeMenu: '/equipment-tpm/maintenance-plans'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-plan.manage
+        },
+        hidden: true
+      }
+    ]
+  },
+
   // 库存管理模块
   {
     path: '/inventory-management',
