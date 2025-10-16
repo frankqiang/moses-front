@@ -29,7 +29,6 @@ const state = {
   },
   // 筛选条件
   filters: {
-    equipmentId: '',
     maintenanceType: '',
     cycleType: '',
     status: '',
@@ -106,7 +105,6 @@ const mutations = {
       totalResults: 0
     }
     state.filters = {
-      equipmentId: '',
       maintenanceType: '',
       cycleType: '',
       status: '',
@@ -124,7 +122,7 @@ const actions = {
    * @param {Object} params - 查询参数
    * @returns {Promise<Object>} 返回列表数据
    */
-  async getList({ commit, state }, params = {}) {
+  async getList({ commit, state, rootState }, params = {}) {
     try {
       commit('SET_LOADING', true)
 
@@ -134,6 +132,20 @@ const actions = {
         ...params,
         page: params.page || state.pagination.page,
         limit: params.limit || state.pagination.limit
+      }
+
+      // 将英文枚举键转换为中文标签（接口要求中文值）
+      if (queryParams.maintenanceType) {
+        const dict = rootState.dictionary.tpm?.maintenanceTypes
+        queryParams.maintenanceType = dict?.values?.[queryParams.maintenanceType] || queryParams.maintenanceType
+      }
+      if (queryParams.cycleType) {
+        const dict = rootState.dictionary.tpm?.cycleTypes
+        queryParams.cycleType = dict?.values?.[queryParams.cycleType] || queryParams.cycleType
+      }
+      if (queryParams.status) {
+        const dict = rootState.dictionary.tpm?.planStatuses
+        queryParams.status = dict?.values?.[queryParams.status] || queryParams.status
       }
 
       const response = await getMaintenancePlans(queryParams)
@@ -261,7 +273,7 @@ const actions = {
       if (response && response.data) {
         // 更新当前计划详情
         commit('SET_CURRENT_PLAN', response.data)
-        return response.data
+        return response
       }
 
       return null
@@ -288,7 +300,7 @@ const actions = {
       if (response && response.data) {
         // 更新当前计划详情
         commit('SET_CURRENT_PLAN', response.data)
-        return response.data
+        return response
       }
 
       return null

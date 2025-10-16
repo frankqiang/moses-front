@@ -204,6 +204,18 @@ export default {
         }
         result[key] = value
       })
+
+      // 将英文枚举键转换为中文标签（接口要求中文值）
+      if (result.status) {
+        result.status = this.getPlanStatusLabel(result.status)
+      }
+      if (result.source) {
+        result.source = this.getPlanSourceLabel(result.source)
+      }
+      if (result.planPriority) {
+        result.planPriority = this.getPlanPriorityLabel(result.planPriority)
+      }
+
       return result
     }
   }

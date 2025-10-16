@@ -22,10 +22,8 @@
  */
 
 import dictionaryBase from '@/mixins/dictionaryBase'
-import { getAllDictionaries } from '../api/dictionary'
 
 const MODULE_NAME = 'tpm'
-const CACHE_KEY = 'tpmDictionaries'
 
 export default {
   mixins: [dictionaryBase],
@@ -47,7 +45,7 @@ export default {
     maintenanceTypeLabels() {
       const state = this.$store.state.dictionary
       const moduleData = state.modules?.[MODULE_NAME] || state[MODULE_NAME]
-      return moduleData?.maintenanceTypes?.labels || {}
+      return moduleData?.maintenanceTypes?.values || {}
     },
 
     // ============ 维护周期类型 ============
@@ -66,7 +64,7 @@ export default {
     cycleTypeLabels() {
       const state = this.$store.state.dictionary
       const moduleData = state.modules?.[MODULE_NAME] || state[MODULE_NAME]
-      return moduleData?.cycleTypes?.labels || {}
+      return moduleData?.cycleTypes?.values || {}
     },
 
     // ============ 周期单位 ============
@@ -121,7 +119,7 @@ export default {
     planStatusLabels() {
       const state = this.$store.state.dictionary
       const moduleData = state.modules?.[MODULE_NAME] || state[MODULE_NAME]
-      return moduleData?.planStatuses?.labels || {}
+      return moduleData?.planStatuses?.values || {}
     },
 
     // ============ 维护任务类型 ============
@@ -140,7 +138,7 @@ export default {
     taskTypeLabels() {
       const state = this.$store.state.dictionary
       const moduleData = state.modules?.[MODULE_NAME] || state[MODULE_NAME]
-      return moduleData?.taskTypes?.labels || {}
+      return moduleData?.taskTypes?.values || {}
     },
 
     // ============ 维护任务状态 ============
@@ -159,7 +157,7 @@ export default {
     taskStatusLabels() {
       const state = this.$store.state.dictionary
       const moduleData = state.modules?.[MODULE_NAME] || state[MODULE_NAME]
-      return moduleData?.taskStatuses?.labels || {}
+      return moduleData?.taskStatuses?.values || {}
     },
 
     // ============ 故障等级 ============
@@ -178,7 +176,7 @@ export default {
     failureLevelLabels() {
       const state = this.$store.state.dictionary
       const moduleData = state.modules?.[MODULE_NAME] || state[MODULE_NAME]
-      return moduleData?.failureLevels?.labels || {}
+      return moduleData?.failureLevels?.values || {}
     },
 
     // ============ 影响程度 ============
@@ -215,7 +213,7 @@ export default {
     failureStatusLabels() {
       const state = this.$store.state.dictionary
       const moduleData = state.modules?.[MODULE_NAME] || state[MODULE_NAME]
-      return moduleData?.failureStatuses?.labels || {}
+      return moduleData?.failureStatuses?.values || {}
     }
   },
 
@@ -342,7 +340,7 @@ export default {
      * @returns {Promise<void>}
      */
     async loadTPMDictionary() {
-      await this.$loadDictionary(MODULE_NAME, getAllDictionaries, CACHE_KEY)
+      await this.$loadDictionary(MODULE_NAME)
     },
 
     // ============ 字典状态检查 ============
