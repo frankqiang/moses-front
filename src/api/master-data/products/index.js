@@ -4,9 +4,15 @@
  * 创建日期：2025-10-15
  * 修改记录：
  *   - 2025-10-15: 初始创建，提供产品选项公共接口
+ *   - 2025-10-15: 添加BASE_URL常量，使用formatQueryParams过滤空值参数
+ *   - 2025-10-15: 修复字段名不匹配问题，后端返回results而非products，修正分页字段映射
  */
 
 import request from '@/utils/request'
+import { formatQueryParams } from '@/utils'
+
+// API基础路径
+const BASE_URL = '/mdm/aluminum-foil-products'
 
 /**
  * 获取产品选项列表（供多个模块使用）
@@ -35,26 +41,23 @@ import request from '@/utils/request'
  * const response = await getProductOptions({ page: 2, limit: 30 })
  */
 export function getProductOptions(params = {}) {
-  const { keyword = '', lifecycleStatus, page = 1, limit = 30 } = params
+  const { keyword, lifecycleStatus, page = 1, limit = 30 } = params
 
-  const apiParams = {
+  // 使用 formatQueryParams 过滤空值参数（空字符串、null、undefined）
+  const apiParams = formatQueryParams({
     keyword,
+    lifecycleStatus,
     page,
     limit
-  }
-
-  // 如果指定了生命周期状态，添加到参数中
-  if (lifecycleStatus) {
-    apiParams.lifecycleStatus = lifecycleStatus
-  }
+  })
 
   return request({
-    url: '/mdm/aluminum-foil-products',
+    url: BASE_URL,
     method: 'get',
     params: apiParams
   }).then(response => {
-    // 转换为选项格式
-    const products = response.data?.products || []
+    // 转换为选项格式（后端返回的字段是 results）
+    const products = response.data?.results || []
     const options = products.map(product => ({
       id: product.id,
       value: product.id,
@@ -72,11 +75,11 @@ export function getProductOptions(params = {}) {
       ...response,
       data: {
         options,
-        pagination: response.data?.pagination || {
-          page,
-          limit,
-          total: 0,
-          totalPages: 0
+        pagination: {
+          page: response.data?.page || page,
+          limit: response.data?.limit || limit,
+          total: response.data?.totalResults || 0,
+          totalPages: response.data?.totalPages || 0
         }
       }
     }
