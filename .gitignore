@@ -14,3 +14,7 @@ tests/**/coverage/
 *.ntvs*
 *.njsproj
 *.sln
+
+
+# 测试相关
+coverage/

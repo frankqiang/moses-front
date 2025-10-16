@@ -23,11 +23,11 @@ package-lock.json
 yarn.lock
 
 # 测试相关
-tests/
+#tests/
 coverage/
-__tests__/
-*.spec.js
-*.test.js
+#__tests__/
+#.spec.js
+#.test.js
 
 # Cursor自身配置
 # .cursor/
