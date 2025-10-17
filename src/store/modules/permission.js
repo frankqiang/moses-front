@@ -282,6 +282,77 @@ export const asyncRoutes = [
           // 生产环境权限：mdm.tpm.maintenance-plan.manage
         },
         hidden: true
+      },
+      // 维护任务管理
+      {
+        path: 'maintenance-tasks',
+        name: 'MaintenanceTaskList',
+        component: () => import('@/views/tpm-management/maintenance-task/index'),
+        meta: {
+          title: '维护任务管理',
+          icon: 'el-icon-s-order'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-task.view
+        }
+      },
+      {
+        path: 'my-tasks',
+        name: 'MyMaintenanceTasks',
+        component: () => import('@/views/tpm-management/maintenance-task/my-tasks'),
+        meta: {
+          title: '我的任务',
+          icon: 'el-icon-s-check'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-task.execute
+        }
+      },
+      {
+        path: 'maintenance-tasks/create',
+        name: 'MaintenanceTaskCreate',
+        component: () => import('@/views/tpm-management/maintenance-task/create'),
+        meta: {
+          title: '创建维护任务',
+          activeMenu: '/equipment-tpm/maintenance-tasks'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-task.manage
+        },
+        hidden: true
+      },
+      {
+        path: 'maintenance-tasks/calendar',
+        name: 'MaintenanceTaskCalendar',
+        component: () => import('@/views/tpm-management/maintenance-task/calendar'),
+        meta: {
+          title: '任务日历',
+          activeMenu: '/equipment-tpm/maintenance-tasks'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-task.view
+        },
+        hidden: true
+      },
+      {
+        path: 'maintenance-tasks/workload',
+        name: 'MaintenanceTaskWorkload',
+        component: () => import('@/views/tpm-management/maintenance-task/workload'),
+        meta: {
+          title: '任务负载分析',
+          activeMenu: '/equipment-tpm/maintenance-tasks'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-task.view
+        },
+        hidden: true
+      },
+      {
+        path: 'maintenance-tasks/:id',
+        name: 'MaintenanceTaskDetail',
+        component: () => import('@/views/tpm-management/maintenance-task/detail'),
+        meta: {
+          title: '维护任务详情',
+          activeMenu: '/equipment-tpm/maintenance-tasks'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-task.view
+        },
+        hidden: true
       }
     ]
   },
@@ -364,6 +435,17 @@ export const asyncRoutes = [
           title: '生产进度报表',
           icon: 'el-icon-data-line'
           // 开发阶段：移除 roles 限制
+        }
+      },
+      {
+        path: 'production-plan-audit-logs',
+        name: 'ProductionPlanAuditLogs',
+        component: () => import('@/views/production-management/production-plan-management/audit-logs'),
+        meta: {
+          title: '审计日志查询',
+          icon: 'el-icon-document-copy'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：prod.production-plan.view
         }
       }
       // 可以继续添加其他生产管理路由...
