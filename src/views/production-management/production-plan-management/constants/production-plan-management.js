@@ -194,15 +194,57 @@ export const AUTO_REFRESH_INTERVAL = 30000 // 30秒
 
 // 状态流转规则 - 定义从当前状态可以转换到哪些目标状态
 // 基于生产计划业务流程说明.md中的状态转换规则
+/**
+ * 📢 状态转换规则（2025-10-18 方案A版本）
+ *
+ * ⚠️ 设计原则（采用方案A：审批逻辑整合到状态变更中）：
+ * 1. ✅ 用户通过"状态变更"对话框选择所有合法的目标状态
+ * 2. ✅ 后端 updatePlanStatus API 自动判断是否需要审批：
+ *    - 目标状态是 RELEASED 或 CANCELLED → 自动触发审批，状态变为 PENDING_APPROVAL
+ *    - 其他状态转换 → 直接生效
+ * 3. ❌ PENDING_APPROVAL 不能作为手动选择项（系统管理状态）
+ * 4. ✅ 前端只需列出用户可以选择的所有合法目标状态，审批由后端处理
+ *
+ * 根据最新接口文档《更新生产计划状态接口详细说明_已重构.md》
+ * 《生产计划业务流程说明.md》第66-90行
+ *
+ * 核心变化（2025-10-18）：
+ * - ✅ CONFIRMED 可以选择 RELEASED、CANCELLED（后端自动走审批）
+ * - ✅ PARTIALLY_RELEASED 可以选择 CANCELLED（后端自动走审批）
+ * - ✅ RELEASED、IN_PROGRESS 可以选择 CANCELLED（后端自动走审批）
+ * - ❌ PENDING_APPROVAL 仍不允许手动变更（由审批流程控制）
+ * - ✅ 简化UX：移除单独的"提交审批"按钮，审批逻辑整合到"状态变更"中
+ */
 export const STATUS_TRANSITION_RULES = {
-  RECEIVED: ['CONFIRMED', 'PENDING_APPROVAL', 'CANCELLED'],
-  CONFIRMED: ['PARTIALLY_RELEASED', 'PENDING_APPROVAL', 'RELEASED', 'CANCELLED'],
-  PENDING_APPROVAL: ['RELEASED', 'CANCELLED', 'CONFIRMED', 'RECEIVED', 'PARTIALLY_RELEASED', 'IN_PROGRESS'],
-  PARTIALLY_RELEASED: ['RELEASED', 'IN_PROGRESS', 'PENDING_APPROVAL', 'CANCELLED'],
-  RELEASED: ['IN_PROGRESS', 'PENDING_APPROVAL', 'CANCELLED'],
-  IN_PROGRESS: ['COMPLETED', 'PENDING_APPROVAL', 'CANCELLED'],
-  COMPLETED: [], // 终态,不可转换
-  CANCELLED: [] // 终态,不可转换
+  // RECEIVED（已接收）→ 只能确认或取消
+  RECEIVED: ['CONFIRMED', 'CANCELLED'],
+
+  // CONFIRMED（已确认）→ 可以部分发布、完全发布、取消
+  // 📢 选择 RELEASED 或 CANCELLED 会自动触发审批流程
+  CONFIRMED: ['PARTIALLY_RELEASED', 'RELEASED', 'CANCELLED'],
+
+  // PENDING_APPROVAL（待审批）→ 不允许手动变更状态
+  // ⚠️ 该状态只能通过审批流程自动变更（批准→RELEASED/CANCELLED，驳回→CONFIRMED）
+  // ⚠️ 用户应该通过审批中心的"批准/驳回"操作，而不是"状态变更"对话框
+  PENDING_APPROVAL: [],
+
+  // PARTIALLY_RELEASED（部分发布）→ 可以继续发布、开始执行、取消
+  // 📢 选择 CANCELLED 会自动触发审批流程
+  PARTIALLY_RELEASED: ['RELEASED', 'IN_PROGRESS', 'CANCELLED'],
+
+  // RELEASED（已发布）→ 可以开始执行、取消
+  // 📢 选择 CANCELLED 会自动触发审批流程
+  RELEASED: ['IN_PROGRESS', 'CANCELLED'],
+
+  // IN_PROGRESS（执行中）→ 可以正常完成、取消
+  // 📢 选择 CANCELLED 会自动触发审批流程
+  IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
+
+  // COMPLETED（已完成）→ 终态，不可转换
+  COMPLETED: [],
+
+  // CANCELLED（已取消）→ 终态，不可转换
+  CANCELLED: []
 }
 
 // 关键状态变更（需要审批）

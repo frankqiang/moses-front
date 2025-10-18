@@ -5,6 +5,12 @@
  * 修改记录：
  *   - 2025-01-21: 初始创建，实现P0阶段核心功能
  *   - 2025-10-17: 根据新接口文档重构，完全符合后端API规范
+ *   - 2025-10-18: 根据最新接口文档优化
+ *     * 添加 APPROVAL_PENDING_EXISTS (409) 错误处理
+ *     * 增强防重复提交机制（2秒冷却）
+ *     * 完善错误码处理（BIZ_030/031/032）
+ *     * 移除硬编码的 targetStatusOptions，改为从字典系统动态获取
+ *     * 修复：根据当前状态动态筛选可选的目标状态（防止状态回退）
  */
 
 <template>
@@ -147,6 +153,9 @@ export default {
         remarks: '',
         requiredPermissions: ['prod.production-plan.approval']
       },
+      // 防重复提交机制（根据《审批重复提交修复对接文档》）
+      lastSubmitTime: 0,
+      submitCooldown: 2000, // 2秒冷却时间
       rules: {
         targetStatus: [
           { required: true, message: '请选择目标状态', trigger: 'change' }
@@ -155,11 +164,6 @@ export default {
           { type: 'array', required: true, message: '请选择至少一个审批权限', trigger: 'change' }
         ]
       },
-      // 目标状态选项（仅限需要审批的状态）
-      targetStatusOptions: [
-        { value: 'RELEASED', label: '已下达' },
-        { value: 'CANCELLED', label: '已取消' }
-      ],
       // 权限选项
       permissionOptions: [
         { value: 'prod.production-plan.approval', label: '生产计划审批权限' },
@@ -171,6 +175,35 @@ export default {
   computed: {
     dialogTitle() {
       return `提交生产计划审批 - ${this.planData.planNumber || ''}`
+    },
+    /**
+     * 目标状态选项（仅限需要审批的状态）
+     * 📢 从字典系统动态获取，根据当前状态动态筛选
+     *
+     * 业务规则（根据《生产计划业务流程说明.md》）：
+     * - RECEIVED、CONFIRMED、PARTIALLY_RELEASED：可以提交 RELEASED 或 CANCELLED 审批
+     * - RELEASED、IN_PROGRESS：只能提交 CANCELLED 审批（已经超过 RELEASED，不能回退）
+     * - COMPLETED、CANCELLED：终态，不能提交审批
+     */
+    targetStatusOptions() {
+      const currentStatus = this.planData.status
+
+      // 定义各状态可以提交的审批目标
+      let allowedStatuses = []
+
+      if (['RECEIVED', 'CONFIRMED', 'PARTIALLY_RELEASED'].includes(currentStatus)) {
+        // 可以提交发布或取消审批
+        allowedStatuses = ['RELEASED', 'CANCELLED']
+      } else if (['RELEASED', 'IN_PROGRESS'].includes(currentStatus)) {
+        // 只能提交取消审批（已经超过 RELEASED，不能回退）
+        allowedStatuses = ['CANCELLED']
+      }
+
+      // 从字典系统获取所有计划状态选项
+      const allStatusOptions = this.planStatusOptions || []
+
+      // 筛选出允许的状态
+      return allStatusOptions.filter(option => allowedStatuses.includes(option.value))
     }
   },
   methods: {
@@ -218,6 +251,10 @@ export default {
      * 根据接口文档重构：
      * - 请求参数：targetStatus（必填）、remarks（选填，最多500字符）、requiredPermissions（选填数组）
      * - 响应结构：{ plan, approval, targetStatus, status, message }
+     *
+     * 根据《审批重复提交修复对接文档》添加防重复提交机制：
+     * - 防止快速重复点击（2秒冷却时间）
+     * - 增强错误处理（BIZ_030、BIZ_031、BIZ_032）
      */
     async handleConfirm() {
       try {
@@ -227,7 +264,23 @@ export default {
           return
         }
 
+        // 防止请求正在处理中时重复提交
+        if (this.loading) {
+          this.$message.warning('请求正在处理中，请勿重复提交')
+          return
+        }
+
+        // 防止短时间内重复提交（2秒冷却时间）
+        const now = Date.now()
+        const timeSinceLastSubmit = now - this.lastSubmitTime
+        if (timeSinceLastSubmit < this.submitCooldown) {
+          const waitSeconds = Math.ceil((this.submitCooldown - timeSinceLastSubmit) / 1000)
+          this.$message.warning(`请等待 ${waitSeconds} 秒后再试`)
+          return
+        }
+
         this.loading = true
+        this.lastSubmitTime = now
 
         // 构建请求数据，完全符合接口文档
         const requestData = {
@@ -277,6 +330,87 @@ export default {
         }
       } catch (error) {
         console.error('审批提交失败:', error)
+
+        // 根据最新接口文档（2025-10-18更新）处理特定错误码
+        const errorCode = error.response?.data?.error?.code
+        const errorMessage = error.response?.data?.error?.message
+        const errorDetails = error.response?.data?.error?.details
+
+        // 处理新增的错误码 APPROVAL_PENDING_EXISTS (409) - 2025-10-18新增
+        if (errorCode === 'APPROVAL_PENDING_EXISTS') {
+          // 该计划存在待处理的审批请求
+          this.$alert(
+            `${errorMessage || '该计划存在待处理的审批请求，请等待当前审批完成后再提交'}`,
+            '审批正在处理中',
+            {
+              confirmButtonText: '我知道了',
+              type: 'warning',
+              callback: () => {
+                this.$emit('refresh-data')
+                this.handleClose()
+              }
+            }
+          )
+          return
+        }
+
+        // 处理特定的业务错误码
+        if (errorCode === 'BIZ_030') {
+          // 存在待处理的审批请求
+          this.$confirm(
+            `${errorMessage || '该计划有审批请求正在处理中'}`,
+            '审批正在处理中',
+            {
+              confirmButtonText: '查看审批详情',
+              cancelButtonText: '关闭',
+              type: 'warning',
+              distinguishCancelAndClose: true
+            }
+          ).then(() => {
+            // 查看审批详情
+            if (errorDetails?.approvalId) {
+              this.$emit('view-approval', errorDetails.approvalId)
+            }
+            this.handleClose()
+          }).catch(() => {
+            this.handleClose()
+          })
+          return
+        } else if (errorCode === 'BIZ_031') {
+          // 并发操作冲突（现在应该很少见）
+          this.$confirm(
+            `${errorMessage || '检测到并发操作，请重试'}`,
+            '并发冲突',
+            {
+              confirmButtonText: '立即重试',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }
+          ).then(() => {
+            // 重新调用提交
+            setTimeout(() => {
+              this.handleConfirm()
+            }, 300)
+          }).catch(() => {
+            // 用户取消，关闭对话框
+          })
+          return
+        } else if (errorCode === 'BIZ_032') {
+          // 操作已被批准，无需重复提交
+          this.$alert(
+            `${errorMessage || '该操作已被批准，无需重复提交'}`,
+            '提示',
+            {
+              confirmButtonText: '刷新页面',
+              type: 'info'
+            }
+          ).then(() => {
+            this.$emit('refresh-data')
+            this.handleClose()
+          })
+          return
+        }
+
         // 如果错误没有被处理，使用默认处理
         if (!error.handled) {
           const errorHandler = createApprovalErrorHandler({

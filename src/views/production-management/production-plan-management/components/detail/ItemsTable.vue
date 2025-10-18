@@ -95,23 +95,6 @@
         </template>
       </el-table-column>
       <el-table-column
-        label="分配设备"
-        min-width="150"
-      >
-        <template slot-scope="{ row }">
-          {{ row.equipment ? row.equipment.name : '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        label="设备关联类型"
-        width="120"
-        align="center"
-      >
-        <template slot-scope="{ row }">
-          {{ row.equipment ? getEquipmentLinkTypeText(row.equipment.linkType) : '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column
         prop="remarks"
         label="备注"
         min-width="150"
@@ -130,6 +113,25 @@
             <div>创建：{{ formatTime(row.createdAt) }}</div>
             <div>更新：{{ formatTime(row.updatedAt) }}</div>
           </div>
+        </template>
+      </el-table-column>
+      <el-table-column
+        label="操作"
+        width="150"
+        align="center"
+        fixed="right"
+      >
+        <template slot-scope="{ row }">
+          <el-button
+            v-if="canGenerateTask(row)"
+            type="text"
+            size="small"
+            icon="el-icon-s-operation"
+            @click="handleGenerateTask(row)"
+          >
+            生成退火任务
+          </el-button>
+          <span v-else class="text-muted">-</span>
         </template>
       </el-table-column>
     </el-table>
@@ -239,24 +241,27 @@ export default {
       return map[linkType] || linkType || '-'
     },
 
-    /**
-     * 获取设备关联类型文本
-     * 根据接口文档附录：equipmentLinkType枚举
-     */
-    getEquipmentLinkTypeText(linkType) {
-      const map = {
-        ANNEALING_FURNACE: '退火炉',
-        PREPARATION_STATION: '准备工位',
-        AUTOMATIC_CART: '自动推车'
-      }
-      return map[linkType] || linkType || '-'
-    },
 
     /**
      * 格式化时间
      */
     formatTime(time) {
       return time ? parseTime(time, '{y}-{m}-{d} {h}:{i}') : '-'
+    },
+
+    /**
+     * 判断是否可以生成退火任务
+     * 只有草稿(DRAFT)或待排程(READY_FOR_SCHEDULING)状态的批次可以生成任务
+     */
+    canGenerateTask(item) {
+      return item.status === 'DRAFT' || item.status === 'READY_FOR_SCHEDULING'
+    },
+
+    /**
+     * 处理生成退火任务
+     */
+    handleGenerateTask(item) {
+      this.$emit('generate-task', item)
     }
   }
 }

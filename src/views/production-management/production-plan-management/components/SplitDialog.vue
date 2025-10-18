@@ -90,16 +90,38 @@
     <div class="items-section">
       <div class="section-header">
         <div class="section-title">子批次列表</div>
-        <el-button
-          v-if="splitMode === 'custom'"
-          type="primary"
-          size="small"
-          icon="el-icon-plus"
-          @click="handleAddItem"
-        >
-          添加子批次
-        </el-button>
+        <div class="section-actions">
+          <el-checkbox v-model="showAdvancedFields" style="margin-right: 12px">
+            显示工艺模板选项
+          </el-checkbox>
+          <el-button
+            v-if="splitMode === 'custom'"
+            type="primary"
+            size="small"
+            icon="el-icon-plus"
+            @click="handleAddItem"
+          >
+            添加子批次
+          </el-button>
+        </div>
       </div>
+
+      <!-- 工艺模板说明 -->
+      <el-alert
+        v-if="!showAdvancedFields"
+        title="提示：工艺模板已隐藏"
+        type="info"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 12px"
+      >
+        <template slot="default">
+          <div>• <strong>工艺模板</strong>：不填写时自动继承主计划配置（95%场景推荐）</div>
+          <div style="margin-top: 6px; color: #909399; font-size: 12px">
+            勾选上方"显示高级选项"可手动配置工艺模板
+          </div>
+        </template>
+      </el-alert>
 
       <el-table
         :data="formData.items"
@@ -131,7 +153,7 @@
           width="100"
           align="center"
         >
-          <template slot-scope="{ row, $index }">
+          <template slot-scope="{ $index }">
             {{ $index + 1 }}
           </template>
         </el-table-column>
@@ -168,14 +190,24 @@
             />
           </template>
         </el-table-column>
+        <!-- 工艺模板 - 高级选项 -->
         <el-table-column
+          v-if="showAdvancedFields"
           label="工艺模板"
           min-width="180"
         >
+          <template slot="header">
+            <div style="display: flex; align-items: center; gap: 4px">
+              <span>工艺模板</span>
+              <el-tooltip content="不填写时自动继承主计划的默认工艺模板" placement="top">
+                <i class="el-icon-question" style="color: #909399; font-size: 14px" />
+              </el-tooltip>
+            </div>
+          </template>
           <template slot-scope="{ row }">
             <el-select
               v-model="row.processTemplateId"
-              placeholder="请选择工艺模板"
+              placeholder="自动继承"
               size="small"
               clearable
               filterable
@@ -191,32 +223,7 @@
           </template>
         </el-table-column>
         <el-table-column
-          label="分配设备"
-          min-width="200"
-        >
-          <template slot-scope="{ row }">
-            <el-select
-              v-model="row.assignedEquipmentId"
-              placeholder="请选择设备"
-              size="small"
-              clearable
-              filterable
-              style="width: 100%"
-            >
-              <el-option
-                v-for="item in equipmentOptions"
-                :key="item.id"
-                :label="`${item.code || ''} - ${item.name}`"
-                :value="item.id"
-              >
-                <span style="float: left">{{ item.code }}</span>
-                <span style="float: right; color: #8492a6; font-size: 13px">{{ item.name }}</span>
-              </el-option>
-            </el-select>
-          </template>
-        </el-table-column>
-        <el-table-column
-          label="装炉时段开始"
+          label="装炉开始时间"
           min-width="180"
         >
           <template slot-scope="{ row }">
@@ -231,7 +238,7 @@
           </template>
         </el-table-column>
         <el-table-column
-          label="装炉时段结束"
+          label="装炉结束时间"
           min-width="180"
         >
           <template slot-scope="{ row }">
@@ -344,20 +351,6 @@
     <!-- 其他配置 -->
     <div class="config-section">
       <el-form ref="configForm" :model="formData" label-width="120px">
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="目标状态">
-              <el-select
-                v-model="formData.targetStatus"
-                placeholder="请选择拆分后的状态"
-                style="width: 100%"
-              >
-                <el-option label="已确认" value="CONFIRMED" />
-                <el-option label="待排程" value="READY_FOR_SCHEDULING" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注说明" prop="remarks">
@@ -448,11 +441,6 @@
               {{ getProcessTemplateName(row.processTemplateId) }}
             </template>
           </el-table-column>
-          <el-table-column prop="assignedEquipmentId" label="分配设备" min-width="120">
-            <template slot-scope="{ row }">
-              {{ getEquipmentName(row.assignedEquipmentId) }}
-            </template>
-          </el-table-column>
           <el-table-column prop="expectedFurnaceWindowStart" label="装炉开始" width="160">
             <template slot-scope="{ row }">
               {{ row.expectedFurnaceWindowStart || '-' }}
@@ -488,8 +476,6 @@
 import { splitPlan } from '../api'
 // 从工艺参数管理模块获取工艺模板数据
 import { fetchProcessTemplateList } from '@/views/master-data/process-parameter-management/api/process-parameter-management'
-// 从设备管理模块获取设备列表
-import { fetchEquipmentList } from '@/views/master-data/equipment-management/api/equipment-management'
 import { PLAN_STATUS } from '../constants'
 
 export default {
@@ -508,14 +494,13 @@ export default {
       splitMode: 'average', // average | custom | furnace
       splitCount: 2,
       furnaceCapacity: 40,
+      showAdvancedFields: false, // 是否显示高级选项（工艺模板）
       formData: {
         items: [],
-        targetStatus: 'CONFIRMED',
         remarks: '',
         changeDescription: ''
       },
-      processTemplateOptions: [],
-      equipmentOptions: []
+      processTemplateOptions: []
     }
   },
   computed: {
@@ -572,7 +557,6 @@ export default {
       this.visible = true
       this.initFormData()
       this.loadProcessTemplates()
-      this.loadEquipments()
     },
 
     /**
@@ -593,7 +577,6 @@ export default {
       this.furnaceCapacity = 40
       this.formData = {
         items: [],
-        targetStatus: 'CONFIRMED',
         remarks: '',
         changeDescription: ''
       }
@@ -607,7 +590,6 @@ export default {
     resetForm() {
       this.formData = {
         items: [],
-        targetStatus: 'CONFIRMED',
         remarks: '',
         changeDescription: ''
       }
@@ -645,41 +627,6 @@ export default {
       } catch (error) {
         console.error('加载工艺模板失败:', error)
         this.$message.error(error.message || '加载工艺模板失败')
-      }
-    },
-
-    /**
-     * 加载设备列表
-     */
-    async loadEquipments() {
-      try {
-        const response = await fetchEquipmentList({
-          equipmentType: 'annealing_furnace', // 只获取退火炉类型的设备（小写下划线格式）
-          status: 'enabled', // 只获取启用状态的设备
-          includeDetails: false, // 不需要详情，减少数据量
-          limit: 100,
-          page: 1
-        })
-
-        // 处理响应数据（根据 equipment-management.js 的返回格式）
-        if (response.success && response.data) {
-          const equipments = response.data.results || response.data.equipments || []
-          this.equipmentOptions = equipments.map(equipment => ({
-            id: equipment.id,
-            name: equipment.name, // equipment-management 返回的字段是 name
-            code: equipment.equipmentCode, // equipment-management 返回的字段是 equipmentCode
-            type: equipment.equipmentType,
-            status: equipment.status
-          }))
-        } else {
-          console.warn('设备列表数据为空')
-          this.equipmentOptions = []
-        }
-      } catch (error) {
-        console.error('加载设备列表失败:', error)
-        this.$message.warning('加载设备列表失败，请手动刷新或联系管理员')
-        // 不阻断用户操作，设置为空数组
-        this.equipmentOptions = []
       }
     },
 
@@ -744,7 +691,6 @@ export default {
           plannedWeight: Number(avgWeight.toFixed(3)),
           plannedQuantity: null,
           processTemplateId: defaultTemplateId,
-          assignedEquipmentId: null,
           expectedFurnaceWindowStart: null,
           expectedFurnaceWindowEnd: null,
           remarks: ''
@@ -763,7 +709,6 @@ export default {
         plannedWeight: 0,
         plannedQuantity: null,
         processTemplateId: defaultTemplateId,
-        assignedEquipmentId: null,
         expectedFurnaceWindowStart: null,
         expectedFurnaceWindowEnd: null,
         remarks: ''
@@ -795,15 +740,6 @@ export default {
       if (!templateId) return '未选择'
       const template = this.processTemplateOptions.find(t => t.id === templateId)
       return template ? template.name : templateId
-    },
-
-    /**
-     * 获取设备名称
-     */
-    getEquipmentName(equipmentId) {
-      if (!equipmentId) return '未选择'
-      const equipment = this.equipmentOptions.find(e => e.id === equipmentId)
-      return equipment ? `${equipment.code || ''} - ${equipment.name}` : equipmentId
     },
 
     /**
@@ -890,8 +826,6 @@ export default {
             processTemplateId: item.processTemplateId || undefined,
             // 工艺模板关联类型（可选）
             processTemplateLinkType: item.processTemplateId ? 'PRIMARY' : undefined,
-            // 分配的设备ID（可选）
-            assignedEquipmentId: item.assignedEquipmentId || undefined,
             // 计划装炉时段开始（可选，ISO 8601格式）
             expectedFurnaceWindowStart: item.expectedFurnaceWindowStart ? this.formatDateTimeToISO(item.expectedFurnaceWindowStart) : undefined,
             // 计划装炉时段结束（可选，ISO 8601格式）
@@ -913,8 +847,6 @@ export default {
         const requestData = {
           // 子批次拆分项列表（必填）
           items,
-          // 拆分后的目标状态（可选，默认CONFIRMED）
-          targetStatus: this.formData.targetStatus || 'CONFIRMED',
           // 备注说明（可选，最大500字符）
           remarks: this.formData.remarks || undefined,
           // 变更描述（可选，最大500字符）
@@ -1111,6 +1043,12 @@ export default {
       font-size: 14px;
       font-weight: 600;
       color: #303133;
+    }
+
+    .section-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
   }
 

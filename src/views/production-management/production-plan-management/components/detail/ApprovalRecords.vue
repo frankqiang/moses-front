@@ -377,22 +377,40 @@ export default {
      * - approver: 审批人信息对象 { id, name, email }（待审批时为 null）
      */
     async fetchApprovals() {
-      if (!this.planId) return
+      if (!this.planId) {
+        console.warn('⚠️ fetchApprovals: planId 为空，跳过查询')
+        return
+      }
 
       try {
         this.loading = true
 
         const params = {
           page: this.pagination.page,
-          limit: this.pagination.limit
+          limit: this.pagination.limit,
+          sortBy: 'requestedAt:desc' // 按提交时间倒序，最新的在前面
         }
 
         // 添加状态筛选
         if (this.filterForm.status) {
           params.status = this.filterForm.status
         }
+        // 📢 如果未选择筛选条件，不传 status 参数表示查询所有状态
+
+        console.log('🔍 查询审批记录:', {
+          planId: this.planId,
+          params: params
+        })
 
         const response = await fetchApprovalRequests(this.planId, params)
+
+        console.log('📥 审批记录响应:', {
+          fullResponse: response,
+          data: response.data,
+          approvals: response.data?.approvals,
+          approvalsLength: response.data?.approvals?.length,
+          pagination: response.data?.pagination
+        })
 
         // 处理响应数据
         if (response.data) {
@@ -402,14 +420,27 @@ export default {
           // 分页信息
           const pagination = response.data.pagination || {}
           this.totalResults = pagination.total || 0
+
+          console.log('✅ 审批记录加载成功:', {
+            列表数量: this.approvalList.length,
+            总记录数: this.totalResults,
+            审批记录: this.approvalList
+          })
         } else {
+          console.warn('⚠️ 响应中没有 data 字段')
           this.approvalList = []
           this.totalResults = 0
         }
       } catch (error) {
-        console.error('加载审批记录失败:', error)
+        console.error('❌ 加载审批记录失败:', error)
+        console.error('错误详情:', {
+          message: error.message,
+          response: error.response,
+          config: error.config
+        })
         this.approvalList = []
         this.totalResults = 0
+        this.$message.error(error.message || '加载审批记录失败')
       } finally {
         this.loading = false
       }

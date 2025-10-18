@@ -9,7 +9,7 @@
  * 业务流程说明：
  *   1. 查询列表：支持分页、排序、筛选、模糊搜索
  *   2. 状态流转：RECEIVED→CONFIRMED→PENDING_APPROVAL→RELEASED→IN_PROGRESS→COMPLETED
- *   3. 快速操作：确认计划、提交审批、取消计划
+ *   3. 快速操作：确认计划、状态变更（自动走审批）、取消计划（自动走审批）
  *   4. 冻结检查：已冻结的计划禁止所有操作
  *
  * 接口依赖：
@@ -54,7 +54,6 @@
       @view="handleView"
       @change-status="handleChangeStatus"
       @confirm="handleConfirm"
-      @submit-approval="handleSubmitApprovalDialog"
       @cancel="handleCancel"
       @selection-change="handleSelectionChange"
     />
@@ -70,12 +69,6 @@
       ref="statusChangeDialog"
       @success="handleStatusChangeSuccess"
     />
-
-    <!-- 审批提交对话框 -->
-    <approval-submit-dialog
-      ref="approvalSubmitDialog"
-      @success="handleApprovalSubmitSuccess"
-    />
   </div>
 </template>
 
@@ -84,7 +77,6 @@ import PlanSearch from './components/PlanSearch.vue'
 import PlanTable from './components/PlanTable.vue'
 import PlanFormDrawer from './components/PlanFormDrawer.vue'
 import StatusChangeDialog from './components/StatusChangeDialog.vue'
-import ApprovalSubmitDialog from './components/ApprovalSubmitDialog.vue'
 import productionPlanDictionaryMixin from './mixins/dictionary'
 import { debounce } from '@/utils'
 import { fetchPlanList, updatePlanStatus } from './api'
@@ -103,8 +95,7 @@ export default {
     PlanSearch,
     PlanTable,
     PlanFormDrawer,
-    StatusChangeDialog,
-    ApprovalSubmitDialog
+    StatusChangeDialog
   },
   mixins: [productionPlanDictionaryMixin],
   data() {
@@ -129,9 +120,7 @@ export default {
       // 选中的行数据
       selectedRows: [],
       // 当前视图格式
-      currentFormat: OUTPUT_FORMAT.TABLE,
-      // 全局loading实例
-      globalLoading: null
+      currentFormat: OUTPUT_FORMAT.TABLE
     }
   },
   created() {
@@ -139,7 +128,9 @@ export default {
     this.debouncedFetchList = debounce(this.fetchListSafe, 300)
     // 加载枚举字典
     this.loadDictionaries()
-    // 从路由查询参数恢复搜索状态
+    // 恢复页面缓存（查询参数和分页信息）
+    this.handlePageCacheRestore()
+    // 从路由查询参数恢复搜索状态（路由参数优先级更高，会覆盖缓存）
     this.restoreSearchFromRoute()
     // 页面初始化时加载列表
     this.fetchListSafe()
@@ -176,7 +167,6 @@ export default {
      * 加载生产计划列表（会抛出异常供调用者处理）
      */
     async fetchList() {
-      this.showGlobalLoading()
       this.loading = true
       try {
         const response = await fetchPlanList({
@@ -215,7 +205,6 @@ export default {
         throw error
       } finally {
         this.loading = false
-        this.hideGlobalLoading()
       }
     },
 
@@ -415,104 +404,17 @@ export default {
     },
 
     /**
-     * 打开审批提交对话框
-     */
-    handleSubmitApprovalDialog(plan) {
-      this.$refs.approvalSubmitDialog.open(plan)
-    },
-
-    /**
-     * 审批提交成功回调
-     */
-    async handleApprovalSubmitSuccess() {
-      await this.fetchListSafe()
-    },
-
-    /**
-     * 处理提交审批（保留旧方法以兼容）
-     */
-    async handleSubmitApproval(plan) {
-      try {
-        const confirmed = await this.$confirm(
-          `确认要提交计划"${plan.planNumber}"到审批流程吗？`,
-          '提交审批',
-          {
-            confirmButtonText: '提交',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }
-        )
-
-        if (!confirmed) {
-          return
-        }
-
-        this.loading = true
-
-        // 使用带重试机制的审批提交
-        const response = await withRetry(
-          () => updatePlanStatus(plan.id, {
-            targetStatus: PLAN_STATUS.PENDING_APPROVAL,
-            changeDescription: '提交生产计划审批'
-          }),
-          {
-            maxRetries: 3,
-            context: {
-              operation: 'submitApproval',
-              planId: plan.id
-            },
-            onApprovalDetailsView: (approvalId) => {
-              // 查看审批详情
-              console.log('查看审批详情:', approvalId)
-            },
-            onRefreshData: () => {
-              this.fetchListSafe()
-            }
-          }
-        )
-
-        if (response.success) {
-          // ⚠️ 必须使用后端返回的message，不得硬编码
-          const message = response.message || getSuccessMessage(response, '提交审批成功')
-          this.$message.success(message)
-          // 刷新列表
-          await this.fetchList()
-        } else {
-          // ⚠️ 优先使用后端返回的错误消息（失败时在 error 对象中）
-          this.$message.error(response.error?.message || '提交审批失败')
-        }
-      } catch (error) {
-        if (error !== 'cancel') {
-          console.error('提交审批失败:', error)
-          // 如果错误没有被处理，使用默认处理
-          if (!error.handled) {
-            const errorHandler = createApprovalErrorHandler({
-              onRefreshData: () => {
-                this.fetchListSafe()
-              }
-            })
-            await errorHandler.handleError(error, {
-              operation: 'submitApproval',
-              planId: plan.id
-            })
-          }
-        }
-      } finally {
-        this.loading = false
-      }
-    },
-
-    /**
      * 处理取消计划
+     * 📢 此操作会自动提交审批，审批通过后计划状态变更为已取消
      */
     async handleCancel(plan) {
       try {
         // 弹出输入框让用户输入取消原因
         const { value: cancelReason } = await this.$prompt(
-          '请输入取消原因（必填）',
+          '⚠️ 此操作将自动提交取消审批，审批通过后计划状态变更为"已取消"\n\n请输入取消原因（必填）',
           `取消计划 ${plan.planNumber}`,
           {
-            confirmButtonText: '确认取消',
+            confirmButtonText: '确认并提交审批',
             cancelButtonText: '取消',
             inputPattern: /\S+/,
             inputErrorMessage: '取消原因不能为空',
@@ -623,53 +525,101 @@ export default {
     },
 
     /**
-     * 显示全局加载遮罩
-     */
-    showGlobalLoading() {
-      this.globalLoading = this.$loading({
-        text: '加载中...',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
-    },
-
-    /**
-     * 隐藏全局加载遮罩
-     */
-    hideGlobalLoading() {
-      if (this.globalLoading) {
-        this.globalLoading.close()
-        this.globalLoading = null
-      }
-    },
-
-    /**
      * 页面缓存恢复
+     *
+     * 修复说明：
+     * - 只恢复查询参数和分页信息，不恢复表格数据
+     * - 表格数据应该通过 fetchList 从后端重新获取
+     * - 添加缓存过期时间检查（30分钟）
      */
     handlePageCacheRestore() {
       const cachedData = sessionStorage.getItem('production-plan-cache')
       if (cachedData) {
         try {
           const cache = JSON.parse(cachedData)
-          this.tableData = cache.tableData || []
+
+          // 检查缓存是否过期（30分钟）
+          const cacheAge = Date.now() - (cache.timestamp || 0)
+          const MAX_CACHE_AGE = 30 * 60 * 1000 // 30分钟
+
+          if (cacheAge > MAX_CACHE_AGE) {
+            console.log('缓存已过期，清理缓存')
+            sessionStorage.removeItem('production-plan-cache')
+            return
+          }
+
+          // 只恢复查询参数和分页信息
+          // ⚠️ 不恢复 tableData，避免缓存大量数据
           this.pagination = cache.pagination || this.pagination
           this.searchParams = cache.searchParams || this.searchParams
+
+          console.log('✅ 页面缓存恢复成功:', {
+            pagination: this.pagination,
+            searchParams: this.searchParams
+          })
         } catch (error) {
           console.warn('页面缓存恢复失败:', error)
+          // 清理损坏的缓存
+          sessionStorage.removeItem('production-plan-cache')
         }
       }
     },
 
     /**
      * 页面缓存保存
+     *
+     * 修复说明：
+     * - 只保存查询参数和分页信息，不保存表格数据
+     * - 添加 try-catch 保护，防止存储失败影响主流程
+     * - 添加数据大小限制检查
      */
     handlePageCacheSave() {
-      const cache = {
-        tableData: this.tableData,
-        pagination: this.pagination,
-        searchParams: this.searchParams,
-        timestamp: Date.now()
+      try {
+        const cache = {
+          // ⚠️ 不缓存 tableData，避免超出 sessionStorage 配额
+          // tableData 应该从后端重新获取，而不是从缓存恢复
+          pagination: this.pagination,
+          searchParams: this.searchParams,
+          timestamp: Date.now()
+        }
+
+        const cacheStr = JSON.stringify(cache)
+
+        // 检查缓存大小（不应超过 100KB）
+        const cacheSize = new Blob([cacheStr]).size
+        const MAX_CACHE_SIZE = 100 * 1024 // 100KB
+
+        if (cacheSize > MAX_CACHE_SIZE) {
+          console.warn('缓存数据过大，跳过保存:', {
+            size: cacheSize,
+            maxSize: MAX_CACHE_SIZE
+          })
+          return
+        }
+
+        sessionStorage.setItem('production-plan-cache', cacheStr)
+
+        console.log('✅ 页面缓存保存成功:', {
+          size: cacheSize,
+          cacheKeys: Object.keys(cache)
+        })
+      } catch (error) {
+        // 捕获 QuotaExceededError 或其他存储错误
+        console.warn('页面缓存保存失败:', error.message)
+
+        // 如果是配额超出错误，清理所有生产计划相关的缓存
+        if (error.name === 'QuotaExceededError') {
+          console.log('检测到 QuotaExceededError，清理旧缓存...')
+          try {
+            sessionStorage.removeItem('production-plan-cache')
+            // 可以在这里添加清理其他相关缓存的逻辑
+          } catch (cleanupError) {
+            console.error('清理缓存失败:', cleanupError)
+          }
+        }
+
+        // ⚠️ 不抛出错误，避免影响主流程
       }
-      sessionStorage.setItem('production-plan-cache', JSON.stringify(cache))
     }
   }
 }

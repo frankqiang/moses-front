@@ -6,6 +6,7 @@
  *   - 2025-01-21: 初始创建
  *   - 2025-01-21: 删除编辑模式，改为只读展示
  *   - 2025-10-17: 根据接口文档重构，添加所有缺失字段，优化JSON对象展示
+ *   - 2025-10-18: 添加备注说明(remarks)字段显示
  */
 
 <template>
@@ -154,11 +155,19 @@
             </div>
           </el-col>
         </el-row>
+        <el-row>
+          <el-col :span="24">
+            <div class="info-item">
+              <span class="info-label">备注说明：</span>
+              <span class="info-value">{{ planData.remarks || '-' }}</span>
+            </div>
+          </el-col>
+        </el-row>
       </div>
 
-      <!-- 工艺与设备配置 -->
+      <!-- 工艺配置 -->
       <div class="info-section">
-        <div class="section-title">工艺与设备配置</div>
+        <div class="section-title">工艺配置</div>
         <el-row :gutter="20">
           <el-col :span="12">
             <div class="info-item">
@@ -184,35 +193,6 @@
                 <el-collapse accordion>
                   <el-collapse-item title="查看工艺参数详情" name="processCapability">
                     <pre class="json-display">{{ formatJsonObject(planData.referenceProcessCapability) }}</pre>
-                  </el-collapse-item>
-                </el-collapse>
-              </div>
-            </div>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <div class="info-item">
-              <span class="info-label">优选设备ID：</span>
-              <span class="info-value">{{ planData.preferredEquipmentId || '-' }}</span>
-            </div>
-          </el-col>
-          <el-col :span="12">
-            <div class="info-item">
-              <span class="info-label">设备关联类型：</span>
-              <span class="info-value">{{ getEquipmentLinkTypeText(planData.equipmentLinkType) }}</span>
-            </div>
-          </el-col>
-        </el-row>
-        <!-- 设备能力快照（JSON对象） -->
-        <el-row v-if="planData.equipmentCapabilitySnapshot">
-          <el-col :span="24">
-            <div class="info-item">
-              <span class="info-label">设备能力快照：</span>
-              <div class="info-value">
-                <el-collapse accordion>
-                  <el-collapse-item title="查看设备参数详情" name="equipmentCapability">
-                    <pre class="json-display">{{ formatJsonObject(planData.equipmentCapabilitySnapshot) }}</pre>
                   </el-collapse-item>
                 </el-collapse>
               </div>
@@ -376,18 +356,6 @@ export default {
       return map[linkType] || linkType || '-'
     },
 
-    /**
-     * 获取设备关联类型文本
-     * 根据接口文档附录：equipmentLinkType枚举
-     */
-    getEquipmentLinkTypeText(linkType) {
-      const map = {
-        ANNEALING_FURNACE: '退火炉',
-        PREPARATION_STATION: '准备工位',
-        AUTOMATIC_CART: '自动推车'
-      }
-      return map[linkType] || linkType || '-'
-    },
 
     /**
      * 格式化JSON对象为易读格式

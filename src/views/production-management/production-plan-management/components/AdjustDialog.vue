@@ -133,6 +133,18 @@
             <i class="el-icon-refresh" /> 自动同步重量
           </el-button>
         </div>
+        <el-alert
+          title="说明：子批次状态由系统自动管理"
+          type="info"
+          :closable="false"
+          show-icon
+          style="margin-bottom: 12px"
+        >
+          <template slot="default">
+            <div>• <strong>子批次状态</strong>：由系统根据业务流程自动更新，无法手动修改</div>
+            <div>• <strong>可调整字段</strong>：重量、数量、装炉时段</div>
+          </template>
+        </el-alert>
         <el-table
           :data="formData.planItems"
           border
@@ -178,26 +190,17 @@
           </el-table-column>
           <el-table-column
             label="状态"
-            width="160"
+            width="140"
+            align="center"
           >
             <template slot-scope="{ row }">
-              <el-select
-                v-model="row.status"
-                size="small"
-                placeholder="请选择状态"
-                style="width: 100%"
-              >
-                <el-option
-                  v-for="item in planItemStatusOptions"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
+              <el-tag :type="getStatusType(row.status)" size="small">
+                {{ getItemStatusText(row.status) }}
+              </el-tag>
             </template>
           </el-table-column>
           <el-table-column
-            label="炉窗开始时间"
+            label="装炉开始时间"
             width="180"
           >
             <template slot-scope="{ row }">
@@ -213,7 +216,7 @@
             </template>
           </el-table-column>
           <el-table-column
-            label="炉窗结束时间"
+            label="装炉结束时间"
             width="180"
           >
             <template slot-scope="{ row }">
@@ -225,6 +228,19 @@
                 format="yyyy-MM-dd HH:mm"
                 value-format="yyyy-MM-ddTHH:mm:ss.sssZ"
                 style="width: 100%"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="备注"
+            min-width="150"
+          >
+            <template slot-scope="{ row }">
+              <el-input
+                v-model="row.remarks"
+                placeholder="备注说明"
+                size="small"
+                clearable
               />
             </template>
           </el-table-column>
@@ -365,9 +381,10 @@ export default {
           itemNumber: item.itemNumber,
           plannedWeight: item.plannedWeight,
           plannedQuantity: item.plannedQuantity,
-          status: item.status,
+          status: item.status, // 只读展示，不传递给后端
           expectedFurnaceWindowStart: item.expectedFurnaceWindowStart || null,
-          expectedFurnaceWindowEnd: item.expectedFurnaceWindowEnd || null
+          expectedFurnaceWindowEnd: item.expectedFurnaceWindowEnd || null,
+          remarks: item.remarks || ''
         })) : []
       }
     },
@@ -430,17 +447,19 @@ export default {
                 plannedQuantity: item.plannedQuantity
               }
 
-              // 添加状态（如果有变更）
-              if (item.status) {
-                itemData.status = item.status
-              }
+              // 不传递状态字段（状态由系统自动管理）
 
-              // 添加炉窗时间（如果有设置）
+              // 添加装炉时间（如果有设置）
               if (item.expectedFurnaceWindowStart) {
                 itemData.expectedFurnaceWindowStart = item.expectedFurnaceWindowStart
               }
               if (item.expectedFurnaceWindowEnd) {
                 itemData.expectedFurnaceWindowEnd = item.expectedFurnaceWindowEnd
+              }
+
+              // 添加备注（如果有填写）
+              if (item.remarks) {
+                itemData.remarks = item.remarks
               }
 
               return itemData
@@ -472,6 +491,22 @@ export default {
      */
     getItemStatusText(status) {
       return this.getPlanItemStatusLabel(status) || '-'
+    },
+
+    /**
+     * 获取状态标签类型
+     */
+    getStatusType(status) {
+      const statusTypeMap = {
+        DRAFT: 'info',
+        READY_FOR_SCHEDULING: 'warning',
+        SCHEDULED: 'primary',
+        RELEASED: 'success',
+        IN_PROGRESS: 'success',
+        COMPLETED: 'success',
+        CANCELLED: 'danger'
+      }
+      return statusTypeMap[status] || 'info'
     },
 
     /**

@@ -5,11 +5,16 @@
  * 修改记录：
  *   - 2025-10-13: 初始创建，实现审批冲突错误的处理逻辑
  *   - 2025-10-17: 根据新接口文档验证，确保错误码处理完全符合规范
+ *   - 2025-10-18: 新增2025-10-18接口文档更新的错误码处理
  *
- * 处理的错误码：
- * - BIZ_030: 存在待处理的审批请求
+ * 处理的错误码（2025-10-18更新）：
+ * - BIZ_030: 存在待处理的审批请求（旧错误码，保留兼容）
  * - BIZ_031: 审批请求提交冲突（并发操作）
  * - BIZ_032: 操作已被批准
+ * - APPROVAL_PENDING_EXISTS: 该计划存在待处理的审批请求（新增，HTTP 409）
+ * - FIELD_FORMAT_INVALID: 不允许传递PENDING_APPROVAL状态（新增，HTTP 400）🆕
+ * - PRODUCTION_PLAN_STATUS_INVALID: 目标计划状态不合法（新增，HTTP 400）
+ * - PRODUCTION_PLAN_STATUS_TRANSITION_INVALID: 状态转移不合法（新增，HTTP 400）
  * - 其他错误码通过 getErrorMessage 统一处理（优先使用后端返回的消息）
  */
 
@@ -54,6 +59,7 @@ export class ApprovalErrorHandler {
 
     switch (code) {
       case 'BIZ_030':
+      case 'APPROVAL_PENDING_EXISTS': // 新增错误码（2025-10-18）
         return this.handlePendingApprovalExists(message, details, context)
 
       case 'BIZ_031':
@@ -61,6 +67,15 @@ export class ApprovalErrorHandler {
 
       case 'BIZ_032':
         return this.handleAlreadyApproved(message, details, context)
+
+      case 'FIELD_FORMAT_INVALID': // 新增错误码（2025-10-18）- 禁止传递PENDING_APPROVAL
+        return this.handleFieldFormatInvalid(message, details, context)
+
+      case 'PRODUCTION_PLAN_STATUS_INVALID': // 新增错误码（2025-10-18）
+        return this.handleStatusInvalid(message, details, context)
+
+      case 'PRODUCTION_PLAN_STATUS_TRANSITION_INVALID': // 新增错误码（2025-10-18）
+        return this.handleStatusTransitionInvalid(message, details, context)
 
       default:
         return this.handleGenericError(error)
@@ -194,6 +209,135 @@ export class ApprovalErrorHandler {
         this.onRefreshData(context)
       } else {
         window.location.reload()
+      }
+
+      return { handled: true, retry: false }
+    } catch (closeAction) {
+      return { handled: true, retry: false }
+    }
+  }
+
+  /**
+   * 处理"字段格式不合法"错误（2025-10-18新增）- 禁止传递PENDING_APPROVAL
+   * @param {string} message - 错误消息
+   * @param {Object} details - 错误详情
+   * @param {Object} context - 上下文信息
+   */
+  async handleFieldFormatInvalid(message, details, context) {
+    try {
+      await MessageBox({
+        title: '不允许的状态操作',
+        message: `
+          <div style="padding: 10px 0;">
+            <p style="margin-bottom: 10px;">❌ ${message || 'PENDING_APPROVAL 状态由系统自动设置，不允许用户直接请求'}</p>
+            <div style="margin: 15px 0; padding: 12px; background-color: #fff7e6; border-left: 4px solid #fa8c16; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-weight: bold; color: #fa8c16;">
+                <i class="el-icon-warning"></i> 为什么不能手动设置为"待审批"？
+              </p>
+              <p style="margin: 5px 0; font-size: 13px; color: #666;">
+                "待审批"是审批流程的系统状态，由审批流程自动管理，以确保审批的完整性和安全性。
+              </p>
+            </div>
+            <div style="margin-top: 15px; padding: 12px; background-color: #f0f9ff; border-left: 4px solid #1890ff; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-weight: bold; color: #1890ff;">
+                <i class="el-icon-info"></i> 正确的操作方式：
+              </p>
+              <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #666;">
+                <li>想要发布计划？点击"提交审批"按钮，选择目标状态为"已发布"</li>
+                <li>想要取消计划？点击"提交审批"按钮，选择目标状态为"已取消"</li>
+                <li>系统会自动将计划设置为"待审批"状态，并创建审批请求</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '我知道了',
+        type: 'warning'
+      })
+
+      return { handled: true, retry: false }
+    } catch (closeAction) {
+      return { handled: true, retry: false }
+    }
+  }
+
+  /**
+   * 处理"目标状态不合法"错误（2025-10-18新增）
+   * @param {string} message - 错误消息
+   * @param {Object} details - 错误详情
+   * @param {Object} context - 上下文信息
+   */
+  async handleStatusInvalid(message, details, context) {
+    try {
+      await MessageBox({
+        title: '状态参数错误',
+        message: `
+          <div style="padding: 10px 0;">
+            <p style="margin-bottom: 10px;">❌ ${message || '提供的目标状态不合法'}</p>
+            <p style="margin-bottom: 15px; color: #909399; font-size: 13px;">
+              请求中的目标状态值不在有效值列表中，请检查状态参数是否正确。
+            </p>
+            ${details?.field ? `<p style="margin: 0; color: #666; font-size: 12px;">错误字段: ${details.field}</p>` : ''}
+            ${details?.value ? `<p style="margin: 0; color: #666; font-size: 12px;">错误值: ${details.value}</p>` : ''}
+            <div style="margin-top: 15px; padding: 8px; background-color: #fff2f0; border-radius: 4px;">
+              <p style="margin: 0; color: #ff4d4f; font-size: 12px;">💡 建议：刷新页面重新尝试，或联系技术支持</p>
+            </div>
+          </div>
+        `,
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '我知道了',
+        type: 'error'
+      })
+
+      return { handled: true, retry: false }
+    } catch (closeAction) {
+      return { handled: true, retry: false }
+    }
+  }
+
+  /**
+   * 处理"状态转移不合法"错误（2025-10-18新增）
+   * @param {string} message - 错误消息
+   * @param {Object} details - 错误详情
+   * @param {Object} context - 上下文信息
+   */
+  async handleStatusTransitionInvalid(message, details, context) {
+    try {
+      const action = await MessageBox({
+        title: '状态转换不合法',
+        message: `
+          <div style="padding: 10px 0;">
+            <p style="margin-bottom: 10px;">⚠️ ${message || '当前状态无法转换到目标状态'}</p>
+            <p style="margin-bottom: 15px; color: #909399; font-size: 13px;">
+              根据业务流程规则，当前状态不允许直接转换到目标状态。这可能是因为：
+            </p>
+            <ul style="margin: 10px 0; padding-left: 20px; color: #666; font-size: 13px;">
+              <li>需要先经过其他中间状态</li>
+              <li>需要通过审批流程才能变更</li>
+              <li>计划状态已经被其他操作更新</li>
+            </ul>
+            ${details?.currentStatus ? `<p style="margin: 5px 0; color: #666; font-size: 12px;">当前状态: ${details.currentStatus}</p>` : ''}
+            ${details?.targetStatus ? `<p style="margin: 5px 0; color: #666; font-size: 12px;">目标状态: ${details.targetStatus}</p>` : ''}
+            <div style="margin-top: 15px; padding: 8px; background-color: #fff7e6; border-radius: 4px;">
+              <p style="margin: 0; color: #fa8c16; font-size: 12px;">💡 建议：刷新页面获取最新状态，然后选择正确的转换路径</p>
+            </div>
+          </div>
+        `,
+        dangerouslyUseHTMLString: true,
+        showCancelButton: true,
+        confirmButtonText: '刷新页面',
+        cancelButtonText: '我知道了',
+        distinguishCancelAndClose: true,
+        type: 'warning'
+      })
+
+      if (action === 'confirm') {
+        // 刷新页面数据
+        if (this.onRefreshData) {
+          this.onRefreshData(context)
+        } else {
+          window.location.reload()
+        }
       }
 
       return { handled: true, retry: false }

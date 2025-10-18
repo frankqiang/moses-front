@@ -5,6 +5,8 @@
  * 修改记录：
  *   - 2025-01-21: 初始创建
  *   - 2025-01-21: 添加冻结状态字段,优化操作按钮逻辑
+ *   - 2025-10-18: 待审批状态不显示状态变更和取消按钮
+ *   - 2025-10-18: 移除"提交审批"按钮，审批逻辑整合到"状态变更"中
  *
  * 功能说明：
  *   1. 表格展示：显示计划编号、产品信息、需求数量、交期、状态、进度等
@@ -13,12 +15,13 @@
  *   4. 进度展示：使用进度条直观展示完成进度
  *   5. 快速操作：根据状态和冻结状态动态显示操作按钮
  *
- * 操作按钮规则：
+ * 操作按钮规则（📢 2025-10-18更新）：
  *   - 确认：仅RECEIVED状态且未冻结
- *   - 提交审批：仅CONFIRMED状态且未冻结
- *   - 状态变更：除COMPLETED和CANCELLED外的状态且未冻结
- *   - 取消：除COMPLETED和CANCELLED外的状态且未冻结
+ *   - 状态变更：除COMPLETED、CANCELLED、PENDING_APPROVAL外的状态且未冻结（自动判断是否需要审批）
+ *   - 取消：除COMPLETED、CANCELLED、PENDING_APPROVAL外的状态且未冻结（自动提交审批）
  *   - 查看：所有状态均可查看
+ *   ⚠️ PENDING_APPROVAL（待审批）状态下所有修改性操作均不可用，由审批流程控制
+ *   ⚠️ 审批逻辑已整合到"状态变更"和"取消"按钮中，无需单独的"提交审批"按钮
  *
  * 视图格式：
  *   - table: 表格视图(默认)
@@ -481,10 +484,12 @@ export default {
 
       const buttons = []
 
-      // 状态变更（除已完成和已取消外的其他状态，且未冻结）
+      // 状态变更（除终态和待审批外的其他状态，且未冻结）
+      // 📢 2025-10-18更新：PENDING_APPROVAL 状态不允许手动变更，由审批流程控制
       if (
         row.status !== PLAN_STATUS.COMPLETED &&
         row.status !== PLAN_STATUS.CANCELLED &&
+        row.status !== PLAN_STATUS.PENDING_APPROVAL &&
         !row.isFrozen
       ) {
         buttons.push({
@@ -503,19 +508,12 @@ export default {
         })
       }
 
-      // 提交审批（仅已确认状态）
-      if (row.status === PLAN_STATUS.CONFIRMED && !row.isFrozen) {
-        buttons.push({
-          text: '提交审批',
-          action: 'submit-approval',
-          icon: 'el-icon-s-promotion'
-        })
-      }
-
-      // 取消操作（除已完成和已取消外的其他状态）
+      // 取消操作（除终态和待审批外的其他状态）
+      // 📢 2025-10-18更新：PENDING_APPROVAL 状态不允许直接取消，由审批流程控制
       if (
         row.status !== PLAN_STATUS.COMPLETED &&
         row.status !== PLAN_STATUS.CANCELLED &&
+        row.status !== PLAN_STATUS.PENDING_APPROVAL &&
         !row.isFrozen
       ) {
         buttons.push({

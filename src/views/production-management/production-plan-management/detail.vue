@@ -5,6 +5,12 @@
  * 修改记录：
  *   - 2025-01-21: 初始创建，实现P0阶段核心功能
  *   - 2025-10-17: 根据接口文档完全重构，确保数据处理和错误处理符合规范
+ *   - 2025-10-18: 根据最新接口文档（2025-10-18更新）优化
+ *     * 按钮控制逻辑符合最新状态转换规则
+ *     * 增强审批重复提交检测
+ *     * 添加 PENDING_APPROVAL 状态判断
+ *     * 实时检查待处理审批请求
+ *     * 简化UX：移除"提交审批"按钮，审批逻辑整合到"状态变更"和"取消"操作中
  */
 
 <template>
@@ -21,14 +27,6 @@
           @click="handleChangeStatus"
         >
           状态变更
-        </el-button>
-        <el-button
-          v-if="canSubmitApproval"
-          type="warning"
-          icon="el-icon-s-promotion"
-          @click="handleSubmitApproval"
-        >
-          提交审批
         </el-button>
         <el-button
           v-if="canSplit"
@@ -64,6 +62,7 @@
     <!-- 审批状态显示 -->
     <approval-status-banner
       v-if="planId && planData.planNumber"
+      ref="approvalStatusBanner"
       :plan-id="planId"
       :plan-number="planData.planNumber"
       @view-approval-detail="handleViewApprovalDetail"
@@ -87,6 +86,7 @@
           <items-table
             :items="planData.items || []"
             :loading="loading"
+            @generate-task="handleGenerateTask"
           />
         </el-tab-pane>
 
@@ -148,15 +148,17 @@
       @success="handleStatusChangeSuccess"
     />
 
-    <!-- 审批提交对话框 -->
-    <approval-submit-dialog
-      ref="approvalSubmitDialog"
-      @success="handleApprovalSubmitSuccess"
-    />
-
     <!-- 可行性评估对话框 -->
     <feasibility-dialog
       ref="feasibilityDialog"
+    />
+
+    <!-- 生成退火任务抽屉 -->
+    <task-generate-from-plan-drawer
+      :visible.sync="generateTaskDrawerVisible"
+      :plan-item="selectedPlanItem"
+      @success="handleGenerateTaskSuccess"
+      @view-task-list="handleViewTaskList"
     />
   </div>
 </template>
@@ -171,10 +173,10 @@ import AdjustDialog from './components/AdjustDialog.vue'
 import SplitDialog from './components/SplitDialog.vue'
 import MergeDialog from './components/MergeDialog.vue'
 import StatusChangeDialog from './components/StatusChangeDialog.vue'
-import ApprovalSubmitDialog from './components/ApprovalSubmitDialog.vue'
 import FeasibilityDialog from './components/FeasibilityDialog.vue'
+import TaskGenerateFromPlanDrawer from '@/views/production-management/annealing-task/components/TaskGenerateFromPlanDrawer.vue'
 import { fetchPlanDetail, fetchAuditLogs } from './api'
-import { getErrorMessage } from './constants'
+import { getErrorMessage, PLAN_STATUS } from './constants'
 
 export default {
   name: 'ProductionPlanDetail',
@@ -188,8 +190,8 @@ export default {
     SplitDialog,
     MergeDialog,
     StatusChangeDialog,
-    ApprovalSubmitDialog,
-    FeasibilityDialog
+    FeasibilityDialog,
+    TaskGenerateFromPlanDrawer
   },
   data() {
     return {
@@ -206,7 +208,10 @@ export default {
         page: 1,
         limit: 10,
         total: 0
-      }
+      },
+      // 生成退火任务相关
+      generateTaskDrawerVisible: false,
+      selectedPlanItem: null
     }
   },
   computed: {
@@ -216,51 +221,108 @@ export default {
 
     /**
      * 是否可以进行状态变更
-     * 根据业务流程：已完成和已取消是终态，不可再变更
-     * 已冻结的计划不允许任何状态变更
+     *
+     * 📢 根据最新接口文档（2025-10-18更新）：
+     * - 《更新生产计划状态接口详细说明_已重构.md》
+     *
+     * 不允许状态变更的情况：
+     * - 已完成和已取消是终态，不可再变更
+     * - 已冻结的计划不允许任何状态变更
+     * - 待审批状态（PENDING_APPROVAL）不允许直接状态变更，需等待审批完成
      */
     canChangeStatus() {
-      const terminalStatuses = ['COMPLETED', 'CANCELLED']
-      return !this.planData.isFrozen && !terminalStatuses.includes(this.planData.status)
-    },
+      // 如果计划数据未加载，不显示按钮
+      if (!this.planData || !this.planData.status) {
+        console.log('⚠️ canChangeStatus: 计划数据未加载')
+        return false
+      }
 
-    /**
-     * 是否可以提交审批
-     * 根据业务流程：已确认或部分发布状态可以提交下达审批
-     * 其他状态可以提交取消审批
-     */
-    canSubmitApproval() {
-      const allowedStatuses = ['CONFIRMED', 'PARTIALLY_RELEASED', 'RECEIVED', 'RELEASED', 'IN_PROGRESS']
-      return !this.planData.isFrozen && allowedStatuses.includes(this.planData.status)
+      const currentStatus = this.planData.status
+      console.log('🔍 canChangeStatus 检查:', {
+        currentStatus,
+        isPendingApproval: currentStatus === PLAN_STATUS.PENDING_APPROVAL,
+        comparison: `"${currentStatus}" === "${PLAN_STATUS.PENDING_APPROVAL}"`,
+        isFrozen: this.planData.isFrozen
+      })
+
+      // 冻结状态不允许变更
+      if (this.planData.isFrozen) {
+        console.log('🚫 计划已冻结，禁用状态变更按钮')
+        return false
+      }
+
+      // 终态不允许变更
+      const terminalStatuses = [PLAN_STATUS.COMPLETED, PLAN_STATUS.CANCELLED]
+      if (terminalStatuses.includes(currentStatus)) {
+        console.log('🚫 终态状态，禁用状态变更按钮')
+        return false
+      }
+
+      // 待审批状态不允许直接变更（需等待审批完成）
+      if (currentStatus === PLAN_STATUS.PENDING_APPROVAL) {
+        console.log('🚫 待审批状态，禁用状态变更按钮')
+        return false
+      }
+
+      console.log('✅ 允许状态变更')
+      return true
     },
 
     /**
      * 是否可以拆分
-     * 根据业务流程：前置条件是计划状态必须为CONFIRMED或PARTIALLY_RELEASED
+     *
+     * 📢 根据接口文档《拆分生产计划接口详细说明_已重构.md》：
+     * - 前置条件：计划状态必须为 RECEIVED（已接收）或 CONFIRMED（已确认）
+     * - 待审批状态（PENDING_APPROVAL）需等待审批完成，不允许拆分
+     * - 已冻结的计划不允许拆分
      */
     canSplit() {
-      const allowedStatuses = ['CONFIRMED', 'PARTIALLY_RELEASED']
-      return !this.planData.isFrozen && allowedStatuses.includes(this.planData.status)
+      if (this.planData.isFrozen) {
+        return false
+      }
+      if (this.planData.status === PLAN_STATUS.PENDING_APPROVAL) {
+        return false
+      }
+      const allowedStatuses = [PLAN_STATUS.RECEIVED, PLAN_STATUS.CONFIRMED]
+      return allowedStatuses.includes(this.planData.status)
     },
 
     /**
      * 是否可以调整
-     * 根据业务流程和调整接口文档：前置条件是计划状态为RECEIVED或CONFIRMED
-     * 注意：接口文档中明确说明只有RECEIVED和CONFIRMED状态可以调整
-     * 已冻结的计划不允许调整
+     *
+     * 📢 根据业务流程文档（2025-10-18）：
+     * - 前置条件是计划状态为RECEIVED或CONFIRMED
+     * - 待审批状态（PENDING_APPROVAL）需等待审批完成，不允许调整
+     * - 已冻结的计划不允许调整
      */
     canAdjust() {
-      const allowedStatuses = ['RECEIVED', 'CONFIRMED']
-      return !this.planData.isFrozen && allowedStatuses.includes(this.planData.status)
+      if (this.planData.isFrozen) {
+        return false
+      }
+      if (this.planData.status === PLAN_STATUS.PENDING_APPROVAL) {
+        return false
+      }
+      const allowedStatuses = [PLAN_STATUS.RECEIVED, PLAN_STATUS.CONFIRMED]
+      return allowedStatuses.includes(this.planData.status)
     },
 
     /**
      * 是否可以合并
-     * 根据业务流程：待合并的计划必须状态相同且为CONFIRMED或PARTIALLY_RELEASED
+     *
+     * 📢 根据业务流程文档（2025-10-18）：
+     * - 待合并的计划必须状态相同且为CONFIRMED或PARTIALLY_RELEASED
+     * - 待审批状态（PENDING_APPROVAL）需等待审批完成，不允许合并
+     * - 已冻结的计划不允许合并
      */
     canMerge() {
-      const allowedStatuses = ['CONFIRMED', 'PARTIALLY_RELEASED']
-      return !this.planData.isFrozen && allowedStatuses.includes(this.planData.status)
+      if (this.planData.isFrozen) {
+        return false
+      }
+      if (this.planData.status === PLAN_STATUS.PENDING_APPROVAL) {
+        return false
+      }
+      const allowedStatuses = [PLAN_STATUS.CONFIRMED, PLAN_STATUS.PARTIALLY_RELEASED]
+      return allowedStatuses.includes(this.planData.status)
     },
 
     /**
@@ -268,7 +330,13 @@ export default {
      * 根据业务流程：已确认及之后的状态可以评估
      */
     canEvaluate() {
-      const allowedStatuses = ['CONFIRMED', 'PENDING_APPROVAL', 'PARTIALLY_RELEASED', 'RELEASED', 'IN_PROGRESS']
+      const allowedStatuses = [
+        PLAN_STATUS.CONFIRMED,
+        PLAN_STATUS.PENDING_APPROVAL,
+        PLAN_STATUS.PARTIALLY_RELEASED,
+        PLAN_STATUS.RELEASED,
+        PLAN_STATUS.IN_PROGRESS
+      ]
       return allowedStatuses.includes(this.planData.status)
     }
   },
@@ -318,11 +386,17 @@ export default {
             items: response.data.items || []
           }
 
-          // 打印调试信息（可选）
+          // 打印调试信息（包含按钮状态）
           console.log('📋 计划详情加载成功:', {
             planNumber: this.planData.planNumber,
             status: this.planData.status,
-            itemsCount: this.planData.items.length
+            itemsCount: this.planData.items.length,
+            buttonStates: {
+              canChangeStatus: this.canChangeStatus,
+              canSplit: this.canSplit,
+              canAdjust: this.canAdjust,
+              canMerge: this.canMerge
+            }
           })
         } else {
           // 区分失败和成功但无数据两种情况
@@ -506,24 +580,6 @@ export default {
     },
 
     /**
-     * 处理提交审批
-     */
-    handleSubmitApproval() {
-      this.$refs.approvalSubmitDialog.open(this.planData)
-    },
-
-    /**
-     * 审批提交成功
-     */
-    async handleApprovalSubmitSuccess() {
-      await this.fetchDetail()
-      // 刷新审批记录列表
-      if (this.$refs.approvalRecords) {
-        this.$refs.approvalRecords.fetchApprovals()
-      }
-    },
-
-    /**
      * 处理可行性评估
      */
     handleEvaluate() {
@@ -564,11 +620,47 @@ export default {
 
     /**
      * 审批状态发生变化
+     *
+     * 当审批状态变化时（如新审批创建、审批完成、审批撤销），需要：
+     * 1. 刷新计划详情（状态可能已变更）
+     * 2. 强制更新计算属性（触发按钮显示/隐藏逻辑）
      */
-    handleApprovalStatusChange(statusInfo) {
+    async handleApprovalStatusChange(statusInfo) {
       console.log('审批状态变化:', statusInfo)
-      // 可以在这里处理状态变化的相关逻辑
-      // 比如更新页面标题、发送通知等
+
+      // 审批状态变化时，重新获取计划详情
+      // 因为计划状态可能已经改变（如审批通过后从 PENDING_APPROVAL 变为 RELEASED）
+      await this.fetchDetail()
+
+      // 强制更新视图，确保按钮状态正确更新
+      this.$forceUpdate()
+    },
+
+    /**
+     * 处理生成退火任务
+     * @param {Object} planItem - 选中的计划批次
+     */
+    handleGenerateTask(planItem) {
+      // 保存选中的计划批次
+      this.selectedPlanItem = planItem
+      // 打开生成任务抽屉
+      this.generateTaskDrawerVisible = true
+    },
+
+    /**
+     * 生成退火任务成功
+     */
+    handleGenerateTaskSuccess(result) {
+      // 刷新计划详情（批次状态可能已变更）
+      this.fetchDetail()
+    },
+
+    /**
+     * 查看任务列表
+     */
+    handleViewTaskList() {
+      // 跳转到退火任务列表页面
+      this.$router.push({ path: '/production-management/annealing-task' })
     }
   }
 }

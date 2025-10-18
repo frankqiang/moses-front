@@ -205,15 +205,41 @@
         </el-row>
       </div>
 
-      <!-- 工艺与设备配置区（可选） -->
+      <!-- 工艺配置区（可选） -->
       <div class="form-section">
-        <div class="section-title">工艺与设备配置（可选）</div>
+        <div class="section-title">
+          工艺配置（可选）
+          <el-tooltip placement="top">
+            <div slot="content" style="max-width: 300px">
+              <div><strong>自动继承规则：</strong></div>
+              <div>1. 不填写 → 从产品主数据获取默认工艺</div>
+              <div>2. 拆分时 → 子批次自动继承此处配置</div>
+              <div>3. 95%场景：不填写，使用默认继承（推荐）</div>
+            </div>
+            <i class="el-icon-question" style="margin-left: 8px; color: #909399; cursor: help" />
+          </el-tooltip>
+        </div>
+        <el-alert
+          title="提示：工艺模板为可选字段"
+          type="info"
+          :closable="false"
+          show-icon
+          style="margin-bottom: 16px"
+        >
+          <template slot="default">
+            <div>• 不填写时，系统自动从产品主数据中获取默认工艺模板</div>
+            <div>• 后续拆分计划时，子批次会自动继承此处设置的工艺模板</div>
+            <div style="margin-top: 4px; color: #606266">
+              <strong>推荐做法</strong>：95%场景下不需要填写，让系统自动继承即可
+            </div>
+          </template>
+        </el-alert>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="默认工艺模板" prop="defaultProcessTemplateId">
               <el-select
                 v-model="formData.defaultProcessTemplateId"
-                placeholder="请选择工艺模板"
+                placeholder="留空则自动从产品获取"
                 filterable
                 clearable
                 style="width: 100%"
@@ -230,6 +256,7 @@
                   </span>
                 </el-option>
               </el-select>
+              <span class="form-item-tip">不填写则从产品主数据自动获取</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">

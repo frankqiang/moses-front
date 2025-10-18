@@ -1,10 +1,11 @@
 /**
  * 文件名称：StatusChangeDialog.vue
- * 文件描述：生产计划状态变更对话框组件
+ * 文件描述：生产计划状态变更对话框组件（整合了审批提交功能）
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建，实现P0阶段核心功能
  *   - 2025-10-17: 根据新接口文档验证，确保完全符合后端API规范
+ *   - 2025-10-18: 优化审批提示信息，明确说明自动审批流程
  */
 
 <template>
@@ -54,7 +55,7 @@
         </el-select>
         <div v-if="needsApproval" class="approval-tip">
           <i class="el-icon-warning" />
-          此状态变更需要提交审批流程
+          <span>⚠️ 此操作将自动提交审批，审批通过后状态变更生效</span>
         </div>
       </el-form-item>
 
@@ -116,7 +117,7 @@
         :loading="loading"
         @click="handleConfirm"
       >
-        {{ needsApproval ? '提交审批' : '确认变更' }}
+        {{ needsApproval ? '确认并提交审批' : '确认变更' }}
       </el-button>
     </div>
   </el-dialog>
@@ -351,7 +352,7 @@ export default {
      * 响应结构：{ plan, approval, targetStatus, status, message }
      */
     handleApprovalResponse(data, message) {
-      const { plan, approval, targetStatus, status } = data
+      const { approval, targetStatus, status } = data
 
       // 显示审批提交成功提示（包含审批请求ID）
       this.$message.success({
@@ -485,9 +486,9 @@ export default {
       const targetText = this.getStatusText(this.formData.targetStatus)
 
       if (this.needsApproval) {
-        return `状态将从"${currentText}"变更为"${targetText}"，此操作需要提交审批流程，审批通过后状态将自动变更`
+        return `📋 状态将从"${currentText}"变更为"${targetText}"。点击"确认并提交审批"后，计划状态将变为"待审批"，审批通过后自动变更为"${targetText}"`
       } else {
-        return `状态将从"${currentText}"变更为"${targetText}"，操作将立即生效`
+        return `✅ 状态将从"${currentText}"变更为"${targetText}"，操作将立即生效`
       }
     }
   }

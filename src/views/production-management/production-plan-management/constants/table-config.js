@@ -5,6 +5,7 @@
  * 修改记录：
  *   - 2025-01-21: 初始创建
  *   - 2025-01-21: STATUS_CONFIG等配置已废弃，请使用字典系统
+ *   - 2025-10-18: 添加备注说明(remarks)列配置
  */
 
 import {
@@ -106,6 +107,13 @@ export const TABLE_COLUMNS = [
     minWidth: 150,
     sortable: 'custom',
     slotName: 'progress'
+  },
+  {
+    prop: 'remarks',
+    label: '备注说明',
+    minWidth: 180,
+    sortable: false,
+    showOverflowTooltip: true
   },
   {
     prop: 'createdAt',
