@@ -447,6 +447,27 @@ export const asyncRoutes = [
           // 开发阶段：移除 roles 限制
           // 生产环境权限：prod.production-plan.view
         }
+      },
+      {
+        path: 'annealing-task',
+        name: 'AnnealingTaskManagement',
+        component: () => import('@/views/production-management/annealing-task/index'),
+        meta: {
+          title: '退火任务管理',
+          icon: 'el-icon-s-order'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：prod.annealing-task.view
+        }
+      },
+      {
+        path: 'annealing-task/:id',
+        name: 'AnnealingTaskDetail',
+        component: () => import('@/views/production-management/annealing-task/detail'),
+        meta: {
+          title: '退火任务详情',
+          activeMenu: '/production-management/annealing-task'
+        },
+        hidden: true
       }
       // 可以继续添加其他生产管理路由...
     ]
