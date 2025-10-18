@@ -1,9 +1,27 @@
 /**
  * 文件名称：PlanSearch.vue
- * 文件描述：生产计划搜索组件
+ * 文件描述：生产计划搜索组件 - 提供多维度筛选和模糊搜索功能
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-01-21: 修正参数映射,确保使用英文枚举值
+ *
+ * 功能说明：
+ *   1. 关键词搜索：支持对计划编号、产品编码、客户名称的模糊搜索
+ *   2. 状态筛选：按计划状态筛选(RECEIVED/CONFIRMED/RELEASED等)
+ *   3. 来源筛选：按计划来源筛选(ERP/MANUAL)
+ *   4. 优先级筛选：按优先级筛选(LOW/NORMAL/HIGH/URGENT)
+ *   5. 日期范围：支持计划交期和创建时间的范围筛选
+ *
+ * 查询参数说明：
+ *   - search: 模糊搜索关键词
+ *   - status: 计划状态(英文枚举值)
+ *   - source: 计划来源(英文枚举值)
+ *   - planPriority: 计划优先级(英文枚举值)
+ *   - deliveryDateRange: 计划交期范围[开始日期, 结束日期]
+ *   - createdDateRange: 创建时间范围[开始日期, 结束日期]
+ *
+ * 注意：查询参数值必须使用英文枚举值,与接口文档保持一致
  */
 <template>
   <div class="plan-search">
@@ -205,16 +223,9 @@ export default {
         result[key] = value
       })
 
-      // 将英文枚举键转换为中文标签（接口要求中文值）
-      if (result.status) {
-        result.status = this.getPlanStatusLabel(result.status)
-      }
-      if (result.source) {
-        result.source = this.getPlanSourceLabel(result.source)
-      }
-      if (result.planPriority) {
-        result.planPriority = this.getPlanPriorityLabel(result.planPriority)
-      }
+      // 注意：根据接口文档,查询参数应使用英文枚举值(如'RECEIVED', 'ERP'等)
+      // 字典选项的value已经是英文枚举值,无需转换
+      // 如果字典系统返回的是中文值,则需要反向转换为英文枚举值
 
       return result
     }

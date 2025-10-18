@@ -4,6 +4,7 @@
  * 创建日期：2025-10-16
  * 修改记录：
  *   - 2025-10-16: 初始创建，从旧版迁移到模块化架构
+ *   - 2025-10-16: 重构以适配新的扁平化接口格式，新增审批状态等字典支持
  *
  * 说明：
  * - 继承自 dictionaryBase 提供的基础能力
@@ -44,7 +45,7 @@ export default {
      */
     planStatusLabels() {
       const state = this.$store.state.dictionary.productionPlan
-      return state?.planStatuses?.values || {}
+      return state?.planStatuses || {}
     },
 
     // ============ 子批次状态 ============
@@ -62,7 +63,7 @@ export default {
      */
     planItemStatusLabels() {
       const state = this.$store.state.dictionary.productionPlan
-      return state?.planItemStatuses?.values || {}
+      return state?.planItemStatuses || {}
     },
 
     // ============ 计划优先级 ============
@@ -80,7 +81,7 @@ export default {
      */
     planPriorityLabels() {
       const state = this.$store.state.dictionary.productionPlan
-      return state?.planPriorities?.values || {}
+      return state?.planPriorities || {}
     },
 
     // ============ 计划来源 ============
@@ -98,7 +99,97 @@ export default {
      */
     planSourceLabels() {
       const state = this.$store.state.dictionary.productionPlan
-      return state?.planSources?.values || {}
+      return state?.planSources || {}
+    },
+
+    // ============ 工艺模板关联类型 ============
+    /**
+     * 工艺模板关联类型选项（用于下拉框）
+     * @returns {Array<{value: string, label: string}>}
+     */
+    processTemplateLinkTypeOptions() {
+      return this.$getDictOptions(MODULE_NAME, 'processTemplateLinkTypes')
+    },
+
+    /**
+     * 工艺模板关联类型标签映射（用于表格 textMap）
+     * @returns {Object} 键值对映射
+     */
+    processTemplateLinkTypeLabels() {
+      const state = this.$store.state.dictionary.productionPlan
+      return state?.processTemplateLinkTypes || {}
+    },
+
+    // ============ 设备关联类型 ============
+    /**
+     * 设备关联类型选项（用于下拉框）
+     * @returns {Array<{value: string, label: string}>}
+     */
+    equipmentLinkTypeOptions() {
+      return this.$getDictOptions(MODULE_NAME, 'equipmentLinkTypes')
+    },
+
+    /**
+     * 设备关联类型标签映射（用于表格 textMap）
+     * @returns {Object} 键值对映射
+     */
+    equipmentLinkTypeLabels() {
+      const state = this.$store.state.dictionary.productionPlan
+      return state?.equipmentLinkTypes || {}
+    },
+
+    // ============ 变更类型 ============
+    /**
+     * 变更类型选项（用于下拉框）
+     * @returns {Array<{value: string, label: string}>}
+     */
+    changeTypeOptions() {
+      return this.$getDictOptions(MODULE_NAME, 'changeTypes')
+    },
+
+    /**
+     * 变更类型标签映射（用于表格 textMap）
+     * @returns {Object} 键值对映射
+     */
+    changeTypeLabels() {
+      const state = this.$store.state.dictionary.productionPlan
+      return state?.changeTypes || {}
+    },
+
+    // ============ 操作来源 ============
+    /**
+     * 操作来源选项（用于下拉框）
+     * @returns {Array<{value: string, label: string}>}
+     */
+    operationSourceOptions() {
+      return this.$getDictOptions(MODULE_NAME, 'operationSources')
+    },
+
+    /**
+     * 操作来源标签映射（用于表格 textMap）
+     * @returns {Object} 键值对映射
+     */
+    operationSourceLabels() {
+      const state = this.$store.state.dictionary.productionPlan
+      return state?.operationSources || {}
+    },
+
+    // ============ 审批状态 ============
+    /**
+     * 审批状态选项（用于下拉框）
+     * @returns {Array<{value: string, label: string}>}
+     */
+    approvalStatusOptions() {
+      return this.$getDictOptions(MODULE_NAME, 'approvalStatuses')
+    },
+
+    /**
+     * 审批状态标签映射（用于表格 textMap）
+     * @returns {Object} 键值对映射
+     */
+    approvalStatusLabels() {
+      const state = this.$store.state.dictionary.productionPlan
+      return state?.approvalStatuses || {}
     }
   },
 
@@ -181,6 +272,16 @@ export default {
      */
     getOperationSourceLabel(source) {
       return this.$getDictLabel(MODULE_NAME, 'operationSources', source)
+    },
+
+    // ============ 审批状态标签 ============
+    /**
+     * 获取审批状态标签
+     * @param {string} status - 状态值
+     * @returns {string} 标签文本
+     */
+    getApprovalStatusLabel(status) {
+      return this.$getDictLabel(MODULE_NAME, 'approvalStatuses', status)
     },
 
     // ============ 加载字典 ============

@@ -1,9 +1,10 @@
 /**
  * 文件名称：progress-report.vue
- * 文件描述：生产计划进度报表页面
+ * 文件描述：生产计划进度报表页面（根据最新接口文档重构）
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建，实现P0阶段核心功能
+ *   - 2025-10-17: 根据最新接口文档完整重构，支持JSON和CSV导出
  */
 
 <template>
@@ -11,6 +12,22 @@
     <!-- 筛选条件 -->
     <el-card class="filter-card" shadow="never">
       <el-form :inline="true" :model="filterForm" size="small">
+        <el-form-item label="计划来源">
+          <el-select
+            v-model="filterForm.source"
+            placeholder="全部"
+            clearable
+            style="width: 120px"
+          >
+            <el-option
+              v-for="option in planSourceOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="状态">
           <el-select
             v-model="filterForm.status"
@@ -29,7 +46,7 @@
 
         <el-form-item label="优先级">
           <el-select
-            v-model="filterForm.priority"
+            v-model="filterForm.planPriority"
             placeholder="全部"
             clearable
             style="width: 120px"
@@ -52,9 +69,50 @@
           />
         </el-form-item>
 
+        <el-form-item label="计划编号">
+          <el-input
+            v-model="filterForm.planNumber"
+            placeholder="请输入计划编号"
+            clearable
+            style="width: 180px"
+          />
+        </el-form-item>
+
+        <el-form-item label="外部订单号">
+          <el-input
+            v-model="filterForm.externalOrderNumber"
+            placeholder="请输入外部订单号"
+            clearable
+            style="width: 180px"
+          />
+        </el-form-item>
+
+        <el-form-item label="全局搜索">
+          <el-input
+            v-model="filterForm.search"
+            placeholder="计划编号/产品编码/订单号"
+            clearable
+            style="width: 220px"
+          >
+            <i slot="prefix" class="el-input__icon el-icon-search" />
+          </el-input>
+        </el-form-item>
+
         <el-form-item label="计划交期">
           <el-date-picker
             v-model="filterForm.deliveryDateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="yyyy-MM-dd"
+            style="width: 260px"
+          />
+        </el-form-item>
+
+        <el-form-item label="创建时间">
+          <el-date-picker
+            v-model="filterForm.createdDateRange"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
@@ -100,8 +158,8 @@
               <i class="el-icon-circle-check" style="color: #4caf50;" />
             </div>
             <div class="stat-content">
-              <div class="stat-value">{{ onScheduleCount }}</div>
-              <div class="stat-label">按期计划</div>
+              <div class="stat-value">{{ completedCount }}</div>
+              <div class="stat-label">已完成计划</div>
             </div>
           </div>
         </el-card>
@@ -110,11 +168,11 @@
         <el-card class="stat-card">
           <div class="stat-item">
             <div class="stat-icon" style="background-color: #fff3e0;">
-              <i class="el-icon-warning" style="color: #ff9800;" />
+              <i class="el-icon-loading" style="color: #ff9800;" />
             </div>
             <div class="stat-content">
-              <div class="stat-value">{{ riskCount }}</div>
-              <div class="stat-label">预警计划</div>
+              <div class="stat-value">{{ inProgressCount }}</div>
+              <div class="stat-label">执行中计划</div>
             </div>
           </div>
         </el-card>
@@ -122,12 +180,12 @@
       <el-col :span="6">
         <el-card class="stat-card">
           <div class="stat-item">
-            <div class="stat-icon" style="background-color: #ffebee;">
-              <i class="el-icon-error" style="color: #f44336;" />
+            <div class="stat-icon" style="background-color: #f3e5f5;">
+              <i class="el-icon-document" style="color: #9c27b0;" />
             </div>
             <div class="stat-content">
-              <div class="stat-value">{{ delayedCount }}</div>
-              <div class="stat-label">延期计划</div>
+              <div class="stat-value">{{ avgProgressPercentage }}%</div>
+              <div class="stat-label">平均完成度</div>
             </div>
           </div>
         </el-card>
@@ -139,8 +197,22 @@
       <div slot="header" class="card-header">
         <span><i class="el-icon-data-line" /> 生产进度报表</span>
         <div class="header-actions">
-          <el-button size="small" icon="el-icon-download" @click="handleExport">
-            导出报表
+          <el-button
+            size="small"
+            icon="el-icon-download"
+            :loading="exportLoading"
+            @click="handleExportJSON"
+          >
+            导出JSON
+          </el-button>
+          <el-button
+            size="small"
+            type="primary"
+            icon="el-icon-download"
+            :loading="exportLoading"
+            @click="handleExportCSV"
+          >
+            导出CSV
           </el-button>
         </div>
       </div>
@@ -166,40 +238,6 @@
         </el-table-column>
 
         <el-table-column
-          prop="productCode"
-          label="产品编码"
-          min-width="130"
-          show-overflow-tooltip
-        />
-
-        <el-table-column
-          prop="productName"
-          label="产品名称"
-          min-width="150"
-          show-overflow-tooltip
-        />
-
-        <el-table-column
-          label="需求数量"
-          min-width="120"
-          align="right"
-        >
-          <template slot-scope="{ row }">
-            {{ formatNumber(row.demandQuantity) }} {{ row.demandUnit }}
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          prop="plannedDeliveryDate"
-          label="计划交期"
-          min-width="160"
-        >
-          <template slot-scope="{ row }">
-            {{ formatDateTime(row.plannedDeliveryDate) }}
-          </template>
-        </el-table-column>
-
-        <el-table-column
           prop="status"
           label="状态"
           width="100"
@@ -208,10 +246,21 @@
           <template slot-scope="{ row }">
             <status-tag
               :status="row.status"
-              :text-map="statusConfig.textMap"
-              :type-map="statusConfig.typeMap"
+              :text-map="planStatusTextMap"
+              :type-map="planStatusTypeMap"
               size="small"
             />
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          prop="plannedDeliveryDate"
+          label="计划交期"
+          min-width="110"
+          align="center"
+        >
+          <template slot-scope="{ row }">
+            {{ formatDate(row.plannedDeliveryDate) }}
           </template>
         </el-table-column>
 
@@ -225,65 +274,70 @@
                 :percentage="Math.round(row.currentProgressPercentage || 0)"
                 :color="getProgressColor(row.currentProgressPercentage)"
                 :stroke-width="16"
-              />
+              >
+                <template slot="default" slot-scope="scope">
+                  {{ scope.percentage }}%
+                </template>
+              </el-progress>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="已完成数量"
-          min-width="120"
-          align="right"
-        >
-          <template slot-scope="{ row }">
-            {{ formatNumber(row.completedQuantity) }} {{ row.demandUnit }}
-          </template>
-        </el-table-column>
+          prop="totalItems"
+          label="计划项总数"
+          width="100"
+          align="center"
+        />
 
         <el-table-column
-          label="在制品数量"
-          min-width="120"
-          align="right"
+          prop="completedItems"
+          label="已完成项"
+          width="90"
+          align="center"
         >
           <template slot-scope="{ row }">
-            <span class="in-progress-quantity">
-              {{ formatNumber(row.inProgressQuantity) }} {{ row.demandUnit }}
+            <span style="color: #67c23a; font-weight: 500;">
+              {{ row.completedItems }}
             </span>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="剩余数量"
-          min-width="120"
-          align="right"
-        >
-          <template slot-scope="{ row }">
-            {{ formatNumber(row.remainingQuantity) }} {{ row.demandUnit }}
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          label="预计完成时间"
-          min-width="160"
-        >
-          <template slot-scope="{ row }">
-            {{ formatDateTime(row.estimatedCompletionDate) }}
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          label="延期预警"
-          width="100"
+          prop="inProgressItems"
+          label="执行中项"
+          width="90"
           align="center"
-          fixed="right"
         >
           <template slot-scope="{ row }">
-            <el-tag
-              :type="getDelayWarningType(row)"
-              size="small"
-            >
-              {{ getDelayWarningText(row) }}
-            </el-tag>
+            <span style="color: #409eff; font-weight: 500;">
+              {{ row.inProgressItems }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          prop="activeItems"
+          label="活动项"
+          width="80"
+          align="center"
+        >
+          <template slot-scope="{ row }">
+            {{ row.activeItems }}
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          prop="cancelledItems"
+          label="已取消项"
+          width="90"
+          align="center"
+        >
+          <template slot-scope="{ row }">
+            <span v-if="row.cancelledItems > 0" style="color: #f56c6c;">
+              {{ row.cancelledItems }}
+            </span>
+            <span v-else style="color: #909399;">-</span>
           </template>
         </el-table-column>
       </el-table>
@@ -291,8 +345,8 @@
       <!-- 分页 -->
       <el-pagination
         v-if="totalCount > 0"
-        :current-page="pagination.page"
-        :page-sizes="[10, 20, 50, 100]"
+        :current-page="currentPage"
+        :page-sizes="[10, 20, 50, 100, 200, 500]"
         :page-size="pagination.limit"
         :total="totalCount"
         layout="total, sizes, prev, pager, next, jumper"
@@ -315,9 +369,7 @@
 import StatusTag from '@/components/StatusTag'
 import { parseTime } from '@/utils'
 import { fetchProgressReport } from './api'
-import {
-  STATUS_CONFIG
-} from './constants'
+import { PLAN_STATUS_TYPE_MAP, PLAN_PRIORITY_TYPE_MAP } from './constants'
 import { getErrorMessage } from './constants/messages-config'
 import dictionaryMixin from './mixins/dictionary'
 
@@ -330,37 +382,56 @@ export default {
   data() {
     return {
       loading: false,
+      exportLoading: false,
       // 筛选表单
       filterForm: {
+        source: '',
         status: '',
-        priority: '',
+        planPriority: '',
         productCode: '',
-        deliveryDateRange: null
+        planNumber: '',
+        externalOrderNumber: '',
+        search: '',
+        deliveryDateRange: null,
+        createdDateRange: null
       },
-      // 状态和优先级选项 - 从字典mixin获取
-      // statusOptions: this.planStatusOptions
-      // priorityOptions: this.planPriorityOptions
-      statusConfig: STATUS_CONFIG,
+      // 类型映射
+      planStatusTypeMap: PLAN_STATUS_TYPE_MAP,
+      planPriorityTypeMap: PLAN_PRIORITY_TYPE_MAP,
       // 报表数据
       reportData: [],
       totalCount: 0,
-      // 分页参数
+      // 分页参数（使用offset而不是page）
       pagination: {
-        page: 1,
+        offset: 0,
         limit: 20
       }
     }
   },
   computed: {
+    // 计算当前页码（用于分页组件显示）
+    currentPage() {
+      return Math.floor(this.pagination.offset / this.pagination.limit) + 1
+    },
+    // 文本映射（从字典获取）
+    planStatusTextMap() {
+      const map = {}
+      this.planStatusOptions.forEach(item => {
+        map[item.value] = item.label
+      })
+      return map
+    },
     // 统计数据
-    onScheduleCount() {
-      return this.reportData.filter(item => this.getDelayStatus(item) === 'normal').length
+    completedCount() {
+      return this.reportData.filter(item => item.status === 'COMPLETED').length
     },
-    riskCount() {
-      return this.reportData.filter(item => this.getDelayStatus(item) === 'warning').length
+    inProgressCount() {
+      return this.reportData.filter(item => item.status === 'IN_PROGRESS').length
     },
-    delayedCount() {
-      return this.reportData.filter(item => this.getDelayStatus(item) === 'danger').length
+    avgProgressPercentage() {
+      if (this.reportData.length === 0) return 0
+      const sum = this.reportData.reduce((acc, item) => acc + (item.currentProgressPercentage || 0), 0)
+      return Math.round(sum / this.reportData.length)
     }
   },
   async created() {
@@ -378,35 +449,60 @@ export default {
         this.loading = true
 
         const params = {
-          page: this.pagination.page,
+          offset: this.pagination.offset,
           limit: this.pagination.limit,
           format: 'json'
         }
 
         // 添加筛选条件
+        if (this.filterForm.source) {
+          params.source = this.filterForm.source
+        }
         if (this.filterForm.status) {
           params.status = this.filterForm.status
         }
-        if (this.filterForm.priority) {
-          params.planPriority = this.filterForm.priority
+        if (this.filterForm.planPriority) {
+          params.planPriority = this.filterForm.planPriority
         }
         if (this.filterForm.productCode) {
           params.productCode = this.filterForm.productCode
         }
+        if (this.filterForm.planNumber) {
+          params.planNumber = this.filterForm.planNumber
+        }
+        if (this.filterForm.externalOrderNumber) {
+          params.externalOrderNumber = this.filterForm.externalOrderNumber
+        }
+        if (this.filterForm.search) {
+          params.search = this.filterForm.search
+        }
+
+        // 日期范围参数（API会自动处理）
         if (this.filterForm.deliveryDateRange && this.filterForm.deliveryDateRange.length === 2) {
-          params.plannedDeliveryDateStart = `${this.filterForm.deliveryDateRange[0]}T00:00:00.000Z`
-          params.plannedDeliveryDateEnd = `${this.filterForm.deliveryDateRange[1]}T23:59:59.999Z`
+          params.deliveryDateRange = this.filterForm.deliveryDateRange
+        }
+        if (this.filterForm.createdDateRange && this.filterForm.createdDateRange.length === 2) {
+          params.createdDateRange = this.filterForm.createdDateRange
         }
 
         const response = await fetchProgressReport(params)
 
         if (response.success && response.data) {
-          this.reportData = response.data.reports || []
-          this.totalCount = response.data.totalCount || 0
+          // 根据接口文档，响应数据结构为 { columns, rows }
+          this.reportData = response.data.rows || []
+          // 总数从 meta.metadata.total 获取
+          this.totalCount = response.meta?.metadata?.total || 0
         } else {
           this.reportData = []
           this.totalCount = 0
-          this.$message.error(response.message || '获取进度报表失败')
+          // 区分失败和成功但无数据两种情况
+          if (response.success === false) {
+            // 请求失败，message 在 error 对象中
+            this.$message.error(response.error?.message || '获取进度报表失败')
+          } else {
+            // 成功但数据为空，message 在顶层
+            this.$message.warning(response.message || '暂无进度报表数据')
+          }
         }
       } catch (error) {
         console.error('加载进度报表失败:', error)
@@ -423,7 +519,7 @@ export default {
      * 搜索
      */
     handleSearch() {
-      this.pagination.page = 1
+      this.pagination.offset = 0
       this.fetchReport()
     },
 
@@ -432,12 +528,17 @@ export default {
      */
     handleReset() {
       this.filterForm = {
+        source: '',
         status: '',
-        priority: '',
+        planPriority: '',
         productCode: '',
-        deliveryDateRange: null
+        planNumber: '',
+        externalOrderNumber: '',
+        search: '',
+        deliveryDateRange: null,
+        createdDateRange: null
       }
-      this.pagination.page = 1
+      this.pagination.offset = 0
       this.fetchReport()
     },
 
@@ -454,7 +555,7 @@ export default {
      */
     handleSizeChange(size) {
       this.pagination.limit = size
-      this.pagination.page = 1
+      this.pagination.offset = 0
       this.fetchReport()
     },
 
@@ -462,7 +563,7 @@ export default {
      * 页码变更
      */
     handlePageChange(page) {
-      this.pagination.page = page
+      this.pagination.offset = (page - 1) * this.pagination.limit
       this.fetchReport()
     },
 
@@ -470,6 +571,7 @@ export default {
      * 查看详情
      */
     handleView(row) {
+      // 接口已返回 id 字段，直接跳转
       this.$router.push({
         name: 'ProductionPlanDetail',
         params: { id: row.id }
@@ -477,60 +579,119 @@ export default {
     },
 
     /**
-     * 导出报表
+     * 导出JSON格式
      */
-    async handleExport() {
+    async handleExportJSON() {
       try {
-        this.$message.info('导出功能开发中，敬请期待')
-        // TODO: 实现导出功能
+        this.exportLoading = true
+
+        const params = this.buildExportParams()
+        params.format = 'json'
+        // JSON导出建议增加限制，避免数据量过大
+        params.limit = Math.min(params.limit || 5000, 5000)
+
+        const response = await fetchProgressReport(params)
+
+        if (response.success && response.data) {
+          // 创建JSON文件并下载
+          const jsonStr = JSON.stringify(response.data, null, 2)
+          const blob = new Blob([jsonStr], { type: 'application/json' })
+          const fileName = `production-progress-report-${Date.now()}.json`
+          this.downloadFile(blob, fileName)
+
+          this.$message.success(`成功导出 ${response.data.rows?.length || 0} 条记录`)
+        } else {
+          // 请求失败，message 在 error 对象中
+          this.$message.error(response.error?.message || '导出失败')
+        }
       } catch (error) {
-        console.error('导出报表失败:', error)
+        console.error('导出JSON失败:', error)
         const errorMessage = getErrorMessage(error)
         this.$message.error(errorMessage)
+      } finally {
+        this.exportLoading = false
       }
     },
 
     /**
-     * 获取延期状态
+     * 导出CSV格式
      */
-    getDelayStatus(row) {
-      if (!row.estimatedCompletionDate || !row.plannedDeliveryDate) {
-        return 'normal'
+    async handleExportCSV() {
+      try {
+        this.exportLoading = true
+
+        const params = this.buildExportParams()
+        params.format = 'csv'
+        params.fileName = `production-progress-report-${this.formatDateForFileName()}`
+
+        // CSV格式返回blob
+        const blob = await fetchProgressReport(params)
+
+        // 从响应头获取文件名（如果有）
+        const fileName = params.fileName + '.csv'
+        this.downloadFile(blob, fileName)
+
+        this.$message.success('CSV文件导出成功')
+      } catch (error) {
+        console.error('导出CSV失败:', error)
+        const errorMessage = getErrorMessage(error)
+        this.$message.error(errorMessage)
+      } finally {
+        this.exportLoading = false
       }
-
-      const estimatedDate = new Date(row.estimatedCompletionDate)
-      const plannedDate = new Date(row.plannedDeliveryDate)
-      const diffDays = Math.ceil((plannedDate - estimatedDate) / (1000 * 60 * 60 * 24))
-
-      if (diffDays < 0) return 'danger' // 已延期
-      if (diffDays <= 3) return 'warning' // 预警
-      return 'normal' // 正常
     },
 
     /**
-     * 获取延期预警类型
+     * 构建导出参数
      */
-    getDelayWarningType(row) {
-      const status = this.getDelayStatus(row)
-      const typeMap = {
-        normal: 'success',
-        warning: 'warning',
-        danger: 'danger'
+    buildExportParams() {
+      const params = {
+        offset: 0,
+        limit: 5000 // 接口最大支持5000条
       }
-      return typeMap[status] || 'info'
+
+      // 复制当前筛选条件
+      if (this.filterForm.source) params.source = this.filterForm.source
+      if (this.filterForm.status) params.status = this.filterForm.status
+      if (this.filterForm.planPriority) params.planPriority = this.filterForm.planPriority
+      if (this.filterForm.productCode) params.productCode = this.filterForm.productCode
+      if (this.filterForm.planNumber) params.planNumber = this.filterForm.planNumber
+      if (this.filterForm.externalOrderNumber) params.externalOrderNumber = this.filterForm.externalOrderNumber
+      if (this.filterForm.search) params.search = this.filterForm.search
+
+      if (this.filterForm.deliveryDateRange) {
+        params.deliveryDateRange = this.filterForm.deliveryDateRange
+      }
+      if (this.filterForm.createdDateRange) {
+        params.createdDateRange = this.filterForm.createdDateRange
+      }
+
+      return params
     },
 
     /**
-     * 获取延期预警文本
+     * 下载文件
      */
-    getDelayWarningText(row) {
-      const status = this.getDelayStatus(row)
-      const textMap = {
-        normal: '正常',
-        warning: '预警',
-        danger: '延期'
-      }
-      return textMap[status] || '-'
+    downloadFile(blob, fileName) {
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    },
+
+    /**
+     * 格式化日期用于文件名
+     */
+    formatDateForFileName() {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      return `${year}${month}${day}`
     },
 
     /**
@@ -544,13 +705,11 @@ export default {
     },
 
     /**
-     * 格式化数字
+     * 格式化日期
      */
-    formatNumber(value, precision = 2) {
-      if (value === null || value === undefined || Number.isNaN(Number(value))) {
-        return '-'
-      }
-      return Number(value).toFixed(precision)
+    formatDate(value) {
+      if (!value) return '-'
+      return parseTime(value, '{y}-{m}-{d}')
     },
 
     /**
@@ -634,11 +793,6 @@ export default {
     .progress-cell {
       padding: 4px 0;
     }
-
-    .in-progress-quantity {
-      color: #409eff;
-      font-weight: 500;
-    }
   }
 
   // 响应式设计
@@ -676,4 +830,3 @@ export default {
   }
 }
 </style>
-

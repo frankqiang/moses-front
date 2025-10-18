@@ -4,6 +4,7 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-10-17: 根据接口文档重构，添加完整的变更类型支持
  */
 
 <template>
@@ -50,6 +51,16 @@
             </el-row>
           </div>
 
+          <!-- 变更上下文（JSON对象） -->
+          <div v-if="log.changeContext && Object.keys(log.changeContext).length > 0" class="log-context">
+            <div class="context-label">变更上下文：</div>
+            <el-collapse accordion>
+              <el-collapse-item title="查看上下文详情" name="context">
+                <pre class="context-display">{{ formatJsonObject(log.changeContext) }}</pre>
+              </el-collapse-item>
+            </el-collapse>
+          </div>
+
           <div class="log-meta">
             <span v-if="log.operatorIp" class="meta-item">
               <i class="el-icon-location-outline" />
@@ -90,38 +101,43 @@ export default {
   },
   data() {
     return {
-      // 变更类型映射
+      // 变更类型映射（完全符合接口文档附录的变更类型枚举）
       changeTypeMap: {
         SPLIT: '拆分',
         MERGE: '合并',
         ADJUST: '调整',
-        STATUS_UPDATE: '状态变更',
+        STATUS_UPDATE: '状态更新',
         PROGRESS_SYNC: '进度同步',
-        CREATE: '创建',
-        UPDATE: '更新',
-        DELETE: '删除'
+        STATUS_UPDATE_REQUESTED: '状态更新请求',
+        STATUS_UPDATE_APPROVED: '状态更新批准',
+        STATUS_UPDATE_REJECTED: '状态更新拒绝',
+        STATUS_UPDATE_CANCELLED: '状态更新取消'
       },
+      // 变更类型颜色映射（完全符合接口文档规范）
       changeTypeColorMap: {
         SPLIT: '#409EFF',
         MERGE: '#67C23A',
         ADJUST: '#E6A23C',
         STATUS_UPDATE: '#909399',
         PROGRESS_SYNC: '#409EFF',
-        CREATE: '#67C23A',
-        UPDATE: '#E6A23C',
-        DELETE: '#F56C6C'
+        STATUS_UPDATE_REQUESTED: '#E6A23C',
+        STATUS_UPDATE_APPROVED: '#67C23A',
+        STATUS_UPDATE_REJECTED: '#F56C6C',
+        STATUS_UPDATE_CANCELLED: '#909399'
       },
+      // 变更类型标签类型映射（完全符合接口文档规范）
       changeTypeTagTypeMap: {
         SPLIT: 'primary',
         MERGE: 'success',
         ADJUST: 'warning',
         STATUS_UPDATE: 'info',
         PROGRESS_SYNC: 'primary',
-        CREATE: 'success',
-        UPDATE: 'warning',
-        DELETE: 'danger'
+        STATUS_UPDATE_REQUESTED: 'warning',
+        STATUS_UPDATE_APPROVED: 'success',
+        STATUS_UPDATE_REJECTED: 'danger',
+        STATUS_UPDATE_CANCELLED: 'info'
       },
-      // 操作来源映射
+      // 操作来源映射（根据接口文档附录：operationSource枚举）
       operationSourceMap: {
         ERP_SYNC: 'ERP同步',
         MANUAL: '手动操作',
@@ -174,6 +190,19 @@ export default {
         return JSON.stringify(value, null, 2)
       }
       return String(value)
+    },
+
+    /**
+     * 格式化JSON对象为易读格式
+     */
+    formatJsonObject(obj) {
+      if (!obj) return '-'
+      try {
+        return JSON.stringify(obj, null, 2)
+      } catch (error) {
+        console.error('JSON格式化失败:', error)
+        return String(obj)
+      }
     }
   }
 }
@@ -242,6 +271,39 @@ export default {
             color: #409eff;
           }
         }
+      }
+    }
+
+    .log-context {
+      margin: 16px 0;
+      padding: 12px;
+      background-color: #f0f9ff;
+      border-radius: 4px;
+
+      .context-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #606266;
+        margin-bottom: 8px;
+      }
+
+      .context-display {
+        margin: 0;
+        padding: 12px;
+        background-color: #fff;
+        border: 1px solid #dcdfe6;
+        border-radius: 4px;
+        font-size: 12px;
+        font-family: 'Courier New', Consolas, Monaco, monospace;
+        color: #606266;
+        line-height: 1.6;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .el-collapse {
+        border: none;
       }
     }
 

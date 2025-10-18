@@ -1,9 +1,24 @@
 /**
  * 文件名称：index.vue
- * 文件描述：生产计划管理主页面
+ * 文件描述：生产计划管理主页面 - 实现生产计划列表展示、查询、筛选和基础操作
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建，完成P0阶段和部分P1阶段功能
+ *   - 2025-01-21: 重构对齐业务流程和接口文档
+ *
+ * 业务流程说明：
+ *   1. 查询列表：支持分页、排序、筛选、模糊搜索
+ *   2. 状态流转：RECEIVED→CONFIRMED→PENDING_APPROVAL→RELEASED→IN_PROGRESS→COMPLETED
+ *   3. 快速操作：确认计划、提交审批、取消计划
+ *   4. 冻结检查：已冻结的计划禁止所有操作
+ *
+ * 接口依赖：
+ *   - GET /v1/prod/plans - 查询生产计划列表
+ *   - PATCH /v1/prod/plans/:planId/status - 更新计划状态
+ *
+ * 参考文档：
+ *   - 生产计划业务流程说明.md
+ *   - 查询生产计划列表接口详细说明.md
  */
 
 <template>
@@ -44,9 +59,9 @@
       @selection-change="handleSelectionChange"
     />
 
-    <!-- 创建计划对话框 -->
-    <plan-form-dialog
-      ref="planFormDialog"
+    <!-- 创建计划抽屉 -->
+    <plan-form-drawer
+      ref="planFormDrawer"
       @success="handleCreateSuccess"
     />
 
@@ -67,9 +82,10 @@
 <script>
 import PlanSearch from './components/PlanSearch.vue'
 import PlanTable from './components/PlanTable.vue'
-import PlanFormDialog from './components/PlanFormDialog.vue'
+import PlanFormDrawer from './components/PlanFormDrawer.vue'
 import StatusChangeDialog from './components/StatusChangeDialog.vue'
 import ApprovalSubmitDialog from './components/ApprovalSubmitDialog.vue'
+import productionPlanDictionaryMixin from './mixins/dictionary'
 import { debounce } from '@/utils'
 import { fetchPlanList, updatePlanStatus } from './api'
 import {
@@ -86,10 +102,11 @@ export default {
   components: {
     PlanSearch,
     PlanTable,
-    PlanFormDialog,
+    PlanFormDrawer,
     StatusChangeDialog,
     ApprovalSubmitDialog
   },
+  mixins: [productionPlanDictionaryMixin],
   data() {
     return {
       // 搜索参数
@@ -134,13 +151,14 @@ export default {
   },
   methods: {
     /**
-     * 加载枚举字典
+     * 加载枚举字典（使用 mixin 提供的方法）
      */
-    loadDictionaries() {
-      this.$store.dispatch('dictionary/loadProductionPlanDictionaries')
-        .catch(error => {
-          console.error('[生产计划管理] 加载枚举字典失败:', error)
-        })
+    async loadDictionaries() {
+      try {
+        await this.loadProductionPlanDictionary()
+      } catch (error) {
+        console.error('[生产计划管理] 加载枚举字典失败:', error)
+      }
     },
 
     /**
@@ -167,6 +185,7 @@ export default {
         })
 
         // 根据接口文档处理响应数据
+        // 响应格式: { success: true, data: { results, page, limit, totalPages, totalResults, format }, message, meta }
         if (response.success && response.data) {
           this.tableData = response.data.results || []
           this.pagination = {
@@ -174,10 +193,12 @@ export default {
             limit: response.data.limit || 20,
             total: response.data.totalResults || 0
           }
+          // 注意: 成功响应也可能包含message,但通常不需要显示
         } else {
           this.tableData = []
           this.pagination.total = 0
-          this.$message.error(response.message || '获取生产计划列表失败')
+          // 优先使用后端返回的message（失败时在 error 对象中）
+          this.$message.error(response.error?.message || '获取生产计划列表失败')
         }
 
         // 缓存页面数据
@@ -277,7 +298,7 @@ export default {
      * 处理创建计划
      */
     handleCreate() {
-      this.$refs.planFormDialog.open()
+      this.$refs.planFormDrawer.open()
     },
 
     /**
@@ -349,11 +370,14 @@ export default {
         )
 
         if (response.success) {
-          this.$message.success(getSuccessMessage(response, '确认计划成功'))
+          // ⚠️ 必须使用后端返回的message，不得硬编码
+          const message = response.message || getSuccessMessage(response, '确认计划成功')
+          this.$message.success(message)
           // 刷新列表
           await this.fetchList()
         } else {
-          this.$message.error(response.message || '确认计划失败')
+          // ⚠️ 优先使用后端返回的错误消息（失败时在 error 对象中）
+          this.$message.error(response.error?.message || '确认计划失败')
         }
       } catch (error) {
         if (error !== 'cancel') {
@@ -448,11 +472,14 @@ export default {
         )
 
         if (response.success) {
-          this.$message.success(getSuccessMessage(response, '提交审批成功'))
+          // ⚠️ 必须使用后端返回的message，不得硬编码
+          const message = response.message || getSuccessMessage(response, '提交审批成功')
+          this.$message.success(message)
           // 刷新列表
           await this.fetchList()
         } else {
-          this.$message.error(response.message || '提交审批失败')
+          // ⚠️ 优先使用后端返回的错误消息（失败时在 error 对象中）
+          this.$message.error(response.error?.message || '提交审批失败')
         }
       } catch (error) {
         if (error !== 'cancel') {
@@ -523,11 +550,14 @@ export default {
         )
 
         if (response.success) {
-          this.$message.success(getSuccessMessage(response, '取消计划成功'))
+          // ⚠️ 必须使用后端返回的message，不得硬编码
+          const message = response.message || getSuccessMessage(response, '取消计划成功')
+          this.$message.success(message)
           // 刷新列表
           await this.fetchList()
         } else {
-          this.$message.error(response.message || '取消计划失败')
+          // ⚠️ 优先使用后端返回的错误消息（失败时在 error 对象中）
+          this.$message.error(response.error?.message || '取消计划失败')
         }
       } catch (error) {
         if (error !== 'cancel') {

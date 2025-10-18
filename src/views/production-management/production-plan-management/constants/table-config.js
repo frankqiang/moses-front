@@ -94,6 +94,13 @@ export const TABLE_COLUMNS = [
     slotName: 'status'
   },
   {
+    prop: 'isFrozen',
+    label: '冻结状态',
+    minWidth: 90,
+    sortable: false,
+    slotName: 'isFrozen'
+  },
+  {
     prop: 'currentProgressPercentage',
     label: '完成进度',
     minWidth: 150,

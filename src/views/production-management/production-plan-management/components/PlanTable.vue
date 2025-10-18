@@ -1,9 +1,32 @@
 /**
  * 文件名称：PlanTable.vue
- * 文件描述：生产计划表格组件
+ * 文件描述：生产计划表格组件 - 展示生产计划列表并提供操作入口
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-01-21: 添加冻结状态字段,优化操作按钮逻辑
+ *
+ * 功能说明：
+ *   1. 表格展示：显示计划编号、产品信息、需求数量、交期、状态、进度等
+ *   2. 状态标识：使用颜色标签区分计划状态和优先级
+ *   3. 冻结标识：醒目显示冻结状态,冻结计划禁止操作
+ *   4. 进度展示：使用进度条直观展示完成进度
+ *   5. 快速操作：根据状态和冻结状态动态显示操作按钮
+ *
+ * 操作按钮规则：
+ *   - 确认：仅RECEIVED状态且未冻结
+ *   - 提交审批：仅CONFIRMED状态且未冻结
+ *   - 状态变更：除COMPLETED和CANCELLED外的状态且未冻结
+ *   - 取消：除COMPLETED和CANCELLED外的状态且未冻结
+ *   - 查看：所有状态均可查看
+ *
+ * 视图格式：
+ *   - table: 表格视图(默认)
+ *   - gantt: 甘特图视图(开发中)
+ *
+ * 响应字段映射：
+ *   - currentProgressPercentage: 完成进度百分比
+ *   - isFrozen: 冻结状态
  */
 <template>
   <div class="plan-table">
@@ -137,13 +160,34 @@
         <span v-else>-</span>
       </template>
 
+      <!-- 冻结状态 -->
+      <template #isFrozen="{ value }">
+        <el-tag
+          v-if="value"
+          type="danger"
+          size="small"
+          effect="dark"
+        >
+          <i class="el-icon-lock" /> 已冻结
+        </el-tag>
+        <el-tag
+          v-else
+          type="success"
+          size="small"
+          effect="plain"
+        >
+          正常
+        </el-tag>
+      </template>
+
       <!-- 完成进度 -->
-      <template #progress="{ value }">
+      <template #progress="{ row, value }">
         <div class="plan-table__progress">
           <el-progress
             :percentage="Math.round(value || 0)"
-            :color="getProgressColor(value)"
+            :color="getProgressColor(value, row.status)"
             :stroke-width="16"
+            :status="getProgressStatus(value, row.status)"
           />
         </div>
       </template>
@@ -532,16 +576,45 @@ export default {
         return '-'
       }
     },
-    getProgressColor(percentage) {
-      if (percentage >= 100) {
-        return '#67C23A'
-      } else if (percentage >= 50) {
-        return '#409EFF'
-      } else if (percentage >= 25) {
-        return '#E6A23C'
-      } else {
-        return '#F56C6C'
+    /**
+     * 根据进度值和状态获取进度条颜色
+     * 根据接口文档要求：0-30%红色、31-70%橙色、71-100%绿色
+     * 已完成状态固定100%绿色，已取消状态显示为灰色
+     */
+    getProgressColor(percentage, status) {
+      // 已完成状态固定绿色
+      if (status === PLAN_STATUS.COMPLETED) {
+        return '#67C23A' // 绿色
       }
+      // 已取消状态固定灰色
+      if (status === PLAN_STATUS.CANCELLED) {
+        return '#909399' // 灰色
+      }
+
+      // 根据进度值动态变化颜色
+      if (percentage >= 71) {
+        return '#67C23A' // 绿色 (71-100%)
+      } else if (percentage >= 31) {
+        return '#E6A23C' // 橙色 (31-70%)
+      } else {
+        return '#F56C6C' // 红色 (0-30%)
+      }
+    },
+
+    /**
+     * 根据状态获取进度条状态
+     */
+    getProgressStatus(percentage, status) {
+      // 已完成状态显示成功状态
+      if (status === PLAN_STATUS.COMPLETED) {
+        return 'success'
+      }
+      // 已取消状态显示异常状态
+      if (status === PLAN_STATUS.CANCELLED) {
+        return 'exception'
+      }
+      // 其他状态返回null，使用自定义颜色
+      return null
     },
     refreshSucceed(message) {
       if (this.$refs.toolbar) {

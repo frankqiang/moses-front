@@ -4,6 +4,7 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建，实现P0阶段核心功能
+ *   - 2025-10-17: 移除 itemNumber 和 sequence 参数传递（后端自动生成）
  */
 
 <template>
@@ -12,6 +13,8 @@
     title="拆分生产计划"
     :close-on-click-modal="false"
     width="1200px"
+    top="5vh"
+    custom-class="split-dialog"
     @close="handleClose"
   >
     <!-- 主计划基本信息 -->
@@ -50,7 +53,8 @@
 
       <!-- 平均拆分配置 -->
       <div v-if="splitMode === 'average'" class="mode-config">
-        <el-form-item label="拆分份数">
+        <div class="config-item">
+          <label class="config-label">拆分份数</label>
           <el-input-number
             v-model="splitCount"
             :min="1"
@@ -59,12 +63,13 @@
             @change="handleAverageSplit"
           />
           <span class="config-hint">系统将平均分配总重量到各个子批次</span>
-        </el-form-item>
+        </div>
       </div>
 
       <!-- 按炉次容量拆分配置 -->
       <div v-if="splitMode === 'furnace'" class="mode-config">
-        <el-form-item label="炉次容量（吨）">
+        <div class="config-item">
+          <label class="config-label">炉次容量（吨）</label>
           <el-input-number
             v-model="furnaceCapacity"
             :min="1"
@@ -74,7 +79,7 @@
             @change="handleFurnaceSplit"
           />
           <span class="config-hint">系统将根据炉次容量自动计算拆分份数</span>
-        </el-form-item>
+        </div>
         <div v-if="furnaceCapacity > 0" class="split-result">
           <span>预计拆分为 <strong>{{ calculatedSplitCount }}</strong> 个子批次</span>
         </div>
@@ -100,7 +105,7 @@
         :data="formData.items"
         border
         stripe
-        max-height="400"
+        max-height="300"
       >
         <el-table-column
           label="序号"
@@ -183,6 +188,74 @@
                 :value="item.id"
               />
             </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="分配设备"
+          min-width="200"
+        >
+          <template slot-scope="{ row }">
+            <el-select
+              v-model="row.assignedEquipmentId"
+              placeholder="请选择设备"
+              size="small"
+              clearable
+              filterable
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in equipmentOptions"
+                :key="item.id"
+                :label="`${item.code || ''} - ${item.name}`"
+                :value="item.id"
+              >
+                <span style="float: left">{{ item.code }}</span>
+                <span style="float: right; color: #8492a6; font-size: 13px">{{ item.name }}</span>
+              </el-option>
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="装炉时段开始"
+          min-width="180"
+        >
+          <template slot-scope="{ row }">
+            <el-date-picker
+              v-model="row.expectedFurnaceWindowStart"
+              type="datetime"
+              placeholder="选择开始时间"
+              size="small"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              style="width: 100%"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="装炉时段结束"
+          min-width="180"
+        >
+          <template slot-scope="{ row }">
+            <el-date-picker
+              v-model="row.expectedFurnaceWindowEnd"
+              type="datetime"
+              placeholder="选择结束时间"
+              size="small"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              style="width: 100%"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="备注"
+          min-width="150"
+        >
+          <template slot-scope="{ row }">
+            <el-input
+              v-model="row.remarks"
+              placeholder="备注说明"
+              size="small"
+              clearable
+            />
           </template>
         </el-table-column>
         <el-table-column
@@ -287,12 +360,26 @@
         </el-row>
         <el-row>
           <el-col :span="24">
+            <el-form-item label="备注说明" prop="remarks">
+              <el-input
+                v-model="formData.remarks"
+                type="textarea"
+                :rows="2"
+                placeholder="请输入备注说明（选填，最多500字符）"
+                maxlength="500"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
             <el-form-item label="变更描述" prop="changeDescription">
               <el-input
                 v-model="formData.changeDescription"
                 type="textarea"
                 :rows="3"
-                placeholder="请输入拆分原因和描述"
+                placeholder="请输入拆分原因和描述（选填，最多500字符）"
                 maxlength="500"
                 show-word-limit
               />
@@ -333,6 +420,7 @@
           :data="formData.items"
           border
           stripe
+          max-height="400"
         >
           <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="itemNumber" label="子计划编号" min-width="150">
@@ -350,10 +438,34 @@
               {{ row.plannedWeight ? row.plannedWeight.toFixed(3) : '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="plannedQuantity" label="预计数量" width="100" align="right" />
+          <el-table-column prop="plannedQuantity" label="预计数量" width="100" align="right">
+            <template slot-scope="{ row }">
+              {{ row.plannedQuantity || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column prop="processTemplateId" label="工艺模板" min-width="150">
             <template slot-scope="{ row }">
               {{ getProcessTemplateName(row.processTemplateId) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="assignedEquipmentId" label="分配设备" min-width="120">
+            <template slot-scope="{ row }">
+              {{ getEquipmentName(row.assignedEquipmentId) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="expectedFurnaceWindowStart" label="装炉开始" width="160">
+            <template slot-scope="{ row }">
+              {{ row.expectedFurnaceWindowStart || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="expectedFurnaceWindowEnd" label="装炉结束" width="160">
+            <template slot-scope="{ row }">
+              {{ row.expectedFurnaceWindowEnd || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="remarks" label="备注" min-width="150">
+            <template slot-scope="{ row }">
+              {{ row.remarks || '-' }}
             </template>
           </el-table-column>
         </el-table>
@@ -376,6 +488,8 @@
 import { splitPlan } from '../api'
 // 从工艺参数管理模块获取工艺模板数据
 import { fetchProcessTemplateList } from '@/views/master-data/process-parameter-management/api/process-parameter-management'
+// 从设备管理模块获取设备列表
+import { fetchEquipmentList } from '@/views/master-data/equipment-management/api/equipment-management'
 import { PLAN_STATUS } from '../constants'
 
 export default {
@@ -400,7 +514,8 @@ export default {
         remarks: '',
         changeDescription: ''
       },
-      processTemplateOptions: []
+      processTemplateOptions: [],
+      equipmentOptions: []
     }
   },
   computed: {
@@ -433,9 +548,9 @@ export default {
         this.isStatusAllowSplit
       )
     },
-    // 状态是否允许拆分
+    // 状态是否允许拆分（根据接口文档：仅RECEIVED或CONFIRMED状态可拆分）
     isStatusAllowSplit() {
-      const allowedStatuses = [PLAN_STATUS.CONFIRMED, 'READY_FOR_SCHEDULING']
+      const allowedStatuses = [PLAN_STATUS.RECEIVED, PLAN_STATUS.CONFIRMED]
       return allowedStatuses.includes(this.planData.status)
     }
   },
@@ -450,13 +565,14 @@ export default {
         return
       }
       if (!this.isStatusAllowSplit) {
-        this.$message.error('当前状态不允许拆分，仅已确认或待排程状态的计划可以拆分')
+        this.$message.error('当前状态不允许拆分，仅已接收（RECEIVED）或已确认（CONFIRMED）状态的计划可以拆分')
         return
       }
 
       this.visible = true
       this.initFormData()
       this.loadProcessTemplates()
+      this.loadEquipments()
     },
 
     /**
@@ -533,6 +649,41 @@ export default {
     },
 
     /**
+     * 加载设备列表
+     */
+    async loadEquipments() {
+      try {
+        const response = await fetchEquipmentList({
+          equipmentType: 'annealing_furnace', // 只获取退火炉类型的设备（小写下划线格式）
+          status: 'enabled', // 只获取启用状态的设备
+          includeDetails: false, // 不需要详情，减少数据量
+          limit: 100,
+          page: 1
+        })
+
+        // 处理响应数据（根据 equipment-management.js 的返回格式）
+        if (response.success && response.data) {
+          const equipments = response.data.results || response.data.equipments || []
+          this.equipmentOptions = equipments.map(equipment => ({
+            id: equipment.id,
+            name: equipment.name, // equipment-management 返回的字段是 name
+            code: equipment.equipmentCode, // equipment-management 返回的字段是 equipmentCode
+            type: equipment.equipmentType,
+            status: equipment.status
+          }))
+        } else {
+          console.warn('设备列表数据为空')
+          this.equipmentOptions = []
+        }
+      } catch (error) {
+        console.error('加载设备列表失败:', error)
+        this.$message.warning('加载设备列表失败，请手动刷新或联系管理员')
+        // 不阻断用户操作，设置为空数组
+        this.equipmentOptions = []
+      }
+    },
+
+    /**
      * 拆分方式变化
      */
     handleSplitModeChange() {
@@ -565,7 +716,11 @@ export default {
           sequence: i + 1,
           plannedWeight: Number(avgWeight.toFixed(3)),
           plannedQuantity: null,
-          processTemplateId: defaultTemplateId
+          processTemplateId: defaultTemplateId,
+          assignedEquipmentId: null,
+          expectedFurnaceWindowStart: null,
+          expectedFurnaceWindowEnd: null,
+          remarks: ''
         })
       }
     },
@@ -588,7 +743,11 @@ export default {
           sequence: i + 1,
           plannedWeight: Number(avgWeight.toFixed(3)),
           plannedQuantity: null,
-          processTemplateId: defaultTemplateId
+          processTemplateId: defaultTemplateId,
+          assignedEquipmentId: null,
+          expectedFurnaceWindowStart: null,
+          expectedFurnaceWindowEnd: null,
+          remarks: ''
         })
       }
     },
@@ -603,7 +762,11 @@ export default {
         sequence: this.formData.items.length + 1,
         plannedWeight: 0,
         plannedQuantity: null,
-        processTemplateId: defaultTemplateId
+        processTemplateId: defaultTemplateId,
+        assignedEquipmentId: null,
+        expectedFurnaceWindowStart: null,
+        expectedFurnaceWindowEnd: null,
+        remarks: ''
       })
     },
 
@@ -632,6 +795,15 @@ export default {
       if (!templateId) return '未选择'
       const template = this.processTemplateOptions.find(t => t.id === templateId)
       return template ? template.name : templateId
+    },
+
+    /**
+     * 获取设备名称
+     */
+    getEquipmentName(equipmentId) {
+      if (!equipmentId) return '未选择'
+      const equipment = this.equipmentOptions.find(e => e.id === equipmentId)
+      return equipment ? `${equipment.code || ''} - ${equipment.name}` : equipmentId
     },
 
     /**
@@ -706,34 +878,57 @@ export default {
       try {
         this.submitLoading = true
 
-        // 构建请求数据
-        const items = this.formData.items.map((item, index) => {
+        // 根据接口文档构建请求数据
+        // 注意：itemNumber 和 sequence 字段由后端自动生成，前端无需传递
+        const items = this.formData.items.map((item) => {
           const itemData = {
-            itemNumber: item.itemNumber || `${this.planData.planNumber}-ITEM-${String(index + 1).padStart(3, '0')}`,
-            sequence: index + 1,
-            plannedWeight: item.plannedWeight
+            // 预计重量（必填，吨）
+            plannedWeight: Number(item.plannedWeight),
+            // 预计数量（可选，卷数/件数）
+            plannedQuantity: item.plannedQuantity ? Number(item.plannedQuantity) : undefined,
+            // 工艺模板ID（可选）
+            processTemplateId: item.processTemplateId || undefined,
+            // 工艺模板关联类型（可选）
+            processTemplateLinkType: item.processTemplateId ? 'PRIMARY' : undefined,
+            // 分配的设备ID（可选）
+            assignedEquipmentId: item.assignedEquipmentId || undefined,
+            // 计划装炉时段开始（可选，ISO 8601格式）
+            expectedFurnaceWindowStart: item.expectedFurnaceWindowStart ? this.formatDateTimeToISO(item.expectedFurnaceWindowStart) : undefined,
+            // 计划装炉时段结束（可选，ISO 8601格式）
+            expectedFurnaceWindowEnd: item.expectedFurnaceWindowEnd ? this.formatDateTimeToISO(item.expectedFurnaceWindowEnd) : undefined,
+            // 备注（可选）
+            remarks: item.remarks || undefined
           }
 
-          if (item.plannedQuantity) {
-            itemData.plannedQuantity = item.plannedQuantity
-          }
-          if (item.processTemplateId) {
-            itemData.processTemplateId = item.processTemplateId
-            itemData.processTemplateLinkType = 'PRIMARY'
-          }
+          // 移除 undefined 字段
+          Object.keys(itemData).forEach(key => {
+            if (itemData[key] === undefined) {
+              delete itemData[key]
+            }
+          })
 
           return itemData
         })
 
         const requestData = {
+          // 子批次拆分项列表（必填）
           items,
-          targetStatus: this.formData.targetStatus,
+          // 拆分后的目标状态（可选，默认CONFIRMED）
+          targetStatus: this.formData.targetStatus || 'CONFIRMED',
+          // 备注说明（可选，最大500字符）
+          remarks: this.formData.remarks || undefined,
+          // 变更描述（可选，最大500字符）
           changeDescription: this.formData.changeDescription || `拆分为${items.length}个子批次`
         }
 
-        if (this.formData.remarks) {
-          requestData.remarks = this.formData.remarks
-        }
+        // 移除 undefined 字段
+        Object.keys(requestData).forEach(key => {
+          if (requestData[key] === undefined) {
+            delete requestData[key]
+          }
+        })
+
+        console.log('[拆分生产计划] 请求数据:', requestData)
 
         const response = await splitPlan(this.planData.id, requestData)
 
@@ -742,14 +937,85 @@ export default {
           this.handleClose()
           this.$emit('success')
         } else {
-          this.$message.error(response.message || '拆分生产计划失败')
+          // 失败时 message 在 error 对象中
+          this.$message.error(response.error?.message || '拆分生产计划失败')
         }
       } catch (error) {
-        console.error('拆分生产计划失败:', error)
-        const errorMessage = error.response?.data?.error?.message || error.message || '拆分生产计划失败'
-        this.$message.error(errorMessage)
+        console.error('[拆分生产计划] 请求失败:', error)
+        this.handleSplitError(error)
       } finally {
         this.submitLoading = false
+      }
+    },
+
+    /**
+     * 处理拆分错误（根据接口文档错误码）
+     */
+    handleSplitError(error) {
+      // 优先从响应中获取错误信息
+      const errorData = error.response?.data?.error
+      const errorCode = errorData?.code
+      const errorMessage = errorData?.message
+
+      // 根据接口文档的错误码处理
+      switch (errorCode) {
+        case 'PRODUCTION_PLAN_SPLIT_INVALID_PAYLOAD':
+          this.$message.error(errorMessage || '拆分请求参数不合法，请检查子批次数据')
+          break
+        case 'PRODUCTION_PLAN_SPLIT_QUANTITY_MISMATCH':
+          this.$message.error(errorMessage || '拆分后重量与原计划不一致，请调整子批次重量')
+          // 显示详细的重量信息
+          if (errorData?.details) {
+            const { demandQuantity, totalSplitWeight, tolerance } = errorData.details
+            this.$notify({
+              title: '重量不一致',
+              message: `需求数量: ${demandQuantity}${this.planData.demandUnit}\n拆分总重量: ${totalSplitWeight}${this.planData.demandUnit}\n允许误差: ±${tolerance}${this.planData.demandUnit}`,
+              type: 'error',
+              duration: 5000
+            })
+          }
+          break
+        case 'PRODUCTION_PLAN_OPERATION_NOT_ALLOWED':
+          if (errorMessage && errorMessage.includes('冻结')) {
+            this.$message.error('计划已冻结，不允许拆分')
+          } else if (errorMessage && errorMessage.includes('状态')) {
+            this.$message.error('当前状态不允许拆分，仅已接收或已确认状态的计划可以拆分')
+          } else if (errorMessage && errorMessage.includes('权限')) {
+            this.$message.error('您没有拆分生产计划的权限，请联系管理员')
+          } else {
+            this.$message.error(errorMessage || '操作不允许')
+          }
+          break
+        case 'PRODUCTION_PLAN_NOT_FOUND':
+          this.$message.error('生产计划不存在')
+          break
+        case 'PRODUCTION_PLAN_TRANSACTION_FAILED':
+          this.$message.error('拆分生产计划失败，请稍后重试')
+          break
+        case 'UNAUTHORIZED':
+          this.$message.error('未授权，请重新登录')
+          break
+        case 'FORBIDDEN':
+          this.$message.error('无权限执行此操作，请联系管理员')
+          break
+        default:
+          // 默认错误处理
+          this.$message.error(errorMessage || error.message || '拆分生产计划失败，请稍后重试')
+      }
+    },
+
+    /**
+     * 格式化日期时间为ISO 8601格式
+     */
+    formatDateTimeToISO(dateStr) {
+      if (!dateStr) return null
+      try {
+        // 如果是 YYYY-MM-DD HH:mm:ss 格式，转换为 ISO 8601
+        const date = new Date(dateStr.replace(' ', 'T'))
+        return date.toISOString()
+      } catch (error) {
+        console.warn('日期格式转换失败:', dateStr, error)
+        return dateStr
       }
     }
   }
@@ -757,6 +1023,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+// 对话框样式优化 - 确保内容可滚动
+::v-deep .split-dialog {
+  .el-dialog__body {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 20px 20px 0;
+  }
+}
+
 .plan-info-section {
   margin-bottom: 20px;
 
@@ -791,6 +1066,18 @@ export default {
   .mode-config {
     margin-top: 16px;
     padding-left: 24px;
+
+    .config-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .config-label {
+        font-size: 14px;
+        color: #606266;
+        min-width: 100px;
+      }
+    }
 
     .config-hint {
       margin-left: 12px;

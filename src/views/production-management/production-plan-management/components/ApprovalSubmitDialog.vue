@@ -4,6 +4,7 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建，实现P0阶段核心功能
+ *   - 2025-10-17: 根据新接口文档重构，完全符合后端API规范
  */
 
 <template>
@@ -213,6 +214,10 @@ export default {
 
     /**
      * 确认提交
+     *
+     * 根据接口文档重构：
+     * - 请求参数：targetStatus（必填）、remarks（选填，最多500字符）、requiredPermissions（选填数组）
+     * - 响应结构：{ plan, approval, targetStatus, status, message }
      */
     async handleConfirm() {
       try {
@@ -224,13 +229,18 @@ export default {
 
         this.loading = true
 
+        // 构建请求数据，完全符合接口文档
+        const requestData = {
+          targetStatus: this.formData.targetStatus,
+          // remarks 是选填的，如果用户没有填写，提供默认说明
+          remarks: this.formData.remarks || `申请将生产计划状态变更为${this.getPlanStatusLabel(this.formData.targetStatus)}`,
+          // requiredPermissions 是选填的数组
+          requiredPermissions: this.formData.requiredPermissions
+        }
+
         // 使用带重试机制的审批提交
         const response = await withRetry(
-          () => submitApproval(this.planData.id, {
-            targetStatus: this.formData.targetStatus,
-            remarks: this.formData.remarks || `申请将生产计划状态变更为${this.getPlanStatusLabel(this.formData.targetStatus)}`,
-            requiredPermissions: this.formData.requiredPermissions
-          }),
+          () => submitApproval(this.planData.id, requestData),
           {
             maxRetries: 3,
             context: {
@@ -239,15 +249,12 @@ export default {
               targetStatus: this.formData.targetStatus
             },
             onApprovalDetailsView: (approvalId) => {
-              // 查看审批详情的逻辑
               this.$emit('view-approval', approvalId)
             },
             onCancelApproval: (approvalId) => {
-              // 撤销审批的逻辑
               this.$emit('cancel-approval', approvalId)
             },
             onRefreshData: () => {
-              // 刷新数据的逻辑
               this.$emit('refresh-data')
             },
             onRetry: (attempt, error) => {
@@ -257,11 +264,16 @@ export default {
         )
 
         if (response.success) {
-          this.$message.success(response.message || '审批提交成功')
-          this.$emit('success', response.data)
-          this.handleClose()
+          // ⚠️ 必须使用后端返回的message显示提示，不得硬编码
+          // 成功时 message 在顶层：response.message
+          const message = response.message || '审批提交成功'
+
+          // 处理响应数据，符合接口文档的响应结构
+          this.handleApprovalSubmitResponse(response.data, message)
         } else {
-          this.$message.error(response.message || '审批提交失败')
+          // ⚠️ 优先使用后端返回的错误消息
+          // 失败时 message 在 error 对象中：response.error.message
+          this.$message.error(response.error?.message || '审批提交失败')
         }
       } catch (error) {
         console.error('审批提交失败:', error)
@@ -283,6 +295,69 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    /**
+     * 处理审批提交成功的响应
+     *
+     * 响应结构（符合接口文档）：
+     * {
+     *   plan: { ... },          // 更新后的计划信息（状态为 PENDING_APPROVAL）
+     *   approval: { ... },      // 审批请求信息（状态为 PENDING）
+     *   targetStatus: string,   // 目标状态
+     *   status: string,         // 计划当前状态（PENDING_APPROVAL）
+     *   message: string         // 操作成功提示信息
+     * }
+     */
+    handleApprovalSubmitResponse(data, message) {
+      const { approval, targetStatus, status } = data
+
+      // 显示成功消息
+      this.$message.success(message)
+
+      // 显示详细的审批信息
+      const approvalInfo = `
+        <div style="text-align: left; padding: 10px;">
+          <p><strong>审批请求ID：</strong>${approval.id}</p>
+          <p><strong>目标状态：</strong>${this.getPlanStatusLabel(targetStatus)}</p>
+          <p><strong>当前状态：</strong>${this.getPlanStatusLabel(status)}</p>
+          <p><strong>审批状态：</strong>${approval.status === 'PENDING' ? '待审批' : approval.status}</p>
+          <p><strong>申请人：</strong>${approval.requesterName || '-'}</p>
+          <p><strong>提交时间：</strong>${this.formatTime(approval.requestedAt)}</p>
+          ${approval.remarks ? `<p><strong>审批说明：</strong>${approval.remarks}</p>` : ''}
+          <p style="color: #E6A23C; margin-top: 10px;">
+            <i class="el-icon-warning"></i> ${data.message || '请等待审批人审核'}
+          </p>
+        </div>
+      `
+
+      this.$notify({
+        title: '生产计划审批已提交',
+        dangerouslyUseHTMLString: true,
+        message: approvalInfo,
+        type: 'warning',
+        duration: 10000,
+        position: 'top-right'
+      })
+
+      // 触发成功事件，传递完整的响应数据
+      this.$emit('success', data)
+      this.handleClose()
+    },
+
+    /**
+     * 格式化时间
+     */
+    formatTime(time) {
+      if (!time) return '-'
+      const date = new Date(time)
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     },
 
     /**

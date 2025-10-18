@@ -5,6 +5,7 @@
  * 修改记录：
  *   - 2025-01-21: 初始创建
  *   - 2025-01-21: 删除编辑模式，改为只读展示
+ *   - 2025-10-17: 根据接口文档重构，添加所有缺失字段，优化JSON对象展示
  */
 
 <template>
@@ -161,7 +162,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <div class="info-item">
-              <span class="info-label">默认工艺模板：</span>
+              <span class="info-label">默认工艺模板ID：</span>
               <span class="info-value">{{ planData.defaultProcessTemplateId || '-' }}</span>
             </div>
           </el-col>
@@ -174,17 +175,66 @@
             </div>
           </el-col>
         </el-row>
+        <!-- 工艺能力快照（JSON对象） -->
+        <el-row v-if="planData.referenceProcessCapability">
+          <el-col :span="24">
+            <div class="info-item">
+              <span class="info-label">工艺能力快照：</span>
+              <div class="info-value">
+                <el-collapse accordion>
+                  <el-collapse-item title="查看工艺参数详情" name="processCapability">
+                    <pre class="json-display">{{ formatJsonObject(planData.referenceProcessCapability) }}</pre>
+                  </el-collapse-item>
+                </el-collapse>
+              </div>
+            </div>
+          </el-col>
+        </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
             <div class="info-item">
-              <span class="info-label">优选设备：</span>
+              <span class="info-label">优选设备ID：</span>
               <span class="info-value">{{ planData.preferredEquipmentId || '-' }}</span>
             </div>
           </el-col>
           <el-col :span="12">
             <div class="info-item">
               <span class="info-label">设备关联类型：</span>
-              <span class="info-value">{{ planData.equipmentLinkType || '-' }}</span>
+              <span class="info-value">{{ getEquipmentLinkTypeText(planData.equipmentLinkType) }}</span>
+            </div>
+          </el-col>
+        </el-row>
+        <!-- 设备能力快照（JSON对象） -->
+        <el-row v-if="planData.equipmentCapabilitySnapshot">
+          <el-col :span="24">
+            <div class="info-item">
+              <span class="info-label">设备能力快照：</span>
+              <div class="info-value">
+                <el-collapse accordion>
+                  <el-collapse-item title="查看设备参数详情" name="equipmentCapability">
+                    <pre class="json-display">{{ formatJsonObject(planData.equipmentCapabilitySnapshot) }}</pre>
+                  </el-collapse-item>
+                </el-collapse>
+              </div>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 操作人员信息 -->
+      <div class="info-section">
+        <div class="section-title">操作人员信息</div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="info-item">
+              <span class="info-label">创建人ID：</span>
+              <span class="info-value">{{ planData.createdBy || '-' }}</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="info-item">
+              <span class="info-label">最后更新人ID：</span>
+              <span class="info-value">{{ planData.updatedBy || '-' }}</span>
             </div>
           </el-col>
         </el-row>
@@ -315,14 +365,41 @@ export default {
 
     /**
      * 获取工艺模板关联类型文本
+     * 根据接口文档附录：processTemplateLinkType枚举
      */
     getProcessLinkTypeText(linkType) {
       const map = {
-        PRIMARY: '主要工艺',
+        PRIMARY: '主工艺',
         BACKUP: '备用工艺',
-        MANUAL_OVERRIDE: '手动覆盖'
+        MANUAL_OVERRIDE: '手动指定'
       }
       return map[linkType] || linkType || '-'
+    },
+
+    /**
+     * 获取设备关联类型文本
+     * 根据接口文档附录：equipmentLinkType枚举
+     */
+    getEquipmentLinkTypeText(linkType) {
+      const map = {
+        ANNEALING_FURNACE: '退火炉',
+        PREPARATION_STATION: '准备工位',
+        AUTOMATIC_CART: '自动推车'
+      }
+      return map[linkType] || linkType || '-'
+    },
+
+    /**
+     * 格式化JSON对象为易读格式
+     */
+    formatJsonObject(obj) {
+      if (!obj) return '-'
+      try {
+        return JSON.stringify(obj, null, 2)
+      } catch (error) {
+        console.error('JSON格式化失败:', error)
+        return String(obj)
+      }
     },
 
     /**
@@ -397,6 +474,27 @@ export default {
     // 状态标签特殊处理
     .status-tag, .el-tag {
       margin-top: 4px;
+    }
+
+    // JSON展示容器样式
+    .el-collapse {
+      width: 100%;
+      border: none;
+    }
+
+    .json-display {
+      margin: 0;
+      padding: 12px;
+      background-color: #f5f7fa;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'Courier New', Consolas, Monaco, monospace;
+      color: #606266;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
   }
 }

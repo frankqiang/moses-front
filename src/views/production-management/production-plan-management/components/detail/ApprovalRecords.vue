@@ -5,6 +5,8 @@
  * 修改记录：
  *   - 2025-01-21: 初始创建
  *   - 2025-01-21: 扩展P0阶段功能 - 添加筛选、详情展开、撤销审批
+ *   - 2025-10-17: 根据新接口文档验证，确保符合审批记录查询接口规范
+ *   - 2025-10-17: 重构组件，完全符合新接口文档规范
  */
 
 <template>
@@ -63,17 +65,30 @@
               <el-descriptions-item label="请求的操作">
                 {{ getActionText(row.requestedAction) }}
               </el-descriptions-item>
+              <el-descriptions-item label="审批状态">
+                <el-tag :type="getStatusType(row.status)" size="small">
+                  {{ getStatusText(row.status) }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="申请人">
+                <div v-if="row.requester">
+                  <div>{{ row.requester.name }}</div>
+                  <div style="font-size: 12px; color: #909399;">{{ row.requester.email }}</div>
+                </div>
+                <span v-else>-</span>
+              </el-descriptions-item>
               <el-descriptions-item label="申请人ID">
                 {{ row.requesterId || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="申请人姓名">
-                {{ row.requesterName || '-' }}
+              <el-descriptions-item label="审批人">
+                <div v-if="row.approver">
+                  <div>{{ row.approver.name }}</div>
+                  <div style="font-size: 12px; color: #909399;">{{ row.approver.email }}</div>
+                </div>
+                <span v-else>-</span>
               </el-descriptions-item>
               <el-descriptions-item label="审批人ID">
                 {{ row.approverId || '-' }}
-              </el-descriptions-item>
-              <el-descriptions-item label="审批人姓名">
-                {{ row.approverName || '-' }}
               </el-descriptions-item>
               <el-descriptions-item label="提交时间">
                 {{ formatTime(row.requestedAt) }}
@@ -84,24 +99,18 @@
               <el-descriptions-item label="审批意见">
                 {{ row.decisionRemarks || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="审批说明" :span="2">
+              <el-descriptions-item label="申请说明" :span="2">
                 {{ row.remarks || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="要求的权限" :span="2">
-                <template v-if="row.requiredPermissions && row.requiredPermissions.length > 0">
-                  <el-tag
-                    v-for="(permission, index) in row.requiredPermissions"
-                    :key="index"
-                    size="mini"
-                    style="margin: 2px"
-                  >
-                    {{ permission }}
-                  </el-tag>
-                </template>
-                <span v-else>-</span>
+              <el-descriptions-item label="记录创建时间">
+                {{ formatTime(row.createdAt) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="记录更新时间">
+                {{ formatTime(row.updatedAt) }}
               </el-descriptions-item>
               <el-descriptions-item label="元数据" :span="2">
-                <pre class="metadata-pre">{{ formatMetadata(row.metadata) }}</pre>
+                <pre v-if="row.metadata" class="metadata-pre">{{ formatMetadata(row.metadata) }}</pre>
+                <span v-else>-</span>
               </el-descriptions-item>
             </el-descriptions>
           </div>
@@ -133,12 +142,15 @@
       </el-table-column>
 
       <el-table-column
-        prop="requesterName"
         label="申请人"
-        width="120"
+        width="150"
       >
         <template slot-scope="{ row }">
-          {{ row.requesterName || '-' }}
+          <div v-if="row.requester">
+            <div>{{ row.requester.name }}</div>
+            <div style="font-size: 12px; color: #909399;">{{ row.requester.email }}</div>
+          </div>
+          <span v-else>-</span>
         </template>
       </el-table-column>
 
@@ -165,11 +177,11 @@
       </el-table-column>
 
       <el-table-column
-        label="创建时间"
+        label="申请时间"
         width="160"
       >
         <template slot-scope="{ row }">
-          {{ formatTime(row.createdAt) }}
+          {{ formatTime(row.requestedAt) }}
         </template>
       </el-table-column>
 
@@ -338,6 +350,31 @@ export default {
   methods: {
     /**
      * 加载审批记录
+     *
+     * 接口文档：GET /v1/prod/plans/:planId/approval/requests
+     * 响应结构：
+     * {
+     *   data: {
+     *     approvals: [...],  // 审批记录数组
+     *     pagination: { total, page, limit, totalPages }
+     *   }
+     * }
+     *
+     * 响应字段说明：
+     * - id: 审批申请唯一标识符（UUID）
+     * - resourceType: 资源类型，固定为 'prod.production-plan'
+     * - resourceId: 资源唯一标识符（生产计划ID）
+     * - requestedAction: 申请的目标动作/状态（如 RELEASED、CANCELLED 等）
+     * - status: 审批状态（PENDING、APPROVED、REJECTED、CANCELLED、WITHDRAWN、EXPIRED）
+     * - requesterId: 申请人用户ID
+     * - approverId: 审批人用户ID（如果已决策）
+     * - requestedAt: 申请提交时间（ISO 8601格式）
+     * - decidedAt: 审批决策时间（ISO 8601格式，待审批时为 null）
+     * - remarks: 申请备注/说明
+     * - decisionRemarks: 审批意见/决策说明（待审批时为 null）
+     * - metadata: 扩展上下文信息（JSON对象，包含计划号、产品编码等）
+     * - requester: 申请人信息对象 { id, name, email }
+     * - approver: 审批人信息对象 { id, name, email }（待审批时为 null）
      */
     async fetchApprovals() {
       if (!this.planId) return
@@ -357,60 +394,10 @@ export default {
 
         const response = await fetchApprovalRequests(this.planId, params)
 
-        // API 返回的字段是 approvals，不是 results
+        // 处理响应数据
         if (response.data) {
-          const approvals = response.data.approvals || []
-
-          // 调试日志：检查后端是否返回 metadata
-          if (approvals.length > 0) {
-            console.log('📋 审批记录示例数据:', approvals[0])
-            console.log('📋 metadata字段:', approvals[0].metadata)
-          }
-
-          // 处理数据，将 requester 和 approver 对象展开
-          this.approvalList = approvals.map(approval => {
-            // 使用后端返回的 metadata，或构建默认值
-            const metadata = approval.metadata || {}
-
-            // 补充缺失的 metadata 字段
-            if (!metadata.planNumber) {
-              metadata.planNumber = (this.planData && this.planData.planNumber) || ''
-            }
-            if (!metadata.targetStatus) {
-              // 目标状态就是 requestedAction
-              metadata.targetStatus = approval.requestedAction || ''
-            }
-            if (!metadata.previousStatus) {
-              // previousStatus 推断逻辑：
-              // 对于待审批的请求，previousStatus 应该是提交审批前的状态
-              // 通常：下达操作的 previousStatus 是 CONFIRMED
-              //       取消操作的 previousStatus 可能是 CONFIRMED、RELEASED 等
-              // 如果当前计划状态是 PENDING_APPROVAL，说明审批未处理，可以推断
-              if (this.planData && this.planData.status === 'PENDING_APPROVAL') {
-                // 根据目标状态推断原始状态
-                if (approval.requestedAction === 'RELEASED') {
-                  metadata.previousStatus = 'CONFIRMED'
-                } else if (approval.requestedAction === 'CANCELLED') {
-                  metadata.previousStatus = 'CONFIRMED' // 通常是从已确认状态取消
-                } else {
-                  metadata.previousStatus = ''
-                }
-              } else {
-                // 如果计划状态已经不是 PENDING_APPROVAL，说明审批已处理
-                // 无法准确推断 previousStatus，保持为空
-                metadata.previousStatus = ''
-              }
-            }
-
-            return {
-              ...approval,
-              requesterName: approval.requester ? approval.requester.name : '-',
-              approverName: approval.approver ? approval.approver.name : '-',
-              // 添加默认的 requiredPermissions（如果后端没有返回）
-              requiredPermissions: approval.requiredPermissions || ['prod.production-plan.approval'],
-              metadata
-            }
-          })
+          // 直接使用后端返回的审批记录数组，不做额外处理
+          this.approvalList = response.data.approvals || []
 
           // 分页信息
           const pagination = response.data.pagination || {}

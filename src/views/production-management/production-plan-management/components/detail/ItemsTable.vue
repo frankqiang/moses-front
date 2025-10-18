@@ -4,6 +4,8 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-10-17: 根据接口文档重构，添加所有缺失字段，优化数据展示
+ *   - 2025-10-17: 更新工艺和设备数据结构，适配后端返回的 processTemplate 和 equipment 对象
  */
 
 <template>
@@ -76,21 +78,47 @@
         </template>
       </el-table-column>
       <el-table-column
-        prop="processTemplateName"
         label="工艺模板"
         min-width="150"
       >
         <template slot-scope="{ row }">
-          {{ row.processTemplateName || '-' }}
+          {{ row.processTemplate ? row.processTemplate.name : '-' }}
         </template>
       </el-table-column>
       <el-table-column
-        prop="assignedEquipmentId"
-        label="分配设备"
-        min-width="120"
+        label="工艺关联类型"
+        width="120"
+        align="center"
       >
         <template slot-scope="{ row }">
-          {{ row.assignedEquipmentId || '-' }}
+          {{ row.processTemplate ? getProcessLinkTypeText(row.processTemplate.linkType) : '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        label="分配设备"
+        min-width="150"
+      >
+        <template slot-scope="{ row }">
+          {{ row.equipment ? row.equipment.name : '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        label="设备关联类型"
+        width="120"
+        align="center"
+      >
+        <template slot-scope="{ row }">
+          {{ row.equipment ? getEquipmentLinkTypeText(row.equipment.linkType) : '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="remarks"
+        label="备注"
+        min-width="150"
+        show-overflow-tooltip
+      >
+        <template slot-scope="{ row }">
+          {{ row.remarks || '-' }}
         </template>
       </el-table-column>
       <el-table-column
@@ -150,17 +178,26 @@ export default {
     }
   },
   computed: {
+    /**
+     * 显示的子批次列表
+     * 根据接口文档：子批次项按sequence字段升序排序
+     */
     displayItems() {
       if (!this.items || this.items.length === 0) {
         return []
       }
-      // 排序
+      // 排序（根据当前排序字段和顺序）
       const sortedItems = [...this.items]
       sortedItems.sort((a, b) => {
         const prop = this.sortProp
         const order = this.sortOrder === 'ascending' ? 1 : -1
-        if (a[prop] < b[prop]) return -1 * order
-        if (a[prop] > b[prop]) return 1 * order
+
+        // 处理null/undefined值
+        const aValue = a[prop] ?? ''
+        const bValue = b[prop] ?? ''
+
+        if (aValue < bValue) return -1 * order
+        if (aValue > bValue) return 1 * order
         return 0
       })
       return sortedItems
@@ -187,6 +224,32 @@ export default {
      */
     getStatusType(status) {
       return this.itemStatusTypeMap[status] || 'info'
+    },
+
+    /**
+     * 获取工艺模板关联类型文本
+     * 根据接口文档附录：processTemplateLinkType枚举
+     */
+    getProcessLinkTypeText(linkType) {
+      const map = {
+        PRIMARY: '主工艺',
+        BACKUP: '备用工艺',
+        MANUAL_OVERRIDE: '手动指定'
+      }
+      return map[linkType] || linkType || '-'
+    },
+
+    /**
+     * 获取设备关联类型文本
+     * 根据接口文档附录：equipmentLinkType枚举
+     */
+    getEquipmentLinkTypeText(linkType) {
+      const map = {
+        ANNEALING_FURNACE: '退火炉',
+        PREPARATION_STATION: '准备工位',
+        AUTOMATIC_CART: '自动推车'
+      }
+      return map[linkType] || linkType || '-'
     },
 
     /**

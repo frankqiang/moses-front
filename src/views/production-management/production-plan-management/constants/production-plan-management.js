@@ -63,6 +63,26 @@ export const APPROVAL_STATUS = {
   EXPIRED: 'EXPIRED'
 }
 
+// 变更类型（用于审计日志，完全符合接口文档规范）
+export const CHANGE_TYPE = {
+  SPLIT: 'SPLIT',
+  MERGE: 'MERGE',
+  ADJUST: 'ADJUST',
+  STATUS_UPDATE: 'STATUS_UPDATE',
+  PROGRESS_SYNC: 'PROGRESS_SYNC',
+  STATUS_UPDATE_REQUESTED: 'STATUS_UPDATE_REQUESTED',
+  STATUS_UPDATE_APPROVED: 'STATUS_UPDATE_APPROVED',
+  STATUS_UPDATE_REJECTED: 'STATUS_UPDATE_REJECTED',
+  STATUS_UPDATE_CANCELLED: 'STATUS_UPDATE_CANCELLED'
+}
+
+// 操作来源（用于审计日志）
+export const OPERATION_SOURCE = {
+  ERP_SYNC: 'ERP_SYNC',
+  MANUAL: 'MANUAL',
+  SYSTEM: 'SYSTEM'
+}
+
 // ========== UI样式映射（保留用于前端展示） ==========
 
 // 计划状态颜色映射
@@ -106,6 +126,46 @@ export const APPROVAL_STATUS_TYPE_MAP = {
   EXPIRED: 'danger'
 }
 
+// 变更类型颜色映射（用于审计日志，完全符合接口文档规范）
+export const CHANGE_TYPE_COLOR_MAP = {
+  SPLIT: '#409EFF',
+  MERGE: '#67C23A',
+  ADJUST: '#E6A23C',
+  STATUS_UPDATE: '#909399',
+  PROGRESS_SYNC: '#409EFF',
+  STATUS_UPDATE_REQUESTED: '#E6A23C',
+  STATUS_UPDATE_APPROVED: '#67C23A',
+  STATUS_UPDATE_REJECTED: '#F56C6C',
+  STATUS_UPDATE_CANCELLED: '#909399'
+}
+
+// 变更类型标签类型映射（用于审计日志，完全符合接口文档规范）
+export const CHANGE_TYPE_TAG_TYPE_MAP = {
+  SPLIT: 'primary',
+  MERGE: 'success',
+  ADJUST: 'warning',
+  STATUS_UPDATE: 'info',
+  PROGRESS_SYNC: 'primary',
+  STATUS_UPDATE_REQUESTED: 'warning',
+  STATUS_UPDATE_APPROVED: 'success',
+  STATUS_UPDATE_REJECTED: 'danger',
+  STATUS_UPDATE_CANCELLED: 'info'
+}
+
+// 操作来源映射（用于审计日志，前端展示用）
+export const OPERATION_SOURCE_MAP = {
+  ERP_SYNC: 'ERP同步',
+  MANUAL: '手动操作',
+  SYSTEM: '系统自动'
+}
+
+// 操作来源选项
+export const OPERATION_SOURCE_OPTIONS = [
+  { value: 'ERP_SYNC', label: 'ERP同步' },
+  { value: 'MANUAL', label: '手动操作' },
+  { value: 'SYSTEM', label: '系统自动' }
+]
+
 // 默认分页配置
 export const DEFAULT_PAGINATION = {
   page: 1,
@@ -133,15 +193,16 @@ export const AUTO_REFRESH_INTERVAL = 30000 // 30秒
 // ========== 业务规则配置（保留用于业务逻辑） ==========
 
 // 状态流转规则 - 定义从当前状态可以转换到哪些目标状态
+// 基于生产计划业务流程说明.md中的状态转换规则
 export const STATUS_TRANSITION_RULES = {
-  RECEIVED: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['PENDING_APPROVAL', 'CANCELLED'],
-  PENDING_APPROVAL: ['RELEASED', 'CONFIRMED', 'CANCELLED'],
-  RELEASED: ['PARTIALLY_RELEASED', 'IN_PROGRESS', 'CANCELLED'],
-  PARTIALLY_RELEASED: ['IN_PROGRESS', 'RELEASED', 'CANCELLED'],
-  IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
-  COMPLETED: [],
-  CANCELLED: []
+  RECEIVED: ['CONFIRMED', 'PENDING_APPROVAL', 'CANCELLED'],
+  CONFIRMED: ['PARTIALLY_RELEASED', 'PENDING_APPROVAL', 'RELEASED', 'CANCELLED'],
+  PENDING_APPROVAL: ['RELEASED', 'CANCELLED', 'CONFIRMED', 'RECEIVED', 'PARTIALLY_RELEASED', 'IN_PROGRESS'],
+  PARTIALLY_RELEASED: ['RELEASED', 'IN_PROGRESS', 'PENDING_APPROVAL', 'CANCELLED'],
+  RELEASED: ['IN_PROGRESS', 'PENDING_APPROVAL', 'CANCELLED'],
+  IN_PROGRESS: ['COMPLETED', 'PENDING_APPROVAL', 'CANCELLED'],
+  COMPLETED: [], // 终态,不可转换
+  CANCELLED: [] // 终态,不可转换
 }
 
 // 关键状态变更（需要审批）

@@ -4,6 +4,7 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-10-17: 根据调整生产计划接口文档完全重构，添加所有支持的调整字段
  */
 
 <template>
@@ -87,12 +88,26 @@
         </el-row>
         <el-row>
           <el-col :span="24">
+            <el-form-item label="备注说明" prop="remarks">
+              <el-input
+                v-model="formData.remarks"
+                type="textarea"
+                :rows="2"
+                placeholder="请输入备注说明（可选）"
+                maxlength="500"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
             <el-form-item label="变更描述" prop="changeDescription">
               <el-input
                 v-model="formData.changeDescription"
                 type="textarea"
                 :rows="3"
-                placeholder="请输入调整原因和变更描述"
+                placeholder="请输入调整原因和变更描述（必填）"
                 maxlength="500"
                 show-word-limit
               />
@@ -122,15 +137,17 @@
           :data="formData.planItems"
           border
           stripe
+          max-height="400"
         >
           <el-table-column
             prop="itemNumber"
             label="子计划编号"
             width="150"
+            fixed
           />
           <el-table-column
             label="预计重量(吨)"
-            width="150"
+            width="140"
           >
             <template slot-scope="{ row }">
               <el-input-number
@@ -146,7 +163,7 @@
           </el-table-column>
           <el-table-column
             label="预计数量(卷/件)"
-            width="150"
+            width="140"
           >
             <template slot-scope="{ row }">
               <el-input-number
@@ -161,10 +178,54 @@
           </el-table-column>
           <el-table-column
             label="状态"
-            width="120"
+            width="160"
           >
             <template slot-scope="{ row }">
-              {{ getItemStatusText(row.status) }}
+              <el-select
+                v-model="row.status"
+                size="small"
+                placeholder="请选择状态"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="item in planItemStatusOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="炉窗开始时间"
+            width="180"
+          >
+            <template slot-scope="{ row }">
+              <el-date-picker
+                v-model="row.expectedFurnaceWindowStart"
+                type="datetime"
+                size="small"
+                placeholder="选择开始时间"
+                format="yyyy-MM-dd HH:mm"
+                value-format="yyyy-MM-ddTHH:mm:ss.sssZ"
+                style="width: 100%"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="炉窗结束时间"
+            width="180"
+          >
+            <template slot-scope="{ row }">
+              <el-date-picker
+                v-model="row.expectedFurnaceWindowEnd"
+                type="datetime"
+                size="small"
+                placeholder="选择结束时间"
+                format="yyyy-MM-dd HH:mm"
+                value-format="yyyy-MM-ddTHH:mm:ss.sssZ"
+                style="width: 100%"
+              />
             </template>
           </el-table-column>
         </el-table>
@@ -211,6 +272,7 @@ export default {
         demandQuantity: null,
         plannedDeliveryDate: '',
         planPriority: '',
+        remarks: '',
         changeDescription: '',
         planItems: []
       },
@@ -221,6 +283,9 @@ export default {
         ],
         plannedDeliveryDate: [
           { required: true, message: '请选择计划交期', trigger: 'change' }
+        ],
+        remarks: [
+          { max: 500, message: '备注说明最多500个字符', trigger: 'blur' }
         ],
         changeDescription: [
           { required: true, message: '请输入变更描述', trigger: 'blur' },
@@ -285,14 +350,25 @@ export default {
 
     /**
      * 初始化表单数据
+     * 根据接口文档，加载当前计划的所有可调整字段值
      */
     initFormData() {
       this.formData = {
         demandQuantity: this.planData.demandQuantity,
         plannedDeliveryDate: this.planData.plannedDeliveryDate,
         planPriority: this.planData.planPriority,
-        changeDescription: '',
-        planItems: this.planData.items ? JSON.parse(JSON.stringify(this.planData.items)) : []
+        remarks: this.planData.remarks || '', // 备注说明（可选）
+        changeDescription: '', // 变更描述（必填）
+        // 深拷贝子批次数据，确保包含所有字段
+        planItems: this.planData.items ? this.planData.items.map(item => ({
+          id: item.id,
+          itemNumber: item.itemNumber,
+          plannedWeight: item.plannedWeight,
+          plannedQuantity: item.plannedQuantity,
+          status: item.status,
+          expectedFurnaceWindowStart: item.expectedFurnaceWindowStart || null,
+          expectedFurnaceWindowEnd: item.expectedFurnaceWindowEnd || null
+        })) : []
       }
     },
 
@@ -304,6 +380,7 @@ export default {
         demandQuantity: null,
         plannedDeliveryDate: '',
         planPriority: '',
+        remarks: '',
         changeDescription: '',
         planItems: []
       }
@@ -331,7 +408,7 @@ export default {
         try {
           this.submitLoading = true
 
-          // 构建请求数据
+          // 构建请求数据，根据接口文档要求
           const requestData = {
             demandQuantity: this.formData.demandQuantity,
             plannedDeliveryDate: this.formData.plannedDeliveryDate,
@@ -339,13 +416,35 @@ export default {
             changeDescription: this.formData.changeDescription
           }
 
-          // 如果有子批次调整
+          // 添加备注说明（可选字段）
+          if (this.formData.remarks) {
+            requestData.remarks = this.formData.remarks
+          }
+
+          // 如果有子批次调整，根据接口文档包含所有支持的字段
           if (this.hasItems) {
-            requestData.items = this.formData.planItems.map(item => ({
-              id: item.id,
-              plannedWeight: item.plannedWeight,
-              plannedQuantity: item.plannedQuantity
-            }))
+            requestData.items = this.formData.planItems.map(item => {
+              const itemData = {
+                id: item.id,
+                plannedWeight: item.plannedWeight,
+                plannedQuantity: item.plannedQuantity
+              }
+
+              // 添加状态（如果有变更）
+              if (item.status) {
+                itemData.status = item.status
+              }
+
+              // 添加炉窗时间（如果有设置）
+              if (item.expectedFurnaceWindowStart) {
+                itemData.expectedFurnaceWindowStart = item.expectedFurnaceWindowStart
+              }
+              if (item.expectedFurnaceWindowEnd) {
+                itemData.expectedFurnaceWindowEnd = item.expectedFurnaceWindowEnd
+              }
+
+              return itemData
+            })
           }
 
           const response = await adjustPlan(this.planData.id, requestData)
@@ -355,7 +454,8 @@ export default {
             this.handleClose()
             this.$emit('success')
           } else {
-            this.$message.error(response.message || '调整生产计划失败')
+            // 失败时 message 在 error 对象中
+            this.$message.error(response.error?.message || '调整生产计划失败')
           }
         } catch (error) {
           console.error('调整生产计划失败:', error)

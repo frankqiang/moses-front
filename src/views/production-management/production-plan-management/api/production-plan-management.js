@@ -157,14 +157,52 @@ export function exportPlans(params = {}) {
 /**
  * 获取生产计划进度报表
  * @param {Object} params - 查询参数
+ * @param {string} [params.format='json'] - 导出格式：json 或 csv
+ * @param {string} [params.fileName] - CSV文件名（不含扩展名）
+ * @param {number} [params.offset=0] - 分页偏移量
+ * @param {number} [params.limit=1000] - 每页数量（1-5000）
+ * @param {string} [params.sortBy] - 排序规则，格式：field:asc,field2:desc
  * @returns {Promise} 返回Promise对象
  */
 export function fetchProgressReport(params = {}) {
-  return service({
+  // 处理日期范围参数
+  const queryParams = { ...params }
+
+  // 处理计划交期范围
+  if (params.deliveryDateRange && Array.isArray(params.deliveryDateRange)) {
+    queryParams.plannedDeliveryDateStart = params.deliveryDateRange[0]
+      ? `${params.deliveryDateRange[0]}T00:00:00.000Z`
+      : undefined
+    queryParams.plannedDeliveryDateEnd = params.deliveryDateRange[1]
+      ? `${params.deliveryDateRange[1]}T23:59:59.999Z`
+      : undefined
+    delete queryParams.deliveryDateRange
+  }
+
+  // 处理创建时间范围
+  if (params.createdDateRange && Array.isArray(params.createdDateRange)) {
+    queryParams.createdAtStart = params.createdDateRange[0]
+      ? `${params.createdDateRange[0]}T00:00:00.000Z`
+      : undefined
+    queryParams.createdAtEnd = params.createdDateRange[1]
+      ? `${params.createdDateRange[1]}T23:59:59.999Z`
+      : undefined
+    delete queryParams.createdDateRange
+  }
+
+  // CSV格式需要特殊处理响应类型
+  const requestConfig = {
     url: buildApiPath(API_ENDPOINTS.PROGRESS_REPORT),
     method: 'get',
-    params
-  })
+    params: queryParams
+  }
+
+  // CSV格式返回blob，用于文件下载
+  if (params.format === 'csv') {
+    requestConfig.responseType = 'blob'
+  }
+
+  return service(requestConfig)
 }
 
 /**

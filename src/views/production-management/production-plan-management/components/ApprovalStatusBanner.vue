@@ -248,7 +248,8 @@ export default {
           this.refreshApprovalStatus()
           this.$emit('approval-cancelled', approval)
         } else {
-          this.$message.error(response.message || '撤销失败')
+          // 失败时 message 在 error 对象中
+          this.$message.error(response.error?.message || '撤销失败')
         }
       } catch (error) {
         if (error !== 'cancel') {

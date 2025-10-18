@@ -4,6 +4,7 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建，实现P0阶段核心功能
+ *   - 2025-10-17: 根据新接口文档验证，确保完全符合后端API规范
  */
 
 <template>
@@ -85,6 +86,18 @@
         />
       </el-form-item>
 
+      <!-- 备注信息 -->
+      <el-form-item label="备注信息" prop="remarks">
+        <el-input
+          v-model="formData.remarks"
+          type="textarea"
+          :rows="2"
+          maxlength="500"
+          show-word-limit
+          placeholder="请输入备注信息（选填）"
+        />
+      </el-form-item>
+
       <!-- 状态转换提示 -->
       <el-alert
         v-if="formData.targetStatus"
@@ -133,7 +146,8 @@ export default {
       formData: {
         targetStatus: '',
         cancelReason: '',
-        changeDescription: ''
+        changeDescription: '',
+        remarks: ''
       },
       rules: {
         targetStatus: [
@@ -195,7 +209,8 @@ export default {
       this.formData = {
         targetStatus: '',
         cancelReason: '',
-        changeDescription: ''
+        changeDescription: '',
+        remarks: ''
       }
       this.$nextTick(() => {
         if (this.$refs.form) {
@@ -233,15 +248,25 @@ export default {
 
         this.loading = true
 
-        // 构建请求数据
+        // 构建请求数据，完全符合接口文档
+        // 接口文档 PATCH /v1/prod/plans/:planId/status 的参数：
+        // - targetStatus（必填）
+        // - changeDescription（选填，最大500字符）
+        // - cancelReason（选填，最大200字符，仅用于CANCELLED状态）
+        // - remarks（选填，最大500字符）
         const requestData = {
           targetStatus: this.formData.targetStatus,
           changeDescription: this.formData.changeDescription || `变更状态从${this.getPlanStatusLabel(this.currentStatus)}到${this.getPlanStatusLabel(this.formData.targetStatus)}`
         }
 
-        // 如果是取消状态，添加取消原因
+        // 如果是取消状态，添加取消原因（必填）
         if (this.formData.targetStatus === 'CANCELLED') {
           requestData.cancelReason = this.formData.cancelReason
+        }
+
+        // 如果有备注信息，添加到请求中
+        if (this.formData.remarks) {
+          requestData.remarks = this.formData.remarks
         }
 
         // 使用防重复提交机制和带重试机制的API调用
@@ -277,11 +302,27 @@ export default {
         )
 
         if (response.success) {
-          this.$message.success(response.message || '状态变更成功')
-          this.$emit('success', response.data)
-          this.handleClose()
+          // ⚠️ 必须使用后端返回的message显示提示，不得硬编码
+          // 成功时 message 在顶层：response.message
+          const message = response.message || '状态变更成功'
+
+          // 根据响应结构判断是否需要审批
+          if (response.data.approval) {
+            // 需要审批的响应结构
+            this.handleApprovalResponse(response.data, message)
+          } else if (response.data.plan) {
+            // 直接更新的响应结构
+            this.handleDirectUpdateResponse(response.data, message)
+          } else {
+            // 兼容旧响应格式
+            this.$message.success(message)
+            this.$emit('success', response.data)
+            this.handleClose()
+          }
         } else {
-          this.$message.error(response.message || '状态变更失败')
+          // ⚠️ 优先使用后端返回的错误消息
+          // 失败时 message 在 error 对象中：response.error.message
+          this.$message.error(response.error?.message || '状态变更失败')
         }
       } catch (error) {
         console.error('状态变更失败:', error)
@@ -303,6 +344,115 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    /**
+     * 处理需要审批的响应
+     * 响应结构：{ plan, approval, targetStatus, status, message }
+     */
+    handleApprovalResponse(data, message) {
+      const { plan, approval, targetStatus, status } = data
+
+      // 显示审批提交成功提示（包含审批请求ID）
+      this.$message.success({
+        message: `${message}，审批请求ID: ${approval.id}`,
+        duration: 5000,
+        showClose: true
+      })
+
+      // 显示详细的审批信息
+      const approvalInfo = `
+        <div style="text-align: left; padding: 10px;">
+          <p><strong>目标状态：</strong>${this.getPlanStatusLabel(targetStatus)}</p>
+          <p><strong>当前状态：</strong>${this.getPlanStatusLabel(status)}</p>
+          <p><strong>审批状态：</strong>${approval.status === 'PENDING' ? '待审批' : approval.status}</p>
+          <p><strong>审批请求ID：</strong>${approval.id}</p>
+          <p style="color: #E6A23C; margin-top: 10px;">
+            <i class="el-icon-warning"></i> ${data.message || '请等待审批人审核'}
+          </p>
+        </div>
+      `
+
+      this.$notify({
+        title: '状态变更已提交审批',
+        dangerouslyUseHTMLString: true,
+        message: approvalInfo,
+        type: 'warning',
+        duration: 10000,
+        position: 'top-right'
+      })
+
+      // 触发成功事件，传递完整的响应数据
+      this.$emit('success', data)
+      this.handleClose()
+    },
+
+    /**
+     * 处理直接更新的响应
+     * 响应结构：{ plan, progress, itemUpdates }
+     */
+    handleDirectUpdateResponse(data, message) {
+      const { plan, progress, itemUpdates } = data
+
+      // 显示成功提示
+      this.$message.success(message)
+
+      // 如果有子批次更新，显示详细信息
+      if (itemUpdates && itemUpdates.length > 0) {
+        const updateInfo = `
+          <div style="text-align: left; padding: 10px;">
+            <p><strong>主计划状态：</strong>${this.getPlanStatusLabel(plan.status)}</p>
+            <p><strong>子批次更新数量：</strong>${itemUpdates.length}</p>
+            ${progress.hasChanged ? `<p><strong>进度更新：</strong>${progress.progressPercentage}%</p>` : ''}
+            <div style="margin-top: 10px; max-height: 200px; overflow-y: auto;">
+              <p><strong>子批次状态变更：</strong></p>
+              ${itemUpdates.slice(0, 5).map(item => `
+                <p style="font-size: 12px; color: #606266;">
+                  ${item.planItemId.substring(0, 8)}... :
+                  ${this.getPlanStatusLabel(item.previousStatus)} →
+                  ${this.getPlanStatusLabel(item.nextStatus)}
+                </p>
+              `).join('')}
+              ${itemUpdates.length > 5 ? `<p style="font-size: 12px; color: #909399;">...还有${itemUpdates.length - 5}个子批次</p>` : ''}
+            </div>
+          </div>
+        `
+
+        this.$notify({
+          title: '状态变更成功',
+          dangerouslyUseHTMLString: true,
+          message: updateInfo,
+          type: 'success',
+          duration: 8000,
+          position: 'top-right'
+        })
+      }
+
+      // 如果有进度变更，显示进度信息
+      if (progress && progress.hasChanged) {
+        const progressInfo = `
+          <div style="text-align: left; padding: 10px;">
+            <p><strong>完成进度：</strong>${progress.progressPercentage}%</p>
+            <p><strong>总子批次：</strong>${progress.breakdown.totalItems}</p>
+            <p><strong>已完成：</strong>${progress.breakdown.completedItems} 个（${progress.breakdown.completedWeight}kg）</p>
+            <p><strong>执行中：</strong>${progress.breakdown.inProgressItems} 个（${progress.breakdown.inProgressWeight}kg）</p>
+            <p><strong>待执行：</strong>${progress.breakdown.readyItems} 个（${progress.breakdown.readyWeight}kg）</p>
+          </div>
+        `
+
+        this.$notify({
+          title: '进度同步完成',
+          dangerouslyUseHTMLString: true,
+          message: progressInfo,
+          type: 'info',
+          duration: 6000,
+          position: 'bottom-right'
+        })
+      }
+
+      // 触发成功事件，传递完整的响应数据
+      this.$emit('success', data)
+      this.handleClose()
     },
 
     /**
