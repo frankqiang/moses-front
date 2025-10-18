@@ -62,8 +62,9 @@ export const TABLE_COLUMNS = [
   {
     prop: 'actions',
     label: '操作',
-    width: 200,
+    width: 250,
     fixed: 'right',
-    slotName: 'actions'
+    slotName: 'actions',
+    showOverflowTooltip: false
   }
 ]

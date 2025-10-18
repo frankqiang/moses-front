@@ -79,7 +79,6 @@ export default {
         limit: this.currentPagination.limit,
         sortBy: this.filters.sortBy,
         search: this.filters.search,
-        equipmentId: this.filters.equipmentId,
         maintenanceType: this.filters.maintenanceType,
         cycleType: this.filters.cycleType,
         status: this.filters.status

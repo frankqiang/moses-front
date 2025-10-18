@@ -117,7 +117,7 @@ export default {
         const params = {
           page: 1,
           limit: 50,
-          status: '运行中' // 只显示运行中的设备
+          status: 'enabled' // 只显示启用状态的设备（根据接口文档枚举值）
         }
 
         if (keyword) {

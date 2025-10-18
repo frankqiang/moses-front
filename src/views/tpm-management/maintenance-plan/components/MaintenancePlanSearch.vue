@@ -9,8 +9,8 @@
 <template>
   <search-form
     v-if="dictionaryLoaded"
-    :items="formItems"
     v-model="searchForm"
+    :items="formItems"
     @search="handleSearch"
     @reset="handleReset"
   />
@@ -31,12 +31,9 @@ export default {
 
   data() {
     return {
-      // 字典加载状态
-      dictionaryLoaded: false,
       // 搜索表单数据
       searchForm: {
         search: '',
-        equipmentId: '',
         maintenanceType: '',
         cycleType: '',
         status: ''
@@ -45,6 +42,11 @@ export default {
   },
 
   computed: {
+    // 字典是否已加载（从 store 获取）
+    dictionaryLoaded() {
+      return this.isTPMDictionaryLoaded()
+    },
+
     // 搜索表单项配置
     formItems() {
       return [
@@ -81,13 +83,6 @@ export default {
         }
       ]
     }
-  },
-
-  async created() {
-    // 加载TPM模块字典
-    await this.loadTPMDictionary()
-    // 标记字典已加载
-    this.dictionaryLoaded = true
   },
 
   methods: {

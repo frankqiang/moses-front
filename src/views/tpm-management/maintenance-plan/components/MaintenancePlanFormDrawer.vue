@@ -172,23 +172,6 @@
           title="四、备件清单"
         />
       </div>
-
-      <!-- 五、计划状态 -->
-      <div v-if="innerMode === 'create'" class="form-section">
-        <div class="section-title">五、计划状态</div>
-        <el-form-item label="计划状态" prop="status">
-          <el-radio-group v-model="formData.status">
-            <el-radio
-              v-for="item in planStatusOptions"
-              :key="item.value"
-              :label="item.value"
-            >
-              {{ item.label }}
-            </el-radio>
-          </el-radio-group>
-          <div class="field-hint">启用后将自动按周期生成维护任务</div>
-        </el-form-item>
-      </div>
     </el-form>
 
     <!-- 底部操作按钮 -->
@@ -348,11 +331,6 @@ export default {
       immediate: true,
       deep: true
     }
-  },
-
-  async created() {
-    // 加载TPM模块字典
-    await this.loadTPMDictionary()
   },
 
   methods: {
@@ -616,6 +594,9 @@ export default {
           safetyNotes: this.formData.safetyNotes || undefined,
           instructionAttachmentUrl: this.formData.instructionAttachmentUrl || undefined
         }
+
+        // 移除status字段（接口默认为"启用"）
+        delete submitData.status
 
         const response = await createMaintenancePlan(submitData)
 
