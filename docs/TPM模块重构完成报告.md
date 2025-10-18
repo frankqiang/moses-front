@@ -2,10 +2,10 @@
 
 ## 📊 重构概述
 
-**重构日期**：2025年10月16日  
-**Git提交**：`15d3053` - refactor(tpm): 重构TPM模块，从主数据模块中独立出来  
-**影响范围**：50个文件  
-**重构类型**：架构优化，模块独立化  
+**重构日期**：2025年10月16日
+**Git提交**：`15d3053` - refactor(tpm): 重构TPM模块，从主数据模块中独立出来
+**影响范围**：50个文件
+**重构类型**：架构优化，模块独立化
 
 ## ✅ 重构目标
 
@@ -89,7 +89,7 @@ import maintenancePlan from './modules/tpm/maintenancePlan'
    ```javascript
    // 修改前
    import tpmDictionaryMixin from '@/views/master-data/equipment-tpm-management/mixins/dictionary'
-   
+
    // 修改后
    import tpmDictionaryMixin from '@/views/tpm-management/mixins/dictionary'
    ```
@@ -104,7 +104,7 @@ import maintenancePlan from './modules/tpm/maintenancePlan'
    ```javascript
    // 修改前
    this.$router.push('/master-data/equipment-tpm-management/maintenance-plan')
-   
+
    // 修改后
    this.$router.push('/equipment-tpm/maintenance-plans')
    ```
@@ -113,7 +113,7 @@ import maintenancePlan from './modules/tpm/maintenancePlan'
    ```javascript
    // 修改前
    } from '@/views/master-data/equipment-tpm-management/maintenance-plan/api'
-   
+
    // 修改后
    } from '@/views/tpm-management/maintenance-plan/api'
    ```
@@ -315,19 +315,19 @@ src/
 
 本次重构成功将TPM模块从主数据管理模块中独立出来，建立了清晰的模块边界和合理的目录结构。重构过程：
 
-✅ **执行平稳**：使用Git mv保留了完整的文件历史  
-✅ **影响可控**：仅涉及TPM模块，不影响其他功能  
-✅ **代码质量**：通过ESLint检查，无引入新错误  
-✅ **文档完善**：提供了完整的重构方案和完成报告  
+✅ **执行平稳**：使用Git mv保留了完整的文件历史
+✅ **影响可控**：仅涉及TPM模块，不影响其他功能
+✅ **代码质量**：通过ESLint检查，无引入新错误
+✅ **文档完善**：提供了完整的重构方案和完成报告
 
-**重构风险评估**：低  
-**预计影响范围**：仅TPM模块（当前只有维护计划管理在使用）  
-**回滚难度**：低（Git可以轻松回滚到重构前）  
+**重构风险评估**：低
+**预计影响范围**：仅TPM模块（当前只有维护计划管理在使用）
+**回滚难度**：低（Git可以轻松回滚到重构前）
 
 ---
 
-**重构执行人**：AI Assistant  
-**审查人**：待指定  
-**完成日期**：2025-10-16  
+**重构执行人**：AI Assistant
+**审查人**：待指定
+**完成日期**：2025-10-16
 **Git提交哈希**：15d3053
 

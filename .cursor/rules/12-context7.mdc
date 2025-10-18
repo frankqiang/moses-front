@@ -1,7 +1,6 @@
 ---
-alwaysApply: false
+alwaysApply: true
 ---
-
 # Context7 MCP 集成规范
 
 ## 使用要求

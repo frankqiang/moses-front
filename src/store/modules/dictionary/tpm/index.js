@@ -4,6 +4,7 @@
  * 创建日期：2025-10-16
  * 修改记录：
  *   - 2025-10-16: 创建独立的 TPM 字典 Store
+ *   - 2025-10-16: 重构以适配新的后端接口格式（扁平的CODE->中文标签映射）
  */
 
 import { getAllDictionaries } from '@/views/tpm-management/api/dictionary'
@@ -31,6 +32,7 @@ const state = {
 
 const mutations = {
   SET_DICTIONARIES(state, dictionaries) {
+    // 后端返回的是扁平的 CODE->中文标签 映射，直接保存
     state.maintenanceTypes = dictionaries.maintenanceTypes || {}
     state.cycleTypes = dictionaries.cycleTypes || {}
     state.cycleUnits = dictionaries.cycleUnits || {}
@@ -130,141 +132,141 @@ const getters = {
   // ============ 维护类型 ============
   maintenanceTypeOptions: (state) => {
     const dict = state.maintenanceTypes
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getMaintenanceTypeLabel: (state) => (type) => {
-    return state.maintenanceTypes?.labels?.[type] || type
+    return state.maintenanceTypes?.[type] || type
   },
 
   // ============ 维护周期类型 ============
   cycleTypeOptions: (state) => {
     const dict = state.cycleTypes
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getCycleTypeLabel: (state) => (type) => {
-    return state.cycleTypes?.labels?.[type] || type
+    return state.cycleTypes?.[type] || type
   },
 
   // ============ 周期单位 ============
   cycleUnitOptions: (state) => {
     const dict = state.cycleUnits
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getCycleUnitLabel: (state) => (unit) => {
-    return state.cycleUnits?.labels?.[unit] || unit
+    return state.cycleUnits?.[unit] || unit
   },
 
   // ============ 维护计划状态 ============
   planStatusOptions: (state) => {
     const dict = state.planStatuses
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getPlanStatusLabel: (state) => (status) => {
-    return state.planStatuses?.labels?.[status] || status
+    return state.planStatuses?.[status] || status
   },
 
   // ============ 维护任务类型 ============
   taskTypeOptions: (state) => {
     const dict = state.taskTypes
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getTaskTypeLabel: (state) => (type) => {
-    return state.taskTypes?.labels?.[type] || type
+    return state.taskTypes?.[type] || type
   },
 
   // ============ 维护任务状态 ============
   taskStatusOptions: (state) => {
     const dict = state.taskStatuses
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getTaskStatusLabel: (state) => (status) => {
-    return state.taskStatuses?.labels?.[status] || status
+    return state.taskStatuses?.[status] || status
   },
 
   // ============ 故障等级 ============
   failureLevelOptions: (state) => {
     const dict = state.failureLevels
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getFailureLevelLabel: (state) => (level) => {
-    return state.failureLevels?.labels?.[level] || level
+    return state.failureLevels?.[level] || level
   },
 
   // ============ 影响程度 ============
   impactDegreeOptions: (state) => {
     const dict = state.impactDegrees
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getImpactDegreeLabel: (state) => (degree) => {
-    return state.impactDegrees?.labels?.[degree] || degree
+    return state.impactDegrees?.[degree] || degree
   },
 
   // ============ 故障类型 ============
   failureTypeOptions: (state) => {
     const dict = state.failureTypes
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getFailureTypeLabel: (state) => (type) => {
-    return state.failureTypes?.labels?.[type] || type
+    return state.failureTypes?.[type] || type
   },
 
   // ============ 故障处理状态 ============
   failureStatusOptions: (state) => {
     const dict = state.failureStatuses
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
   getFailureStatusLabel: (state) => (status) => {
-    return state.failureStatuses?.labels?.[status] || status
+    return state.failureStatuses?.[status] || status
   }
 }
 

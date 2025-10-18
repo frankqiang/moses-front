@@ -35,12 +35,9 @@ router.beforeEach(async(to, from, next) => {
         //   sessionManager.init()
         // }
 
-        // 确保字典数据已加载（异步，不阻塞路由）
-        if (!store.state.dictionary.loaded && !store.state.dictionary.loading) {
-          store.dispatch('dictionary/loadProductionPlanDictionaries').catch(err => {
-            console.error('加载字典数据失败:', err)
-          })
-        }
+        // 字典数据采用按需加载策略：
+        // 每个模块在自己的页面中通过 mixin 或 created 钩子加载所需字典
+        // 不再在全局路由守卫中预加载，避免不必要的请求
 
         // 检查是否已经生成动态路由，并且角色没有变化
         const hasRoutes = store.getters.routesGenerated

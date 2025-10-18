@@ -19,6 +19,12 @@
     "precommit": "npm run check-mock"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.19",
+    "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
+    "@fullcalendar/list": "^6.1.19",
+    "@fullcalendar/timegrid": "^6.1.19",
+    "@fullcalendar/vue": "^6.1.19",
     "axios": "0.18.0",
     "core-js": "3.6.5",
     "dayjs": "^1.11.10",

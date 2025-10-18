@@ -4,11 +4,13 @@
  * 创建日期：2025-10-15
  * 修改记录：
  *   - 2025-10-15: 初始创建，作为所有模块字典 mixin 的基础
+ *   - 2025-10-16: 增强兼容性，同时支持新格式 { values: {} } 和扁平化格式
  *
  * 说明：
  * - 提供最基础的字典访问能力
  * - 各模块可继承此 mixin 并扩展业务方法
  * - 不包含任何模块特定的业务逻辑
+ * - 兼容新旧两种数据格式
  *
  * 使用方式：
  * import dictionaryBase from '@/mixins/dictionaryBase'
@@ -52,9 +54,15 @@ export default {
         return value || ''
       }
 
-      // 修复：使用 values[value] 获取中文标签
-      // 因为 values 的结构是 { "DRAFT": "草稿" }，key 是英文枚举，value 是中文标签
-      return dict.values?.[value] || value || ''
+      // 兼容两种格式：
+      // 1. 新格式（推荐）：{ values: { "DRAFT": "草稿" } }
+      // 2. 扁平化格式（已废弃）：{ "DRAFT": "草稿" }
+      if (dict.values) {
+        return dict.values[value] || value || ''
+      } else {
+        // 扁平化格式兼容
+        return dict[value] || value || ''
+      }
     },
 
     /**
@@ -82,16 +90,24 @@ export default {
       }
 
       const dict = moduleState[dictType]
-      if (!dict || !dict.values) {
-        console.warn(`[Dictionary] 字典类型 "${dictType}" 数据不完整`)
+      if (!dict) {
+        console.warn(`[Dictionary] 字典类型 "${dictType}" 不存在于模块 "${moduleName}"`)
         return []
       }
 
-      // 修复：使用 values[key] 获取中文标签，而不是 labels[key]
-      // 因为 values 的结构是 { "DRAFT": "草稿" }，key 是英文枚举，value 是中文标签
-      return Object.keys(dict.values).map(key => ({
+      // 兼容两种格式：
+      // 1. 新格式（推荐）：{ values: { "DRAFT": "草稿" } }
+      // 2. 扁平化格式（已废弃）：{ "DRAFT": "草稿" }
+      const dataSource = dict.values || dict
+
+      if (!dataSource || Object.keys(dataSource).length === 0) {
+        console.warn(`[Dictionary] 字典类型 "${dictType}" 数据为空`)
+        return []
+      }
+
+      return Object.keys(dataSource).map(key => ({
         value: key,
-        label: dict.values[key] || key
+        label: dataSource[key] || key
       }))
     },
 

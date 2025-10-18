@@ -16,6 +16,7 @@
 | 设备关联类型 | equipmentLinkTypes | 设备关联类型枚举 |
 | 变更类型 | changeTypes | 变更类型枚举 |
 | 操作来源 | operationSources | 操作来源枚举 |
+| 审批状态 | approvalStatuses | 审批状态枚举 |
 
 ## 🔧 使用方式
 
@@ -57,7 +58,7 @@ productionPlan/
 
 ## 🔄 缓存管理
 
-- **缓存键**：`app_dictionaries_cache`
+- **缓存键**：`productionPlanDictionaries`
 - **缓存时长**：24 小时
 - **清除缓存**：`this.$store.dispatch('dictionary/productionPlan/clearCache')`
 
@@ -73,4 +74,5 @@ productionPlan/
 ---
 
 **创建日期：** 2025-10-16
+**最后更新：** 2025-10-16 (扁平化格式重构，统一缓存键命名规范)
 

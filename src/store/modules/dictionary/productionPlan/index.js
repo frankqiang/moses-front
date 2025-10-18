@@ -4,11 +4,12 @@
  * 创建日期：2025-10-16
  * 修改记录：
  *   - 2025-10-16: 从 dictionary.js 拆分独立
+ *   - 2025-10-16: 重构以适配新的扁平化接口格式，新增审批状态字典
  */
 
 import { getAllDictionaries } from '@/views/production-management/production-plan-management/api'
 
-const CACHE_KEY = 'app_dictionaries_cache'
+const CACHE_KEY = 'productionPlanDictionaries'
 const CACHE_VALIDITY_HOURS = 24
 
 const state = {
@@ -21,6 +22,7 @@ const state = {
   equipmentLinkTypes: {},
   changeTypes: {},
   operationSources: {},
+  approvalStatuses: {},
 
   // 加载状态
   loaded: false,
@@ -37,6 +39,7 @@ const mutations = {
     state.equipmentLinkTypes = dictionaries.equipmentLinkTypes || {}
     state.changeTypes = dictionaries.changeTypes || {}
     state.operationSources = dictionaries.operationSources || {}
+    state.approvalStatuses = dictionaries.approvalStatuses || {}
   },
 
   SET_LOADED(state, loaded) {
@@ -127,56 +130,63 @@ const getters = {
    * 获取计划状态标签
    */
   getPlanStatusLabel: (state) => (status) => {
-    return state.planStatuses?.labels?.[status] || status
+    return state.planStatuses?.[status] || status
   },
 
   /**
    * 获取子批次状态标签
    */
   getPlanItemStatusLabel: (state) => (status) => {
-    return state.planItemStatuses?.labels?.[status] || status
+    return state.planItemStatuses?.[status] || status
   },
 
   /**
    * 获取计划优先级标签
    */
   getPlanPriorityLabel: (state) => (priority) => {
-    return state.planPriorities?.labels?.[priority] || priority
+    return state.planPriorities?.[priority] || priority
   },
 
   /**
    * 获取计划来源标签
    */
   getPlanSourceLabel: (state) => (source) => {
-    return state.planSources?.labels?.[source] || source
+    return state.planSources?.[source] || source
   },
 
   /**
    * 获取工艺模板关联类型标签
    */
   getProcessTemplateLinkTypeLabel: (state) => (type) => {
-    return state.processTemplateLinkTypes?.labels?.[type] || type
+    return state.processTemplateLinkTypes?.[type] || type
   },
 
   /**
    * 获取设备关联类型标签
    */
   getEquipmentLinkTypeLabel: (state) => (type) => {
-    return state.equipmentLinkTypes?.labels?.[type] || type
+    return state.equipmentLinkTypes?.[type] || type
   },
 
   /**
    * 获取变更类型标签
    */
   getChangeTypeLabel: (state) => (type) => {
-    return state.changeTypes?.labels?.[type] || type
+    return state.changeTypes?.[type] || type
   },
 
   /**
    * 获取操作来源标签
    */
   getOperationSourceLabel: (state) => (source) => {
-    return state.operationSources?.labels?.[source] || source
+    return state.operationSources?.[source] || source
+  },
+
+  /**
+   * 获取审批状态标签
+   */
+  getApprovalStatusLabel: (state) => (status) => {
+    return state.approvalStatuses?.[status] || status
   },
 
   /**
@@ -184,10 +194,10 @@ const getters = {
    */
   planStatusOptions: (state) => {
     const dict = state.planStatuses
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
@@ -196,10 +206,10 @@ const getters = {
    */
   planItemStatusOptions: (state) => {
     const dict = state.planItemStatuses
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
@@ -208,10 +218,10 @@ const getters = {
    */
   planPriorityOptions: (state) => {
     const dict = state.planPriorities
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
     }))
   },
 
@@ -220,10 +230,70 @@ const getters = {
    */
   planSourceOptions: (state) => {
     const dict = state.planSources
-    if (!dict.values || !dict.labels) return []
-    return Object.keys(dict.values).map(key => ({
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict[key]
+    }))
+  },
+
+  /**
+   * 获取工艺模板关联类型选项（用于下拉框）
+   */
+  processTemplateLinkTypeOptions: (state) => {
+    const dict = state.processTemplateLinkTypes
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
+      value: key,
+      label: dict[key]
+    }))
+  },
+
+  /**
+   * 获取设备关联类型选项（用于下拉框）
+   */
+  equipmentLinkTypeOptions: (state) => {
+    const dict = state.equipmentLinkTypes
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
+      value: key,
+      label: dict[key]
+    }))
+  },
+
+  /**
+   * 获取变更类型选项（用于下拉框）
+   */
+  changeTypeOptions: (state) => {
+    const dict = state.changeTypes
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
+      value: key,
+      label: dict[key]
+    }))
+  },
+
+  /**
+   * 获取操作来源选项（用于下拉框）
+   */
+  operationSourceOptions: (state) => {
+    const dict = state.operationSources
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
+      value: key,
+      label: dict[key]
+    }))
+  },
+
+  /**
+   * 获取审批状态选项（用于下拉框）
+   */
+  approvalStatusOptions: (state) => {
+    const dict = state.approvalStatuses
+    if (!dict || Object.keys(dict).length === 0) return []
+    return Object.keys(dict).map(key => ({
+      value: key,
+      label: dict[key]
     }))
   }
 }

@@ -4,6 +4,7 @@
  * 创建日期：2025-10-16
  * 修改记录：
  *   - 2025-10-16: 从 dictionary.js 拆分独立
+ *   - 2025-10-16: 重构以适配新的后端接口格式（CODE->中文直接映射）
  */
 
 import { getAllDictionaries } from '@/views/master-data/process-parameter-management/api'
@@ -12,12 +13,12 @@ const CACHE_KEY = 'processTemplateDictionaries'
 const CACHE_VALIDITY_HOURS = 24
 
 const state = {
-  // 字典数据
-  templateStatuses: {},
-  templateVersionStatuses: {},
-  atmosphereTypes: {},
-  circulationFanSpeeds: {},
-  controlModes: {},
+  // 字典数据 - 新格式：{ values: { CODE: "中文标签" } }
+  templateStatuses: { values: {}},
+  templateVersionStatuses: { values: {}},
+  atmosphereTypes: { values: {}},
+  circulationFanSpeeds: { values: {}},
+  controlModes: { values: {}},
 
   // 加载状态
   loaded: false,
@@ -25,12 +26,30 @@ const state = {
 }
 
 const mutations = {
+  /**
+   * 设置字典数据
+   * @param {Object} dictionaries - 后端返回的字典数据（扁平化格式）
+   *
+   * 后端新格式：{ templateStatuses: { "DRAFT": "草稿", ... } }
+   * Store存储格式：{ templateStatuses: { values: { "DRAFT": "草稿", ... } } }
+   */
   SET_DICTIONARIES(state, dictionaries) {
-    state.templateStatuses = dictionaries.templateStatuses || {}
-    state.templateVersionStatuses = dictionaries.templateVersionStatuses || {}
-    state.atmosphereTypes = dictionaries.atmosphereTypes || {}
-    state.circulationFanSpeeds = dictionaries.circulationFanSpeeds || {}
-    state.controlModes = dictionaries.controlModes || {}
+    // 将后端扁平化格式包装成统一的 { values: {...} } 结构
+    state.templateStatuses = {
+      values: dictionaries.templateStatuses || {}
+    }
+    state.templateVersionStatuses = {
+      values: dictionaries.templateVersionStatuses || {}
+    }
+    state.atmosphereTypes = {
+      values: dictionaries.atmosphereTypes || {}
+    }
+    state.circulationFanSpeeds = {
+      values: dictionaries.circulationFanSpeeds || {}
+    }
+    state.controlModes = {
+      values: dictionaries.controlModes || {}
+    }
   },
 
   SET_LOADED(state, loaded) {
@@ -121,35 +140,35 @@ const getters = {
    * 获取工艺模板状态标签
    */
   getTemplateStatusLabel: (state) => (status) => {
-    return state.templateStatuses?.labels?.[status] || status
+    return state.templateStatuses?.values?.[status] || status
   },
 
   /**
    * 获取工艺模板版本状态标签
    */
   getTemplateVersionStatusLabel: (state) => (status) => {
-    return state.templateVersionStatuses?.labels?.[status] || status
+    return state.templateVersionStatuses?.values?.[status] || status
   },
 
   /**
    * 获取保护气氛类型标签
    */
   getAtmosphereTypeLabel: (state) => (type) => {
-    return state.atmosphereTypes?.labels?.[type] || type
+    return state.atmosphereTypes?.values?.[type] || type
   },
 
   /**
    * 获取循环风机速度标签
    */
   getCirculationFanSpeedLabel: (state) => (speed) => {
-    return state.circulationFanSpeeds?.labels?.[speed] || speed
+    return state.circulationFanSpeeds?.values?.[speed] || speed
   },
 
   /**
    * 获取控温方式标签
    */
   getControlModeLabel: (state) => (mode) => {
-    return state.controlModes?.labels?.[mode] || mode
+    return state.controlModes?.values?.[mode] || mode
   },
 
   /**
@@ -157,10 +176,10 @@ const getters = {
    */
   templateStatusOptions: (state) => {
     const dict = state.templateStatuses
-    if (!dict.values || !dict.labels) return []
+    if (!dict.values) return []
     return Object.keys(dict.values).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict.values[key]
     }))
   },
 
@@ -169,10 +188,10 @@ const getters = {
    */
   templateVersionStatusOptions: (state) => {
     const dict = state.templateVersionStatuses
-    if (!dict.values || !dict.labels) return []
+    if (!dict.values) return []
     return Object.keys(dict.values).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict.values[key]
     }))
   },
 
@@ -181,10 +200,10 @@ const getters = {
    */
   atmosphereTypeOptions: (state) => {
     const dict = state.atmosphereTypes
-    if (!dict.values || !dict.labels) return []
+    if (!dict.values) return []
     return Object.keys(dict.values).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict.values[key]
     }))
   },
 
@@ -193,10 +212,10 @@ const getters = {
    */
   circulationFanSpeedOptions: (state) => {
     const dict = state.circulationFanSpeeds
-    if (!dict.values || !dict.labels) return []
+    if (!dict.values) return []
     return Object.keys(dict.values).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict.values[key]
     }))
   },
 
@@ -205,10 +224,10 @@ const getters = {
    */
   controlModeOptions: (state) => {
     const dict = state.controlModes
-    if (!dict.values || !dict.labels) return []
+    if (!dict.values) return []
     return Object.keys(dict.values).map(key => ({
       value: key,
-      label: dict.labels[key]
+      label: dict.values[key]
     }))
   }
 }

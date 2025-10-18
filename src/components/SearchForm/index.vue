@@ -399,8 +399,8 @@ export default {
 
       // 确保DOM更新后再继续操作
       this.$nextTick(() => {
-        // 触发重置事件
-        this.$emit('reset')
+        // 触发重置事件，传递重置后的空数据
+        this.$emit('reset', emptyModel)
 
         // 同步到父组件
         this.syncToParent()
