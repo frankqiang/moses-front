@@ -39,6 +39,19 @@ export function fetchAnnealingTaskList(params) {
 }
 
 /**
+ * 获取待排程任务摘要统计
+ * @param {Object} params - 查询参数
+ * @returns {Promise<Object>} 返回摘要统计数据
+ */
+export function fetchPendingScheduleSummary(params) {
+  return service({
+    url: `${API_ENDPOINTS.PENDING_SCHEDULE}/summary`,
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 获取退火任务详情
  * @param {string} taskId - 任务ID
  * @returns {Promise<Object>} 返回任务详情数据

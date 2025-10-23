@@ -103,6 +103,12 @@ export const DEFAULT_PAGINATION = {
   limit: 20
 }
 
+// 待排程任务默认分页（接口基于limit/offset）
+export const PENDING_DEFAULT_PAGINATION = {
+  limit: 20,
+  offset: 0
+}
+
 // API 响应字段名称映射
 export const API_RESPONSE_FIELDS = {
   list: 'results',
@@ -124,5 +130,112 @@ export const SORTABLE_FIELDS = [
   'actualWeight',
   'createdAt',
   'updatedAt'
+]
+
+// 状态流转规则（从当前状态到允许的下一状态）
+// 注意：pending-schedule → scheduled 的变更必须通过"应用排程结果"接口完成，不能通过简单的状态更新
+export const STATE_TRANSITIONS = {
+  [TASK_STATUS.DRAFT]: [TASK_STATUS.PENDING_SCHEDULE, TASK_STATUS.CANCELLED],
+  [TASK_STATUS.PENDING_SCHEDULE]: [TASK_STATUS.DRAFT, TASK_STATUS.CANCELLED], // 移除SCHEDULED，该操作由排程系统完成
+  [TASK_STATUS.SCHEDULED]: [TASK_STATUS.WAITING_LOADING, TASK_STATUS.PENDING_SCHEDULE, TASK_STATUS.PAUSED, TASK_STATUS.CANCELLED],
+  [TASK_STATUS.WAITING_LOADING]: [TASK_STATUS.LOADING, TASK_STATUS.PAUSED, TASK_STATUS.CANCELLED],
+  [TASK_STATUS.LOADING]: [TASK_STATUS.WAITING_EXECUTE, TASK_STATUS.WAITING_LOADING, TASK_STATUS.PAUSED, TASK_STATUS.TERMINATED],
+  [TASK_STATUS.WAITING_EXECUTE]: [TASK_STATUS.IN_PROGRESS, TASK_STATUS.PAUSED, TASK_STATUS.TERMINATED],
+  [TASK_STATUS.IN_PROGRESS]: [TASK_STATUS.WAITING_UNLOAD, TASK_STATUS.PAUSED, TASK_STATUS.TERMINATED],
+  [TASK_STATUS.WAITING_UNLOAD]: [TASK_STATUS.COMPLETED, TASK_STATUS.PAUSED, TASK_STATUS.TERMINATED],
+  [TASK_STATUS.PAUSED]: [
+    TASK_STATUS.SCHEDULED,
+    TASK_STATUS.WAITING_LOADING,
+    TASK_STATUS.LOADING,
+    TASK_STATUS.WAITING_EXECUTE,
+    TASK_STATUS.IN_PROGRESS,
+    TASK_STATUS.WAITING_UNLOAD,
+    TASK_STATUS.CANCELLED,
+    TASK_STATUS.TERMINATED
+  ],
+  [TASK_STATUS.COMPLETED]: [],
+  [TASK_STATUS.CANCELLED]: [],
+  [TASK_STATUS.TERMINATED]: []
+}
+
+// 需要原因说明的状态
+export const REASON_REQUIRED_STATUSES = [
+  TASK_STATUS.PAUSED,
+  TASK_STATUS.CANCELLED,
+  TASK_STATUS.TERMINATED
+]
+
+// 快捷原因选项（用于暂停、取消、异常终止）
+export const QUICK_REASON_OPTIONS = {
+  [TASK_STATUS.PAUSED]: [
+    { label: '设备故障', value: '设备故障' },
+    { label: '物料不足', value: '物料不足' },
+    { label: '工艺调整', value: '工艺调整' },
+    { label: '计划变更', value: '计划变更' },
+    { label: '质量问题', value: '质量问题' },
+    { label: '人员调配', value: '人员调配' }
+  ],
+  [TASK_STATUS.CANCELLED]: [
+    { label: '生产计划取消', value: '生产计划取消' },
+    { label: '客户取消订单', value: '客户取消订单' },
+    { label: '物料质量不合格', value: '物料质量不合格' },
+    { label: '设备无法使用', value: '设备无法使用' },
+    { label: '重复创建', value: '重复创建' }
+  ],
+  [TASK_STATUS.TERMINATED]: [
+    { label: '设备严重故障', value: '设备严重故障' },
+    { label: '安全事故', value: '安全事故' },
+    { label: '严重质量问题', value: '严重质量问题' },
+    { label: '停电停水', value: '停电停水' },
+    { label: '其他紧急情况', value: '其他紧急情况' }
+  ]
+}
+
+// 状态说明（用于帮助用户理解状态含义）
+export const STATUS_DESCRIPTIONS = {
+  [TASK_STATUS.DRAFT]: '任务初始状态，可继续编辑',
+  [TASK_STATUS.PENDING_SCHEDULE]: '任务已确认，等待系统排程',
+  [TASK_STATUS.SCHEDULED]: '已分配退火炉和时间窗口',
+  [TASK_STATUS.WAITING_LOADING]: '排程已发布，等待装炉操作',
+  [TASK_STATUS.LOADING]: '正在进行装炉操作',
+  [TASK_STATUS.WAITING_EXECUTE]: '装炉完成，等待退火工艺执行',
+  [TASK_STATUS.IN_PROGRESS]: '退火工艺正在执行',
+  [TASK_STATUS.WAITING_UNLOAD]: '退火完成，等待出炉操作',
+  [TASK_STATUS.COMPLETED]: '出炉完成，任务终态',
+  [TASK_STATUS.PAUSED]: '任务暂停，可恢复到暂停前状态',
+  [TASK_STATUS.CANCELLED]: '任务取消，任务终态',
+  [TASK_STATUS.TERMINATED]: '任务因异常终止，任务终态'
+}
+
+// 常用快速状态更新操作（用于列表页快捷操作）
+export const QUICK_STATUS_ACTIONS = [
+  {
+    label: '标记为待排程',
+    targetStatus: TASK_STATUS.PENDING_SCHEDULE,
+    allowedFromStatuses: [TASK_STATUS.DRAFT],
+    type: '', // 使用默认按钮样式，与"查看详情"等操作按钮风格统一
+    icon: 'el-icon-s-order'
+  },
+  {
+    label: '开始装炉',
+    targetStatus: TASK_STATUS.LOADING,
+    allowedFromStatuses: [TASK_STATUS.WAITING_LOADING],
+    type: 'success',
+    icon: 'el-icon-upload2'
+  },
+  {
+    label: '开始执行',
+    targetStatus: TASK_STATUS.IN_PROGRESS,
+    allowedFromStatuses: [TASK_STATUS.WAITING_EXECUTE],
+    type: 'success',
+    icon: 'el-icon-video-play'
+  },
+  {
+    label: '标记完成',
+    targetStatus: TASK_STATUS.COMPLETED,
+    allowedFromStatuses: [TASK_STATUS.WAITING_UNLOAD],
+    type: 'success',
+    icon: 'el-icon-check'
+  }
 ]
 

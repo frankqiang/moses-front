@@ -84,7 +84,7 @@ export const TABLE_COLUMNS = [
     prop: 'materialCount',
     label: '物料数量',
     sortable: true,
-    minWidth: 100,
+    minWidth: 120,
     align: 'center',
     showOverflowTooltip: true
   },
@@ -137,11 +137,161 @@ export const TABLE_COLUMNS = [
   {
     prop: 'actions',
     label: '操作',
-    minWidth: 180,
+    minWidth: 280,
     fixed: 'right',
     slotName: 'actions',
     showOverflowTooltip: false
   }
+]
+
+// 待排程任务表格列配置
+// 注意：排序由后端自动固定（优先级 > 计划装炉时间 > 任务编号），不支持前端自定义排序
+export const PENDING_TABLE_COLUMNS = [
+  {
+    prop: 'taskCode',
+    label: '任务编号',
+    sortable: false,
+    minWidth: 200,
+    fixed: 'left',
+    align: 'left',
+    showOverflowTooltip: true,
+    slotName: 'taskCode'
+  },
+  {
+    prop: 'taskName',
+    label: '任务名称',
+    sortable: false,
+    minWidth: 180,
+    align: 'left',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'productCode',
+    label: '产品编码',
+    sortable: false,
+    minWidth: 160,
+    align: 'left',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'alloyGrade',
+    label: '合金牌号',
+    sortable: false,
+    minWidth: 120,
+    align: 'center',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'mixingGroupCode',
+    label: '混炉分组',
+    sortable: false,
+    minWidth: 140,
+    align: 'center',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'priority',
+    label: '优先级',
+    sortable: false,
+    minWidth: 100,
+    align: 'center',
+    slotName: 'priority',
+    showOverflowTooltip: false
+  },
+  {
+    prop: 'plannedWeight',
+    label: '计划重量 (吨)',
+    sortable: false,
+    minWidth: 140,
+    align: 'right',
+    showOverflowTooltip: true,
+    slotName: 'plannedWeight'
+  },
+  {
+    prop: 'actualWeight',
+    label: '实际重量 (吨)',
+    sortable: false,
+    minWidth: 140,
+    align: 'right',
+    showOverflowTooltip: true,
+    slotName: 'actualWeight'
+  },
+  {
+    prop: 'materialCount',
+    label: '物料数量',
+    sortable: false,
+    minWidth: 120,
+    align: 'center',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'plannedLoadingAt',
+    label: '计划装炉时间',
+    sortable: false,
+    minWidth: 180,
+    align: 'center',
+    type: 'datetime',
+    format: '{y}-{m}-{d} {h}:{i}',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'scheduleLockedUntil',
+    label: '锁定截止时间',
+    sortable: false,
+    minWidth: 180,
+    align: 'center',
+    type: 'datetime',
+    format: '{y}-{m}-{d} {h}:{i}',
+    showOverflowTooltip: true,
+    slotName: 'scheduleLockedUntil'
+  },
+  {
+    prop: 'schedulePlanId',
+    label: '排程方案ID',
+    sortable: false,
+    minWidth: 200,
+    align: 'left',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'expectedDurationMinutes',
+    label: '预计执行时长',
+    sortable: false,
+    minWidth: 140,
+    align: 'center',
+    slotName: 'expectedDurationMinutes'
+  },
+  {
+    prop: 'estimatedEnergyConsumption',
+    label: '预计能耗 (kWh)',
+    sortable: false,
+    minWidth: 140,
+    align: 'center',
+    slotName: 'estimatedEnergyConsumption'
+  },
+  {
+    prop: 'actions',
+    label: '操作',
+    minWidth: 280,
+    fixed: 'right',
+    slotName: 'actions',
+    showOverflowTooltip: false
+  }
+]
+
+// 待排程任务默认可见列
+export const PENDING_DEFAULT_VISIBLE_COLUMNS = [
+  'taskCode',
+  'taskName',
+  'productCode',
+  'alloyGrade',
+  'mixingGroupCode',
+  'priority',
+  'plannedWeight',
+  'materialCount',
+  'plannedLoadingAt',
+  'scheduleLockedUntil',
+  'actions'
 ]
 
 // 默认可见列

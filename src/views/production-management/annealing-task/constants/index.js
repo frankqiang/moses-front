@@ -10,6 +10,7 @@
 export * from './annealing-task'
 export * from './table-config'
 export * from './form-config'
+export * from './pending-form-config'
 export * from './api-config'
 export * from './messages-config'
 export * from './detail-config'
