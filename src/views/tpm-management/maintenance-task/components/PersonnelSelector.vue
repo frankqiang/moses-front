@@ -96,10 +96,6 @@ export default {
     }
   },
 
-  created() {
-    this.loadPersonnelList()
-  },
-
   watch: {
     departmentId() {
       this.loadPersonnelList()
@@ -110,6 +106,10 @@ export default {
     roleIds() {
       this.loadPersonnelList()
     }
+  },
+
+  created() {
+    this.loadPersonnelList()
   },
 
   methods: {

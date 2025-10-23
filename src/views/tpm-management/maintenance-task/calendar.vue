@@ -279,7 +279,7 @@ export default {
         '执行中': '#409EFF', // 蓝色（processing）
         '已完成': '#67C23A', // 绿色（success）
         '已延期': '#E6A23C', // 橙色（warning）
-        '已取消': '#F56C6C'  // 红色（error）- 已取消的任务已被后端过滤，理论上不会出现
+        '已取消': '#F56C6C' // 红色（error）- 已取消的任务已被后端过滤，理论上不会出现
       }
       return colorMap[status] || '#909399'
     },

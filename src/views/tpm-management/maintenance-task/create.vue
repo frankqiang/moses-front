@@ -9,7 +9,7 @@
 <template>
   <div class="create-task-container">
     <div class="page-header">
-      <el-page-header @back="handleBack" content="创建维护任务" />
+      <el-page-header content="创建维护任务" @back="handleBack" />
     </div>
 
     <div class="page-content">
@@ -591,5 +591,4 @@ export default {
   }
 }
 </style>
-
 

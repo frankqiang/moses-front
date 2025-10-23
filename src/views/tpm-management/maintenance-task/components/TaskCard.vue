@@ -97,11 +97,11 @@ import { parseTime } from '@/utils'
 export default {
   name: 'TaskCard',
 
-  mixins: [tpmDictionaryMixin],
-
   components: {
     TaskStatusTag
   },
+
+  mixins: [tpmDictionaryMixin],
 
   props: {
     // 任务数据
