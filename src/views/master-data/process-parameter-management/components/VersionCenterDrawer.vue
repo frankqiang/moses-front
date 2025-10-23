@@ -894,7 +894,7 @@ export default {
 
       try {
         // 将英文枚举键转换为中文标签（接口要求中文值）
-        let statusParam = undefined
+        let statusParam
         if (this.versionStatusFilter !== 'ALL') {
           statusParam = this.getTemplateVersionStatusLabel(this.versionStatusFilter)
         }
