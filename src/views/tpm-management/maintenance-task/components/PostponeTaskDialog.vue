@@ -86,7 +86,7 @@
       <!-- 业务规则提示 -->
       <el-alert
         v-if="taskInfo && taskInfo.status === '执行中'"
-        title="温馨提示：执行中的任务延期后，设备将保持"维护中"状态，直到任务完成或取消"
+        title="温馨提示：执行中的任务延期后，设备将保持维护中状态，直到任务完成或取消"
         type="info"
         :closable="false"
         show-icon
