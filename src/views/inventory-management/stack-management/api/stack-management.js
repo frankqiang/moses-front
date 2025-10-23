@@ -14,8 +14,12 @@ import { STACK_API_ENDPOINTS } from '../constants'
  * @param {Object} data - 组垛数据
  * @param {string} [data.stackCode] - 料垛编号（格式：LD-YYYYMMDD-XXXX，可选，不提供则自动生成）
  * @param {Array<string>} data.binIds - 料框ID列表（UUID数组，至少2个，元素唯一，必填）
+ * @param {string} [data.currentLocationId] - 料垛位置ID（UUID格式，可选）
+ *   - 不传：使用第一个料框的位置（就地组垛）
+ *   - 传入库位ID：指定新位置
+ *   - 传入null：暂无位置
  * @param {string} [data.remarks] - 备注（可选，最大500字符）
- * @returns {Promise<Object>} 返回料垛完整信息（包含id、stackCode、totalWeight、binCount等字段）
+ * @returns {Promise<Object>} 返回料垛完整信息（包含id、stackCode、totalWeight、binCount、currentLocationId等字段）
  */
 export function createStack(data) {
   return service({

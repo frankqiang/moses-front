@@ -3,6 +3,7 @@
     :visible.sync="dialogVisible"
     :title="dialogTitle"
     width="1200px"
+    top="5vh"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     @close="handleClose"
@@ -185,6 +186,54 @@
         </div>
       </el-form-item>
 
+      <!-- 位置选择模式 -->
+      <el-form-item label="料垛位置">
+        <el-radio-group v-model="locationMode" @change="handleLocationModeChange">
+          <el-radio label="default">就地组垛（使用第一个料框位置）</el-radio>
+          <el-radio label="specify">指定新位置</el-radio>
+          <el-radio label="none">暂无位置</el-radio>
+        </el-radio-group>
+      </el-form-item>
+
+      <!-- 指定位置选择器 -->
+      <el-form-item v-if="locationMode === 'specify'" label="选择库位" prop="currentLocationId">
+        <el-select
+          v-model="formData.currentLocationId"
+          placeholder="请选择库位"
+          filterable
+          remote
+          clearable
+          :remote-method="searchLocations"
+          :loading="locationLoading"
+          style="width: 100%"
+        >
+          <el-option
+            v-for="location in locationOptions"
+            :key="location.id"
+            :label="`${location.locationId} - ${location.locationTypeName} (${location.occupancyStatusName})`"
+            :value="location.id"
+            :disabled="location.occupancyStatus !== 'free'"
+          >
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span>
+                <strong>{{ location.locationId }}</strong>
+                <span style="margin-left: 8px; color: #909399;">{{ location.locationTypeName }}</span>
+              </span>
+              <el-tag :type="location.occupancyStatus === 'free' ? 'success' : 'info'" size="mini">
+                {{ location.occupancyStatusName }}
+              </el-tag>
+            </div>
+            <div style="font-size: 12px; color: #909399; margin-top: 4px;">
+              承重: {{ location.loadCapacity }}kg | 最大堆叠: {{ location.maxStackHeight }}层
+            </div>
+          </el-option>
+        </el-select>
+        <div class="form-item-tip">
+          <i class="el-icon-info" />
+          只显示空闲的地面堆垛区库位，输入库位编码可搜索
+        </div>
+      </el-form-item>
+
       <!-- 备注 -->
       <el-form-item label="备注" prop="remarks">
         <el-input
@@ -247,6 +296,7 @@
 <script>
 import { createStack } from '../api'
 import { getBinDetail } from '@/views/inventory-management/bin-management/api'
+import { getLocationList } from '@/views/master-data/storage-location-management/storage-location/api/storage-location'
 import { STACK_CODE_PATTERN } from '../constants'
 import { BIN_STATUS_CONFIG } from '@/views/inventory-management/bin-management/constants'
 import StatusTag from '@/components/StatusTag'
@@ -288,17 +338,25 @@ export default {
       binIdsInput: '',
       formData: {
         stackCode: '',
+        currentLocationId: null,
         remarks: ''
       },
       formRules: {
         stackCode: [
           { validator: validateStackCode, trigger: 'blur' }
+        ],
+        currentLocationId: [
+          { required: true, message: '请选择库位', trigger: 'change' }
         ]
       },
       selectedBins: [], // 已选择的料框列表
       validationErrors: [], // 组垛规则验证错误
       binStatusConfig: BIN_STATUS_CONFIG,
-      binSelectorVisible: false
+      binSelectorVisible: false,
+      // 位置相关
+      locationMode: 'default', // default: 就地组垛, specify: 指定新位置, none: 暂无位置
+      locationOptions: [], // 库位选项列表
+      locationLoading: false // 库位加载状态
     }
   },
 
@@ -372,6 +430,74 @@ export default {
         }).catch(() => {
           this.selectMode = this.selectMode === 'manual' ? 'table' : 'manual'
         })
+      }
+    },
+
+    /**
+     * 处理位置模式切换
+     */
+    handleLocationModeChange(mode) {
+      // 清空当前选择的位置
+      this.formData.currentLocationId = null
+
+      // 如果切换到指定位置模式，加载初始库位列表
+      if (mode === 'specify') {
+        this.loadInitialLocations()
+      }
+    },
+
+    /**
+     * 加载初始库位列表
+     */
+    async loadInitialLocations() {
+      this.locationLoading = true
+      try {
+        const response = await getLocationList({
+          occupancyStatus: 'free',
+          locationType: 'ground_stacking',
+          page: 1,
+          limit: 20
+        })
+
+        if (response.success && response.data) {
+          this.locationOptions = response.data.results || []
+        }
+      } catch (error) {
+        console.error('加载库位列表失败:', error)
+        // 错误处理由request拦截器统一处理
+      } finally {
+        this.locationLoading = false
+      }
+    },
+
+    /**
+     * 搜索库位（远程搜索）
+     */
+    async searchLocations(query) {
+      if (!query) {
+        // 如果没有搜索词，加载默认列表
+        this.loadInitialLocations()
+        return
+      }
+
+      this.locationLoading = true
+      try {
+        const response = await getLocationList({
+          keyword: query,
+          occupancyStatus: 'free',
+          locationType: 'ground_stacking',
+          page: 1,
+          limit: 20
+        })
+
+        if (response.success && response.data) {
+          this.locationOptions = response.data.results || []
+        }
+      } catch (error) {
+        console.error('搜索库位失败:', error)
+        // 错误处理由request拦截器统一处理
+      } finally {
+        this.locationLoading = false
       }
     },
 
@@ -591,6 +717,12 @@ export default {
           return
         }
 
+        // 如果选择了指定位置模式但没有选择库位，提示用户
+        if (this.locationMode === 'specify' && !this.formData.currentLocationId) {
+          this.$message.warning('请选择库位')
+          return
+        }
+
         this.submitting = true
 
         try {
@@ -602,6 +734,16 @@ export default {
           if (this.formData.stackCode) {
             data.stackCode = this.formData.stackCode
           }
+
+          // 根据位置模式处理 currentLocationId
+          if (this.locationMode === 'specify') {
+            // 指定新位置：传入库位ID
+            data.currentLocationId = this.formData.currentLocationId
+          } else if (this.locationMode === 'none') {
+            // 暂无位置：传入 null
+            data.currentLocationId = null
+          }
+          // default 模式：不传 currentLocationId，后端使用第一个料框的位置
 
           // 备注（可选）
           if (this.formData.remarks) {
@@ -647,6 +789,11 @@ export default {
       this.validationErrors = []
       this.selectMode = 'manual'
       this.submitting = false
+
+      // 重置位置相关状态
+      this.locationMode = 'default'
+      this.formData.currentLocationId = null
+      this.locationOptions = []
 
       this.dialogVisible = false
     }

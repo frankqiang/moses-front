@@ -76,6 +76,16 @@ export const STACK_FORM_CONFIG = [
     formatter: (value) => value?.toUpperCase().trim()
   },
   {
+    type: 'select',
+    prop: 'currentLocationId',
+    label: '料垛位置',
+    placeholder: '请选择库位',
+    clearable: true,
+    filterable: true,
+    remote: true,
+    options: [] // 动态加载库位选项
+  },
+  {
     type: 'textarea',
     prop: 'remarks',
     label: '备注',
@@ -85,6 +95,13 @@ export const STACK_FORM_CONFIG = [
     maxlength: 500,
     clearable: true
   }
+]
+
+// 位置选择模式选项
+export const LOCATION_MODE_OPTIONS = [
+  { label: '就地组垛（使用第一个料框位置）', value: 'default' },
+  { label: '指定新位置', value: 'specify' },
+  { label: '暂无位置', value: 'none' }
 ]
 
 // 组垛表单验证规则
