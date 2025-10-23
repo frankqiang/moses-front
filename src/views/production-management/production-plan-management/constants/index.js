@@ -4,6 +4,7 @@
  * 创建日期：2025-01-21
  * 修改记录：
  *   - 2025-01-21: 初始创建
+ *   - 2025-10-23: 新增审计日志配置导出
  */
 
 // 导出基础常量
@@ -20,4 +21,7 @@ export * from './api-config'
 
 // 导出消息配置
 export * from './messages-config'
+
+// 导出审计日志配置
+export * from './audit-logs-config'
 
