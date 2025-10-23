@@ -241,7 +241,6 @@ export default {
       return map[linkType] || linkType || '-'
     },
 
-
     /**
      * 格式化时间
      */
@@ -252,6 +251,15 @@ export default {
     /**
      * 判断是否可以生成退火任务
      * 只有草稿(DRAFT)或待排程(READY_FOR_SCHEDULING)状态的批次可以生成任务
+     *
+     * 📢 状态流转说明：
+     * - 生成任务前：状态为 DRAFT 或 READY_FOR_SCHEDULING
+     * - 生成任务后：后端自动更新状态为 SCHEDULED（已排程）
+     * - 状态为 SCHEDULED 后：此按钮会自动隐藏，避免重复生成
+     *
+     * 参考：
+     * - docs/接口文档/单独接口/创建退火任务接口详细说明.md
+     * - docs/创建退火任务自动更新子批次状态功能说明.md
      */
     canGenerateTask(item) {
       return item.status === 'DRAFT' || item.status === 'READY_FOR_SCHEDULING'

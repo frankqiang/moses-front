@@ -622,8 +622,8 @@ export default {
         return false
       }
 
-      // 检查子批次是否有有效重量
-      const hasValidWeight = this.planData.items.some(item => item.predictedWeight && item.predictedWeight > 0)
+      // 检查子批次是否有有效重量（根据接口文档，字段名为 plannedWeight）
+      const hasValidWeight = this.planData.items.some(item => item.plannedWeight && item.plannedWeight > 0)
       if (!hasValidWeight) {
         this.$message.warning('生产计划缺少有效重量，无法评估')
         return false

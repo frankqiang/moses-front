@@ -33,7 +33,7 @@ const FALLBACK_MESSAGES = {
 /**
  * 获取错误消息
  * 优先级：后端消息 > 本地备用消息
- * @param {Error} error - 错误对象
+ * @param {Error} error - 错误对象（可能是 ApiError 或 axios 错误）
  * @returns {string} 错误消息
  */
 export function getErrorMessage(error) {
@@ -41,19 +41,25 @@ export function getErrorMessage(error) {
     return FALLBACK_MESSAGES.UNKNOWN_ERROR
   }
 
-  // ✅ 第一优先级：后端返回的错误消息（完整且准确）
+  // ✅ 第一优先级：ApiError 对象（已被 request.js 包装）
+  // ApiError 的 message 属性直接包含后端返回的错误消息
+  if (error.name === 'ApiError' && error.message) {
+    return error.message
+  }
+
+  // ✅ 第二优先级：axios 原始错误对象中的后端消息
   if (error.response?.data?.error?.message) {
     return error.response.data.error.message
   }
 
-  // ⚠️ 第二优先级：无法到达后端的场景
+  // ⚠️ 第三优先级：无法到达后端的场景
   // 网络错误
-  if (error.message === 'Network Error' || !error.response) {
+  if (error.message === 'Network Error' || error.code === 'NETWORK_ERROR') {
     return FALLBACK_MESSAGES.NETWORK_ERROR
   }
 
   // 请求超时
-  if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+  if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_TIMEOUT' || error.message.includes('timeout')) {
     return FALLBACK_MESSAGES.TIMEOUT_ERROR
   }
 

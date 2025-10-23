@@ -41,7 +41,7 @@
           <div class="el-upload__text">
             将Excel文件拖到此处，或<em>点击上传</em>
           </div>
-          <div class="el-upload__tip" slot="tip">
+          <div slot="tip" class="el-upload__tip">
             只能上传 .xlsx/.xls 文件，且不超过10MB
           </div>
         </el-upload>
@@ -473,7 +473,7 @@ export default {
         { wch: 15 }, // 客户编码
         { wch: 12 }, // 计划优先级
         { wch: 30 }, // 特殊要求
-        { wch: 36 }  // 工艺模板ID
+        { wch: 36 } // 工艺模板ID
       ]
 
       XLSX.utils.book_append_sheet(wb, ws, '生产计划导入模板')

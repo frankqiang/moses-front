@@ -356,7 +356,6 @@ export default {
       return map[linkType] || linkType || '-'
     },
 
-
     /**
      * 格式化JSON对象为易读格式
      */

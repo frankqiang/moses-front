@@ -105,12 +105,12 @@
           <div v-if="selectedTargetPlan" class="target-plan-detail">
             <el-divider>目标计划详情</el-divider>
             <el-descriptions :column="3" border size="small">
-              <el-descriptions-item label="计划编号">{{ selectedTargetPlan.planNumber }}</el-descriptions-item>
-              <el-descriptions-item label="产品ID">{{ selectedTargetPlan.productId }}</el-descriptions-item>
-              <el-descriptions-item label="产品编码">{{ selectedTargetPlan.productCode }}</el-descriptions-item>
-              <el-descriptions-item label="产品名称" :span="2">{{ selectedTargetPlan.productName }}</el-descriptions-item>
+              <el-descriptions-item label="计划编号">{{ selectedTargetPlan.planNumber || '未知' }}</el-descriptions-item>
+              <el-descriptions-item label="产品ID">{{ selectedTargetPlan.productId || '未设置' }}</el-descriptions-item>
+              <el-descriptions-item label="产品编码">{{ selectedTargetPlan.productCode || '未设置' }}</el-descriptions-item>
+              <el-descriptions-item label="产品名称" :span="2">{{ selectedTargetPlan.productName || '未设置' }}</el-descriptions-item>
               <el-descriptions-item label="需求数量">
-                {{ selectedTargetPlan.demandQuantity }} {{ selectedTargetPlan.demandUnit }}
+                {{ selectedTargetPlan.demandQuantity || 0 }} {{ selectedTargetPlan.demandUnit || '' }}
               </el-descriptions-item>
               <el-descriptions-item label="子批次数量">
                 {{ (selectedTargetPlan.items || []).length }}
@@ -119,7 +119,8 @@
                 {{ selectedTargetPlan.defaultProcessTemplateId || '未设置' }}
               </el-descriptions-item>
               <el-descriptions-item label="工艺模板名称">
-                {{ selectedTargetPlan.processTemplateName || '未设置' }}
+                <!-- ✅ 直接使用标准字段访问（接口已保证一致性） -->
+                {{ getTargetPlanProcessTemplateName() }}
               </el-descriptions-item>
             </el-descriptions>
           </div>
@@ -130,7 +131,7 @@
       <el-card class="section-card" shadow="never">
         <div slot="header" class="card-header">
           <span class="card-title">待合并子批次选择</span>
-          <span class="card-subtitle">只能选择状态为"草稿"或"待排程"的子批次进行合并</span>
+          <span class="card-subtitle">只能选择来自其他计划的、状态为"草稿"或"待排程"的子批次进行合并</span>
         </div>
         <div class="items-section">
           <!-- 搜索筛选区 -->
@@ -184,6 +185,19 @@
             </el-form-item>
           </el-form>
 
+          <!-- 联动筛选提示 -->
+          <el-alert
+            v-if="selectedTargetPlan && selectedTargetPlan.productCode"
+            type="info"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 16px"
+          >
+            <template slot="title">
+              🔗 <strong>智能联动筛选</strong>：仅显示来自其他计划的、与目标计划产品一致的子批次（{{ selectedTargetPlan.productCode || '未知' }}），已自动排除目标计划自己的批次
+            </template>
+          </el-alert>
+
           <!-- 待合并子批次列表 -->
           <el-table
             ref="itemsTable"
@@ -200,7 +214,31 @@
             <el-table-column prop="itemNumber" label="子批次编号" min-width="150" show-overflow-tooltip />
             <el-table-column prop="plannedWeight" label="预计重量(吨)" width="120" />
             <el-table-column prop="plannedQuantity" label="预计数量" width="100" />
-            <el-table-column prop="processTemplateName" label="工艺模板" min-width="150" show-overflow-tooltip />
+            <!-- ✅ 直接使用标准字段访问（接口已保证一致性） -->
+            <el-table-column label="工艺模板" min-width="150" show-overflow-tooltip>
+              <template slot-scope="scope">
+                {{ (scope.row.processTemplate && scope.row.processTemplate.name) || '未设置' }}
+              </template>
+            </el-table-column>
+            <!-- 🔧 新增：目标计划标识列 -->
+            <el-table-column label="来源" width="100">
+              <template slot-scope="scope">
+                <el-tag
+                  v-if="selectedTargetPlan && scope.row.parentPlanId === selectedTargetPlan.id"
+                  type="success"
+                  size="small"
+                >
+                  目标计划
+                </el-tag>
+                <el-tag
+                  v-else
+                  type="info"
+                  size="small"
+                >
+                  其他计划
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column label="状态" width="100">
               <template slot-scope="scope">
                 <el-tag :type="getItemStatusType(scope.row.status)" size="small">
@@ -244,7 +282,7 @@
             <div style="margin-top: 8px; font-size: 13px; color: #67C23A;">
               <div>✓ 目标计划状态符合要求</div>
               <div>✓ 所有子批次状态符合要求</div>
-              <div>✓ 至少一个子批次属于目标计划</div>
+              <div>✓ 至少一个子批次来自其他计划（防止自合并）</div>
               <div>✓ 产品一致性检查通过</div>
               <div>✓ 工艺模板一致性检查通过（按来源计划分组）</div>
             </div>
@@ -262,16 +300,16 @@
           <!-- 合并详情 -->
           <el-descriptions :column="3" border size="small">
             <el-descriptions-item label="目标计划">
-              {{ selectedTargetPlan ? selectedTargetPlan.planNumber : '未选择' }}
+              {{ selectedTargetPlan ? (selectedTargetPlan.planNumber || '未知') : '未选择' }}
             </el-descriptions-item>
             <el-descriptions-item label="目标计划产品">
-              {{ selectedTargetPlan ? selectedTargetPlan.productCode : '未选择' }}
+              {{ selectedTargetPlan ? (selectedTargetPlan.productCode || '未设置') : '未选择' }}
             </el-descriptions-item>
             <el-descriptions-item label="涉及来源计划数">
               {{ getSourcePlansCount() }}
             </el-descriptions-item>
-            <el-descriptions-item label="待合并子批次数">
-              {{ selectedItems.length }}
+            <el-descriptions-item label="来自其他计划的批次数" label-style="font-weight: 600; color: #409EFF;">
+              {{ getItemsFromOtherPlansCount() }} / {{ selectedItems.length }}
             </el-descriptions-item>
             <el-descriptions-item label="目标计划现有子批次数">
               {{ getTargetItemsCount() }}
@@ -310,13 +348,13 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="100">
+            <el-table-column label="工艺一致性" width="110">
               <template slot-scope="scope">
                 <el-tag
                   :type="scope.row.processTemplates.length > 1 ? 'danger' : 'success'"
                   size="small"
                 >
-                  {{ scope.row.processTemplates.length > 1 ? '工艺不一致' : '验证通过' }}
+                  {{ scope.row.processTemplates.length > 1 ? '不一致' : '一致' }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -360,8 +398,7 @@ import {
   PLAN_STATUS,
   PLAN_STATUS_TYPE_MAP,
   ITEM_STATUS,
-  ITEM_STATUS_TYPE_MAP,
-  getErrorMessage
+  ITEM_STATUS_TYPE_MAP
 } from '../constants'
 
 /**
@@ -381,6 +418,9 @@ export default {
       visible: false,
       loading: false,
       submitting: false,
+
+      // 数据缓存（优化性能，避免重复调用接口）
+      allPlansCache: [],
 
       // 目标计划相关
       targetPlanList: [],
@@ -451,8 +491,8 @@ export default {
     open() {
       this.visible = true
       this.resetForm()
-      this.fetchTargetPlans()
-      this.fetchAvailableItems()
+      // 优化：一次性获取所有需要的数据，避免重复调用接口
+      this.fetchAllPlansData()
     },
 
     /**
@@ -465,10 +505,16 @@ export default {
 
     /**
      * 重置表单
+     * 🔧 修复：清理联动状态
      */
     resetForm() {
+      // 清理缓存数据
+      this.allPlansCache = []
+
+      // 🔧 重要：先清理选择状态，避免联动触发
       this.selectedTargetPlan = null
       this.selectedItems = []
+
       this.targetPlanFilters = {
         planNumber: '',
         productCode: '',
@@ -482,36 +528,71 @@ export default {
       }
       this.changeDescription = ''
       this.validationErrors = []
+
+      // 清理表格选择状态
+      if (this.$refs.itemsTable) {
+        this.$refs.itemsTable.clearSelection()
+      }
     },
 
     /**
-     * 获取目标计划列表
-     * 只查询状态为 CONFIRMED 或 PARTIALLY_RELEASED 的计划
-     * 使用分页方式获取所有数据（limit最大为100）
+     * 一次性获取所有计划数据并分离处理
+     * 优化：避免重复调用接口，提升性能
      */
-    async fetchTargetPlans() {
+    async fetchAllPlansData() {
       try {
+        this.loading = true
         this.targetPlanLoading = true
-        const allPlans = []
+        this.itemsLoading = true
+
+        const allPlans = await this.getAllPlansWithPagination()
+
+        // 分离目标计划和子批次
+        this.processPlansData(allPlans)
+      } catch (error) {
+        console.error('获取计划数据失败:', error)
+
+        // 🔧 判断是否需要业务层显示错误消息
+        // request.js 会自动显示以下类型的错误：VAL_*、SYS_*、5xx、429、423、403
+        // 其他业务错误需要业务层显示
+        const errorCode = error.code || error.response?.data?.error?.code
+        const shouldShowMessage = !this.isErrorHandledByRequestLayer(errorCode, error.status)
+
+        if (shouldShowMessage) {
+          // ✅ 使用后端返回的错误消息
+          const errorMessage = error.response?.data?.error?.message || error.message || '获取计划数据失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
+      } finally {
+        this.loading = false
+        this.targetPlanLoading = false
+        this.itemsLoading = false
+      }
+    },
+
+    /**
+     * 分页获取所有符合条件的计划数据
+     * ⚡ 性能优化：只查询状态为 CONFIRMED 或 PARTIALLY_RELEASED 的计划
+     */
+    async getAllPlansWithPagination() {
+      const allPlans = []
+
+      // ⚡ 优化：分别查询两种状态的计划，减少不必要的数据传输
+      // 注意：接口的 status 参数只支持单个值，不支持数组
+      const statuses = [PLAN_STATUS.CONFIRMED, PLAN_STATUS.PARTIALLY_RELEASED]
+
+      for (const status of statuses) {
         let currentPage = 1
         const pageSize = 100 // 接口限制最大为100
         let hasMore = true
 
-        // 分页获取所有符合条件的计划
         while (hasMore) {
           const params = {
             page: currentPage,
             limit: pageSize,
-            status: [PLAN_STATUS.CONFIRMED, PLAN_STATUS.PARTIALLY_RELEASED].join(','),
-            ...this.targetPlanFilters
+            status: status, // ⚡ 关键优化：传递状态参数进行后端筛选
+            includeDetails: true // 获取子计划数据
           }
-
-          // 清空空值
-          Object.keys(params).forEach(key => {
-            if (!params[key]) {
-              delete params[key]
-            }
-          })
 
           const response = await fetchPlanList(params)
           if (response.success && response.data) {
@@ -523,89 +604,193 @@ export default {
             hasMore = pagination && currentPage < pagination.totalPages
             currentPage++
           } else {
-            // 失败时 message 在 error 对象中
-            this.$message.error(response.error?.message || '获取目标计划列表失败')
+            this.$message.error(response.error?.message || '获取计划列表失败')
             hasMore = false
+            break
           }
         }
+      }
 
-        this.targetPlanList = allPlans
+      return allPlans
+    },
+
+    /**
+     * 处理计划数据，分离目标计划和子批次
+     * ⚡ 性能优化：后端已筛选状态，前端只需处理数据结构
+     */
+    processPlansData(allPlans) {
+      // 缓存所有计划数据
+      this.allPlansCache = allPlans
+
+      const targetPlans = []
+      const availableItems = []
+
+      allPlans.forEach(plan => {
+        // ⚡ 优化：后端已筛选状态为 CONFIRMED 或 PARTIALLY_RELEASED，无需重复判断
+        targetPlans.push(plan)
+
+        // 提取符合条件的子批次：状态为 DRAFT 或 READY_FOR_SCHEDULING
+        if (plan.items && Array.isArray(plan.items)) {
+          plan.items.forEach(item => {
+            if (item.status === ITEM_STATUS.DRAFT || item.status === ITEM_STATUS.READY_FOR_SCHEDULING) {
+              availableItems.push({
+                ...item,
+                planId: item.planId || plan.id, // 保持原有的planId，如果没有则使用父计划ID
+                parentPlanNumber: plan.planNumber,
+                parentPlanId: plan.id,
+                parentProductId: plan.productId,
+                parentProductCode: plan.productCode,
+                parentProductName: plan.productName
+              })
+            }
+          })
+        }
+      })
+
+      // 应用当前的筛选条件
+      this.targetPlanList = this.applyTargetPlanFilters(targetPlans)
+      this.itemsList = this.applyItemFilters(availableItems)
+    },
+
+    /**
+     * 应用目标计划筛选条件
+     */
+    applyTargetPlanFilters(plans) {
+      return plans.filter(plan => {
+        const { planNumber, productCode, status } = this.targetPlanFilters
+
+        if (planNumber && plan.planNumber && !plan.planNumber.toLowerCase().includes(planNumber.toLowerCase())) {
+          return false
+        }
+        if (productCode && plan.productCode && !plan.productCode.toLowerCase().includes(productCode.toLowerCase())) {
+          return false
+        }
+        if (status && plan.status !== status) {
+          return false
+        }
+
+        return true
+      })
+    },
+
+    /**
+     * 应用子批次筛选条件
+     * 🔧 新增：如果选择了目标计划，自动排除目标计划自己的批次（防止自合并）
+     */
+    applyItemFilters(items) {
+      return items.filter(item => {
+        // 🔧 核心筛选：如果已选择目标计划，排除目标计划自己的批次
+        if (this.selectedTargetPlan && item.planId === this.selectedTargetPlan.id) {
+          return false
+        }
+
+        const { planNumber, productCode, processTemplateName, status } = this.itemFilters
+
+        if (planNumber && item.parentPlanNumber && !item.parentPlanNumber.toLowerCase().includes(planNumber.toLowerCase())) {
+          return false
+        }
+        if (productCode && item.parentProductCode && !item.parentProductCode.toLowerCase().includes(productCode.toLowerCase())) {
+          return false
+        }
+        // ✅ 直接使用标准字段访问（接口已保证一致性）
+        if (processTemplateName) {
+          const itemTemplateName = item.processTemplate?.name || '未设置'
+          if (!itemTemplateName.toLowerCase().includes(processTemplateName.toLowerCase())) {
+            return false
+          }
+        }
+        if (status && item.status !== status) {
+          return false
+        }
+
+        return true
+      })
+    },
+
+    /**
+     * 获取目标计划列表（优化为本地筛选）
+     * 兼容原有的搜索和重置功能，但使用缓存数据
+     */
+    async fetchTargetPlans() {
+      // 如果没有缓存数据，先获取全部数据
+      if (!this.allPlansCache || this.allPlansCache.length === 0) {
+        await this.fetchAllPlansData()
+        return
+      }
+
+      try {
+        this.targetPlanLoading = true
+
+        // ⚡ 优化：缓存中的数据已经是筛选过的，无需重复判断状态
+        // 直接应用搜索筛选条件即可
+        this.targetPlanList = this.applyTargetPlanFilters(this.allPlansCache)
       } catch (error) {
-        console.error('获取目标计划列表失败:', error)
-        const errorMessage = getErrorMessage(error)
-        this.$message.error(errorMessage)
+        console.error('筛选目标计划失败:', error)
+
+        // 🔧 判断是否需要业务层显示错误消息
+        const errorCode = error.code || error.response?.data?.error?.code
+        const shouldShowMessage = !this.isErrorHandledByRequestLayer(errorCode, error.status)
+
+        if (shouldShowMessage) {
+          const errorMessage = error.response?.data?.error?.message || error.message || '筛选目标计划失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
       } finally {
         this.targetPlanLoading = false
       }
     },
 
     /**
-     * 获取可合并的子批次列表
-     * 从所有计划中提取状态为 DRAFT 或 READY_FOR_SCHEDULING 的子批次
-     * 使用分页方式获取所有数据（limit最大为100）
+     * 获取可合并的子批次列表（优化为本地筛选）
+     * 兼容原有的搜索和重置功能，但使用缓存数据
      */
     async fetchAvailableItems() {
+      // 如果没有缓存数据，先获取全部数据
+      if (!this.allPlansCache || this.allPlansCache.length === 0) {
+        await this.fetchAllPlansData()
+        // fetchAllPlansData 中已经调用了 processPlansData，数据已设置完毕
+        return
+      }
+
       try {
         this.itemsLoading = true
-        const allItems = []
-        let currentPage = 1
-        const pageSize = 100 // 接口限制最大为100
-        let hasMore = true
 
-        // 分页获取所有计划
-        while (hasMore) {
-          const params = {
-            page: currentPage,
-            limit: pageSize,
-            ...this.itemFilters
-          }
-
-          // 清空空值
-          Object.keys(params).forEach(key => {
-            if (!params[key]) {
-              delete params[key]
-            }
-          })
-
-          const response = await fetchPlanList(params)
-          if (response.success && response.data) {
-            const plans = response.data.results || []
-
-            // 提取符合状态的子批次
-            plans.forEach(plan => {
-              if (plan.items && Array.isArray(plan.items)) {
-                plan.items.forEach(item => {
-                  // 只保留草稿或待排程状态的子批次
-                  if (item.status === ITEM_STATUS.DRAFT || item.status === ITEM_STATUS.READY_FOR_SCHEDULING) {
-                    allItems.push({
-                      ...item,
-                      parentPlanNumber: plan.planNumber,
-                      parentPlanId: plan.id,
-                      parentProductId: plan.productId,
-                      parentProductCode: plan.productCode,
-                      parentProductName: plan.productName
-                    })
-                  }
+        // ⚡ 优化：从缓存中提取符合条件的子批次
+        // 缓存中的父计划状态已由后端筛选（CONFIRMED 或 PARTIALLY_RELEASED）
+        // 只需检查子批次状态为 DRAFT 或 READY_FOR_SCHEDULING
+        const availableItems = []
+        this.allPlansCache.forEach(plan => {
+          if (plan.items && Array.isArray(plan.items)) {
+            plan.items.forEach(item => {
+              // 只保留草稿或待排程状态的子批次
+              if (item.status === ITEM_STATUS.DRAFT || item.status === ITEM_STATUS.READY_FOR_SCHEDULING) {
+                availableItems.push({
+                  ...item,
+                  planId: item.planId || plan.id, // 保持原有的planId，如果没有则使用父计划ID
+                  parentPlanNumber: plan.planNumber,
+                  parentPlanId: plan.id,
+                  parentProductId: plan.productId,
+                  parentProductCode: plan.productCode,
+                  parentProductName: plan.productName
                 })
               }
             })
-
-            // 判断是否还有更多数据
-            const pagination = response.data.pagination
-            hasMore = pagination && currentPage < pagination.totalPages
-            currentPage++
-          } else {
-            // 失败时 message 在 error 对象中
-            this.$message.error(response.error?.message || '获取子批次列表失败')
-            hasMore = false
           }
-        }
+        })
 
-        this.itemsList = allItems
+        // 应用筛选条件
+        this.itemsList = this.applyItemFilters(availableItems)
       } catch (error) {
-        console.error('获取子批次列表失败:', error)
-        const errorMessage = getErrorMessage(error)
-        this.$message.error(errorMessage)
+        console.error('筛选子批次列表失败:', error)
+
+        // 🔧 判断是否需要业务层显示错误消息
+        const errorCode = error.code || error.response?.data?.error?.code
+        const shouldShowMessage = !this.isErrorHandledByRequestLayer(errorCode, error.status)
+
+        if (shouldShowMessage) {
+          const errorMessage = error.response?.data?.error?.message || error.message || '筛选子批次列表失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
       } finally {
         this.itemsLoading = false
       }
@@ -632,21 +817,151 @@ export default {
 
     /**
      * 目标计划选择变化
+     * 🔧 修复：实现目标计划与子批次列表的联动
      */
     handleTargetPlanChange(row) {
       this.selectedTargetPlan = row
+
+      // 🔧 联动更新：目标计划选择后，重新筛选子批次列表
+      if (row) {
+        this.updateItemsListByTargetPlan()
+      } else {
+        // 取消选择时，显示所有可用子批次
+        this.refreshItemsList()
+      }
+
       this.performValidation()
     },
 
     /**
+     * 根据目标计划更新子批次列表（联动筛选）
+     * 🔧 新增：实现产品兼容性筛选 + 排除目标计划自己的批次（防止自合并）
+     */
+    updateItemsListByTargetPlan() {
+      if (!this.selectedTargetPlan || !this.allPlansCache || this.allPlansCache.length === 0) {
+        return
+      }
+
+      try {
+        this.itemsLoading = true
+
+        // ⚡ 优化：从缓存中提取符合条件的子批次
+        // 缓存中的父计划状态已由后端筛选（CONFIRMED 或 PARTIALLY_RELEASED）
+        // 只需检查：1. 子批次状态  2. 产品ID与目标计划一致  3. 不是目标计划自己的批次
+        const availableItems = []
+        this.allPlansCache.forEach(plan => {
+          if (plan.items && Array.isArray(plan.items)) {
+            plan.items.forEach(item => {
+              // 只保留草稿或待排程状态的子批次
+              if (item.status === ITEM_STATUS.DRAFT || item.status === ITEM_STATUS.READY_FOR_SCHEDULING) {
+                // 🔧 关键筛选条件：
+                // 1. 产品ID与目标计划一致
+                // 2. 不是目标计划自己的批次（防止自合并）
+                if (plan.productId === this.selectedTargetPlan.productId &&
+                    plan.id !== this.selectedTargetPlan.id) {
+                  availableItems.push({
+                    ...item,
+                    planId: item.planId || plan.id,
+                    parentPlanNumber: plan.planNumber,
+                    parentPlanId: plan.id,
+                    parentProductId: plan.productId,
+                    parentProductCode: plan.productCode,
+                    parentProductName: plan.productName
+                  })
+                }
+              }
+            })
+          }
+        })
+
+        // 应用搜索筛选条件
+        this.itemsList = this.applyItemFilters(availableItems)
+      } catch (error) {
+        console.error('根据目标计划筛选子批次失败:', error)
+
+        // 🔧 判断是否需要业务层显示错误消息
+        const errorCode = error.code || error.response?.data?.error?.code
+        const shouldShowMessage = !this.isErrorHandledByRequestLayer(errorCode, error.status)
+
+        if (shouldShowMessage) {
+          const errorMessage = error.response?.data?.error?.message || error.message || '根据目标计划筛选子批次失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
+      } finally {
+        this.itemsLoading = false
+      }
+    },
+
+    /**
+     * 刷新子批次列表（显示所有可用子批次）
+     * 🔧 新增：取消目标计划选择时的回退逻辑
+     */
+    refreshItemsList() {
+      if (!this.allPlansCache || this.allPlansCache.length === 0) {
+        return
+      }
+
+      try {
+        this.itemsLoading = true
+
+        // ⚡ 优化：从缓存中提取所有符合条件的子批次（不限制产品）
+        // 缓存中的父计划状态已由后端筛选（CONFIRMED 或 PARTIALLY_RELEASED）
+        // 只需检查子批次状态为 DRAFT 或 READY_FOR_SCHEDULING
+        const availableItems = []
+        this.allPlansCache.forEach(plan => {
+          if (plan.items && Array.isArray(plan.items)) {
+            plan.items.forEach(item => {
+              // 只保留草稿或待排程状态的子批次
+              if (item.status === ITEM_STATUS.DRAFT || item.status === ITEM_STATUS.READY_FOR_SCHEDULING) {
+                availableItems.push({
+                  ...item,
+                  planId: item.planId || plan.id,
+                  parentPlanNumber: plan.planNumber,
+                  parentPlanId: plan.id,
+                  parentProductId: plan.productId,
+                  parentProductCode: plan.productCode,
+                  parentProductName: plan.productName
+                })
+              }
+            })
+          }
+        })
+
+        // 应用搜索筛选条件
+        this.itemsList = this.applyItemFilters(availableItems)
+      } catch (error) {
+        console.error('刷新子批次列表失败:', error)
+
+        // 🔧 判断是否需要业务层显示错误消息
+        const errorCode = error.code || error.response?.data?.error?.code
+        const shouldShowMessage = !this.isErrorHandledByRequestLayer(errorCode, error.status)
+
+        if (shouldShowMessage) {
+          const errorMessage = error.response?.data?.error?.message || error.message || '刷新子批次列表失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
+      } finally {
+        this.itemsLoading = false
+      }
+    },
+
+    /**
      * 子批次搜索
+     * 🔧 修复：考虑目标计划选择状态的搜索
      */
     handleItemSearch() {
-      this.fetchAvailableItems()
+      if (this.selectedTargetPlan) {
+        // 如果已选择目标计划，使用联动筛选
+        this.updateItemsListByTargetPlan()
+      } else {
+        // 未选择目标计划，显示所有可用子批次
+        this.fetchAvailableItems()
+      }
     },
 
     /**
      * 子批次重置
+     * 🔧 修复：考虑目标计划选择状态的重置
      */
     handleItemReset() {
       this.itemFilters = {
@@ -655,7 +970,14 @@ export default {
         processTemplateName: '',
         status: ''
       }
-      this.fetchAvailableItems()
+
+      if (this.selectedTargetPlan) {
+        // 如果已选择目标计划，使用联动筛选
+        this.updateItemsListByTargetPlan()
+      } else {
+        // 未选择目标计划，显示所有可用子批次
+        this.fetchAvailableItems()
+      }
     },
 
     /**
@@ -673,7 +995,9 @@ export default {
     performValidation() {
       this.validationErrors = []
 
+      // 0. 验证必须选择子批次（按接口文档要求）
       if (this.selectedItems.length === 0) {
+        this.validationErrors.push('必须指定至少一个子计划ID')
         return
       }
 
@@ -687,6 +1011,11 @@ export default {
         this.validationErrors.push(`目标计划状态必须是"已确认"或"部分下发"，当前状态：${this.getPlanStatusLabel(this.selectedTargetPlan.status)}`)
       }
 
+      // 1.1 验证目标计划未被冻结（按接口文档要求）
+      if (this.selectedTargetPlan.isFrozen) {
+        this.validationErrors.push('目标计划已被冻结，无法进行合并操作')
+      }
+
       // 2. 验证所有子批次状态
       const invalidStatusItems = this.selectedItems.filter(
         item => ![ITEM_STATUS.DRAFT, ITEM_STATUS.READY_FOR_SCHEDULING].includes(item.status)
@@ -695,10 +1024,11 @@ export default {
         this.validationErrors.push(`有 ${invalidStatusItems.length} 个子批次状态不符合要求，只能合并"草稿"或"待排程"状态的子批次`)
       }
 
-      // 3. 验证至少一个子批次属于目标计划
-      const belongsToTarget = this.selectedItems.some(item => item.planId === this.selectedTargetPlan.id)
-      if (!belongsToTarget) {
-        this.validationErrors.push('必须选择至少一个属于目标计划的子批次')
+      // 🔧 修复：验证必须至少有一个来自其他计划的批次（防止自合并）
+      // 业务规则：合并操作必须选择其他计划的批次，不能将计划自己的批次合并到自己
+      const itemsFromOtherPlans = this.selectedItems.filter(item => item.planId !== this.selectedTargetPlan.id)
+      if (itemsFromOtherPlans.length === 0) {
+        this.validationErrors.push('合并操作必须选择至少一个来自其他计划的批次，不能将计划自己的批次合并到自己')
       }
 
       // 4. 验证产品一致性（所有来源计划的产品必须与目标计划一致）
@@ -707,15 +1037,87 @@ export default {
       if (productMismatchItems.length > 0) {
         const uniqueProducts = [...new Set(productMismatchItems.map(item => item.parentProductCode))]
         this.validationErrors.push(
-          `产品不一致：目标计划产品为 "${this.selectedTargetPlan.productCode}"，但有 ${productMismatchItems.length} 个子批次的产品不匹配（${uniqueProducts.join(', ')}）`
+          `产品不一致：目标计划产品为 "${this.selectedTargetPlan.productCode || '未知'}"，但有 ${productMismatchItems.length} 个子批次的产品不匹配（${uniqueProducts.join(', ')}）`
         )
       }
 
-      // 5. 验证工艺模板一致性（按来源计划分组验证）
+      // 5. 验证来源计划状态（按接口文档要求）
+      const sourcePlanStatusErrors = this.validateSourcePlansStatus()
+      if (sourcePlanStatusErrors.length > 0) {
+        this.validationErrors.push(...sourcePlanStatusErrors)
+      }
+
+      // 5.1 验证来源计划未被冻结（按接口文档要求）
+      const frozenPlanErrors = this.validateSourcePlansFrozenStatus()
+      if (frozenPlanErrors.length > 0) {
+        this.validationErrors.push(...frozenPlanErrors)
+      }
+
+      // 6. 验证工艺模板一致性（按来源计划分组验证）
       const processTemplateErrors = this.validateProcessTemplatesByPlan()
       if (processTemplateErrors.length > 0) {
         this.validationErrors.push(...processTemplateErrors)
       }
+    },
+
+    /**
+     * 验证来源计划的状态
+     * 接口文档要求：来源计划状态必须是 CONFIRMED 或 PARTIALLY_RELEASED
+     */
+    validateSourcePlansStatus() {
+      const errors = []
+
+      if (!this.allPlansCache || this.allPlansCache.length === 0) {
+        return errors
+      }
+
+      // 获取所有涉及的来源计划ID（排除目标计划）
+      const sourcePlanIds = new Set()
+      this.selectedItems.forEach(item => {
+        if (item.planId !== this.selectedTargetPlan.id) {
+          sourcePlanIds.add(item.planId)
+        }
+      })
+
+      // 检查每个来源计划的状态
+      sourcePlanIds.forEach(planId => {
+        const sourcePlan = this.allPlansCache.find(plan => plan.id === planId)
+        if (sourcePlan && ![PLAN_STATUS.CONFIRMED, PLAN_STATUS.PARTIALLY_RELEASED].includes(sourcePlan.status)) {
+          errors.push(`来源计划 "${sourcePlan.planNumber}" 状态为"${this.getPlanStatusLabel(sourcePlan.status)}"，不允许合并。仅允许"已确认"或"部分下发"状态的计划`)
+        }
+      })
+
+      return errors
+    },
+
+    /**
+     * 验证来源计划的冻结状态
+     * 接口文档要求：目标计划和来源计划均未被冻结（isFrozen = false）
+     */
+    validateSourcePlansFrozenStatus() {
+      const errors = []
+
+      if (!this.allPlansCache || this.allPlansCache.length === 0) {
+        return errors
+      }
+
+      // 获取所有涉及的来源计划ID（排除目标计划）
+      const sourcePlanIds = new Set()
+      this.selectedItems.forEach(item => {
+        if (item.planId !== this.selectedTargetPlan.id) {
+          sourcePlanIds.add(item.planId)
+        }
+      })
+
+      // 检查每个来源计划的冻结状态
+      sourcePlanIds.forEach(planId => {
+        const sourcePlan = this.allPlansCache.find(plan => plan.id === planId)
+        if (sourcePlan && sourcePlan.isFrozen) {
+          errors.push(`来源计划 "${sourcePlan.planNumber}" 已被冻结，无法进行合并操作`)
+        }
+      })
+
+      return errors
     },
 
     /**
@@ -742,12 +1144,13 @@ export default {
 
       // 验证每个来源计划的工艺模板一致性
       Object.values(groupedByPlan).forEach(group => {
-        // 获取该计划的所有工艺模板ID（使用子批次的工艺模板或目标计划的默认工艺模板）
-        const templateIds = group.items.map(item => item.processTemplateId || targetTemplateId)
+        // ✅ 直接使用标准字段访问（接口已保证一致性）
+        const templateIds = group.items.map(item => item.processTemplate?.id || targetTemplateId)
         const uniqueTemplateIds = [...new Set(templateIds)]
 
         if (uniqueTemplateIds.length > 1) {
-          const templateNames = group.items.map(item => item.processTemplateName || '未设置')
+          // ✅ 直接使用标准字段访问
+          const templateNames = group.items.map(item => item.processTemplate?.name || '未设置')
           const uniqueTemplateNames = [...new Set(templateNames)]
           errors.push(
             `来源计划 "${group.planNumber}" 的子批次工艺模板不一致（${uniqueTemplateNames.join(', ')}），同一计划的子批次必须使用相同工艺模板`
@@ -756,6 +1159,20 @@ export default {
       })
 
       return errors
+    },
+
+    /**
+     * 获取目标计划的工艺模板名称
+     * 从第一个子批次中获取工艺模板名称
+     */
+    getTargetPlanProcessTemplateName() {
+      if (!this.selectedTargetPlan) return '未设置'
+      if (!this.selectedTargetPlan.items || this.selectedTargetPlan.items.length === 0) return '未设置'
+
+      const firstItem = this.selectedTargetPlan.items[0]
+      if (!firstItem.processTemplate) return '未设置'
+
+      return firstItem.processTemplate.name || '未设置'
     },
 
     /**
@@ -771,6 +1188,16 @@ export default {
           .map(item => item.planId)
       )
       return uniquePlanIds.size
+    },
+
+    /**
+     * 🔧 新增：获取来自其他计划的批次数量（防止自合并）
+     */
+    getItemsFromOtherPlansCount() {
+      if (!this.selectedTargetPlan || this.selectedItems.length === 0) {
+        return 0
+      }
+      return this.selectedItems.filter(item => item.planId !== this.selectedTargetPlan.id).length
     },
 
     /**
@@ -801,7 +1228,9 @@ export default {
       if (!this.selectedTargetPlan) {
         return '0 吨'
       }
-      return `${this.selectedTargetPlan.demandQuantity || 0} ${this.selectedTargetPlan.demandUnit || '吨'}`
+      const quantity = this.selectedTargetPlan.demandQuantity || 0
+      const unit = this.selectedTargetPlan.demandUnit || '吨'
+      return `${quantity} ${unit}`
     },
 
     /**
@@ -844,7 +1273,8 @@ export default {
 
         groupedByPlan[planId].items.push(item)
         groupedByPlan[planId].totalWeight += item.plannedWeight || 0
-        groupedByPlan[planId].processTemplates.add(item.processTemplateName || '未设置')
+        // ✅ 直接使用标准字段访问（接口已保证一致性）
+        groupedByPlan[planId].processTemplates.add(item.processTemplate?.name || '未设置')
       })
 
       // 转换为数组并格式化
@@ -883,6 +1313,52 @@ export default {
      */
     getItemStatusType(status) {
       return ITEM_STATUS_TYPE_MAP[status] || 'info'
+    },
+
+    /**
+     * 判断错误是否已被 request.js 层处理（显示过消息）
+     * 根据 request.js 的 handleCommonErrors 逻辑判断
+     * @param {string} errorCode - 错误码
+     * @param {number} status - HTTP状态码
+     * @returns {boolean} 是否已被request层处理（显示过消息）
+     */
+    isErrorHandledByRequestLayer(errorCode, status) {
+      if (!errorCode && !status) {
+        return false
+      }
+
+      // 1. 验证错误（VAL_*）- request.js 已显示
+      if (errorCode && errorCode.startsWith('VAL_')) {
+        return true
+      }
+
+      // 2. 系统错误（SYS_*）- request.js 已显示
+      if (errorCode && errorCode.startsWith('SYS_')) {
+        return true
+      }
+
+      // 3. 速率限制错误 - request.js 已显示
+      if (status === 429 || ['AUTH_020', 'AUTH_021', 'AUTH_022'].includes(errorCode)) {
+        return true
+      }
+
+      // 4. 账户锁定错误 - request.js 已显示
+      if (status === 423 || ['AUTH_014', 'AUTH_015'].includes(errorCode)) {
+        return true
+      }
+
+      // 5. 权限不足错误 - request.js 已显示
+      if (status === 403 || errorCode === 'AUTH_006' || errorCode === 'AUTH_009' || errorCode === 'FORBIDDEN') {
+        return true
+      }
+
+      // 6. HTTP 5xx 错误 - request.js 已显示
+      if (status >= 500) {
+        return true
+      }
+
+      // 其他业务错误 - request.js 未显示，需要业务层处理
+      return false
     },
 
     /**
@@ -942,13 +1418,44 @@ export default {
           this.$emit('success')
           this.handleClose()
         } else {
-          // 失败时 message 在 error 对象中
-          this.$message.error(response.error?.message || '合并生产计划失败')
+          // 🔧 新增：处理自合并错误码（业务规则修复）
+          if (response.error?.code === 'PRODUCTION_PLAN_MERGE_INVALID_PAYLOAD') {
+            const errorMsg = response.error?.message || '合并操作必须选择其他计划的批次，不能将计划自己的批次合并到自己'
+            this.$message({
+              type: 'warning',
+              message: errorMsg,
+              duration: 5000,
+              showClose: true
+            })
+          } else {
+            // 其他失败情况
+            this.$message.error(response.error?.message || '合并生产计划失败')
+          }
         }
       } catch (error) {
         console.error('合并生产计划失败:', error)
-        const errorMessage = getErrorMessage(error)
-        this.$message.error(errorMessage)
+
+        // 🔧 处理自合并错误码（业务规则修复）
+        if (error.response?.data?.error?.code === 'PRODUCTION_PLAN_MERGE_INVALID_PAYLOAD') {
+          const errorMsg = error.response.data.error.message || '合并操作必须选择其他计划的批次，不能将计划自己的批次合并到自己'
+          this.$message({
+            type: 'warning',
+            message: errorMsg,
+            duration: 5000,
+            showClose: true
+          })
+          return
+        }
+
+        // 🔧 判断是否需要业务层显示错误消息
+        const errorCode = error.code || error.response?.data?.error?.code
+        const shouldShowMessage = !this.isErrorHandledByRequestLayer(errorCode, error.status)
+
+        if (shouldShowMessage) {
+          // ✅ 使用后端返回的错误消息
+          const errorMessage = error.response?.data?.error?.message || error.message || '合并生产计划失败，请稍后重试'
+          this.$message.error(errorMessage)
+        }
       } finally {
         this.submitting = false
       }

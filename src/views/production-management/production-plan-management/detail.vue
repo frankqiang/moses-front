@@ -641,18 +641,32 @@ export default {
      * @param {Object} planItem - 选中的计划批次
      */
     handleGenerateTask(planItem) {
-      // 保存选中的计划批次
-      this.selectedPlanItem = planItem
+      // 保存选中的计划批次，并添加产品编码（产品编码在主计划层级）
+      this.selectedPlanItem = {
+        ...planItem,
+        productCode: this.planData.productCode
+      }
       // 打开生成任务抽屉
       this.generateTaskDrawerVisible = true
     },
 
     /**
      * 生成退火任务成功
+     *
+     * 📢 重要：后端会自动更新子批次状态为 SCHEDULED（已排程）
+     * 参考：docs/接口文档/单独接口/创建退火任务接口详细说明.md
      */
-    handleGenerateTaskSuccess(result) {
-      // 刷新计划详情（批次状态可能已变更）
-      this.fetchDetail()
+    async handleGenerateTaskSuccess(result) {
+      // 关闭生成任务抽屉
+      this.generateTaskDrawerVisible = false
+
+      // 刷新计划详情（后端已自动更新批次状态为 SCHEDULED）
+      await this.fetchDetail()
+
+      // 显示成功提示（如果后端没有返回消息）
+      if (result && result.totalCount) {
+        this.$message.success(`成功生成 ${result.totalCount} 个退火任务，子批次状态已更新为"已排程"`)
+      }
     },
 
     /**
