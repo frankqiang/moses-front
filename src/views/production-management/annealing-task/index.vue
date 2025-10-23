@@ -42,12 +42,30 @@
       @bind-materials="handleBindMaterials"
       @view-plan="handleViewPlan"
       @selection-change="handleSelectionChange"
+      @quick-status-update="handleQuickStatusUpdate"
+      @update-status="handleUpdateStatus"
     />
 
     <!-- 手工创建任务抽屉 -->
     <task-create-drawer
       :visible.sync="createDrawerVisible"
       @success="handleCreateSuccess"
+    />
+
+    <!-- 物料绑定对话框 -->
+    <material-bind-dialog
+      :visible.sync="bindDialogVisible"
+      :task-info="bindTaskInfo"
+      @success="handleBindSuccess"
+    />
+
+    <!-- 状态更新对话框 -->
+    <status-update-dialog
+      :visible.sync="statusUpdateDialogVisible"
+      :task-id="currentTask ? currentTask.id : ''"
+      :task-code="currentTask ? currentTask.taskCode : ''"
+      :current-status="currentTask ? currentTask.status : ''"
+      @success="handleStatusUpdateSuccess"
     />
   </div>
 </template>
@@ -56,12 +74,12 @@
 import TaskSearch from './components/TaskSearch.vue'
 import TaskTable from './components/TaskTable.vue'
 import TaskCreateDrawer from './components/TaskCreateDrawer.vue'
-import { debounce } from '@/utils'
-import { fetchAnnealingTaskList } from './api'
+import MaterialBindDialog from './components/MaterialBindDialog.vue'
+import StatusUpdateDialog from './components/StatusUpdateDialog.vue'
+import { fetchAnnealingTaskList, updateAnnealingTaskStatus } from './api'
 import {
   DEFAULT_PAGINATION,
   DEFAULT_SORT,
-  SUCCESS_MESSAGES,
   ERROR_MESSAGES
 } from './constants'
 
@@ -70,7 +88,9 @@ export default {
   components: {
     TaskSearch,
     TaskTable,
-    TaskCreateDrawer
+    TaskCreateDrawer,
+    MaterialBindDialog,
+    StatusUpdateDialog
   },
   data() {
     return {
@@ -96,13 +116,39 @@ export default {
       // 选中的行数据
       selectedRows: [],
       // 创建任务抽屉状态
-      createDrawerVisible: false
+      createDrawerVisible: false,
+      // 物料绑定对话框
+      bindDialogVisible: false,
+      currentBindTask: null,
+      // 状态更新对话框
+      statusUpdateDialogVisible: false,
+      currentTask: null
     }
   },
   computed: {
     exportParams() {
-      const { page, limit, sortBy, ...filters } = this.searchParams
+      const { ...filters } = this.searchParams
       return filters
+    },
+    // 物料绑定对话框所需的任务信息
+    bindTaskInfo() {
+      if (!this.currentBindTask) {
+        return {
+          taskId: '',
+          taskCode: '',
+          productCode: '',
+          plannedWeight: 0,
+          actualWeight: 0
+        }
+      }
+      const task = this.currentBindTask
+      return {
+        taskId: task.id,
+        taskCode: task.taskCode,
+        productCode: task.productCode,
+        plannedWeight: parseFloat(task.plannedWeight || 0),
+        actualWeight: parseFloat(task.actualWeight || 0)
+      }
     }
   },
   mounted() {
@@ -191,9 +237,13 @@ export default {
       this.$message.info('编辑任务功能将在后续任务中实现')
     },
     handleBindMaterials(task) {
-      // TODO: 实现绑定物料功能（TASK005）
-      console.log('绑定物料:', task)
-      this.$message.info('绑定物料功能将在后续任务中实现')
+      // 打开物料绑定对话框
+      this.currentBindTask = task
+      this.bindDialogVisible = true
+    },
+    handleBindSuccess(data) {
+      // 绑定成功后刷新任务列表
+      this.loadTaskList()
     },
     handleViewPlan(planId) {
       // TODO: 跳转到生产计划详情页
@@ -207,6 +257,51 @@ export default {
       // TODO: 实现导出功能
       this.$message.info('导出功能将在后续任务中实现')
       return Promise.resolve()
+    },
+    // 快速状态更新（单击即更新，不需要打开对话框）
+    async handleQuickStatusUpdate({ row, targetStatus }) {
+      const statusTextMap = {
+        'pending-schedule': '待排程',
+        'loading': '装炉中',
+        'in-progress': '执行中',
+        'completed': '已完成'
+      }
+
+      const statusText = statusTextMap[targetStatus] || targetStatus
+
+      try {
+        await this.$confirm(`确认将任务"${row.taskCode}"状态更新为"${statusText}"？`, '确认操作', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+
+        const response = await updateAnnealingTaskStatus(row.id, {
+          status: targetStatus
+        })
+
+        if (response && response.data) {
+          this.$message.success(response.message || '更新任务状态成功')
+          this.loadTaskList()
+        }
+      } catch (error) {
+        if (error === 'cancel') {
+          return
+        }
+        console.error('快速更新任务状态失败:', error)
+        const errorMessage = error.response?.data?.error?.message || '更新任务状态失败'
+        this.$message.error(errorMessage)
+      }
+    },
+    // 通用状态更新（打开对话框选择目标状态）
+    handleUpdateStatus(task) {
+      this.currentTask = task
+      this.statusUpdateDialogVisible = true
+    },
+    handleStatusUpdateSuccess(data) {
+      // 状态更新成功后刷新列表
+      this.loadTaskList()
+      this.currentTask = null
     }
   }
 }
@@ -214,7 +309,7 @@ export default {
 
 <style lang="scss" scoped>
 .annealing-task-management {
-  padding: 20px;
+  padding: 10px;
   background-color: #f0f2f5;
   min-height: calc(100vh - 84px);
 }

@@ -18,6 +18,22 @@
       </el-breadcrumb>
       <div class="header-actions">
         <el-button
+          v-if="canUpdateStatus"
+          type="success"
+          icon="el-icon-s-promotion"
+          @click="handleUpdateStatus"
+        >
+          更新状态
+        </el-button>
+        <el-button
+          v-if="canBindMaterial"
+          type="primary"
+          icon="el-icon-link"
+          @click="handleBindMaterial"
+        >
+          绑定物料
+        </el-button>
+        <el-button
           icon="el-icon-refresh"
           :loading="loading"
           @click="handleRefresh"
@@ -84,12 +100,28 @@
       <!-- 物料明细 -->
       <material-list :materials="taskDetail.materials || []" />
     </div>
+
+    <!-- 物料绑定对话框 -->
+    <material-bind-dialog
+      :visible.sync="bindDialogVisible"
+      :task-info="bindTaskInfo"
+      @success="handleBindSuccess"
+    />
+
+    <!-- 状态更新对话框 -->
+    <status-update-dialog
+      :visible.sync="statusUpdateDialogVisible"
+      :task-id="taskId"
+      :task-code="taskDetail ? taskDetail.task.taskCode : ''"
+      :current-status="taskDetail ? taskDetail.task.status : ''"
+      @success="handleStatusUpdateSuccess"
+    />
   </div>
 </template>
 
 <script>
 import { fetchAnnealingTaskDetail, fetchTaskProgress } from './api'
-import { ERROR_MESSAGES } from './constants'
+import { ERROR_MESSAGES, TASK_STATUS, STATE_TRANSITIONS } from './constants'
 import BasicInfo from './components/detail/BasicInfo.vue'
 import ProductInfo from './components/detail/ProductInfo.vue'
 import PlanInfo from './components/detail/PlanInfo.vue'
@@ -97,6 +129,8 @@ import ScheduleInfo from './components/detail/ScheduleInfo.vue'
 import ExecutionInfo from './components/detail/ExecutionInfo.vue'
 import MaterialList from './components/detail/MaterialList.vue'
 import TaskProgress from './components/detail/TaskProgress.vue'
+import MaterialBindDialog from './components/MaterialBindDialog.vue'
+import StatusUpdateDialog from './components/StatusUpdateDialog.vue'
 
 export default {
   name: 'AnnealingTaskDetail',
@@ -107,7 +141,9 @@ export default {
     ScheduleInfo,
     ExecutionInfo,
     MaterialList,
-    TaskProgress
+    TaskProgress,
+    MaterialBindDialog,
+    StatusUpdateDialog
   },
   data() {
     return {
@@ -116,7 +152,9 @@ export default {
       progressData: null,
       loading: false,
       progressRefreshing: false,
-      loadError: null
+      loadError: null,
+      bindDialogVisible: false,
+      statusUpdateDialogVisible: false
     }
   },
   computed: {
@@ -134,6 +172,39 @@ export default {
       return this.taskDetail &&
         this.taskDetail.task &&
         progressStatuses.includes(this.taskDetail.task.status)
+    },
+    // 是否可以绑定物料（仅draft和pending-schedule状态）
+    canBindMaterial() {
+      if (!this.taskDetail || !this.taskDetail.task) return false
+      const status = this.taskDetail.task.status
+      return status === TASK_STATUS.DRAFT || status === TASK_STATUS.PENDING_SCHEDULE
+    },
+    // 是否可以更新状态（非终态都可以更新）
+    canUpdateStatus() {
+      if (!this.taskDetail || !this.taskDetail.task) return false
+      const status = this.taskDetail.task.status
+      const finalStatuses = [TASK_STATUS.COMPLETED, TASK_STATUS.CANCELLED, TASK_STATUS.TERMINATED]
+      return !finalStatuses.includes(status) && STATE_TRANSITIONS[status] && STATE_TRANSITIONS[status].length > 0
+    },
+    // 物料绑定对话框所需的任务信息
+    bindTaskInfo() {
+      if (!this.taskDetail || !this.taskDetail.task) {
+        return {
+          taskId: '',
+          taskCode: '',
+          productCode: '',
+          plannedWeight: 0,
+          actualWeight: 0
+        }
+      }
+      const task = this.taskDetail.task
+      return {
+        taskId: task.id,
+        taskCode: task.taskCode,
+        productCode: task.productCode,
+        plannedWeight: parseFloat(task.plannedWeight || 0),
+        actualWeight: parseFloat(task.actualWeight || 0)
+      }
     }
   },
   mounted() {
@@ -201,6 +272,20 @@ export default {
     handleViewPlan(planId) {
       // 跳转到生产计划详情页
       this.$router.push(`/production-management/production-plan/${planId}`)
+    },
+    handleBindMaterial() {
+      this.bindDialogVisible = true
+    },
+    handleBindSuccess(data) {
+      // 绑定成功后刷新任务详情
+      this.loadTaskDetail()
+    },
+    handleUpdateStatus() {
+      this.statusUpdateDialogVisible = true
+    },
+    handleStatusUpdateSuccess(data) {
+      // 状态更新成功后刷新任务详情
+      this.loadTaskDetail()
     }
   }
 }
