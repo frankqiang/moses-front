@@ -460,6 +460,17 @@ export const asyncRoutes = [
         }
       },
       {
+        path: 'annealing-task/pending',
+        name: 'PendingTaskManagement',
+        component: () => import('@/views/production-management/annealing-task/pending-tasks'),
+        meta: {
+          title: '待排程任务',
+          icon: 'el-icon-time'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：prod.annealing-task.schedule
+        }
+      },
+      {
         path: 'annealing-task/:id',
         name: 'AnnealingTaskDetail',
         component: () => import('@/views/production-management/annealing-task/detail'),
