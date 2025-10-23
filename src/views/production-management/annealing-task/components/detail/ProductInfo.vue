@@ -4,6 +4,8 @@
  * 创建日期：2025-10-18
  * 修改记录：
  *   - 2025-10-18: 初始创建
+ *   - 2025-10-22: 根据接口改进v1.1.0，优先从productInfo顶层获取thickness、width、temper字段
+ *                保留从specifications对象获取的兼容逻辑
  */
 
 <template>
@@ -25,13 +27,13 @@
       <!-- 产品详细信息（如果有productInfo） -->
       <template v-if="productInfo">
         <el-descriptions-item label="厚度(mm)">
-          <span class="info-value">{{ getProductSpecification('thickness') }}</span>
+          <span class="info-value">{{ getProductField('thickness') }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="宽度(mm)">
-          <span class="info-value">{{ getProductSpecification('width') }}</span>
+          <span class="info-value">{{ getProductField('width') }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="态别">
-          <span class="info-value">{{ getProductSpecification('temper') }}</span>
+          <span class="info-value">{{ getProductField('temper') }}</span>
         </el-descriptions-item>
       </template>
 
@@ -65,13 +67,22 @@ export default {
   },
   methods: {
     /**
-     * 获取产品规格信息
+     * 获取产品字段值
+     * 优先从productInfo顶层获取，其次从specifications对象中获取（兼容旧版本）
      */
-    getProductSpecification(field) {
-      if (!this.productInfo || !this.productInfo.specifications) {
+    getProductField(field) {
+      if (!this.productInfo) {
         return '-'
       }
-      return this.productInfo.specifications[field] || '-'
+      // 优先使用顶层字段（v1.1.0+）
+      if (this.productInfo[field] !== undefined && this.productInfo[field] !== null) {
+        return this.productInfo[field]
+      }
+      // 兼容旧版本：从specifications对象中获取
+      if (this.productInfo.specifications && this.productInfo.specifications[field]) {
+        return this.productInfo.specifications[field]
+      }
+      return '-'
     },
 
     /**

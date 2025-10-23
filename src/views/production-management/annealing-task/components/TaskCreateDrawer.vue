@@ -23,17 +23,16 @@
       label-width="120px"
       class="task-create-form"
     >
-      <!-- 产品编码（必填） -->
-      <el-form-item label="产品编码" prop="productCode">
+      <!-- 产品选择（必填） -->
+      <el-form-item label="产品选择" prop="productId">
         <el-select
-          v-model="formData.productCode"
+          v-model="formData.productId"
           filterable
           remote
           reserve-keyword
-          placeholder="请选择产品编码"
+          placeholder="请选择或搜索产品"
           :remote-method="handleProductSearch"
           :loading="loadingProducts"
-          value-key="productCode"
           class="full-width"
           @change="handleProductChange"
         >
@@ -41,17 +40,16 @@
             v-for="product in productOptions"
             :key="product.id"
             :label="`${product.productCode} - ${product.productName}`"
-            :value="product.productCode"
+            :value="product.id"
           >
-            <div class="product-option">
-              <span class="product-code">{{ product.productCode }}</span>
-              <span class="product-name">{{ product.productName }}</span>
-              <span class="product-alloy">{{ product.alloyGrade }}</span>
-            </div>
+            <span style="float: left">{{ product.productCode }}</span>
+            <span style="float: right; color: #8492a6; font-size: 13px">
+              {{ product.productName }}
+            </span>
           </el-option>
         </el-select>
         <div v-if="selectedProduct" class="product-info">
-          <el-tag size="small" type="info">{{ selectedProduct.productName }}</el-tag>
+          <el-tag size="small" type="info">{{ selectedProduct.productCode }}</el-tag>
           <el-tag size="small" type="success">{{ selectedProduct.alloyGrade }}</el-tag>
         </div>
       </el-form-item>
@@ -62,11 +60,14 @@
           v-model="formData.plannedWeight"
           :min="WEIGHT_LIMITS.MIN"
           :max="WEIGHT_LIMITS.MAX"
-          :precision="WEIGHT_LIMITS.PRECISION"
-          :step="WEIGHT_LIMITS.STEP"
+          :precision="3"
+          :step="0.1"
           placeholder="请输入计划重量"
+          controls-position="right"
           class="full-width"
-        />
+        >
+          <template slot="append">吨</template>
+        </el-input-number>
         <div class="field-hint">
           <span v-if="!isWithinFurnaceCapacity" class="warning-hint">
             <i class="el-icon-warning" />
@@ -134,12 +135,15 @@
         <el-input-number
           v-model="formData.plannedQuantity"
           :min="0"
-          :precision="WEIGHT_LIMITS.PRECISION"
+          :precision="0"
           :step="1"
           placeholder="请输入计划数量"
+          controls-position="right"
           class="full-width"
-        />
-        <div class="field-hint info-hint">卷数/件数</div>
+        >
+          <template slot="append">卷/件</template>
+        </el-input-number>
+        <div class="field-hint info-hint">卷数/件数（整数）</div>
       </el-form-item>
 
       <!-- 任务优先级 -->
@@ -173,7 +177,9 @@
 <script>
 import BaseDrawer from '@/components/Drawer'
 import { debounce } from '@/utils'
-import { getProductOptions } from '@/api/master-data/products'
+// 从铝箔产品管理模块获取产品数据（与生产计划模块保持一致）
+import { fetchFoilProductList } from '@/views/master-data/aluminum-foil-product-management/api/aluminum-foil-product-management'
+// 从工艺参数管理模块获取工艺模板数据
 import { fetchProcessTemplateList } from '@/views/master-data/process-parameter-management/api/process-parameter-management'
 import { createAnnealingTask } from '../api'
 import {
@@ -197,10 +203,10 @@ export default {
     }
   },
   data() {
-    // 产品编码验证器
-    const validateProductCode = (rule, value, callback) => {
+    // 产品验证器
+    const validateProduct = (rule, value, callback) => {
       if (!value) {
-        callback(new Error('请选择产品编码'))
+        callback(new Error('请选择产品'))
       } else {
         callback()
       }
@@ -230,6 +236,7 @@ export default {
 
       // 表单数据
       formData: {
+        productId: '',
         productCode: '',
         plannedWeight: null,
         processTemplateId: '',
@@ -242,8 +249,8 @@ export default {
 
       // 表单校验规则
       formRules: {
-        productCode: [
-          { required: true, validator: validateProductCode, trigger: 'change' }
+        productId: [
+          { required: true, validator: validateProduct, trigger: 'change' }
         ],
         plannedWeight: [
           { required: true, validator: validatePlannedWeight, trigger: 'blur' }
@@ -285,6 +292,8 @@ export default {
       this.drawerVisible = val
       if (val) {
         this.resetForm()
+        this.loadProductList()
+        this.loadProcessTemplateList()
       }
     },
     drawerVisible(val) {
@@ -292,69 +301,93 @@ export default {
     }
   },
   methods: {
-    // 产品搜索（带防抖）
-    handleProductSearch: debounce(async function(keyword) {
-      if (!keyword) {
-        this.productOptions = []
-        return
-      }
-
-      this.loadingProducts = true
+    /**
+     * 加载产品列表（参考生产计划模块实现）
+     */
+    async loadProductList(query = '') {
       try {
-        const response = await getProductOptions({
-          keyword,
-          lifecycleStatus: '量产',
-          limit: 30
-        })
-
-        if (response && response.data && response.data.options) {
-          this.productOptions = response.data.options
+        this.loadingProducts = true
+        // 构建查询参数
+        const params = {
+          limit: 50,
+          page: 1
+        }
+        if (query && query.trim()) {
+          params.search = query.trim()
+        }
+        const response = await fetchFoilProductList(params)
+        if (response.data && response.data.results) {
+          this.productOptions = response.data.results
         }
       } catch (error) {
-        console.error('获取产品列表失败:', error)
-        this.$message.error(error.response?.data?.error?.message || '获取产品列表失败')
+        console.error('加载产品列表失败:', error)
+        this.$message.error(error.response?.data?.error?.message || '加载产品列表失败')
       } finally {
         this.loadingProducts = false
       }
+    },
+
+    /**
+     * 产品搜索（带防抖）
+     */
+    handleProductSearch: debounce(async function(keyword) {
+      if (keyword !== '') {
+        await this.loadProductList(keyword)
+      } else {
+        this.productOptions = []
+      }
     }, 300),
 
-    // 产品选择变更
-    async handleProductChange(productCode) {
+    /**
+     * 产品选择变更（参考生产计划模块实现）
+     */
+    handleProductChange(productId) {
       // 查找选中的产品
-      const product = this.productOptions.find(p => p.productCode === productCode)
-      this.selectedProduct = product || null
-
-      // 清空之前选择的工艺模板
-      this.formData.processTemplateId = ''
-      this.processTemplateOptions = []
-
-      // 如果选择了产品，自动加载该产品的生效工艺模板
-      if (product && product.id) {
-        await this.loadProcessTemplates(product.id)
+      const selectedProduct = this.productOptions.find(item => item.id === productId)
+      if (selectedProduct) {
+        // 自动填充产品编码
+        this.formData.productCode = selectedProduct.productCode || ''
+        this.selectedProduct = selectedProduct
+      } else {
+        this.formData.productCode = ''
+        this.selectedProduct = null
       }
     },
 
-    // 加载工艺模板（只加载生效状态）
-    async loadProcessTemplates(productId) {
-      this.loadingTemplates = true
+    /**
+     * 加载工艺模板列表（参考生产计划模块实现）
+     * 在抽屉打开时加载所有生效的工艺模板
+     */
+    async loadProcessTemplateList() {
       try {
+        this.loadingTemplates = true
         const response = await fetchProcessTemplateList({
-          status: '生效', // 只加载生效状态的工艺模板
-          applicableProductId: productId,
-          limit: 100
+          status: '生效', // 只获取生效状态的工艺模板（中文状态值）
+          limit: 100,
+          page: 1
         })
 
+        // 检查响应数据结构 - API 返回的字段是 templates，不是 results
+        let templates = []
         if (response && response.data && response.data.templates) {
-          this.processTemplateOptions = response.data.templates
+          templates = response.data.templates
+        } else if (response && response.templates) {
+          templates = response.templates
+        }
 
-          // 如果只有一个生效的工艺模板，自动选择
-          if (this.processTemplateOptions.length === 1) {
-            this.formData.processTemplateId = this.processTemplateOptions[0].id
-          }
+        if (templates && templates.length > 0) {
+          this.processTemplateOptions = templates.map(template => ({
+            id: template.id,
+            templateCode: template.templateCode,
+            templateName: template.templateName,
+            status: template.status
+          }))
+        } else {
+          this.processTemplateOptions = []
         }
       } catch (error) {
-        console.error('获取工艺模板列表失败:', error)
-        this.$message.warning('获取工艺模板失败，请手动选择或稍后重试')
+        console.error('加载工艺模板列表失败:', error)
+        this.$message.warning('获取工艺模板失败，请稍后重试')
       } finally {
         this.loadingTemplates = false
       }
@@ -362,16 +395,8 @@ export default {
 
     // 关闭抽屉
     handleClose() {
-      this.$confirm('确定要取消创建任务吗？未保存的数据将丢失。', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.drawerVisible = false
-        this.resetForm()
-      }).catch(() => {
-        // 取消操作，不关闭抽屉
-      })
+      this.drawerVisible = false
+      this.resetForm()
     },
 
     // 确认提交
@@ -390,13 +415,16 @@ export default {
     async submitForm() {
       this.saving = true
       try {
-        // 构建提交数据
+        // 构建提交数据（必填参数）
         const payload = {
           productCode: this.formData.productCode,
           plannedWeight: this.formData.plannedWeight
         }
 
         // 添加可选字段
+        if (this.formData.productId) {
+          payload.productId = this.formData.productId
+        }
         if (this.formData.taskCode) {
           payload.taskCode = this.formData.taskCode
         }
@@ -460,6 +488,7 @@ export default {
         this.$refs.taskForm.resetFields()
       }
       this.formData = {
+        productId: '',
         productCode: '',
         plannedWeight: null,
         processTemplateId: '',

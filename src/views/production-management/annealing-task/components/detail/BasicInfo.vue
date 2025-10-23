@@ -4,6 +4,8 @@
  * 创建日期：2025-10-18
  * 修改记录：
  *   - 2025-10-18: 初始创建
+ *   - 2025-10-22: 根据接口改进v1.1.0，优先使用后端返回的中文标签（statusLabel、priorityLabel、sourceLabel）
+ *                和完整的用户信息对象（createdByUser、updatedByUser）
  */
 
 <template>
@@ -20,15 +22,15 @@
       </el-descriptions-item>
       <el-descriptions-item label="任务状态">
         <el-tag :type="getStatusType(taskData.status)" size="small">
-          {{ getStatusLabel(taskData.status) }}
+          {{ taskData.statusLabel || getStatusLabel(taskData.status) }}
         </el-tag>
       </el-descriptions-item>
       <el-descriptions-item label="任务来源">
-        <span class="info-value">{{ getSourceLabel(taskData.source) }}</span>
+        <span class="info-value">{{ taskData.sourceLabel || getSourceLabel(taskData.source) }}</span>
       </el-descriptions-item>
       <el-descriptions-item label="任务优先级">
         <el-tag :type="getPriorityType(taskData.priority)" size="small">
-          {{ getPriorityLabel(taskData.priority) }}
+          {{ taskData.priorityLabel || getPriorityLabel(taskData.priority) }}
         </el-tag>
       </el-descriptions-item>
       <el-descriptions-item label="计划重量">
@@ -48,13 +50,13 @@
         <span class="info-value">{{ taskData.materialCount || 0 }}</span>
       </el-descriptions-item>
       <el-descriptions-item label="创建人">
-        <span class="info-value">{{ taskData.createdBy || '-' }}</span>
+        <span class="info-value">{{ getCreatorName(taskData) }}</span>
       </el-descriptions-item>
       <el-descriptions-item label="创建时间">
         <span class="info-value">{{ formatTime(taskData.createdAt) }}</span>
       </el-descriptions-item>
       <el-descriptions-item label="最后更新人">
-        <span class="info-value">{{ taskData.updatedBy || '-' }}</span>
+        <span class="info-value">{{ getUpdaterName(taskData) }}</span>
       </el-descriptions-item>
       <el-descriptions-item label="最后更新时间">
         <span class="info-value">{{ formatTime(taskData.updatedAt) }}</span>
@@ -85,6 +87,26 @@ export default {
     }
   },
   methods: {
+    /**
+     * 获取创建人姓名（优先使用createdByUser对象）
+     */
+    getCreatorName(taskData) {
+      if (taskData.createdByUser) {
+        return taskData.createdByUser.name || taskData.createdByUser.username || '-'
+      }
+      return taskData.createdBy || '-'
+    },
+
+    /**
+     * 获取更新人姓名（优先使用updatedByUser对象）
+     */
+    getUpdaterName(taskData) {
+      if (taskData.updatedByUser) {
+        return taskData.updatedByUser.name || taskData.updatedByUser.username || '-'
+      }
+      return taskData.updatedBy || '-'
+    },
+
     getStatusLabel(status) {
       const option = TASK_STATUS_OPTIONS.find(item => item.value === status)
       return option ? option.label : status || '-'

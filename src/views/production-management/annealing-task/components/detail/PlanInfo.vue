@@ -4,6 +4,7 @@
  * 创建日期：2025-10-18
  * 修改记录：
  *   - 2025-10-18: 初始创建
+ *   - 2025-10-22: 根据接口改进v1.1.0，优先使用后端返回的中文标签（statusLabel、planPriorityLabel）
  */
 
 <template>
@@ -24,10 +25,10 @@
           </el-link>
         </el-descriptions-item>
         <el-descriptions-item label="计划优先级">
-          <span class="info-value">{{ planInfo.planPriority || '-' }}</span>
+          <span class="info-value">{{ planInfo.planPriorityLabel || planInfo.planPriority || '-' }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="计划状态">
-          <span class="info-value">{{ planInfo.status || '-' }}</span>
+          <span class="info-value">{{ planInfo.statusLabel || planInfo.status || '-' }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="外部订单号">
           <span class="info-value">{{ planInfo.externalOrderNumber || '-' }}</span>

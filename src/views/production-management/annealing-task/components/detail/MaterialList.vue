@@ -4,6 +4,8 @@
  * 创建日期：2025-10-18
  * 修改记录：
  *   - 2025-10-18: 初始创建
+ *   - 2025-10-22: 根据接口改进v1.1.0，状态快照列优先显示statusSnapshotLabel（中文标签）
+ *                添加状态Tag样式，改善用户体验
  */
 
 <template>
@@ -96,9 +98,15 @@
       <el-table-column
         prop="statusSnapshot"
         label="状态快照"
-        width="100"
+        width="120"
         align="center"
-      />
+      >
+        <template slot-scope="scope">
+          <el-tag :type="getStatusType(scope.row.statusSnapshot)" size="small">
+            {{ scope.row.statusSnapshotLabel || scope.row.statusSnapshot || '-' }}
+          </el-tag>
+        </template>
+      </el-table-column>
     </el-table>
     <el-empty
       v-else
@@ -131,6 +139,21 @@ export default {
         return '-'
       }
       return Number(weight).toFixed(3)
+    },
+    /**
+     * 获取物料状态的Tag颜色类型
+     */
+    getStatusType(status) {
+      // 根据状态返回不同的颜色类型
+      const statusColorMap = {
+        'WAITING_ANNEALING': 'warning',
+        'IN_ANNEALING': 'primary',
+        'ANNEALED': 'success',
+        'QUALITY_CHECKED': 'success',
+        'REJECTED': 'danger',
+        'IN_STORAGE': 'info'
+      }
+      return statusColorMap[status] || 'info'
     }
   }
 }

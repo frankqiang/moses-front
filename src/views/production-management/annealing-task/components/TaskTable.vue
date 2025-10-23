@@ -32,7 +32,7 @@
         <action-buttons :buttons="toolbarButtons" mode="normal" @click="handleToolbarAction" />
         <slot name="toolbar-left">
           <span v-if="selectedRows.length" class="task-table__selection-indicator">
-            已选{{ selectedRows.length}}项
+            已选{{ selectedRows.length }}项
           </span>
         </slot>
       </template>
@@ -127,6 +127,7 @@
           :row="row"
           mode="text"
           size="small"
+          :max-visible="2"
           @click="handleActionClick"
         />
       </template>
@@ -150,7 +151,8 @@ import {
 } from '../constants/table-config'
 import {
   DEFAULT_SORT,
-  TASK_STATUS
+  TASK_STATUS,
+  QUICK_STATUS_ACTIONS
 } from '../constants'
 
 export default {
@@ -283,10 +285,10 @@ export default {
     toolbarButtons() {
       return [
         {
-          type: 'create',
-          label: '创建任务',
+          action: 'create',
+          text: '创建任务',
           icon: 'el-icon-plus',
-          buttonType: 'primary'
+          type: 'primary'
         }
       ]
     }
@@ -316,10 +318,10 @@ export default {
       this.$emit('refresh')
     },
     handleToolbarColumnChange(visibleColumns) {
-      this.updateVisibleColumns(visibleColumns)
+      this.handleColumnChange(visibleColumns)
     },
-    handleToolbarAction({ type }) {
-      if (type === 'create') {
+    handleToolbarAction({ action }) {
+      if (action === 'create') {
         this.$emit('create')
       }
     },
@@ -332,35 +334,67 @@ export default {
     handleViewPlan(planId) {
       this.$emit('view-plan', planId)
     },
-    handleActionClick({ type, row }) {
-      this.$emit(type, row)
+    handleActionClick({ action, row }) {
+      this.$emit(action, row)
     },
     getActionButtons(row) {
+      // 检查 row 是否存在，避免访问 undefined 对象
+      if (!row) {
+        return []
+      }
+
       const buttons = [
         {
-          type: 'view',
-          label: '查看详情',
+          action: 'view',
+          text: '查看详情',
           icon: 'el-icon-view'
         }
       ]
 
-      // 根据状态显示不同的操作按钮
+      // 添加快速状态更新按钮（排除"标记为待排程"，将其放到更多菜单）
+      const quickActions = QUICK_STATUS_ACTIONS.filter(action =>
+        action.allowedFromStatuses.includes(row.status) &&
+        action.targetStatus !== TASK_STATUS.PENDING_SCHEDULE // 排除"标记为待排程"
+      )
+
+      quickActions.forEach(quickAction => {
+        buttons.push({
+          action: 'quick-status-update',
+          text: quickAction.label,
+          icon: quickAction.icon,
+          type: quickAction.type,
+          targetStatus: quickAction.targetStatus
+        })
+      })
+
+      // 添加通用的更新状态按钮（如果不是终态）
+      const finalStatuses = [TASK_STATUS.COMPLETED, TASK_STATUS.CANCELLED, TASK_STATUS.TERMINATED]
+      if (!finalStatuses.includes(row.status)) {
+        buttons.push({
+          action: 'update-status',
+          text: '更新状态',
+          icon: 'el-icon-s-promotion'
+        })
+      }
+
+      // 以下按钮放到更多菜单中（添加到最后）
+      // 草稿和待排程状态可以绑定物料
+      if (row.status === TASK_STATUS.DRAFT || row.status === TASK_STATUS.PENDING_SCHEDULE) {
+        buttons.push({
+          action: 'bind-materials',
+          text: '绑定物料',
+          icon: 'el-icon-connection'
+        })
+      }
+
+      // 草稿状态可以标记为待排程
       if (row.status === TASK_STATUS.DRAFT) {
         buttons.push({
-          type: 'edit',
-          label: '编辑',
-          icon: 'el-icon-edit'
-        })
-        buttons.push({
-          type: 'bind-materials',
-          label: '绑定物料',
-          icon: 'el-icon-connection'
-        })
-      } else if (row.status === TASK_STATUS.PENDING_SCHEDULE) {
-        buttons.push({
-          type: 'bind-materials',
-          label: '绑定物料',
-          icon: 'el-icon-connection'
+          action: 'quick-status-update',
+          text: '标记为待排程',
+          icon: 'el-icon-s-order',
+          type: '',
+          targetStatus: TASK_STATUS.PENDING_SCHEDULE
         })
       }
 
@@ -380,13 +414,11 @@ export default {
 .task-table {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .task-table__toolbar {
   background-color: #fff;
   padding: 16px;
-  border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 

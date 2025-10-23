@@ -10,7 +10,7 @@
   <base-drawer
     :visible.sync="drawerVisible"
     :title="title"
-    :loading="generating"
+    :loading="generating || previewing"
     :show-footer="false"
     width="920px"
     @close="handleClose"
@@ -89,16 +89,6 @@
             </el-col>
           </el-row>
         </el-form>
-        <div class="action-buttons">
-          <el-button
-            type="primary"
-            icon="el-icon-view"
-            :loading="previewing"
-            @click="handlePreview"
-          >
-            预览装炉方案
-          </el-button>
-        </div>
       </div>
 
       <!-- 步骤3：预览结果 -->
@@ -167,11 +157,6 @@
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="plannedQuantity" label="计划数量" width="110" align="right">
-              <template slot-scope="{ row }">
-                {{ row.plannedQuantity ? row.plannedQuantity.toFixed(0) : '-' }}
-              </template>
-            </el-table-column>
             <el-table-column prop="loadRate" label="装载率" width="120" align="center">
               <template slot-scope="{ row }">
                 <el-progress
@@ -195,25 +180,6 @@
             </el-table-column>
           </el-table>
         </div>
-
-        <!-- 操作按钮 -->
-        <div class="action-buttons mt-3">
-          <el-button
-            icon="el-icon-refresh-left"
-            @click="handleRePreview"
-          >
-            重新预览
-          </el-button>
-          <el-button
-            type="success"
-            icon="el-icon-check"
-            :loading="generating"
-            :disabled="!canGenerate"
-            @click="handleGenerate"
-          >
-            确认生成任务
-          </el-button>
-        </div>
       </div>
 
       <!-- 生成结果展示 -->
@@ -226,27 +192,7 @@
           icon="success"
           title="退火任务生成成功"
           :sub-title="`成功生成 ${generateResult.totalCount} 个退火任务`"
-        >
-          <template slot="extra">
-            <div class="result-actions">
-              <el-button
-                type="primary"
-                size="medium"
-                icon="el-icon-document"
-                @click="handleViewTaskList"
-              >
-                查看任务列表
-              </el-button>
-              <el-button
-                size="medium"
-                icon="el-icon-close"
-                @click="handleClose"
-              >
-                关闭
-              </el-button>
-            </div>
-          </template>
-        </el-result>
+        />
         <div class="generated-tasks-summary">
           <div class="summary-title">生成的任务编号：</div>
           <div class="task-codes">
@@ -263,6 +209,54 @@
         </div>
       </div>
     </div>
+
+    <!-- Footer按钮区域 -->
+    <template #footer>
+      <!-- 未预览时：显示预览按钮 -->
+      <div v-if="!hasPreviewResult && !hasGenerateResult" class="footer-buttons">
+        <el-button @click="handleClose">取消</el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-view"
+          :loading="previewing"
+          @click="handlePreview"
+        >
+          预览装炉方案
+        </el-button>
+      </div>
+
+      <!-- 已预览但未生成：显示重新预览和确认生成按钮 -->
+      <div v-else-if="hasPreviewResult && !hasGenerateResult" class="footer-buttons">
+        <el-button
+          icon="el-icon-refresh-left"
+          :disabled="previewing || generating"
+          @click="handleRePreview"
+        >
+          重新预览
+        </el-button>
+        <el-button
+          type="success"
+          icon="el-icon-check"
+          :loading="generating"
+          :disabled="!canGenerate || previewing"
+          @click="handleGenerate"
+        >
+          确认生成任务
+        </el-button>
+      </div>
+
+      <!-- 已生成：显示查看任务列表和关闭按钮 -->
+      <div v-else-if="hasGenerateResult" class="footer-buttons">
+        <el-button @click="handleClose">关闭</el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-document"
+          @click="handleViewTaskList"
+        >
+          查看任务列表
+        </el-button>
+      </div>
+    </template>
   </base-drawer>
 </template>
 
@@ -528,27 +522,9 @@ export default {
 
     // 关闭抽屉
     handleClose() {
-      if (this.hasGenerateResult) {
-        // 如果已经生成任务，直接关闭
-        this.drawerVisible = false
-        this.resetDrawer()
-      } else if (this.hasPreviewResult) {
-        // 如果已经预览但未生成，提示确认
-        this.$confirm('确定要取消生成任务吗？预览结果将丢失。', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          this.drawerVisible = false
-          this.resetDrawer()
-        }).catch(() => {
-          // 取消操作，不关闭抽屉
-        })
-      } else {
-        // 未预览，直接关闭
-        this.drawerVisible = false
-        this.resetDrawer()
-      }
+      // 直接关闭抽屉，不再显示确认提示
+      this.drawerVisible = false
+      this.resetDrawer()
     },
 
     // 重置抽屉状态
@@ -639,7 +615,7 @@ export default {
           grid: {
             left: '3%',
             right: '4%',
-            bottom: '3%',
+            bottom: '15%',
             top: '15%',
             containLabel: true
           },
@@ -649,7 +625,17 @@ export default {
             axisLabel: {
               rotate: 45,
               interval: 0,
-              fontSize: 11
+              fontSize: 10,
+              formatter: (value) => {
+                // 如果编码太长，只显示后缀部分（如：01-1, 01-2）
+                // 格式：PLAN-XXX-PLAN-XXX-01-1 => 01-1
+                if (value.length > 20) {
+                  const parts = value.split('-')
+                  // 取最后两部分，如 "01" 和 "1"
+                  return parts.slice(-2).join('-')
+                }
+                return value
+              }
             }
           },
           yAxis: {
@@ -826,14 +812,6 @@ export default {
       }
     }
 
-    // 操作按钮
-    .action-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 16px;
-    }
-
     // 统计信息
     .summary-info {
       display: flex;
@@ -890,13 +868,6 @@ export default {
 
     // 结果区域
     &.result-section {
-      .result-actions {
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-        margin-top: 16px;
-      }
-
       .generated-tasks-summary {
         margin-top: 24px;
         padding: 16px;
@@ -923,10 +894,14 @@ export default {
       }
     }
   }
+}
 
-  .mt-3 {
-    margin-top: 16px;
-  }
+// Footer按钮样式
+.footer-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
 }
 
 // 深度选择器样式
