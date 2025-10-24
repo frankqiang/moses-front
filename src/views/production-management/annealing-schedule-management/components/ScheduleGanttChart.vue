@@ -351,7 +351,7 @@ export default {
         return
       }
 
-      const { timeline, furnaces } = this.ganttData
+      const { timeline } = this.ganttData
 
       // 构建 Y 轴数据（炉子列表）
       const yAxisData = this.filteredFurnaces.map(f => ({

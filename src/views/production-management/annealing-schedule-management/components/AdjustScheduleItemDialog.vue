@@ -249,7 +249,7 @@
 </template>
 
 <script>
-import { adjustScheduleItem, fetchScheduleConflicts } from '../api'
+import { adjustScheduleItem } from '../api'
 import {
   CONFLICT_TYPE_MAP,
   SEVERITY_LEVEL_MAP,
