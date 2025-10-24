@@ -353,6 +353,95 @@ export const asyncRoutes = [
           // 生产环境权限：mdm.tpm.maintenance-task.view
         },
         hidden: true
+      },
+      // 维护记录管理
+      {
+        path: 'maintenance-records',
+        name: 'MaintenanceRecordList',
+        component: () => import('@/views/tpm-management/maintenance-record/index'),
+        meta: {
+          title: '维护记录管理',
+          icon: 'el-icon-document',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-record.view
+        }
+      },
+      {
+        path: 'maintenance-records/equipment-history',
+        name: 'EquipmentMaintenanceHistory',
+        component: () => import('@/views/tpm-management/maintenance-record/equipment-history'),
+        meta: {
+          title: '设备维护历史',
+          icon: 'el-icon-data-line',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-record.view
+        }
+      },
+      {
+        path: 'maintenance-records/statistics',
+        name: 'MaintenanceRecordStatistics',
+        component: () => import('@/views/tpm-management/maintenance-record/statistics'),
+        meta: {
+          title: '维护记录统计分析',
+          icon: 'el-icon-s-data',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-record.view
+        }
+      },
+      {
+        path: 'maintenance-records/:id',
+        name: 'MaintenanceRecordDetail',
+        component: () => import('@/views/tpm-management/maintenance-record/detail'),
+        meta: {
+          title: '维护记录详情',
+          activeMenu: '/equipment-tpm/maintenance-records',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.maintenance-record.view
+        },
+        hidden: true
+      },
+      // 设备故障管理
+      {
+        path: 'equipment-fault',
+        name: 'EquipmentFaultList',
+        component: () => import('@/views/tpm-management/equipment-fault/index'),
+        meta: {
+          title: '设备故障管理',
+          icon: 'el-icon-warning-outline',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.equipment-failure.view
+        }
+      },
+      {
+        path: 'equipment-fault/statistics',
+        name: 'EquipmentFaultStatistics',
+        component: () => import('@/views/tpm-management/equipment-fault/components/StatisticsPage'),
+        meta: {
+          title: '故障统计分析',
+          activeMenu: '/equipment-tpm/equipment-fault',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.equipment-failure.view
+        },
+        hidden: true
+      },
+      {
+        path: 'equipment-fault/:id',
+        name: 'EquipmentFaultDetail',
+        component: () => import('@/views/tpm-management/equipment-fault/components/FaultDetail'),
+        meta: {
+          title: '故障详情',
+          activeMenu: '/equipment-tpm/equipment-fault',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.equipment-failure.view
+        },
+        hidden: true
       }
     ]
   },
@@ -477,6 +566,37 @@ export const asyncRoutes = [
         meta: {
           title: '退火任务详情',
           activeMenu: '/production-management/annealing-task'
+        },
+        hidden: true
+      },
+      {
+        path: 'annealing-schedule',
+        name: 'AnnealingScheduleManagement',
+        component: () => import('@/views/production-management/annealing-schedule-management/index'),
+        meta: {
+          title: '退火炉排程',
+          icon: 'el-icon-date'
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：prod.scheduling.view
+        }
+      },
+      {
+        path: 'annealing-schedule/:id',
+        name: 'SchedulePlanDetail',
+        component: () => import('@/views/production-management/annealing-schedule-management/detail'),
+        meta: {
+          title: '排程方案详情',
+          activeMenu: '/production-management/annealing-schedule'
+        },
+        hidden: true
+      },
+      {
+        path: 'annealing-schedule/:id/gantt',
+        name: 'ScheduleGanttChart',
+        component: () => import('@/views/production-management/annealing-schedule-management/gantt'),
+        meta: {
+          title: '排程甘特图',
+          activeMenu: '/production-management/annealing-schedule'
         },
         hidden: true
       }
