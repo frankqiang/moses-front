@@ -1,0 +1,48 @@
+/**
+ * 文件名称：index.js
+ * 文件描述：设备故障管理模块常量统一导出
+ * 创建日期：2025-01-20
+ * 修改记录：
+ *   - 2025-01-20: 初始创建
+ */
+
+// 基础常量
+export {
+  FAILURE_LEVEL,
+  IMPACT_DEGREE,
+  FAILURE_TYPE,
+  FAILURE_STATUS,
+  DEFAULT_PAGINATION,
+  DEFAULT_SORT,
+  FAILURE_LEVEL_OPTIONS,
+  IMPACT_DEGREE_OPTIONS,
+  FAILURE_TYPE_OPTIONS,
+  FAILURE_STATUS_OPTIONS,
+  REPEAT_FAILURE_OPTIONS,
+  FAILURE_LEVEL_CONFIG,
+  FAILURE_STATUS_CONFIG
+} from './equipment-fault'
+
+// 表格配置
+export {
+  TABLE_COLUMNS,
+  DEFAULT_VISIBLE_COLUMNS,
+  TABLE_TOOLBAR_CONFIG
+} from './table-config'
+
+// API配置
+export {
+  API_BASE_PATH,
+  API_ENDPOINTS,
+  REQUEST_TIMEOUT,
+  PAGINATION_CONFIG
+} from './api-config'
+
+// 消息配置
+export {
+  SUCCESS_MESSAGES,
+  ERROR_MESSAGES,
+  CONFIRM_MESSAGES,
+  WARNING_MESSAGES
+} from './messages-config'
+
