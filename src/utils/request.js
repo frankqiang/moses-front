@@ -1,1031 +1,150 @@
+/**
+ * 文件名称：request.js
+ * 文件描述：axios实例配置和主入口（重构版）
+ * 创建日期：2025-10-27
+ * 修改记录：
+ *   - 2025-10-27: 重构为模块化架构，保持向后兼容
+ *
+ * 设计原则：
+ * 1. 拦截器只处理通用错误（网络、认证、系统错误）
+ * 2. 业务错误交给业务层处理
+ * 3. 提供清晰的错误对象结构
+ *
+ * 重构说明：
+ * - 旧版本（1032行单文件）已重构为模块化架构
+ * - 核心逻辑移至 src/utils/api/ 目录
+ * - 此文件保持向后兼容，重新导出新版本的所有功能
+ */
+
 import axios from 'axios'
-import { Message } from 'element-ui'
-import store from '@/store'
-import router from '@/router'
-import { getToken, getRefreshToken, setTokens, removeToken } from '@/utils/auth'
-import { refreshTokens } from '@/views/login/api/index'
-
-// 防重复错误消息机制
-const errorMessageCache = new Set()
-const ERROR_MESSAGE_DURATION = 3000 // 3秒内相同错误消息不重复显示
-
-// 请求去重机制
-const pendingRequests = new Map()
-const REQUEST_DEDUP_KEY_PREFIX = 'req_'
-
-// 重试配置
-const RETRY_CONFIG = {
-  maxRetries: 3,
-  retryDelay: 1000,
-  retryableErrors: ['NETWORK_TIMEOUT', 'NETWORK_CONNECTION_FAILED', 'NETWORK_DISCONNECTED'],
-  exponentialBackoff: true
-}
-
-// 认证失效处理标志（防止重复跳转）
-let isHandlingAuthFailure = false
-
-// ========================================
-// 🔄 Token自动刷新机制
-// ========================================
+import { setupRequestInterceptor } from './api/interceptors/request'
+import { setupResponseInterceptor } from './api/interceptors/response'
+import { getToken, getRefreshToken, removeToken } from './auth'
+import { getErrorStats, clearErrorStats, ApiError } from './api/errorHandler'
 
 /**
- * Token刷新状态管理
- */
-let isRefreshingToken = false // 是否正在刷新token
-const refreshTokenQueue = [] // 等待token刷新的请求队列
-
-/**
- * 添加请求到token刷新队列
- * @param {Function} resolve - Promise resolve函数
- * @param {Function} reject - Promise reject函数
- * @param {Object} config - 请求配置
- */
-function addToRefreshQueue(resolve, reject, config) {
-  refreshTokenQueue.push({ resolve, reject, config })
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`📝 请求已加入刷新队列，当前队列长度: ${refreshTokenQueue.length}`, {
-      url: config.url,
-      method: config.method
-    })
-  }
-}
-
-/**
- * 处理token刷新队列
- * @param {boolean} isRefreshSuccess - 刷新是否成功
- * @param {string} newToken - 新的access token（刷新成功时）
- * @param {Error} error - 错误对象（刷新失败时）
- */
-function processRefreshQueue(isRefreshSuccess, newToken = null, error = null) {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`🔄 处理刷新队列，队列长度: ${refreshTokenQueue.length}，刷新${isRefreshSuccess ? '成功' : '失败'}`)
-  }
-
-  const queue = [...refreshTokenQueue]
-  refreshTokenQueue.length = 0 // 清空队列
-
-  queue.forEach(({ resolve, reject, config }) => {
-    if (isRefreshSuccess && newToken) {
-      // 刷新成功：更新请求头并重试
-      config.headers.Authorization = `Bearer ${newToken}`
-      resolve(service(config))
-    } else {
-      // 刷新失败：拒绝所有排队的请求
-      reject(error || new Error('Token refresh failed'))
-    }
-  })
-}
-
-/**
- * 显示错误消息（防重复）
- * @param {string} message - 错误消息
- * @param {string} type - 消息类型
- * @param {number} duration - 显示时长
- */
-function showErrorMessage(message, type = 'error', duration = 5000) {
-  // 检查是否已经显示过相同的错误消息
-  if (errorMessageCache.has(message)) {
-    return
-  }
-
-  errorMessageCache.add(message)
-  Message({
-    message,
-    type,
-    duration
-  })
-
-  // 清除缓存
-  setTimeout(() => {
-    errorMessageCache.delete(message)
-  }, ERROR_MESSAGE_DURATION)
-}
-
-/**
- * 🚀 现代化API错误类
- * 提供标准化的错误对象，支持错误码、状态码和详细信息
- */
-export class ApiError extends Error {
-  constructor(code, message, status = 500, details = null) {
-    super(message)
-    this.code = code
-    this.status = status
-    this.details = details
-    this.name = 'ApiError'
-  }
-}
-/**
- * 🔧 创建axios实例
- * 配置基础URL、超时时间等全局设置
+ * 创建axios实例
  */
 const service = axios.create({
-  baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
-  // withCredentials: true, // send cookies when cross-domain requests
-  timeout: 5000 // request timeout
+  baseURL: process.env.VUE_APP_BASE_API, // API基础路径
+  timeout: 5000, // 请求超时时间
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
 
 /**
- * 📤 请求拦截器 - 增强版
- * 功能：添加认证token、安全头、请求日志等
+ * 配置拦截器
  */
-service.interceptors.request.use(
-  (config) => {
-    // 📋 请求去重检查
-    const requestKey = generateRequestKey(config)
-    if (pendingRequests.has(requestKey)) {
-      // 返回已存在的请求Promise
-      return pendingRequests.get(requestKey)
-    }
-
-    // 记录请求开始时间用于性能监控
-    config._startTime = Date.now()
-
-    // 🔐 添加认证token（移除冗余的X-Token）
-    if (store.getters.token) {
-      config.headers.Authorization = `Bearer ${getToken()}`
-    }
-
-    // 🛡️ 添加现代安全头
-    config.headers['X-Requested-With'] = 'XMLHttpRequest'
-    config.headers['Content-Type'] = config.headers['Content-Type'] || 'application/json'
-
-    // 🐛 开发环境调试日志
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 API Request:', {
-        url: config.url,
-        method: config.method,
-        params: config.params,
-        data: config.data
-      })
-    }
-
-    return config
-  },
-  (error) => {
-    console.log('❌ Request Error:', error)
-    return Promise.reject(error)
-  }
-)
+setupRequestInterceptor(service)
+setupResponseInterceptor(service)
 
 /**
- * 📥 响应拦截器 - 现代化版本
- * 功能：统一错误处理，支持现代API响应格式、重试机制、认证队列等
+ * ==================== 工具函数 ====================
  */
-service.interceptors.response.use(
-  (response) => {
-    // 📋 清理请求去重缓存
-    const requestKey = generateRequestKey(response.config)
-    pendingRequests.delete(requestKey)
-
-    // 📈 性能监控
-    if (response.config._startTime) {
-      trackPerformance(response.config, response.config._startTime, response)
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📥 API Response:', {
-        url: response.config.url,
-        status: response.status,
-        success: response.data?.success,
-        errorCode: response.data?.error?.code,
-        data: response.data,
-        requestId: response.data?.meta?.requestId
-      })
-    }
-
-    const res = response.data
-    return handleModernFormat(res, response.status, response)
-  },
-  async(error) => {
-    const { config } = error
-
-    // 📋 清理请求去重缓存
-    if (config) {
-      const requestKey = generateRequestKey(config)
-      pendingRequests.delete(requestKey)
-    }
-
-    console.error('❌ Response Interceptor Error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      errorCode: error.response?.data?.error?.code,
-      errorMessage: error.response?.data?.error?.message,
-      fullError: error.response || error
-    })
-
-    // 处理后端返回的业务错误
-    if (error.response && error.response.data) {
-      const res = error.response.data
-      if (res.success !== undefined && !res.success) {
-        console.log('🔄 调用 handleModernFormat 处理业务错误')
-        return handleModernFormat(res, error.response.status, error.response)
-      }
-    }
-
-    // 🔄 重试机制 - 对网络错误进行重试
-    if (config && !config._isRetry) {
-      // 检查是否为离线状态，如果离线则不进行重试
-      const isOffline = !navigator.onLine ||
-        error.message === 'Network Error' ||
-        error.code === 'ERR_NETWORK' ||
-        error.message.includes('ERR_INTERNET_DISCONNECTED')
-
-      if (!isOffline) {
-        try {
-          return await retryWithBackoff(service, config)
-        } catch (retryError) {
-          // 重试失败，继续原有错误处理逻辑
-          error = retryError
-        }
-      } else {
-        console.warn('🌐 检测到网络离线状态，跳过重试机制')
-      }
-    }
-
-    // 🌐 网络错误统一包装为ApiError实例
-    let errorCode = 'NETWORK_ERROR'
-    let errorMessage = '网络请求失败，请稍后重试'
-    const errorDetails = {
-      originalError: error.code,
-      url: error.config?.url,
-      method: error.config?.method,
-      timestamp: new Date().toISOString()
-    }
-
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      errorCode = 'NETWORK_TIMEOUT'
-      errorMessage = '请求超时，请检查网络连接'
-    } else if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
-      errorCode = 'NETWORK_CONNECTION_FAILED'
-      errorMessage = '网络连接失败，请检查网络设置'
-    } else if (error.message.includes('ERR_INTERNET_DISCONNECTED')) {
-      errorCode = 'NETWORK_DISCONNECTED'
-      errorMessage = '网络连接已断开，请检查网络连接'
-    }
-
-    // 对于401统一由认证流程处理，这里不再弹出英文错误提示
-    if (error.response && error.response.status === 401) {
-      return Promise.reject(error)
-    }
-
-    // 显示用户友好的错误消息
-    showErrorMessage(errorMessage)
-
-    // 统一返回 ApiError 实例
-    return Promise.reject(new ApiError(errorCode, errorMessage, error.response?.status || 0, errorDetails))
-  }
-)
 
 /**
- * 🚀 现代格式响应处理函数
- * 提供现代化的错误处理和标准化的错误对象，充分利用后端meta信息
- *
- * @param {Object} res - 现代格式响应数据
- * @param {number} status - HTTP状态码
- * @param {Object} response - 完整的响应对象
- * @returns {Object|Promise.reject} 处理结果
+ * 获取请求统计信息
+ * @returns {Object}
  */
-function handleModernFormat(res, status, response = null) {
-  if (!res.success) {
-    // 🔐 认证错误处理（支持token自动刷新）
-    if (isAuthError(res.error?.code)) {
-      // 📊 详细日志：帮助调试Token刷新逻辑
-      console.log('🔍 认证错误详情:', {
-        errorCode: res.error?.code,
-        errorMessage: res.error?.message,
-        currentToken: getToken() ? '存在' : '不存在',
-        refreshToken: getRefreshToken() ? '存在' : '不存在'
-      })
-
-      // ✅ Token过期检测 - 尝试自动刷新
-      // 根据后端文档：
-      // - AUTH_002: TOKEN_EXPIRED（标准错误码，后端已修复）
-      // - AUTH_004: TOKEN_MALFORMED（兼容旧版本，待后端完全迁移）
-      // - TOKEN_EXPIRED: 通用错误码（向下兼容）
-      const isTokenExpiredError =
-        res.error?.code === 'AUTH_002' || // 标准Token过期错误码
-        res.error?.code === 'TOKEN_EXPIRED' || // 通用Token过期标识
-        (res.error?.code === 'AUTH_004' && res.error?.message?.includes('过期')) // 兼容旧版本
-
-      if (isTokenExpiredError) {
-        console.log(`✅ 检测到Token过期错误: ${res.error?.code}，尝试自动刷新...`)
-        // 轻量级提示：正在刷新Token（用户基本无感知）
-        if (process.env.NODE_ENV === 'development') {
-          Message({
-            message: '登录状态即将过期，正在自动续期...',
-            type: 'info',
-            duration: 2000
-          })
-        }
-        return handleTokenExpired(response)
-      }
-
-      // ❌ refreshToken过期或无效 - 静默跳转登录页
-      // AUTH_032: REFRESH_TOKEN_EXPIRED
-      // AUTH_033: REFRESH_TOKEN_INVALID
-      // 注意：这些错误通常发生在刷新Token接口调用时，应该静默处理
-      if (res.error?.code === 'AUTH_032' || res.error?.code === 'AUTH_033') {
-        console.warn(`⚠️ RefreshToken失效: ${res.error?.code}, 跳转登录页`)
-
-        // 轻量级提示：登录已过期
-        Message({
-          message: res.error?.message || '登录已过期，请重新登录',
-          type: 'warning',
-          duration: 3000,
-          showClose: true
-        })
-
-        // 清除认证状态
-        store.commit('user/RESET_STATE')
-        removeToken()
-
-        // 跳转到登录页
-        const currentPath = router.currentRoute.fullPath
-        router.replace({
-          path: '/login',
-          query: currentPath !== '/login' ? { redirect: currentPath } : {}
-        }).catch(err => console.warn('路由跳转警告:', err.message))
-
-        // 返回rejected Promise，阻止错误继续传递到业务层
-        return Promise.reject(
-          new ApiError(res.error?.code, res.error?.message || '登录已过期，请重新登录', 401)
-        )
-      }
-
-      // 🔒 其他认证错误 - 智能处理
-      // 包括：AUTH_001(未授权)、AUTH_003(无效令牌)、AUTH_005(令牌黑名单)等
-
-      // ⚡ 智能优化：对于AUTH_001，如果refreshToken存在，尝试刷新
-      // 这种情况可能是accessToken被意外清除，但refreshToken还在
-      if (res.error?.code === 'AUTH_001' && getRefreshToken()) {
-        console.log('💡 AUTH_001但存在refreshToken，尝试自动刷新...')
-        return handleTokenExpired(response)
-      }
-
-      // 其他情况：清除状态并跳转登录
-      console.warn(`⚠️ 认证错误: ${res.error?.code}, 跳转登录页`)
-
-      // 清除认证状态
-      if (!isHandlingAuthFailure) {
-        isHandlingAuthFailure = true
-
-        // 轻量级提示：认证失败
-        const authErrorMessage = res.error?.message || '认证失败，请重新登录'
-        Message({
-          message: authErrorMessage,
-          type: 'warning',
-          duration: 3000,
-          showClose: true
-        })
-
-        store.commit('user/RESET_STATE')
-        removeToken()
-
-        // 跳转到登录页
-        const currentPath = router.currentRoute.fullPath
-        router.replace({
-          path: '/login',
-          query: currentPath !== '/login' ? { redirect: currentPath } : {}
-        }).catch(err => console.warn('路由跳转警告:', err.message))
-          .finally(() => {
-            // 跳转完成后重置标志
-            isHandlingAuthFailure = false
-          })
-      }
-
-      // 返回rejected Promise，阻止错误继续传递到业务层
-      return Promise.reject(
-        new ApiError(res.error?.code || 'AUTH_ERROR', res.error?.message || '认证失败，请重新登录', 401)
-      )
-    }
-
-    // 📋 统一处理常见错误
-    const isHandled = handleCommonErrors(res.error, status, response)
-
-    // 📋 转换为标准ApiError对象，提供丰富的错误信息
-    const errorDetails = {
-      ...res.error?.details,
-      // 充分利用后端返回的meta信息
-      requestId: res.meta?.requestId,
-      timestamp: res.meta?.timestamp,
-      version: res.meta?.version,
-      // 添加错误追踪信息
-      traceId: res.meta?.requestId,
-      url: response?.config?.url,
-      method: response?.config?.method,
-      // 标记是否已在request层处理
-      handledByRequestLayer: isHandled
-    }
-
-    return Promise.reject(
-      new ApiError(res.error?.code || 'UNKNOWN_ERROR', res.error?.message || '未知错误', status, errorDetails)
-    )
-  }
-
-  // ✅ 成功响应，返回新格式数据（包含meta信息）
-  return res
-}
-
-/**
- * 🔐 认证失效检测函数 - 精确匹配策略（与后端同步）
- * 只有真正的认证失效（需要重新登录）才返回true
- * 登录验证失败（密码错误等）不会触发重新登录弹窗
- *
- * @param {string} errorCode - 错误码
- * @returns {boolean} 是否为认证失效错误
- */
-function isAuthError(errorCode) {
-  if (!errorCode) return false
-
-  // 1. 后端认证失效错误码（基于errorCodes.js）
-  const authFailureCodes = [
-    'AUTH_001', // UNAUTHORIZED - 未授权访问
-    'AUTH_002', // TOKEN_EXPIRED - 令牌过期
-    'AUTH_003', // INVALID_TOKEN - 令牌无效
-    'AUTH_004', // TOKEN_MALFORMED - 令牌格式错误
-    'AUTH_005', // TOKEN_BLACKLISTED - 令牌被加入黑名单
-    // 'AUTH_006', // INSUFFICIENT_PERMISSIONS - 权限不足（不应跳转登录）
-    'AUTH_030', // SESSION_EXPIRED - 会话过期
-    'AUTH_031', // SESSION_INVALID - 会话无效
-    'AUTH_032', // REFRESH_TOKEN_EXPIRED - 刷新令牌过期
-    'AUTH_033' // REFRESH_TOKEN_INVALID - 刷新令牌无效
-  ]
-
-  // 2. 处理通用认证失效错误码（向下兼容）
-  // 注意：FORBIDDEN (403) 是权限不足，不应该跳转登录
-  const commonAuthFailureCodes = ['UNAUTHORIZED', 'TOKEN_EXPIRED', 'INVALID_TOKEN']
-
-  return authFailureCodes.includes(errorCode) || commonAuthFailureCodes.includes(errorCode)
-}
-
-/**
- * 🔄 处理token过期，尝试自动刷新
- *
- * 场景1：accessToken过期，refreshToken有效 → 自动刷新，用户无感知
- * 场景2：refreshToken也过期/无效 → 跳转登录页
- * 场景3：并发请求 → 只刷新一次，其他请求排队等待
- *
- * @param {Object} response - axios响应对象
- * @returns {Promise} 返回刷新后的请求或错误
- */
-async function handleTokenExpired(response) {
-  const refreshToken = getRefreshToken()
-
-  // 场景检查：如果没有refresh token，直接跳转登录
-  if (!refreshToken) {
-    console.warn('⚠️ 未找到refreshToken，需要重新登录')
-    handleAuthError('登录已过期，请重新登录')
-    return Promise.reject(new ApiError('AUTH_001', '未授权访问，请重新登录', 401))
-  }
-
-  // 场景3：并发请求处理 - 如果正在刷新token，将当前请求加入队列
-  if (isRefreshingToken) {
-    console.log('🔄 Token刷新进行中，请求已加入等待队列')
-    return new Promise((resolve, reject) => {
-      addToRefreshQueue(resolve, reject, response.config)
-    })
-  }
-
-  // 开始刷新token流程
-  isRefreshingToken = true
-  console.log('🔄 检测到Token过期，开始自动刷新流程...')
-
-  try {
-    // 调用刷新token接口
-    const refreshResponse = await refreshTokens(refreshToken)
-
-    // 验证响应格式
-    if (!refreshResponse || !refreshResponse.success || !refreshResponse.data) {
-      throw new ApiError('REFRESH_FAILED', '刷新令牌响应格式错误', 500)
-    }
-
-    const { access, refresh } = refreshResponse.data
-
-    // 验证返回的token数据
-    if (!access?.token || !refresh?.token) {
-      throw new ApiError('REFRESH_FAILED', '刷新令牌数据不完整', 500)
-    }
-
-    // 场景1：刷新成功 - 更新本地token
-    console.log('✅ Token刷新成功，更新本地存储')
-
-    // 更新localStorage/sessionStorage中的token
-    setTokens({
-      accessToken: access.token,
-      refreshToken: refresh.token,
-      expiresIn: access.expires
-    }, store.getters.rememberMe || false)
-
-    // 更新Vuex store中的token
-    await store.dispatch('user/setToken', access.token)
-
-    // 处理等待队列中的所有请求
-    processRefreshQueue(true, access.token)
-
-    // 重新发送原始请求（使用新token）
-    response.config.headers.Authorization = `Bearer ${access.token}`
-    console.log('🚀 使用新Token重试原始请求:', response.config.url)
-    return service(response.config)
-  } catch (error) {
-    // 场景2：刷新失败 - 轻量级提示后跳转登录页
-    console.error('❌ Token刷新失败:', error.message || error)
-
-    // 轻量级提示：刷新Token失败
-    Message({
-      message: error.message || '登录已过期，请重新登录',
-      type: 'warning',
-      duration: 3000,
-      showClose: true
-    })
-
-    // 创建统一的错误对象
-    const refreshError = new ApiError(
-      error.code || 'REFRESH_FAILED',
-      error.message || '登录已过期，请重新登录',
-      error.status || 401,
-      {
-        originalError: error,
-        url: response.config?.url,
-        timestamp: new Date().toISOString()
-      }
-    )
-
-    // 处理等待队列中的所有请求（全部失败）
-    processRefreshQueue(false, null, refreshError)
-
-    // 🔧 关键：先完全清除认证状态，防止路由守卫触发额外请求
-    console.log('🧹 完全清理认证状态，防止路由守卫误判...')
-    store.commit('user/RESET_STATE')
-    removeToken()
-
-    // 跳转到登录页
-    const currentPath = router.currentRoute.fullPath
-    console.log('🔐 Token刷新失败，跳转到登录页，来源页面:', currentPath)
-
-    // 立即跳转到登录页
-    router.replace({
-      path: '/login',
-      query: currentPath !== '/login' ? { redirect: currentPath } : {}
-    }).catch(err => {
-      console.warn('路由跳转警告:', err.message)
-    })
-
-    return Promise.reject(refreshError)
-  } finally {
-    // 重置刷新状态
-    // eslint-disable-next-line require-atomic-updates
-    isRefreshingToken = false
-    console.log('🔓 Token刷新流程结束，解除锁定')
+function getRequestStats() {
+  return {
+    hasAccessToken: !!getToken(),
+    hasRefreshToken: !!getRefreshToken(),
+    errorStats: getErrorStats()
   }
 }
 
 /**
- * 🔍 检测验证相关错误
- * @param {string} errorCode - 错误码
- * @returns {boolean} 是否为验证错误
+ * 手动清除Token（用于登出）
  */
-function isValidationError(errorCode) {
-  if (!errorCode) return false
-  return errorCode.startsWith('VAL_')
-}
-
-/**
- * ⚙️ 检测系统相关错误
- * @param {string} errorCode - 错误码
- * @returns {boolean} 是否为系统错误
- */
-function isSystemError(errorCode) {
-  if (!errorCode) return false
-  return errorCode.startsWith('SYS_')
-}
-
-/**
- * 🚫 检测速率限制错误
- * @param {string} errorCode - 错误码
- * @param {number} status - HTTP状态码
- * @returns {boolean} 是否为速率限制错误
- */
-function isRateLimitError(errorCode, status) {
-  return status === 429 || ['AUTH_020', 'AUTH_021', 'AUTH_022'].includes(errorCode)
-}
-
-/**
- * 🔒 检测账户锁定错误
- * @param {string} errorCode - 错误码
- * @param {number} status - HTTP状态码
- * @returns {boolean} 是否为账户锁定错误
- */
-function isAccountLockedError(errorCode, status) {
-  return status === 423 || ['AUTH_014', 'AUTH_015'].includes(errorCode)
-}
-
-/**
- * 📋 统一处理常见错误 - 在request层自动处理
- * @param {Object} errorData - 错误数据
- * @param {number} status - HTTP状态码
- * @param {Object} response - 响应对象
- * @returns {boolean} 是否已处理（true表示已处理，false表示需要传递给业务层）
- */
-function handleCommonErrors(errorData, status, response) {
-  const errorCode = errorData?.code
-  const errorMessage = errorData?.message || '未知错误' // 👈 直接使用后端返回的message
-
-  // 1. 验证错误 - 统一显示验证失败消息
-  if (isValidationError(errorCode)) {
-    showErrorMessage(errorMessage, 'warning', 4000) // 👈 使用后端消息
-    return false // 传递给业务层进行具体字段处理
-  }
-
-  // 2. 系统错误 - 统一显示系统错误消息
-  if (isSystemError(errorCode)) {
-    // 对于系统错误，可以选择显示更用户友好的通用消息，或直接使用后端消息
-    const userFriendlyMessage = getUserFriendlySystemMessage(errorCode, errorMessage)
-    showErrorMessage(userFriendlyMessage, 'error', 5000)
-    return true // 已处理，不传递给业务层
-  }
-
-  // 3. 速率限制错误 - 统一处理
-  if (isRateLimitError(errorCode, status)) {
-    const retryAfter = errorData?.details?.retryAfter
-    const rateLimitMessage = retryAfter
-      ? `${errorMessage}，请在 ${retryAfter} 秒后重试` // 👈 基于后端消息增强
-      : errorMessage // 👈 直接使用后端消息
-
-    showErrorMessage(rateLimitMessage, 'warning', 6000)
-    return true // 已处理
-  }
-
-  // 4. 账户锁定错误 - 统一处理
-  if (isAccountLockedError(errorCode, status)) {
-    showErrorMessage(errorMessage, 'error', 8000) // 👈 直接使用后端消息
-    return true // 已处理
-  }
-
-  // 5. 权限不足错误 (403) - 统一处理
-  // 注意：权限不足不应跳转登录，只显示错误提示
-  if (status === 403 || errorCode === 'AUTH_006' || errorCode === 'AUTH_009' || errorCode === 'FORBIDDEN') {
-    const permissionMessage = errorMessage || '权限不足，无法执行此操作'
-    showErrorMessage(permissionMessage, 'warning', 5000)
-    return false // 传递给业务层，允许业务代码进行特殊处理
-  }
-
-  // 6. HTTP状态码错误 - 统一处理
-  if (status >= 500) {
-    const serverErrorMessage = errorMessage || '服务器异常，请稍后重试'
-    showErrorMessage(serverErrorMessage, 'error', 5000)
-    return true // 已处理
-  }
-
-  if (status === 502 || status === 503) {
-    const serviceErrorMessage = errorMessage || '服务暂时不可用，请稍后重试'
-    showErrorMessage(serviceErrorMessage, 'error', 5000)
-    return true // 已处理
-  }
-
-  return false // 未处理，传递给业务层
-}
-
-/**
- * 🎨 获取用户友好的系统错误消息
- * 对于系统错误，可以选择显示更通用的用户友好消息
- * @param {string} errorCode - 错误码
- * @param {string} backendMessage - 后端返回的消息
- * @returns {string} 用户友好的错误消息
- */
-function getUserFriendlySystemMessage(errorCode, backendMessage) {
-  // 可以根据需要选择使用后端消息或自定义用户友好消息
-  const friendlyMessages = {
-    SYS_001: '服务器繁忙，请稍后重试',
-    SYS_002: '数据处理异常，请稍后重试',
-    SYS_003: '外部服务异常，请稍后重试',
-    SYS_004: '网络连接异常，请检查网络',
-    SYS_005: '服务暂时不可用，请稍后重试',
-    SYS_006: '请求处理超时，请稍后重试',
-    SYS_007: '系统配置异常，请联系管理员'
-  }
-
-  // 优先使用后端消息，如果需要更友好的消息可以使用映射
-  return backendMessage || friendlyMessages[errorCode] || '系统异常，请稍后重试'
-}
-
-/**
- * 📎 生成请求去重键
- * @param {Object} config - axios配置对象
- * @returns {string} 去重键
- */
-function generateRequestKey(config) {
-  const { method, url, params, data } = config
-  const paramsStr = params ? JSON.stringify(params) : ''
-  const dataStr = data ? JSON.stringify(data) : ''
-  return `${REQUEST_DEDUP_KEY_PREFIX}${method}_${url}_${paramsStr}_${dataStr}`
-}
-
-/**
- * 🔄 指数退避重试函数
- * @param {Function} fn - 要重试的函数
- * @param {Object} config - axios配置
- * @param {number} retryCount - 当前重试次数
- * @returns {Promise} 重试结果
- */
-async function retryWithBackoff(fn, config, retryCount = 0) {
-  try {
-    return await fn(config)
-  } catch (error) {
-    // 检查是否为可重试错误
-    const isRetryableError = RETRY_CONFIG.retryableErrors.some(
-      (errType) => error.code?.includes(errType) || error.message?.includes(errType)
-    )
-
-    if (!isRetryableError || retryCount >= RETRY_CONFIG.maxRetries) {
-      throw error
-    }
-
-    // 计算重试延迟
-    const delay = RETRY_CONFIG.exponentialBackoff
-      ? RETRY_CONFIG.retryDelay * Math.pow(2, retryCount)
-      : RETRY_CONFIG.retryDelay
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔄 请求重试 (${retryCount + 1}/${RETRY_CONFIG.maxRetries}), ${delay}ms后重试:`, {
-        url: config.url,
-        error: error.message
-      })
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, delay))
-    return retryWithBackoff(fn, config, retryCount + 1)
-  }
-}
-
-/**
- * 📈 性能监控函数
- * @param {Object} config - 请求配置
- * @param {number} startTime - 请求开始时间
- * @param {Object} response - 响应对象
- */
-function trackPerformance(config, startTime, response) {
-  const duration = Date.now() - startTime
-  const requestId = response?.data?.meta?.requestId
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log('📈 性能监控:', {
-      url: config.url,
-      method: config.method,
-      duration: `${duration}ms`,
-      requestId,
-      status: response.status
-    })
-  }
-
-  // 可以在这里添加向监控系统发送数据的逻辑
-  if (duration > 3000) {
-    console.warn('⚠️ 慢请求警告:', {
-      url: config.url,
-      duration: `${duration}ms`,
-      requestId
-    })
-  }
-}
-/**
- * 🔐 统一认证错误处理函数（保留用于特殊场景）
- *
- * ⚠️ 注意：Token自动刷新机制已改为静默跳转，不再使用此函数弹窗
- * 此函数保留用于未来可能需要用户交互的特殊认证场景
- *
- * @param {string} message - 错误消息
- */
-function handleAuthError(message) {
-  console.warn('⚠️ handleAuthError 被调用（已废弃），建议使用静默跳转方式')
-
-  // 如果正在处理认证失效，直接返回（避免重复跳转）
-  if (isHandlingAuthFailure) {
-    return
-  }
-
-  isHandlingAuthFailure = true
-
-  // 🔧 立即清除认证状态，防止路由守卫误判
-  console.log('🧹 清理认证状态并跳转登录页')
-  store.commit('user/RESET_STATE')
+function clearTokens() {
   removeToken()
-
-  // 静默跳转到登录页
-  const currentPath = router.currentRoute.fullPath
-  router.replace({
-    path: '/login',
-    query: currentPath !== '/login' ? { redirect: currentPath } : {}
-  }).catch(err => {
-    console.warn('路由跳转警告:', err.message)
-  }).finally(() => {
-    // 跳转完成后重置标志
-    isHandlingAuthFailure = false
-  })
+  console.log('🧹 已清除所有Token')
 }
 
 /**
- * 📊 导出axios实例和工具类
+ * ==================== 导出 ====================
  */
-/**
- * 📋 导出axios实例和工具类
- * 支持重试、去重、认证队列等现代化特性
- */
+
+// 默认导出axios实例（保持向后兼容）
 export default service
 
-/**
- * 🔄 带重试功能的axios实例
- * @param {Object} config - 请求配置
- * @param {Object} retryOptions - 重试配置
- * @returns {Promise} 请求结果
- */
-export const serviceWithRetry = (config, retryOptions = {}) => {
-  const mergedRetryConfig = { ...RETRY_CONFIG, ...retryOptions }
-  const originalRetryConfig = { ...RETRY_CONFIG }
+// 导出API错误类（业务层可用）
+export { ApiError }
 
-  // 临时更新重试配置
-  Object.assign(RETRY_CONFIG, mergedRetryConfig)
-
-  return service(config).finally(() => {
-    // 还原原有配置
-    Object.assign(RETRY_CONFIG, originalRetryConfig)
-  })
+// 导出工具函数
+export {
+  getRequestStats,
+  clearTokens,
+  // 导出错误统计
+  getErrorStats,
+  clearErrorStats
 }
 
 /**
- * 🗼️ 清理工具函数
- */
-export const clearRequestCache = () => {
-  pendingRequests.clear()
-  errorMessageCache.clear()
-  refreshTokenQueue.length = 0
-  isHandlingAuthFailure = false
-  isRefreshingToken = false
-  console.log('🧹 已清理所有请求缓存和队列')
-}
-
-/**
- * 📈 获取请求统计信息
- */
-export const getRequestStats = () => {
-  return {
-    pendingRequestsCount: pendingRequests.size,
-    refreshTokenQueueCount: refreshTokenQueue.length,
-    isHandlingAuthFailure,
-    isRefreshingToken,
-    cachedErrorMessages: errorMessageCache.size
-  }
-}
-
-/**
- * 🔧 配置更新工具
- */
-export const updateRetryConfig = (newConfig) => {
-  Object.assign(RETRY_CONFIG, newConfig)
-}
-
-export const getRetryConfig = () => ({ ...RETRY_CONFIG })
-
-/**
- * 🔧 错误检测辅助方法 - 导出给业务层使用
- */
-export const errorUtils = {
-  isAuthError,
-  isValidationError,
-  isSystemError,
-  isRateLimitError,
-  isAccountLockedError,
-
-  // 业务层可用的错误检测方法
-  isAccountLocked: (error) => isAccountLockedError(error.code, error.status),
-  isRateLimited: (error) => isRateLimitError(error.code, error.status),
-  isValidation: (error) => isValidationError(error.code),
-  isSystem: (error) => isSystemError(error.code),
-  isAuth: (error) => isAuthError(error.code),
-
-  // 检查错误是否已被request层处理
-  isHandledByRequestLayer: (error) => error.details?.handledByRequestLayer === true
-}
-
-/**
- * 📖 使用说明和最佳实践
+ * ==================== 使用示例 ====================
  *
- * 🚀 现代化使用方式（统一错误处理 + 架构优化）：
- * ```javascript
- * // 1. 基本使用
- * async getData() {
+ * // 方式1：基本使用（继续使用旧的方式）
+ * import service from '@/utils/request'
+ *
+ * async function fetchData() {
  *   try {
- *     const res = await api.getData()
- *     this.data = res.data
- *
- *     // 利用后端返回的meta信息
- *     if (res.meta?.requestId) {
- *       console.log('Request ID:', res.meta.requestId)
- *     }
- *
- *     if (res.message) {
- *       this.$message.success(res.message)
- *     }
+ *     const res = await service.get('/v1/users')
+ *     console.log(res.data)
+ *     return res.data
  *   } catch (error) {
- *     // 所有错误都是 ApiError 实例，统一处理
- *     this.handleApiError(error)
+ *     // 拦截器已处理网络错误、认证错误、系统错误
+ *     // 这里只需要处理业务错误
+ *     if (!error.handledByInterceptor) {
+ *       this.$message.error(error.message)
+ *     }
  *   }
  * }
  *
- * // 2. 使用带重试功能的请求
- * import { serviceWithRetry } from './request'
+ * // 方式2：使用errorMixin（推荐）
+ * import service from '@/utils/request'
+ * import errorMixin from '@/mixins/errorMixin'
  *
- * async fetchImportantData() {
- *   try {
- *     const response = await serviceWithRetry({
- *       url: '/api/critical-data',
- *       method: 'get'
- *     }, {
- *       maxRetries: 5,
- *       retryDelay: 2000,
- *       exponentialBackoff: true
- *     })
- *   } catch (error) {
- *     // 重试失败后的处理
+ * export default {
+ *   mixins: [errorMixin],
+ *
+ *   methods: {
+ *     async handleSubmit() {
+ *       try {
+ *         const res = await service.post('/v1/users', this.formData)
+ *         this.$message.success(res.message)
+ *       } catch (error) {
+ *         this.handleError(error)  // 一行代码搞定！
+ *       }
+ *     }
  *   }
  * }
  *
- * // 3. 获取请求统计信息
- * import { getRequestStats, clearRequestCache } from './request'
+ * // 方式3：自定义特定错误码处理
+ * export default {
+ *   mixins: [errorMixin],
  *
- * // 查看当前请求状态
- * console.log('请求统计:', getRequestStats())
- *
- * // 清理缓存（在页面切换时使用）
- * clearRequestCache()
- *
- * // 2. 使用错误检测工具（现在直接使用后端消息）
- * import { errorUtils } from './request'
- *
- * handleApiError(error) {
- *   // 利用增强的错误信息
- *   if (error.details?.requestId) {
- *     console.log('错误追踪 ID:', error.details.requestId)
- *   }
- *
- *   // 检查是否已被request层处理
- *   if (errorUtils.isHandledByRequestLayer(error)) {
- *     console.log('错误已在request层处理，无需业务层处理')
- *     return
- *   }
- *
- *   // 使用错误检测工具进行分类处理
- *   if (errorUtils.isAuth(error)) {
- *     // 登录验证失败错误（与后端同步） - 这些不会触发重新登录
- *     // 👉 直接使用后端返回的消息，无需硬编码！
- *     this.$message.error(error.message) // 所有认证错误直接显示后端消息
- *   } else if (errorUtils.isValidation(error)) {
- *     // 验证错误 - 可以进行字段级别的处理
- *     this.handleValidationError(error)
- *   } else if (error.code?.startsWith('BIZ_')) {
- *     // 业务错误 - 直接使用后端返回的消息
- *     this.$message.error(error.message) // 👈 直接使用后端消息
- *   } else if (error.code?.startsWith('NETWORK_')) {
- *     // 网络错误 - 可以显示重试按钮等
- *     this.showRetryButton = true
- *   } else {
- *     // 其他未知错误 - 使用后端消息或默认消息
- *     this.$message.error(error.message || '操作失败') // 👈 优先使用后端消息
+ *   methods: {
+ *     async handleSubmit() {
+ *       try {
+ *         const res = await service.post('/v1/users', this.formData)
+ *         this.$message.success(res.message)
+ *       } catch (error) {
+ *         this.handleError(error, {
+ *           'USER_EMAIL_ALREADY_EXISTS': () => {
+ *             this.$message.error('邮箱已存在，请更换')
+ *             this.focusField('email')
+ *           }
+ *         })
+ *       }
+ *     }
  *   }
  * }
  *
- * // 3. 验证错误的详细处理（现在更简洁）
- * handleValidationError(error) {
- *   const details = error.details
- *   if (details?.field) {
- *     // 针对特定字段的验证错误
- *     this.setFieldError(details.field, error.message) // 👈 直接使用后端消息
- *   } else {
- *     // 通用验证错误消息已在request层显示（使用后端消息）
- *     console.log('验证错误已显示:', error.message)
- *   }
- * }
- *
- * // 4. 💡 最佳实践总结：
- * // ✅ 优先使用后端返回的error.message
- * // ✅ 前端只负责UI交互逻辑，不重复定义错误文案
- * // ✅ 保持前后端错误消息的一致性
- * // ✅ 减少维护成本，避免前后端消息不同步
- * ```
- *
- * 🔧 环境配置：
- * - VUE_APP_BASE_API: API基础路径
- * - NODE_ENV=development: 开启调试日志
- *
- * 🛡️ 安全特性：
- * - 自动添加X-Requested-With头
- * - 支持认证token自动附加
- * - 统一认证错误处理，支持路由跳转
- * - 基于错误码前缀的智能错误识别
- *
- * 📈 优化特性：
- * - 统一的错误对象格式（所有错误都是ApiError实例）
- * - SPA友好的认证错误处理（路由跳转而非页面刷新）
- * - 自适应后端新增错误码
- * - 网络错误自动重分类和用户友好提示
- * - 支持请求/响应中间件扩展
+ * 📚 相关文档：
+ * - 模块化架构：./api/README.md
+ * - 迁移指南：./api/MIGRATION_GUIDE.md
+ * - 错误处理：./api/errorHandler.js
+ * - 业务层Mixin：../mixins/errorMixin.js
  */
