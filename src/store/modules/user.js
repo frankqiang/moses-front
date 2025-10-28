@@ -227,6 +227,14 @@ const actions = {
     })
   },
 
+  // set token (用于Token刷新后更新)
+  setToken({ commit }, token) {
+    return new Promise(resolve => {
+      commit('SET_TOKEN', token)
+      resolve()
+    })
+  },
+
   // remove token
   resetToken({ commit }) {
     return new Promise(resolve => {
