@@ -202,3 +202,32 @@ export function param2Obj(url) {
   })
   return obj
 }
+
+/**
+ * 格式化数字，添加千位分隔符并保留指定小数位
+ * @param {number|string} num - 要格式化的数字
+ * @param {number} decimals - 小数位数，默认2位
+ * @returns {string} 格式化后的数字字符串
+ * @example
+ * formatNumber(1234.567, 2) // "1,234.57"
+ * formatNumber(1234567.89) // "1,234,567.89"
+ */
+export function formatNumber(num, decimals = 2) {
+  if (num === null || num === undefined || num === '') {
+    return '0.00'
+  }
+
+  const number = parseFloat(num)
+  if (isNaN(number)) {
+    return '0.00'
+  }
+
+  // 使用toFixed保留指定小数位
+  const fixed = number.toFixed(decimals)
+
+  // 添加千位分隔符
+  const parts = fixed.split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+
+  return parts.join('.')
+}
