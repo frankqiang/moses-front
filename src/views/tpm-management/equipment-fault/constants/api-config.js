@@ -7,7 +7,7 @@
  */
 
 // API基础路径
-export const API_BASE_PATH = '/v1/mdm/tpm/equipment-failures'
+export const API_BASE_PATH = '/mdm/tpm/equipment-failures'
 
 // API端点配置
 export const API_ENDPOINTS = {

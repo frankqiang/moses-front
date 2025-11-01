@@ -9,7 +9,7 @@
 
 import request from '@/utils/request'
 
-const BASE_URL = '/v1/mdm/tpm/maintenance-records'
+const BASE_URL = '/mdm/tpm/maintenance-records'
 
 /**
  * 查询维护记录列表
