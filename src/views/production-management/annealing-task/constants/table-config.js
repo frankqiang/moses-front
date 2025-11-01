@@ -4,6 +4,8 @@
  * 创建日期：2025-10-18
  * 修改记录：
  *   - 2025-10-18: 初始创建，定义表格列、状态配置及工具栏配置
+ *   - 2025-10-31: 更新待排程任务表格列配置，新增工艺模板、生产计划等相关列，删除重复的"要求完成日期"列
+ *   - 2025-11-01: 新增排程状态（schedulingStatus）列配置，并添加到默认可见列中
  */
 
 import { TASK_STATUS } from './annealing-task'
@@ -45,6 +47,15 @@ export const TABLE_COLUMNS = [
     showOverflowTooltip: true
   },
   {
+    prop: 'processTemplateName',
+    label: '工艺模板',
+    sortable: false,
+    minWidth: 160,
+    align: 'left',
+    showOverflowTooltip: true,
+    slotName: 'processTemplateName'
+  },
+  {
     prop: 'status',
     label: '任务状态',
     sortable: true,
@@ -63,6 +74,24 @@ export const TABLE_COLUMNS = [
     showOverflowTooltip: false
   },
   {
+    prop: 'schedulingStatus',
+    label: '排程状态',
+    sortable: false,
+    minWidth: 120,
+    align: 'center',
+    slotName: 'schedulingStatus',
+    showOverflowTooltip: false
+  },
+  {
+    prop: 'isLocked',
+    label: '锁定状态',
+    sortable: false,
+    minWidth: 100,
+    align: 'center',
+    slotName: 'isLocked',
+    showOverflowTooltip: false
+  },
+  {
     prop: 'plannedWeight',
     label: '计划重量 (吨)',
     sortable: true,
@@ -70,6 +99,15 @@ export const TABLE_COLUMNS = [
     align: 'right',
     showOverflowTooltip: true,
     slotName: 'plannedWeight'
+  },
+  {
+    prop: 'plannedQuantity',
+    label: '计划数量',
+    sortable: true,
+    minWidth: 120,
+    align: 'center',
+    showOverflowTooltip: true,
+    slotName: 'plannedQuantity'
   },
   {
     prop: 'actualWeight',
@@ -89,6 +127,15 @@ export const TABLE_COLUMNS = [
     showOverflowTooltip: true
   },
   {
+    prop: 'expectedDurationMinutes',
+    label: '预计执行时长',
+    sortable: true,
+    minWidth: 140,
+    align: 'center',
+    showOverflowTooltip: true,
+    slotName: 'expectedDurationMinutes'
+  },
+  {
     prop: 'plannedFurnaceCode',
     label: '计划执行炉号',
     sortable: true,
@@ -105,6 +152,51 @@ export const TABLE_COLUMNS = [
     type: 'datetime',
     format: '{y}-{m}-{d} {h}:{i}',
     showOverflowTooltip: true
+  },
+  {
+    prop: 'plannedUnloadingAt',
+    label: '计划出炉时间',
+    sortable: true,
+    minWidth: 180,
+    align: 'center',
+    type: 'datetime',
+    format: '{y}-{m}-{d} {h}:{i}',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'remarks',
+    label: '备注',
+    sortable: false,
+    minWidth: 200,
+    align: 'left',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'scheduleContextTaskCount',
+    label: '同炉任务数',
+    sortable: false,
+    minWidth: 120,
+    align: 'center',
+    showOverflowTooltip: true,
+    slotName: 'scheduleContextTaskCount'
+  },
+  {
+    prop: 'scheduleContextTotalWeight',
+    label: '同炉总重量 (吨)',
+    sortable: false,
+    minWidth: 150,
+    align: 'right',
+    showOverflowTooltip: true,
+    slotName: 'scheduleContextTotalWeight'
+  },
+  {
+    prop: 'scheduleContextCapacityUtilization',
+    label: '容量利用率',
+    sortable: false,
+    minWidth: 120,
+    align: 'center',
+    showOverflowTooltip: true,
+    slotName: 'scheduleContextCapacityUtilization'
   },
   {
     prop: 'planNumber',
@@ -127,6 +219,16 @@ export const TABLE_COLUMNS = [
   {
     prop: 'createdAt',
     label: '创建时间',
+    sortable: true,
+    minWidth: 180,
+    align: 'center',
+    type: 'datetime',
+    format: '{y}-{m}-{d} {h}:{i}:{s}',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'updatedAt',
+    label: '最后更新时间',
     sortable: true,
     minWidth: 180,
     align: 'center',
@@ -174,6 +276,14 @@ export const PENDING_TABLE_COLUMNS = [
     showOverflowTooltip: true
   },
   {
+    prop: 'productName',
+    label: '产品名称',
+    sortable: false,
+    minWidth: 180,
+    align: 'left',
+    showOverflowTooltip: true
+  },
+  {
     prop: 'alloyGrade',
     label: '合金牌号',
     sortable: false,
@@ -190,12 +300,37 @@ export const PENDING_TABLE_COLUMNS = [
     showOverflowTooltip: true
   },
   {
+    prop: 'processTemplateName',
+    label: '工艺模板',
+    sortable: false,
+    minWidth: 160,
+    align: 'left',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'processTemplateVersionNumber',
+    label: '工艺版本',
+    sortable: false,
+    minWidth: 100,
+    align: 'center',
+    showOverflowTooltip: true
+  },
+  {
     prop: 'priority',
     label: '优先级',
     sortable: false,
     minWidth: 100,
     align: 'center',
     slotName: 'priority',
+    showOverflowTooltip: false
+  },
+  {
+    prop: 'schedulingStatus',
+    label: '排程状态',
+    sortable: false,
+    minWidth: 120,
+    align: 'center',
+    slotName: 'schedulingStatus',
     showOverflowTooltip: false
   },
   {
@@ -227,6 +362,16 @@ export const PENDING_TABLE_COLUMNS = [
   {
     prop: 'plannedLoadingAt',
     label: '计划装炉时间',
+    sortable: false,
+    minWidth: 180,
+    align: 'center',
+    type: 'datetime',
+    format: '{y}-{m}-{d} {h}:{i}',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'plannedUnloadingAt',
+    label: '计划出炉时间',
     sortable: false,
     minWidth: 180,
     align: 'center',
@@ -270,6 +415,33 @@ export const PENDING_TABLE_COLUMNS = [
     slotName: 'estimatedEnergyConsumption'
   },
   {
+    prop: 'planNumber',
+    label: '生产计划编号',
+    sortable: false,
+    minWidth: 180,
+    align: 'left',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'customerName',
+    label: '客户名称',
+    sortable: false,
+    minWidth: 180,
+    align: 'left',
+    showOverflowTooltip: true
+  },
+  {
+    prop: 'deliveryDate',
+    label: '交货日期',
+    sortable: false,
+    minWidth: 140,
+    align: 'center',
+    type: 'date',
+    format: '{y}-{m}-{d}',
+    showOverflowTooltip: true,
+    slotName: 'deliveryDate'
+  },
+  {
     prop: 'actions',
     label: '操作',
     minWidth: 280,
@@ -286,11 +458,15 @@ export const PENDING_DEFAULT_VISIBLE_COLUMNS = [
   'productCode',
   'alloyGrade',
   'mixingGroupCode',
+  'processTemplateName',
   'priority',
+  'schedulingStatus',
   'plannedWeight',
   'materialCount',
   'plannedLoadingAt',
   'scheduleLockedUntil',
+  'planNumber',
+  'deliveryDate',
   'actions'
 ]
 
@@ -300,12 +476,18 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   'taskName',
   'productCode',
   'alloyGrade',
+  'processTemplateName',
   'status',
   'priority',
+  'schedulingStatus',
+  'isLocked',
   'plannedWeight',
+  'plannedQuantity',
   'actualWeight',
+  'expectedDurationMinutes',
   'plannedFurnaceCode',
   'plannedLoadingAt',
+  'plannedUnloadingAt',
   'actions'
 ]
 
@@ -366,6 +548,20 @@ export const SOURCE_CONFIG = {
   typeMap: {
     'plan-split': 'success',
     'manual': 'primary'
+  }
+}
+
+// 排程状态标签配置（v1.1新增）
+export const SCHEDULING_STATUS_CONFIG = {
+  textMap: {
+    'not_scheduled': '未排程',
+    'plan_created': '已生成方案',
+    'scheduled': '已发布排程'
+  },
+  typeMap: {
+    'not_scheduled': 'info',
+    'plan_created': 'warning',
+    'scheduled': 'success'
   }
 }
 

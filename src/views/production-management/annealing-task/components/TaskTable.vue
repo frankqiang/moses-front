@@ -4,6 +4,7 @@
  * 创建日期：2025-10-18
  * 修改记录：
  *   - 2025-10-18: 初始创建，实现任务列表展示和操作
+ *   - 2025-11-01: 移除"标记为待排程"快速状态更新按钮
  */
 <template>
   <div class="task-table">
@@ -92,13 +93,51 @@
         <span v-else>-</span>
       </template>
 
+      <template #processTemplateName="{ row }">
+        <span v-if="row.processTemplate && row.processTemplate.templateName">
+          {{ row.processTemplate.templateName }}
+        </span>
+        <span v-else>-</span>
+      </template>
+
       <template #plannedWeight="{ value }">
         <span v-if="value !== null && value !== undefined">{{ formatWeight(value) }}</span>
         <span v-else>-</span>
       </template>
 
+      <template #plannedQuantity="{ value }">
+        <span v-if="value !== null && value !== undefined">{{ formatQuantity(value) }}</span>
+        <span v-else>-</span>
+      </template>
+
       <template #actualWeight="{ value }">
         <span v-if="value !== null && value !== undefined">{{ formatWeight(value) }}</span>
+        <span v-else>-</span>
+      </template>
+
+      <template #expectedDurationMinutes="{ value }">
+        <span v-if="value !== null && value !== undefined">{{ formatDuration(value) }}</span>
+        <span v-else>-</span>
+      </template>
+
+      <template #scheduleContextTaskCount="{ row }">
+        <span v-if="row.scheduleContext && row.scheduleContext.taskCount !== null && row.scheduleContext.taskCount !== undefined">
+          {{ row.scheduleContext.taskCount }}
+        </span>
+        <span v-else>-</span>
+      </template>
+
+      <template #scheduleContextTotalWeight="{ row }">
+        <span v-if="row.scheduleContext && row.scheduleContext.totalWeight !== null && row.scheduleContext.totalWeight !== undefined">
+          {{ formatWeight(row.scheduleContext.totalWeight) }}
+        </span>
+        <span v-else>-</span>
+      </template>
+
+      <template #scheduleContextCapacityUtilization="{ row }">
+        <span v-if="row.scheduleContext && (row.scheduleContext.capacityUtilization || row.scheduleContext.capacityUtilization === 0)">
+          {{ formatPercentage(row.scheduleContext.capacityUtilization) }}
+        </span>
         <span v-else>-</span>
       </template>
 
@@ -118,6 +157,38 @@
           effect="plain"
           size="small"
         />
+        <span v-else>-</span>
+      </template>
+
+      <template #schedulingStatus="{ value }">
+        <status-tag
+          v-if="value && value.status"
+          :status="value.status"
+          :text-map="schedulingStatusConfig.textMap"
+          :type-map="schedulingStatusConfig.typeMap"
+          effect="light"
+          size="small"
+        />
+        <span v-else>-</span>
+      </template>
+
+      <template #isLocked="{ row }">
+        <el-tag
+          v-if="row.schedulingStatus && row.schedulingStatus.isLocked"
+          type="warning"
+          size="small"
+          effect="plain"
+        >
+          <i class="el-icon-lock" /> 已锁定
+        </el-tag>
+        <el-tag
+          v-else-if="row.schedulingStatus && !row.schedulingStatus.isLocked"
+          type="info"
+          size="small"
+          effect="plain"
+        >
+          <i class="el-icon-unlock" /> 未锁定
+        </el-tag>
         <span v-else>-</span>
       </template>
 
@@ -147,6 +218,7 @@ import {
   STATUS_CONFIG,
   PRIORITY_CONFIG,
   SOURCE_CONFIG,
+  SCHEDULING_STATUS_CONFIG,
   TABLE_TOOLBAR_CONFIG
 } from '../constants/table-config'
 import {
@@ -222,6 +294,9 @@ export default {
     },
     sourceConfig() {
       return SOURCE_CONFIG
+    },
+    schedulingStatusConfig() {
+      return SCHEDULING_STATUS_CONFIG
     },
     toolbarProps() {
       return {
@@ -351,10 +426,9 @@ export default {
         }
       ]
 
-      // 添加快速状态更新按钮（排除"标记为待排程"，将其放到更多菜单）
+      // 添加快速状态更新按钮
       const quickActions = QUICK_STATUS_ACTIONS.filter(action =>
-        action.allowedFromStatuses.includes(row.status) &&
-        action.targetStatus !== TASK_STATUS.PENDING_SCHEDULE // 排除"标记为待排程"
+        action.allowedFromStatuses.includes(row.status)
       )
 
       quickActions.forEach(quickAction => {
@@ -387,17 +461,6 @@ export default {
         })
       }
 
-      // 草稿状态可以标记为待排程
-      if (row.status === TASK_STATUS.DRAFT) {
-        buttons.push({
-          action: 'quick-status-update',
-          text: '标记为待排程',
-          icon: 'el-icon-s-order',
-          type: '',
-          targetStatus: TASK_STATUS.PENDING_SCHEDULE
-        })
-      }
-
       return buttons
     },
     formatWeight(value) {
@@ -405,6 +468,45 @@ export default {
         return '-'
       }
       return Number(value).toFixed(3)
+    },
+    formatQuantity(value) {
+      if (value === null || value === undefined) {
+        return '-'
+      }
+      // 如果是整数，不显示小数点
+      const num = Number(value)
+      return Number.isInteger(num) ? num.toString() : num.toFixed(2)
+    },
+    formatDuration(minutes) {
+      if (minutes === null || minutes === undefined) {
+        return '-'
+      }
+      const mins = Number(minutes)
+      if (mins < 60) {
+        return `${mins} 分钟`
+      }
+      const hours = Math.floor(mins / 60)
+      const remainingMins = mins % 60
+      if (remainingMins === 0) {
+        return `${hours} 小时`
+      }
+      return `${hours} 小时 ${remainingMins} 分钟`
+    },
+    formatPercentage(value) {
+      if (value === null || value === undefined || value === '') {
+        return '-'
+      }
+      const num = Number(value)
+      // 检查转换后是否为有效数字
+      if (isNaN(num)) {
+        return '-'
+      }
+      // 如果值在0-1之间，认为是小数形式，转换为百分比
+      if (num >= 0 && num <= 1) {
+        return `${(num * 100).toFixed(1)}%`
+      }
+      // 如果值大于1，认为已经是百分比形式
+      return `${num.toFixed(1)}%`
     }
   }
 }

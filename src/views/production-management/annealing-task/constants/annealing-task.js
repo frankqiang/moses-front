@@ -4,6 +4,7 @@
  * 创建日期：2025-10-18
  * 修改记录：
  *   - 2025-10-18: 初始创建，定义任务状态、优先级、来源等业务枚举
+ *   - 2025-11-01: 更新状态流转规则(v1.2)，禁止已排程任务直接回退或取消；移除"标记为待排程"快速操作
  */
 
 // 任务状态
@@ -64,6 +65,20 @@ export const TASK_SOURCE = {
 export const TASK_SOURCE_OPTIONS = [
   { value: TASK_SOURCE.PLAN_SPLIT, label: '计划拆分' },
   { value: TASK_SOURCE.MANUAL, label: '手工创建' }
+]
+
+// 排程状态（v1.1新增）
+export const SCHEDULING_STATUS = {
+  NOT_SCHEDULED: 'not_scheduled',
+  PLAN_CREATED: 'plan_created',
+  SCHEDULED: 'scheduled'
+}
+
+// 排程状态选项
+export const SCHEDULING_STATUS_OPTIONS = [
+  { value: SCHEDULING_STATUS.NOT_SCHEDULED, label: '未排程' },
+  { value: SCHEDULING_STATUS.PLAN_CREATED, label: '已生成方案' },
+  { value: SCHEDULING_STATUS.SCHEDULED, label: '已发布排程' }
 ]
 
 // 物料类型
@@ -134,10 +149,11 @@ export const SORTABLE_FIELDS = [
 
 // 状态流转规则（从当前状态到允许的下一状态）
 // 注意：pending-schedule → scheduled 的变更必须通过"应用排程结果"接口完成，不能通过简单的状态更新
+// v1.2更新：已排程任务禁止直接回退到待排程或取消，需通过排程模块取消排程方案
 export const STATE_TRANSITIONS = {
   [TASK_STATUS.DRAFT]: [TASK_STATUS.PENDING_SCHEDULE, TASK_STATUS.CANCELLED],
   [TASK_STATUS.PENDING_SCHEDULE]: [TASK_STATUS.DRAFT, TASK_STATUS.CANCELLED], // 移除SCHEDULED，该操作由排程系统完成
-  [TASK_STATUS.SCHEDULED]: [TASK_STATUS.WAITING_LOADING, TASK_STATUS.PENDING_SCHEDULE, TASK_STATUS.PAUSED, TASK_STATUS.CANCELLED],
+  [TASK_STATUS.SCHEDULED]: [TASK_STATUS.WAITING_LOADING, TASK_STATUS.PAUSED], // v1.2：移除PENDING_SCHEDULE和CANCELLED，防止数据不一致
   [TASK_STATUS.WAITING_LOADING]: [TASK_STATUS.LOADING, TASK_STATUS.PAUSED, TASK_STATUS.CANCELLED],
   [TASK_STATUS.LOADING]: [TASK_STATUS.WAITING_EXECUTE, TASK_STATUS.WAITING_LOADING, TASK_STATUS.PAUSED, TASK_STATUS.TERMINATED],
   [TASK_STATUS.WAITING_EXECUTE]: [TASK_STATUS.IN_PROGRESS, TASK_STATUS.PAUSED, TASK_STATUS.TERMINATED],
@@ -195,7 +211,7 @@ export const QUICK_REASON_OPTIONS = {
 export const STATUS_DESCRIPTIONS = {
   [TASK_STATUS.DRAFT]: '任务初始状态，可继续编辑',
   [TASK_STATUS.PENDING_SCHEDULE]: '任务已确认，等待系统排程',
-  [TASK_STATUS.SCHEDULED]: '已分配退火炉和时间窗口',
+  [TASK_STATUS.SCHEDULED]: '已分配退火炉和时间窗口（需重新排程或取消请前往排程管理模块）',
   [TASK_STATUS.WAITING_LOADING]: '排程已发布，等待装炉操作',
   [TASK_STATUS.LOADING]: '正在进行装炉操作',
   [TASK_STATUS.WAITING_EXECUTE]: '装炉完成，等待退火工艺执行',
@@ -209,13 +225,6 @@ export const STATUS_DESCRIPTIONS = {
 
 // 常用快速状态更新操作（用于列表页快捷操作）
 export const QUICK_STATUS_ACTIONS = [
-  {
-    label: '标记为待排程',
-    targetStatus: TASK_STATUS.PENDING_SCHEDULE,
-    allowedFromStatuses: [TASK_STATUS.DRAFT],
-    type: '', // 使用默认按钮样式，与"查看详情"等操作按钮风格统一
-    icon: 'el-icon-s-order'
-  },
   {
     label: '开始装炉',
     targetStatus: TASK_STATUS.LOADING,

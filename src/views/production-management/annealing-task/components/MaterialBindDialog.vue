@@ -10,6 +10,11 @@
  *                简化错误处理逻辑：直接显示后端返回的错误消息，不判断错误码
  *                优化对话框布局：调整高度和滚动设置，确保底部按钮始终可见，无需滚动
  *                优化重量校验提示：简化UI，仅显示Alert+复选框，勾选时弹窗显示详细说明
+ *   - 2025-10-31: 同步后端接口更新（v1.2），移除重量范围校验功能
+ *                后端已移除35-42吨固定范围的重量校验，改由排程系统根据实际分配的炉子容量进行精确校验
+ *                移除skipWeightValidation参数和相关UI
+ *                简化canSubmit逻辑，移除重量范围判断
+ *                移除FURNACE_CAPACITY常量依赖
  */
 
 <template>
@@ -335,24 +340,6 @@
             </el-table-column>
           </el-table>
         </div>
-
-        <!-- 重量校验提示 - 简化版 -->
-        <div v-if="showWeightWarning" class="weight-warning-section">
-          <el-alert
-            :title="weightWarningMessage"
-            :type="weightWarningType"
-            :closable="false"
-            show-icon
-          >
-            <el-checkbox
-              v-model="skipWeightValidation"
-              style="margin-top: 8px"
-              @change="handleSkipValidationChange"
-            >
-              跳过重量校验
-            </el-checkbox>
-          </el-alert>
-        </div>
       </div>
     </div>
 
@@ -375,10 +362,12 @@
 import { getBinList } from '@/views/inventory-management/bin-management/api'
 import { getStackList } from '@/views/inventory-management/stack-management/api'
 import { bindMaterialsToTask } from '../api'
-import { FURNACE_CAPACITY, MATERIAL_TYPE } from '../constants'
+import errorMixin from '@/mixins/errorMixin'
+import { MATERIAL_TYPE } from '../constants'
 
 export default {
   name: 'MaterialBindDialog',
+  mixins: [errorMixin],
   props: {
     visible: {
       type: Boolean,
@@ -414,7 +403,6 @@ export default {
         limit: 20,
         total: 0
       },
-      skipWeightValidation: false,
       submitting: false
     }
   },
@@ -427,58 +415,12 @@ export default {
     totalWeightAfterBinding() {
       return parseFloat(this.taskInfo.actualWeight || 0) + this.pendingTotalWeight
     },
-    // 是否显示重量警告
-    showWeightWarning() {
-      return this.pendingMaterials.length > 0 &&
-        (this.totalWeightAfterBinding < FURNACE_CAPACITY.MIN ||
-         this.totalWeightAfterBinding > FURNACE_CAPACITY.MAX)
-    },
-    // 重量警告类型
-    weightWarningType() {
-      // 如果已勾选跳过校验，统一显示 warning 类型
-      if (this.skipWeightValidation) {
-        return 'warning'
-      }
-      // 未勾选跳过校验时，超出最大容量显示 error，低于最小容量显示 warning
-      if (this.totalWeightAfterBinding > FURNACE_CAPACITY.MAX) {
-        return 'error'
-      } else if (this.totalWeightAfterBinding < FURNACE_CAPACITY.MIN) {
-        return 'warning'
-      }
-      return 'info'
-    },
-    // 重量警告消息
-    weightWarningMessage() {
-      const weight = this.totalWeightAfterBinding.toFixed(3)
-      const min = FURNACE_CAPACITY.MIN
-      const max = FURNACE_CAPACITY.MAX
-
-      if (this.totalWeightAfterBinding > max) {
-        if (this.skipWeightValidation) {
-          return `绑定后总重量 ${weight}吨 超过最大容量 ${max}吨（已跳过校验）`
-        }
-        return `绑定后总重量 ${weight}吨 超过最大容量 ${max}吨，请调整物料数量或勾选"跳过重量校验"`
-      } else if (this.totalWeightAfterBinding < min) {
-        if (this.skipWeightValidation) {
-          return `绑定后总重量 ${weight}吨 低于最小容量 ${min}吨（已跳过校验）`
-        }
-        return `绑定后总重量 ${weight}吨 低于最小容量 ${min}吨，建议继续添加物料或勾选"跳过重量校验"`
-      }
-      return ''
-    },
     // 是否可以提交
     canSubmit() {
       // 没有待绑定物料时不可提交
       if (this.pendingMaterials.length === 0) return false
       // 正在提交时不可提交
       if (this.submitting) return false
-      // 如果重量不在范围内且未勾选跳过校验，不可提交
-      if (!this.skipWeightValidation) {
-        if (this.totalWeightAfterBinding < FURNACE_CAPACITY.MIN ||
-            this.totalWeightAfterBinding > FURNACE_CAPACITY.MAX) {
-          return false
-        }
-      }
       // 其他情况允许提交
       return true
     }
@@ -510,7 +452,6 @@ export default {
         limit: 20,
         total: 0
       }
-      this.skipWeightValidation = false
       this.submitting = false
 
       // 加载物料列表
@@ -759,14 +700,7 @@ export default {
       return 'highlight'
     },
     getTotalWeightClass() {
-      if (this.totalWeightAfterBinding > FURNACE_CAPACITY.MAX) {
-        return 'error'
-      } else if (this.totalWeightAfterBinding < FURNACE_CAPACITY.MIN) {
-        return 'warning'
-      } else if (this.totalWeightAfterBinding >= FURNACE_CAPACITY.MIN &&
-                 this.totalWeightAfterBinding <= FURNACE_CAPACITY.MAX) {
-        return 'success'
-      }
+      // 移除重量范围校验后，统一使用中性颜色显示
       return ''
     },
     async handleSubmit() {
@@ -795,8 +729,7 @@ export default {
             ...(m.statusSnapshot && { statusSnapshot: m.statusSnapshot }),
             ...(m.weightSource && { weightSource: m.weightSource }),
             ...(m.remarks && { remarks: m.remarks })
-          })),
-          skipWeightValidation: this.skipWeightValidation
+          }))
         }
 
         const response = await bindMaterialsToTask(this.taskInfo.taskId, requestData)
@@ -809,56 +742,9 @@ export default {
         }
       } catch (error) {
         console.error('绑定物料失败:', error)
-
-        // 直接从错误对象提取信息（全局拦截器已转换为ApiError）
-        const errorMessage = error.message || error.response?.data?.error?.message || '绑定物料失败'
-        const errorDetails = error.details || error.response?.data?.error?.details
-
-        // 显示后端返回的错误消息
-        this.$message.error(errorMessage)
-
-        // 如果有冲突物料详情，额外显示详细列表
-        if (errorDetails?.conflictMaterials) {
-          const conflicts = errorDetails.conflictMaterials
-            .map(c => `${c.materialCode} (已绑定到 ${c.taskCode})`)
-            .join('\n')
-          this.$alert(
-            `${errorMessage}\n\n${conflicts}`,
-            '详细信息',
-            {
-              type: 'warning',
-              confirmButtonText: '知道了'
-            }
-          )
-        }
+        this.handleError(error)
       } finally {
         this.submitting = false
-      }
-    },
-    handleSkipValidationChange(checked) {
-      if (checked) {
-        // 勾选时弹窗提示详细信息
-        this.$alert(
-          `<div style="line-height: 1.8;">
-            <p><strong>适用场景：</strong></p>
-            <ul style="margin: 8px 0; padding-left: 20px;">
-              <li>分批装炉（先绑定部分物料，后续继续添加）</li>
-              <li>特殊工艺要求（需要特定重量配比）</li>
-              <li>测试/调试场景</li>
-            </ul>
-            <p style="color: #E6A23C; margin-top: 12px;">
-              <i class="el-icon-warning"></i>
-              <strong>注意：</strong>跳过校验后将允许绑定任意重量的物料，即使不在 35-42吨 炉容范围内。<br>
-              请确认这是您期望的操作，绑定后请及时补充或调整物料。
-            </p>
-          </div>`,
-          '跳过重量校验说明',
-          {
-            dangerouslyUseHTMLString: true,
-            type: 'warning',
-            confirmButtonText: '我知道了'
-          }
-        )
       }
     },
     handleClose() {

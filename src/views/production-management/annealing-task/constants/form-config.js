@@ -9,7 +9,8 @@
 import {
   TASK_STATUS_OPTIONS,
   TASK_PRIORITY_OPTIONS,
-  TASK_SOURCE_OPTIONS
+  TASK_SOURCE_OPTIONS,
+  SCHEDULING_STATUS_OPTIONS
 } from './annealing-task'
 
 // 搜索表单配置
@@ -104,6 +105,15 @@ export const SEARCH_FORM_CONFIG = [
     prop: 'search',
     label: '关键词搜索',
     placeholder: '支持任务编号/任务名称模糊查询',
+    clearable: true,
+    priority: 'advanced'
+  },
+  {
+    type: 'select',
+    prop: 'schedulingStatus',
+    label: '排程状态',
+    placeholder: '请选择排程状态',
+    options: SCHEDULING_STATUS_OPTIONS,
     clearable: true,
     priority: 'advanced'
   }

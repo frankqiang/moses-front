@@ -4,6 +4,8 @@
  * 创建日期：2025-10-20
  * 修改记录：
  *   - 2025-10-20: 初始创建，实现待排程任务表格及操作
+ *   - 2025-10-31: 新增交货日期格式化显示，将ISO格式转换为易读的日期格式
+ *   - 2025-11-01: 适配后端接口更新，使用 schedulingStatus.isLocked 判断锁定状态，新增排程状态列显示
  */
 
 <template>
@@ -90,9 +92,21 @@
         <span v-else>-</span>
       </template>
 
-      <template #scheduleLockedUntil="{ value }">
+      <template #schedulingStatus="{ row }">
         <el-tag
-          v-if="value"
+          v-if="row.schedulingStatus || row.schedulingStatusLabel"
+          size="small"
+          :type="getSchedulingStatusType(row)"
+          effect="plain"
+        >
+          {{ getSchedulingStatusLabel(row) }}
+        </el-tag>
+        <span v-else>-</span>
+      </template>
+
+      <template #scheduleLockedUntil="{ value, row }">
+        <el-tag
+          v-if="row.isLocked && value"
           size="small"
           type="danger"
         >
@@ -109,6 +123,11 @@
 
       <template #estimatedEnergyConsumption="{ value }">
         <span>{{ formatEnergy(value) }}</span>
+      </template>
+
+      <template #deliveryDate="{ value }">
+        <span v-if="value">{{ formatDate(value) }}</span>
+        <span v-else>-</span>
       </template>
 
       <template #actions="{ row }">
@@ -170,6 +189,7 @@ import {
   PENDING_TABLE_COLUMNS,
   PENDING_DEFAULT_VISIBLE_COLUMNS,
   PRIORITY_CONFIG,
+  SCHEDULING_STATUS_CONFIG,
   TABLE_TOOLBAR_CONFIG,
   MATERIAL_TYPE
 } from '../constants'
@@ -298,6 +318,10 @@ export default {
       if (!time) return '-'
       return parseTime(time, '{y}-{m}-{d} {h}:{i}')
     },
+    formatDate(time) {
+      if (!time) return '-'
+      return parseTime(time, '{y}-{m}-{d}')
+    },
     formatDuration(minutes) {
       if (!minutes && minutes !== 0) return '-'
       const totalMinutes = Number(minutes)
@@ -325,6 +349,14 @@ export default {
         return '料垛'
       }
       return type || '-'
+    },
+    getSchedulingStatusType(row) {
+      const statusCode = row.schedulingStatusCode || (row.schedulingStatus && row.schedulingStatus.status)
+      if (!statusCode) return 'info'
+      return SCHEDULING_STATUS_CONFIG.typeMap[statusCode] || 'info'
+    },
+    getSchedulingStatusLabel(row) {
+      return row.schedulingStatusLabel || (row.schedulingStatus && row.schedulingStatus.statusLabel) || '-'
     },
     handleSelectionChange(selection) {
       this.selectedRows = selection || []
@@ -368,7 +400,9 @@ export default {
         }
       ]
 
-      const isLocked = Boolean(row.scheduleLockedUntil)
+      // ✅ 使用 schedulingStatus.isLocked 或扁平化的 isLocked 字段判断锁定状态
+      // 而不是直接判断 scheduleLockedUntil 是否有值
+      const isLocked = row.isLocked || row.schedulingStatus?.isLocked || false
 
       if (!isLocked) {
         actions.push({

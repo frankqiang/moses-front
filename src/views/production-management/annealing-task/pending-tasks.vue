@@ -5,6 +5,8 @@
  * 修改记录：
  *   - 2025-10-20: 初始创建，实现待排程任务管理P0阶段功能与P1第9项
  *   - 2025-10-20: 从 menus 目录移到顶层，作为独立路由页面
+ *   - 2025-10-31: 适配后端API响应结构更新，增加数据扁平化转换逻辑
+ *   - 2025-11-01: 适配后端接口更新，新增 schedulingStatus 对象字段扁平化处理
  */
 
 <template>
@@ -98,7 +100,8 @@ export default {
         const response = await fetchPendingScheduleTasks(params)
 
         if (response && response.data) {
-          this.tableData = response.data.tasks || []
+          // 将嵌套的响应数据扁平化，以适配表格列配置
+          this.tableData = this.transformTaskData(response.data.tasks || [])
           this.pagination = {
             limit: params.limit,
             offset: params.offset,
@@ -116,6 +119,50 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    /**
+     * 转换任务数据：将嵌套的响应结构扁平化
+     * @param {Array} tasks - 原始任务数据数组
+     * @returns {Array} 扁平化后的任务数据数组
+     */
+    transformTaskData(tasks) {
+      if (!Array.isArray(tasks)) {
+        return []
+      }
+
+      return tasks.map((task) => {
+        // 保留原始数据的同时，添加扁平化的字段
+        const transformed = {
+          ...task,
+          // 工艺模板信息扁平化
+          processTemplateId: task.processTemplate?.id || null,
+          processTemplateCode: task.processTemplate?.templateCode || null,
+          processTemplateName: task.processTemplate?.templateName || null,
+          // 工艺模板版本信息扁平化
+          processTemplateVersionId: task.processTemplateVersion?.id || null,
+          processTemplateVersionNumber: task.processTemplateVersion?.versionNumber || null,
+          processTemplateVersionStatus: task.processTemplateVersion?.status || null,
+          // 排程状态信息扁平化（v1.1新增）
+          schedulingStatusCode: task.schedulingStatus?.status || null,
+          schedulingStatusLabel: task.schedulingStatus?.statusLabel || null,
+          schedulingStatusPlanId: task.schedulingStatus?.schedulePlanId || null,
+          isLocked: task.schedulingStatus?.isLocked || false,
+          // 生产计划信息扁平化
+          planId: task.planInfo?.id || null,
+          planNumber: task.planInfo?.planNumber || null,
+          planPriority: task.planInfo?.planPriority || null,
+          customerName: task.planInfo?.customerName || null,
+          deliveryDate: task.planInfo?.deliveryDate || null,
+          // 计划批次信息扁平化
+          planItemId: task.planItemInfo?.id || null,
+          planItemNumber: task.planItemInfo?.itemNumber || null,
+          planItemPlannedWeight: task.planItemInfo?.plannedWeight || null,
+          planItemPlannedQuantity: task.planItemInfo?.plannedQuantity || null,
+          planItemStatus: task.planItemInfo?.status || null
+        }
+
+        return transformed
+      })
     },
     handleSearch(params) {
       this.searchParams = {

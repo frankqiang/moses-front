@@ -77,6 +77,7 @@ import TaskCreateDrawer from './components/TaskCreateDrawer.vue'
 import MaterialBindDialog from './components/MaterialBindDialog.vue'
 import StatusUpdateDialog from './components/StatusUpdateDialog.vue'
 import { fetchAnnealingTaskList, updateAnnealingTaskStatus } from './api'
+import errorMixin from '@/mixins/errorMixin'
 import {
   DEFAULT_PAGINATION,
   DEFAULT_SORT,
@@ -92,6 +93,7 @@ export default {
     MaterialBindDialog,
     StatusUpdateDialog
   },
+  mixins: [errorMixin],
   data() {
     return {
       // 搜索参数
@@ -289,8 +291,8 @@ export default {
           return
         }
         console.error('快速更新任务状态失败:', error)
-        const errorMessage = error.response?.data?.error?.message || '更新任务状态失败'
-        this.$message.error(errorMessage)
+        // 使用 errorMixin 统一处理错误
+        this.handleError(error)
       }
     },
     // 通用状态更新（打开对话框选择目标状态）

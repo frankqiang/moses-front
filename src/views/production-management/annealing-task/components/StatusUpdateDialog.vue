@@ -4,6 +4,7 @@
  * 创建日期：2025-10-20
  * 修改记录：
  *   - 2025-10-20: 初始创建，实现状态更新功能
+ *   - 2025-11-01: 适配接口v1.2，已排程任务不允许直接回退或取消；移除状态历史功能
  */
 <template>
   <el-dialog
@@ -31,16 +32,6 @@
           effect="light"
           size="medium"
         />
-        <el-link
-          v-if="showStatusTimeline"
-          type="primary"
-          :underline="false"
-          style="margin-left: 16px"
-          @click="handleViewTimeline"
-        >
-          <i class="el-icon-time" />
-          查看状态历史
-        </el-link>
       </el-form-item>
 
       <!-- 目标状态 -->
@@ -126,17 +117,12 @@
       <el-button @click="handleClose">取消</el-button>
       <el-button type="primary" :loading="submitting" @click="handleSubmit">确定更新</el-button>
     </div>
-
-    <!-- 状态历史时间轴对话框 -->
-    <status-timeline-dialog
-      :visible.sync="timelineDialogVisible"
-      :task-code="taskCode"
-    />
   </el-dialog>
 </template>
 
 <script>
 import { updateAnnealingTaskStatus } from '../api'
+import errorMixin from '@/mixins/errorMixin'
 import {
   TASK_STATUS_OPTIONS,
   STATE_TRANSITIONS,
@@ -146,24 +132,19 @@ import {
 } from '../constants'
 import { STATUS_CONFIG } from '../constants/table-config'
 import StatusTag from '@/components/StatusTag'
-import StatusTimelineDialog from './StatusTimelineDialog.vue'
 
 export default {
   name: 'StatusUpdateDialog',
   components: {
-    StatusTag,
-    StatusTimelineDialog
+    StatusTag
   },
+  mixins: [errorMixin],
   props: {
     visible: {
       type: Boolean,
       default: false
     },
     taskId: {
-      type: String,
-      default: ''
-    },
-    taskCode: {
       type: String,
       default: ''
     },
@@ -180,7 +161,6 @@ export default {
         remarks: ''
       },
       submitting: false,
-      timelineDialogVisible: false,
       statusTextMap: STATUS_CONFIG.textMap,
       statusTypeMap: STATUS_CONFIG.typeMap,
       statusDescriptions: STATUS_DESCRIPTIONS
@@ -217,10 +197,6 @@ export default {
     // 选中状态的说明
     selectedStatusDescription() {
       return this.formData.status ? STATUS_DESCRIPTIONS[this.formData.status] : ''
-    },
-    // 是否显示状态历史链接
-    showStatusTimeline() {
-      return this.taskCode
     },
     // 表单校验规则
     formRules() {
@@ -275,9 +251,6 @@ export default {
         this.$refs.statusForm.clearValidate(['reason'])
       }
     },
-    handleViewTimeline() {
-      this.timelineDialogVisible = true
-    },
     handleSubmit() {
       this.$refs.statusForm.validate(async(valid) => {
         if (!valid) {
@@ -322,17 +295,7 @@ export default {
           }
         } catch (error) {
           console.error('更新任务状态失败:', error)
-          const errorMessage = error.response?.data?.error?.message || '更新任务状态失败'
-          this.$message.error(errorMessage)
-
-          // 如果是状态流转不合法，显示允许的下一状态
-          if (error.response?.data?.error?.code === 'INVALID_STATUS') {
-            const allowedStatuses = error.response.data.error.details?.allowedNextStatuses
-            if (allowedStatuses && allowedStatuses.length > 0) {
-              const statusNames = allowedStatuses.map(s => this.statusTextMap[s]).join('、')
-              this.$message.info(`允许的下一状态：${statusNames}`)
-            }
-          }
+          this.handleError(error)
         } finally {
           this.submitting = false
         }
