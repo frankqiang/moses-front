@@ -20,39 +20,39 @@ const AUTH_FAILURE_CODES = [
   'AUTH_030', // 会话过期
   'AUTH_031', // 会话无效
   'AUTH_032', // RefreshToken过期
-  'AUTH_033', // RefreshToken无效
-];
+  'AUTH_033' // RefreshToken无效
+]
 
 /**
  * 检查是否为认证失效错误（需要重新登录）
  */
 export function isAuthFailure(errorCode) {
-  return AUTH_FAILURE_CODES.includes(errorCode);
+  return AUTH_FAILURE_CODES.includes(errorCode)
 }
 
 /**
  * 检查是否为Token过期（可以尝试刷新）
  */
 export function isTokenExpired(errorCode) {
-  return errorCode === 'AUTH_002' || errorCode === 'TOKEN_EXPIRED';
+  return errorCode === 'AUTH_002' || errorCode === 'TOKEN_EXPIRED'
 }
 
 /**
  * 检查是否为RefreshToken失效
  */
 export function isRefreshTokenError(errorCode) {
-  return errorCode === 'AUTH_032' || errorCode === 'AUTH_033';
+  return errorCode === 'AUTH_032' || errorCode === 'AUTH_033'
 }
 
 /**
  * 检查是否为系统错误
  */
 export function isSystemError(errorCode) {
-  return errorCode?.startsWith('SYS_');
+  return errorCode?.startsWith('SYS_')
 }
 
 // 别名函数（兼容性）
-export const isTokenExpiredError = isTokenExpired;
+export const isTokenExpiredError = isTokenExpired
 
 // 就这么简单！其他错误都交给业务层处理
 export default {
@@ -60,5 +60,5 @@ export default {
   isTokenExpired,
   isTokenExpiredError,
   isRefreshTokenError,
-  isSystemError,
-};
+  isSystemError
+}

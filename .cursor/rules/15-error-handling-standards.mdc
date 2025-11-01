@@ -1,0 +1,119 @@
+---
+alwaysApply: true
+---
+# 错误处理统一规范
+
+## 核心原则
+
+1. **统一使用 errorMixin**：所有组件必须使用 [errorMixin.js](mdc:src/mixins/errorMixin.js) 处理API错误
+2. **禁止硬编码错误消息**：必须使用后端返回的 `error.message`
+3. **防止重复提示**：拦截器已处理的错误不得再次显示
+4. **职责清晰**：拦截器处理通用错误，业务层处理业务错误
+
+## 强制规范
+
+### ✅ 必须这样做
+
+```javascript
+// 1. 引入 errorMixin
+import errorMixin from '@/mixins/errorMixin'
+
+export default {
+  mixins: [errorMixin],
+
+  methods: {
+    async handleSubmit() {
+      try {
+        const res = await service.post('/v1/api', data)
+        // 使用后端返回的消息
+        this.$message.success(res.message)
+      } catch (error) {
+        // 统一错误处理
+        this.handleError(error)
+      }
+    }
+  }
+}
+```
+
+### ❌ 禁止这样做
+
+```javascript
+// ❌ 禁止：硬编码错误消息
+catch (error) {
+  this.$message.error('操作失败')
+}
+
+// ❌ 禁止：硬编码成功消息
+this.$message.success('操作成功')
+
+// ❌ 禁止：不检查拦截器标志
+catch (error) {
+  this.$message.error(error.message)  // 可能重复显示
+}
+
+// ❌ 禁止：复杂的错误码判断
+catch (error) {
+  if (error.code?.startsWith('VAL_')) { ... }
+  else if (error.code?.startsWith('BIZ_')) { ... }
+}
+
+// ❌ 禁止：不使用 errorMixin
+catch (error) {
+  if (!error.handledByInterceptor) {
+    this.$message.error(error.message)
+  }
+}
+```
+
+## 特殊场景处理
+
+### 需要额外逻辑
+
+```javascript
+catch (error) {
+  this.handleError(error)  // 显示消息
+  // 额外逻辑放在后面
+  if (error.code === 'USER_EMAIL_EXISTS') {
+    this.focusField('email')
+  }
+}
+```
+
+### 静默处理
+
+```javascript
+catch (error) {
+  this.handleError(error, { silent: true })
+  // 不显示消息，执行其他操作
+}
+```
+
+## Code Review 检查清单
+
+审查代码时必须确认：
+
+- [ ] 是否引入并使用了 errorMixin
+- [ ] catch 块中是否使用 `this.handleError(error)`
+- [ ] 是否使用后端返回的 `res.message` 而非硬编码
+- [ ] 是否避免了重复的错误消息显示
+- [ ] 特殊逻辑是否放在 `handleError()` 调用之后
+
+## 拦截器职责范围
+
+**拦截器自动处理**（业务层无需处理）：
+- 网络错误（超时、断网）
+- 认证失效（Token过期、需重新登录）
+- 系统错误（5xx）
+
+**业务层必须处理**：
+- 验证错误（VAL_*）
+- 业务错误（BIZ_*）
+- 其他业务逻辑错误
+
+## 相关文件
+
+- [errorMixin实现](mdc:src/mixins/errorMixin.js)
+- [请求拦截器](mdc:src/utils/api/interceptors/response.js)
+- [错误处理器](mdc:src/utils/api/errorHandler.js)
+- [统一请求入口](mdc:src/utils/request.js)

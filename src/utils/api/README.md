@@ -1,4 +1,17 @@
-# 🚀 API 请求模块 - 简化版
+# 🚀 API 请求模块 - 模块化架构
+
+## 📂 架构说明
+
+```
+src/utils/request.js          ← 统一入口（项目中使用这个）
+    ↓ 使用模块化拦截器
+src/utils/api/
+    ├── interceptors/         ← 请求和响应拦截器
+    ├── errorHandler.js       ← 错误处理核心逻辑
+    └── errorTypes.js         ← 错误类型判断
+```
+
+**重要**：项目中统一使用 `import service from '@/utils/request'`，不要引入其他路径。
 
 ## 📋 核心理念
 
@@ -36,11 +49,11 @@ catch (error) {
 ### 最简单的用法（95%场景）
 
 ```javascript
-import request from '@/api/request'
+import service from '@/utils/request'
 
 async function createUser(userData) {
   try {
-    const res = await request.post('/v1/users', userData)
+    const res = await service.post('/v1/users', userData)
     this.$message.success(res.message)
     return res.data
   } catch (error) {
@@ -55,6 +68,7 @@ async function createUser(userData) {
 ### 使用Mixin（推荐）
 
 ```javascript
+import service from '@/utils/request'
 import errorMixin from '@/mixins/errorMixin'
 
 export default {
@@ -63,7 +77,7 @@ export default {
   methods: {
     async handleSubmit() {
       try {
-        const res = await request.post('/v1/users', this.formData)
+        const res = await service.post('/v1/users', this.formData)
         this.$message.success(res.message)
       } catch (error) {
         this.handleError(error)  // 就这一行！
@@ -76,13 +90,16 @@ export default {
 ### 自定义特定错误码处理（5%场景）
 
 ```javascript
+import service from '@/utils/request'
+import errorMixin from '@/mixins/errorMixin'
+
 export default {
   mixins: [errorMixin],
 
   methods: {
     async handleSubmit() {
       try {
-        const res = await request.post('/v1/users', this.formData)
+        const res = await service.post('/v1/users', this.formData)
         this.$message.success(res.message)
       } catch (error) {
         this.handleError(error, {

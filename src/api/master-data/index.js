@@ -9,6 +9,9 @@
 // 产品相关API
 export * from './products'
 
+// 设备相关API
+export * from './equipment'
+
 /**
  * 主数据公共API模块说明
  *

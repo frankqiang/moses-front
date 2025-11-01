@@ -62,7 +62,12 @@ function processRefreshQueue(isSuccess, newToken, error, retryRequest) {
       resolve(retryRequest(config))
     } else {
       // 刷新失败：拒绝所有排队的请求
-      reject(error || new Error('Token refresh failed'))
+      // 确保传递ApiError对象，保持错误对象一致性
+      const apiError = error instanceof ApiError
+        ? error
+        : new ApiError('REFRESH_QUEUE_FAILED', error?.message || 'Token刷新失败', 401)
+      apiError.handledByInterceptor = true
+      reject(apiError)
     }
   })
 }
@@ -89,7 +94,9 @@ export async function handleTokenExpired(originalConfig, retryRequest) {
   if (!refreshToken) {
     console.warn('⚠️ 未找到RefreshToken，需要重新登录')
     handleAuthFailure('登录已过期，请重新登录')
-    return Promise.reject(new ApiError('AUTH_001', '未授权访问，请重新登录', 401))
+    const authError = new ApiError('AUTH_001', '未授权访问，请重新登录', 401)
+    authError.handledByInterceptor = true // 标记已处理
+    return Promise.reject(authError)
   }
 
   // 场景2：如果正在刷新token，将当前请求加入队列
@@ -161,6 +168,7 @@ export async function handleTokenExpired(originalConfig, retryRequest) {
         timestamp: new Date().toISOString()
       }
     )
+    refreshError.handledByInterceptor = true // 标记已处理
 
     // 处理等待队列中的所有请求（全部失败）
     processRefreshQueue(false, null, refreshError, retryRequest)
@@ -225,13 +233,12 @@ export async function handleAuthError(errorData, originalConfig, retryRequest) {
   if (isRefreshTokenError(errorCode)) {
     console.warn(`⚠️ RefreshToken失效: ${errorCode}, 跳转登录页`)
 
-    // 轻量级提示
-    showMessage(errorData?.message || '登录已过期，请重新登录', 'warning', 3000)
+    // 清除认证状态并跳转（不显示消息，由handleAuthFailure统一处理）
+    await handleAuthFailure(errorData?.message || '登录已过期，请重新登录')
 
-    // 清除认证状态并跳转
-    await handleAuthFailure(errorData?.message)
-
-    return Promise.reject(new ApiError(errorCode, errorData?.message || '登录已过期，请重新登录', 401))
+    const authError = new ApiError(errorCode, errorData?.message || '登录已过期，请重新登录', 401)
+    authError.handledByInterceptor = true // 标记已处理
+    return Promise.reject(authError)
   }
 
   // 3. 其他认证错误 - 智能处理
@@ -245,7 +252,9 @@ export async function handleAuthError(errorData, originalConfig, retryRequest) {
   console.warn(`⚠️ 认证错误: ${errorCode}, 跳转登录页`)
   await handleAuthFailure(errorData?.message || '认证失败，请重新登录')
 
-  return Promise.reject(new ApiError(errorCode || 'AUTH_ERROR', errorData?.message || '认证失败，请重新登录', 401))
+  const authError = new ApiError(errorCode || 'AUTH_ERROR', errorData?.message || '认证失败，请重新登录', 401)
+  authError.handledByInterceptor = true // 标记已处理
+  return Promise.reject(authError)
 }
 
 /**

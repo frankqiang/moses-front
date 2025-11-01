@@ -307,18 +307,6 @@ export const asyncRoutes = [
         }
       },
       {
-        path: 'maintenance-tasks/create',
-        name: 'MaintenanceTaskCreate',
-        component: () => import('@/views/tpm-management/maintenance-task/create'),
-        meta: {
-          title: '创建维护任务',
-          activeMenu: '/equipment-tpm/maintenance-tasks'
-          // 开发阶段：移除 roles 限制
-          // 生产环境权限：mdm.tpm.maintenance-task.manage
-        },
-        hidden: true
-      },
-      {
         path: 'maintenance-tasks/calendar',
         name: 'MaintenanceTaskCalendar',
         component: () => import('@/views/tpm-management/maintenance-task/calendar'),
@@ -442,6 +430,129 @@ export const asyncRoutes = [
           // 生产环境权限：mdm.tpm.equipment-failure.view
         },
         hidden: true
+      },
+      // 备件管理
+      {
+        path: 'spare-parts',
+        name: 'SparePartList',
+        component: () => import(/* webpackChunkName: "spare-parts" */ '@/views/tpm-management/spare-parts/index'),
+        meta: {
+          title: '备件管理',
+          icon: 'el-icon-s-goods',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.spare-part.view
+        }
+      },
+      {
+        path: 'spare-parts/transactions',
+        name: 'SparePartTransactionRecords',
+        component: () => import(/* webpackChunkName: "spare-parts" */ '@/views/tpm-management/spare-parts/transaction-records/index'),
+        meta: {
+          title: '出入库记录',
+          icon: 'el-icon-tickets',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.spare-part.view
+        }
+      },
+      {
+        path: 'spare-parts/:id',
+        name: 'SparePartDetail',
+        component: () => import(/* webpackChunkName: "spare-parts" */ '@/views/tpm-management/spare-parts/detail'),
+        meta: {
+          title: '备件详情',
+          activeMenu: '/equipment-tpm/spare-parts',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.spare-part.view
+        },
+        hidden: true
+      },
+      // TPM统计分析
+      {
+        path: 'tpm-statistics',
+        name: 'TpmStatistics',
+        component: () => import('@/views/tpm-management/tpm-statistics/index'),
+        meta: {
+          title: 'TPM综合看板',
+          icon: 'el-icon-data-board',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.statistics.view
+        }
+      },
+      {
+        path: 'maintenance-plan-rate',
+        name: 'MaintenancePlanRate',
+        component: () => import('@/views/tpm-management/tpm-statistics/maintenance-plan-rate'),
+        meta: {
+          title: '维护计划执行率统计',
+          icon: 'el-icon-s-data',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.statistics.view
+        }
+      },
+      {
+        path: 'equipment-health',
+        name: 'EquipmentHealth',
+        component: () => import('@/views/tpm-management/tpm-statistics/equipment-health'),
+        meta: {
+          title: '设备健康度评分',
+          icon: 'el-icon-trophy',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.statistics.view
+        }
+      },
+      {
+        path: 'failure-summary',
+        name: 'FailureSummary',
+        component: () => import('@/views/tpm-management/tpm-statistics/failure-summary'),
+        meta: {
+          title: '故障汇总统计',
+          icon: 'el-icon-warning',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.statistics.view
+        }
+      },
+      {
+        path: 'mttr-trend',
+        name: 'MttrTrend',
+        component: () => import('@/views/tpm-management/tpm-statistics/mttr-trend'),
+        meta: {
+          title: 'MTTR趋势分析',
+          icon: 'el-icon-data-line',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.statistics.view
+        }
+      },
+      {
+        path: 'spare-part-consumption',
+        name: 'SparePartConsumption',
+        component: () => import('@/views/tpm-management/tpm-statistics/spare-part-consumption'),
+        meta: {
+          title: '备件消耗分析',
+          icon: 'el-icon-coin',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.statistics.view
+        }
+      },
+      {
+        path: 'maintenance-workload',
+        name: 'MaintenanceWorkload',
+        component: () => import('@/views/tpm-management/tpm-statistics/maintenance-workload'),
+        meta: {
+          title: '维护工作量统计',
+          icon: 'el-icon-s-data',
+          breadcrumb: true
+          // 开发阶段：移除 roles 限制
+          // 生产环境权限：mdm.tpm.statistics.view
+        }
       }
     ]
   },

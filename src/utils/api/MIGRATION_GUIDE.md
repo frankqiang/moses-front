@@ -10,14 +10,14 @@
 
 ## 🚀 迁移步骤（3步）
 
-### 步骤1：替换导入
+### 步骤1：引入errorMixin
 
 ```javascript
-// Before
-import service from '@/request'
+// Before（旧版本）
+import service from '@/utils/request'
 
-// After
-import request from '@/api/request'
+// After（新版本 - 添加errorMixin）
+import service from '@/utils/request'
 import errorMixin from '@/mixins/errorMixin'
 ```
 
@@ -48,7 +48,7 @@ async handleSubmit() {
 // After（新版本）
 async handleSubmit() {
   try {
-    const res = await request.post('/v1/users', this.formData)
+    const res = await service.post('/v1/users', this.formData)
     this.$message.success(res.message)
   } catch (error) {
     this.handleError(error)  // 就这一行！
@@ -71,7 +71,7 @@ try {
 
 // After
 try {
-  const res = await request.get('/v1/users')
+  const res = await service.get('/v1/users')
   this.list = res.data
 } catch (error) {
   this.handleError(error)
@@ -91,7 +91,7 @@ try {
 
 // After
 try {
-  const res = await request.post('/v1/users', this.formData)
+  const res = await service.post('/v1/users', this.formData)
   this.$message.success(res.message)
 } catch (error) {
   this.handleError(error)
@@ -115,7 +115,7 @@ try {
 
 // After
 try {
-  const res = await request.post('/v1/users', this.formData)
+  const res = await service.post('/v1/users', this.formData)
 } catch (error) {
   this.handleError(error, {
     'USER_EMAIL_ALREADY_EXISTS': () => {
@@ -162,7 +162,7 @@ export default {
 ### After（新版本）
 
 ```javascript
-import request from '@/api/request'
+import service from '@/utils/request'
 import errorMixin from '@/mixins/errorMixin'
 
 export default {
@@ -179,7 +179,7 @@ export default {
     async handleSubmit() {
       this.loading = true
       try {
-        const res = await request.post('/v1/users', this.formData)
+        const res = await service.post('/v1/users', this.formData)
         this.$message.success(res.message)
         this.dialogVisible = false
       } catch (error) {
@@ -194,7 +194,6 @@ export default {
 
 ## ✅ 迁移检查清单
 
-- [ ] 替换所有 `import service from '@/request'` 为 `import request from '@/api/request'`
 - [ ] 在组件中引入 `errorMixin`
 - [ ] 将 catch 块中的错误处理改为 `this.handleError(error)`
 - [ ] 测试验证错误提示是否正常
