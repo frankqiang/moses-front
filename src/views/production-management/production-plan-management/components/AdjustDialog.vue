@@ -142,7 +142,7 @@
         >
           <template slot="default">
             <div>• <strong>子批次状态</strong>：由系统根据业务流程自动更新，无法手动修改</div>
-            <div>• <strong>可调整字段</strong>：重量、数量、装炉时段</div>
+            <div>• <strong>可调整字段</strong>：重量、数量</div>
           </template>
         </el-alert>
         <el-table
@@ -200,38 +200,6 @@
             </template>
           </el-table-column>
           <el-table-column
-            label="装炉开始时间"
-            width="180"
-          >
-            <template slot-scope="{ row }">
-              <el-date-picker
-                v-model="row.expectedFurnaceWindowStart"
-                type="datetime"
-                size="small"
-                placeholder="选择开始时间"
-                format="yyyy-MM-dd HH:mm"
-                value-format="yyyy-MM-ddTHH:mm:ss.sssZ"
-                style="width: 100%"
-              />
-            </template>
-          </el-table-column>
-          <el-table-column
-            label="装炉结束时间"
-            width="180"
-          >
-            <template slot-scope="{ row }">
-              <el-date-picker
-                v-model="row.expectedFurnaceWindowEnd"
-                type="datetime"
-                size="small"
-                placeholder="选择结束时间"
-                format="yyyy-MM-dd HH:mm"
-                value-format="yyyy-MM-ddTHH:mm:ss.sssZ"
-                style="width: 100%"
-              />
-            </template>
-          </el-table-column>
-          <el-table-column
             label="备注"
             min-width="150"
           >
@@ -270,6 +238,7 @@
 <script>
 import { adjustPlan } from '../api'
 import dictionaryMixin from '../mixins/dictionary'
+import { debounce } from '@/utils'
 
 export default {
   name: 'AdjustDialog',
@@ -292,6 +261,8 @@ export default {
         changeDescription: '',
         planItems: []
       },
+      // 防抖提示函数
+      debouncedWarning: null,
       formRules: {
         demandQuantity: [
           { required: true, message: '请输入需求数量', trigger: 'blur' },
@@ -347,6 +318,14 @@ export default {
       return this.hasItems && this.weightValidationStatus === 'error'
     }
   },
+  created() {
+    // 创建防抖版本的警告提示函数（2秒延迟）
+    this.debouncedWarning = debounce(() => {
+      if (this.hasItems && this.weightDifference > 0.5) {
+        this.$message.warning('需求数量已变更，请同步调整子批次重量或点击"自动同步重量"按钮')
+      }
+    }, 2000)
+  },
   methods: {
     /**
      * 打开对话框
@@ -382,8 +361,6 @@ export default {
           plannedWeight: item.plannedWeight,
           plannedQuantity: item.plannedQuantity,
           status: item.status, // 只读展示，不传递给后端
-          expectedFurnaceWindowStart: item.expectedFurnaceWindowStart || null,
-          expectedFurnaceWindowEnd: item.expectedFurnaceWindowEnd || null,
           remarks: item.remarks || ''
         })) : []
       }
@@ -449,14 +426,6 @@ export default {
 
               // 不传递状态字段（状态由系统自动管理）
 
-              // 添加装炉时间（如果有设置）
-              if (item.expectedFurnaceWindowStart) {
-                itemData.expectedFurnaceWindowStart = item.expectedFurnaceWindowStart
-              }
-              if (item.expectedFurnaceWindowEnd) {
-                itemData.expectedFurnaceWindowEnd = item.expectedFurnaceWindowEnd
-              }
-
               // 添加备注（如果有填写）
               if (item.remarks) {
                 itemData.remarks = item.remarks
@@ -511,12 +480,11 @@ export default {
 
     /**
      * 需求数量变更时的处理
+     * 使用防抖避免频繁提示
      */
     handleDemandQuantityChange(newValue) {
-      // 如果有子批次且重量不一致，提示用户同步
-      if (this.hasItems && this.weightDifference > 0.5) {
-        this.$message.warning('需求数量已变更，请同步调整子批次重量或点击"自动同步重量"按钮')
-      }
+      // 调用防抖函数，避免连续点击时频繁弹出提示
+      this.debouncedWarning()
     },
 
     /**

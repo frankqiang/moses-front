@@ -9,37 +9,16 @@
   <el-dialog
     :visible.sync="visible"
     title="取消审批"
-    width="650px"
+    width="750px"
     :close-on-click-modal="false"
     @close="handleClose"
   >
     <!-- 审批请求信息 -->
-    <el-descriptions
+    <approval-info-card
       v-if="approvalData"
-      :column="2"
-      border
-      class="approval-info"
-    >
-      <el-descriptions-item label="计划编号">
-        {{ planNumber }}
-      </el-descriptions-item>
-      <el-descriptions-item label="申请人">
-        {{ approvalData.requesterName || '-' }}
-      </el-descriptions-item>
-      <el-descriptions-item label="当前状态">
-        <el-tag :type="previousStatusType" size="small">
-          {{ previousStatusText }}
-        </el-tag>
-      </el-descriptions-item>
-      <el-descriptions-item label="目标状态">
-        <el-tag :type="targetStatusType" size="small">
-          {{ targetStatusText }}
-        </el-tag>
-      </el-descriptions-item>
-      <el-descriptions-item label="申请原因" :span="2">
-        {{ approvalData.remarks || '-' }}
-      </el-descriptions-item>
-    </el-descriptions>
+      :approval-data="approvalData"
+      :plan-data="planData"
+    />
 
     <el-divider />
 
@@ -84,15 +63,16 @@
 </template>
 
 <script>
+import ApprovalInfoCard from './ApprovalInfoCard.vue'
 import { cancelApproval } from '../api'
-import {
-  PLAN_STATUS_TYPE_MAP,
-  getErrorMessage
-} from '../constants'
+import { getErrorMessage } from '../constants'
 import dictionaryMixin from '../mixins/dictionary'
 
 export default {
   name: 'ApprovalCancelDialog',
+  components: {
+    ApprovalInfoCard
+  },
   mixins: [dictionaryMixin],
   props: {
     // 生产计划数据 - 用于显示实际的计划编号和状态
@@ -114,37 +94,6 @@ export default {
           { max: 500, message: '取消原因最多500个字符', trigger: 'blur' }
         ]
       }
-    }
-  },
-  computed: {
-    planNumber() {
-      // 优先使用实际计划数据中的计划编号
-      return this.planData.planNumber ||
-             (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.planNumber) || '-'
-    },
-    previousStatusText() {
-      // 优先使用实际计划数据中的状态作为当前状态
-      const status = this.planData.status ||
-                    (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.previousStatus) || ''
-      return this.getStatusText(status)
-    },
-    previousStatusType() {
-      // 优先使用实际计划数据中的状态作为当前状态
-      const status = this.planData.status ||
-                    (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.previousStatus) || ''
-      return this.getStatusType(status)
-    },
-    targetStatusText() {
-      // 目标状态优先从审批数据的requestedAction获取，其次从metadata获取
-      const status = (this.approvalData && this.approvalData.requestedAction) ||
-                    (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.targetStatus) || ''
-      return this.getStatusText(status)
-    },
-    targetStatusType() {
-      // 目标状态优先从审批数据的requestedAction获取，其次从metadata获取
-      const status = (this.approvalData && this.approvalData.requestedAction) ||
-                    (this.approvalData && this.approvalData.metadata && this.approvalData.metadata.targetStatus) || ''
-      return this.getStatusType(status)
     }
   },
   methods: {
@@ -227,30 +176,12 @@ export default {
       } finally {
         this.loading = false
       }
-    },
-
-    /**
-     * 获取状态文本
-     */
-    getStatusText(status) {
-      return this.getPlanStatusLabel(status) || '-'
-    },
-
-    /**
-     * 获取状态类型
-     */
-    getStatusType(status) {
-      return PLAN_STATUS_TYPE_MAP[status] || 'info'
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.approval-info {
-  margin-bottom: 20px;
-}
-
 ::v-deep .el-dialog__body {
   padding-top: 16px;
 }

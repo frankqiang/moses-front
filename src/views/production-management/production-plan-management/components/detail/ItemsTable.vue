@@ -65,19 +65,6 @@
         </template>
       </el-table-column>
       <el-table-column
-        label="计划装炉时段"
-        min-width="180"
-      >
-        <template slot-scope="{ row }">
-          <div v-if="row.expectedFurnaceWindowStart && row.expectedFurnaceWindowEnd">
-            {{ formatTime(row.expectedFurnaceWindowStart) }}
-            <br>
-            至 {{ formatTime(row.expectedFurnaceWindowEnd) }}
-          </div>
-          <span v-else class="text-muted">-</span>
-        </template>
-      </el-table-column>
-      <el-table-column
         label="工艺模板"
         min-width="150"
       >

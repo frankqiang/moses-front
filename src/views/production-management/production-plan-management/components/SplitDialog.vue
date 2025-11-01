@@ -223,36 +223,6 @@
           </template>
         </el-table-column>
         <el-table-column
-          label="装炉开始时间"
-          min-width="180"
-        >
-          <template slot-scope="{ row }">
-            <el-date-picker
-              v-model="row.expectedFurnaceWindowStart"
-              type="datetime"
-              placeholder="选择开始时间"
-              size="small"
-              value-format="yyyy-MM-dd HH:mm:ss"
-              style="width: 100%"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column
-          label="装炉结束时间"
-          min-width="180"
-        >
-          <template slot-scope="{ row }">
-            <el-date-picker
-              v-model="row.expectedFurnaceWindowEnd"
-              type="datetime"
-              placeholder="选择结束时间"
-              size="small"
-              value-format="yyyy-MM-dd HH:mm:ss"
-              style="width: 100%"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column
           label="备注"
           min-width="150"
         >
@@ -439,16 +409,6 @@
           <el-table-column prop="processTemplateId" label="工艺模板" min-width="150">
             <template slot-scope="{ row }">
               {{ getProcessTemplateName(row.processTemplateId) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="expectedFurnaceWindowStart" label="装炉开始" width="160">
-            <template slot-scope="{ row }">
-              {{ row.expectedFurnaceWindowStart || '-' }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="expectedFurnaceWindowEnd" label="装炉结束" width="160">
-            <template slot-scope="{ row }">
-              {{ row.expectedFurnaceWindowEnd || '-' }}
             </template>
           </el-table-column>
           <el-table-column prop="remarks" label="备注" min-width="150">
@@ -665,8 +625,6 @@ export default {
           plannedQuantity: null,
           processTemplateId: defaultTemplateId,
           assignedEquipmentId: null,
-          expectedFurnaceWindowStart: null,
-          expectedFurnaceWindowEnd: null,
           remarks: ''
         })
       }
@@ -691,8 +649,6 @@ export default {
           plannedWeight: Number(avgWeight.toFixed(3)),
           plannedQuantity: null,
           processTemplateId: defaultTemplateId,
-          expectedFurnaceWindowStart: null,
-          expectedFurnaceWindowEnd: null,
           remarks: ''
         })
       }
@@ -709,8 +665,6 @@ export default {
         plannedWeight: 0,
         plannedQuantity: null,
         processTemplateId: defaultTemplateId,
-        expectedFurnaceWindowStart: null,
-        expectedFurnaceWindowEnd: null,
         remarks: ''
       })
     },
@@ -826,10 +780,6 @@ export default {
             processTemplateId: item.processTemplateId || undefined,
             // 工艺模板关联类型（可选）
             processTemplateLinkType: item.processTemplateId ? 'PRIMARY' : undefined,
-            // 计划装炉时段开始（可选，ISO 8601格式）
-            expectedFurnaceWindowStart: item.expectedFurnaceWindowStart ? this.formatDateTimeToISO(item.expectedFurnaceWindowStart) : undefined,
-            // 计划装炉时段结束（可选，ISO 8601格式）
-            expectedFurnaceWindowEnd: item.expectedFurnaceWindowEnd ? this.formatDateTimeToISO(item.expectedFurnaceWindowEnd) : undefined,
             // 备注（可选）
             remarks: item.remarks || undefined
           }
