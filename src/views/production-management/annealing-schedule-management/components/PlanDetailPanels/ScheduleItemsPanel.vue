@@ -27,19 +27,6 @@
             @keyup.enter.native="handleFilter"
           />
         </el-form-item>
-        <el-form-item label="优先级">
-          <el-select
-            v-model="filterForm.priority"
-            placeholder="全部"
-            clearable
-            @change="handleFilter"
-          >
-            <el-option label="紧急" value="emergency" />
-            <el-option label="高" value="high" />
-            <el-option label="普通" value="normal" />
-            <el-option label="低" value="low" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="冲突标记">
           <el-select
             v-model="filterForm.hasConflict"
@@ -63,9 +50,11 @@
       :data="filteredItems"
       :columns="tableColumns"
       :loading="loading"
-      :pagination="false"
+      :pagination="tablePagination"
+      :show-index="true"
       :row-class-name="getRowClassName"
       @sort-change="handleSortChange"
+      @pagination-change="handlePaginationChange"
     >
       <!-- 任务编号列 -->
       <template #taskCode="{ row }">
@@ -99,19 +88,24 @@
         {{ formatDuration(row.estimatedDurationMinutes) }}
       </template>
 
-      <!-- 计划重量列 -->
+      <!-- 炉次总重量列 -->
       <template #scheduleWeight="{ row }">
-        {{ formatWeight(row.scheduleWeight) }}
-      </template>
-
-      <!-- 优先级列 -->
-      <template #priority="{ row }">
-        <el-tag
-          :type="getPriorityType(getTaskPriority(row))"
-          size="small"
-        >
-          {{ getPriorityText(getTaskPriority(row)) }}
-        </el-tag>
+        <div style="display: flex; align-items: center;">
+          <span>{{ getContextWeight(row) }}</span>
+          <el-tooltip v-if="hasCapacityInfo(row)" placement="top">
+            <div slot="content">
+              <div>任务数量：{{ row.scheduleContext.taskCount || 1 }}个</div>
+              <div>炉次总重量：{{ getContextWeight(row) }}吨</div>
+              <div>本任务重量：{{ formatTaskWeight(row) }}吨</div>
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd;">
+                <div>容量利用率：{{ getCapacityUtilization(row) }}%</div>
+                <div>炉子最大容量：{{ getFurnaceMaxCapacity(row) }}吨</div>
+                <div>炉子最小装载量：{{ getFurnaceMinCapacity(row) }}吨</div>
+              </div>
+            </div>
+            <i class="el-icon-info" style="color: #409EFF; cursor: pointer; margin-left: 4px;" />
+          </el-tooltip>
+        </div>
       </template>
 
       <!-- 是否混炉列 -->
@@ -138,6 +132,7 @@
           v-if="row.hasConflict"
           type="danger"
           size="small"
+          style="cursor: pointer;"
           @click="handleViewConflict(row)"
         >
           <i class="el-icon-warning" />
@@ -157,7 +152,9 @@
       <template #actions="{ row }">
         <action-buttons
           :buttons="getActionButtons(row)"
+          :row="row"
           mode="text"
+          @click="handleActionClick"
         />
       </template>
     </base-table>
@@ -210,13 +207,14 @@ export default {
       filterForm: {
         furnaceCode: '',
         productCode: '',
-        priority: '',
         hasConflict: ''
       },
       sortProp: '',
       sortOrder: '',
       adjustDialogVisible: false,
-      currentAdjustItem: {}
+      currentAdjustItem: {},
+      currentPage: 1,
+      pageSize: 20
     }
   },
   computed: {
@@ -227,7 +225,7 @@ export default {
       const furnaces = [...new Set(this.items.map(item => item.furnaceCode))]
       return furnaces.sort()
     },
-    filteredItems() {
+    allFilteredItems() {
       let result = [...this.items]
 
       // 筛选
@@ -240,12 +238,6 @@ export default {
           return productCode && productCode.includes(this.filterForm.productCode)
         })
       }
-      if (this.filterForm.priority) {
-        result = result.filter(item => {
-          const priority = item.scheduleContext && item.scheduleContext.priority
-          return priority === this.filterForm.priority
-        })
-      }
       if (this.filterForm.hasConflict !== '') {
         result = result.filter(item => item.hasConflict === this.filterForm.hasConflict)
       }
@@ -253,18 +245,8 @@ export default {
       // 排序
       if (this.sortProp) {
         result = result.sort((a, b) => {
-          let aVal = a[this.sortProp]
-          let bVal = b[this.sortProp]
-
-          // 处理嵌套属性
-          if (this.sortProp === 'priority') {
-            // 注意：优先级顺序按照业务重要性排序
-            const priorityOrder = { low: 1, normal: 2, high: 3, emergency: 4 }
-            const aPriority = (a.scheduleContext && a.scheduleContext.priority) || 'normal'
-            const bPriority = (b.scheduleContext && b.scheduleContext.priority) || 'normal'
-            aVal = priorityOrder[aPriority]
-            bVal = priorityOrder[bPriority]
-          }
+          const aVal = a[this.sortProp]
+          const bVal = b[this.sortProp]
 
           if (this.sortOrder === 'ascending') {
             return aVal > bVal ? 1 : -1
@@ -275,6 +257,22 @@ export default {
       }
 
       return result
+    },
+    filteredItems() {
+      // 客户端分页：从 allFilteredItems 中截取当前页数据
+      const start = (this.currentPage - 1) * this.pageSize
+      const end = start + this.pageSize
+      return this.allFilteredItems.slice(start, end)
+    },
+    tablePagination() {
+      return {
+        page: this.currentPage,
+        limit: this.pageSize,
+        total: this.allFilteredItems.length,
+        pageSizes: [10, 20, 50, 100],
+        layout: 'total, sizes, prev, pager, next, jumper',
+        background: true
+      }
     }
   },
   methods: {
@@ -297,47 +295,71 @@ export default {
     },
 
     /**
-     * 格式化重量
+     * 格式化重量（通用方法）
+     * 注意：接口文档2025-10-25更新，weight字段改为字符串格式
      */
     formatWeight(weight) {
       if (weight === null || weight === undefined) return '-'
-      return Number(weight).toFixed(2)
+      // 兼容字符串和数值格式
+      const numWeight = typeof weight === 'string' ? parseFloat(weight) : weight
+      return numWeight.toFixed(2)
     },
 
     /**
-     * 获取任务优先级
-     * 从排程上下文中获取优先级，而不是从任务对象
+     * 格式化任务重量
+     * 优先使用实际重量（actualWeight），如果没有则使用计划重量（plannedWeight）
      */
-    getTaskPriority(row) {
-      return (row.scheduleContext && row.scheduleContext.priority) || 'normal'
-    },
-
-    /**
-     * 获取优先级类型
-     * 注意：必须严格按照接口文档中的枚举值定义
-     */
-    getPriorityType(priority) {
-      const typeMap = {
-        emergency: 'danger', // 紧急 - 红色
-        high: 'warning', // 高 - 橙色
-        normal: '', // 普通 - 默认
-        low: 'info' // 低 - 灰色
+    formatTaskWeight(row) {
+      // 优先使用实际重量
+      const actualWeight = row.task?.actualWeight
+      if (actualWeight !== null && actualWeight !== undefined) {
+        return this.formatWeight(actualWeight)
       }
-      return typeMap[priority] || ''
+
+      // 备用：计划重量
+      const plannedWeight = row.task?.plannedWeight
+      if (plannedWeight !== null && plannedWeight !== undefined) {
+        return this.formatWeight(plannedWeight)
+      }
+
+      return '-'
     },
 
     /**
-     * 获取优先级文本
-     * 注意：必须严格按照接口文档中的枚举值定义
+     * 是否有容量信息
      */
-    getPriorityText(priority) {
-      const textMap = {
-        emergency: '紧急',
-        high: '高',
-        normal: '普通',
-        low: '低'
-      }
-      return textMap[priority] || '普通'
+    hasCapacityInfo(row) {
+      return row.scheduleContext &&
+             row.scheduleContext.furnaceMaxCapacity !== undefined &&
+             row.scheduleContext.furnaceMinCapacity !== undefined
+    },
+
+    /**
+     * 获取炉次总重量
+     */
+    getContextWeight(row) {
+      return row.scheduleContext?.totalWeight || '-'
+    },
+
+    /**
+     * 获取容量利用率
+     */
+    getCapacityUtilization(row) {
+      return row.scheduleContext?.capacityUtilization || '-'
+    },
+
+    /**
+     * 获取炉子最大容量
+     */
+    getFurnaceMaxCapacity(row) {
+      return row.scheduleContext?.furnaceMaxCapacity || '-'
+    },
+
+    /**
+     * 获取炉子最小装载量
+     */
+    getFurnaceMinCapacity(row) {
+      return row.scheduleContext?.furnaceMinCapacity || '-'
     },
 
     /**
@@ -354,7 +376,8 @@ export default {
      * 处理筛选
      */
     handleFilter() {
-      // 筛选逻辑在computed中处理
+      // 筛选后重置到第一页
+      this.currentPage = 1
     },
 
     /**
@@ -364,9 +387,17 @@ export default {
       this.filterForm = {
         furnaceCode: '',
         productCode: '',
-        priority: '',
         hasConflict: ''
       }
+      this.currentPage = 1
+    },
+
+    /**
+     * 处理分页变化
+     */
+    handlePaginationChange({ page, limit }) {
+      this.currentPage = page
+      this.pageSize = limit
     },
 
     /**
@@ -392,32 +423,33 @@ export default {
      */
     handleViewConflict(row) {
       // 获取与该任务相关的冲突
+      // 注意：接口文档中冲突记录使用 relatedTaskIds 字段
       const relatedConflicts = this.conflicts.filter(conflict =>
-        conflict.affectedTaskIds.includes(row.taskId)
+        conflict.relatedTaskIds && conflict.relatedTaskIds.includes(row.taskId)
       )
 
       if (relatedConflicts.length > 0) {
-        this.$emit('highlight-conflict', relatedConflicts[0].affectedTaskIds)
+        this.$emit('highlight-conflict', relatedConflicts[0].relatedTaskIds)
       }
     },
 
     /**
      * 获取操作按钮
+     * 注意：任务编号已经可以点击查看详情，所以这里不再重复显示"查看详情"按钮
      */
     getActionButtons(row) {
-      return [
-        {
-          label: '查看详情',
-          type: 'primary',
-          onClick: () => this.handleViewTaskDetail(row.taskId)
-        },
-        {
-          label: '手动调整',
-          type: 'warning',
-          onClick: () => this.handleAdjustItem(row),
-          show: this.canAdjust()
-        }
-      ]
+      const buttons = []
+
+      // 仅已生成状态的方案允许调整
+      if (this.canAdjust()) {
+        buttons.push({
+          text: '手动调整',
+          action: 'adjust',
+          type: 'warning'
+        })
+      }
+
+      return buttons
     },
 
     /**
@@ -434,6 +466,19 @@ export default {
     handleAdjustItem(row) {
       this.currentAdjustItem = { ...row }
       this.adjustDialogVisible = true
+    },
+
+    /**
+     * 处理操作按钮点击
+     */
+    handleActionClick({ action, row }) {
+      switch (action) {
+        case 'adjust':
+          this.handleAdjustItem(row)
+          break
+        default:
+          console.warn('未处理的操作:', action)
+      }
     },
 
     /**

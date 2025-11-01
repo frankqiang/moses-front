@@ -8,7 +8,7 @@
       <div class="header-right">
         <el-button
           icon="el-icon-refresh"
-          size="medium"
+          size="mini"
           @click="handleRefresh"
         >
           刷新
@@ -16,7 +16,7 @@
         <el-button
           v-if="canViewGantt"
           icon="el-icon-data-line"
-          size="medium"
+          size="mini"
           type="primary"
           @click="handleViewGantt"
         >
@@ -25,7 +25,7 @@
         <el-button
           v-if="canPublish"
           icon="el-icon-check"
-          size="medium"
+          size="mini"
           type="success"
           @click="handlePublish"
         >
@@ -34,7 +34,7 @@
         <el-button
           v-if="canCancel"
           icon="el-icon-close"
-          size="medium"
+          size="mini"
           type="danger"
           @click="handleCancelPlan"
         >
@@ -92,32 +92,23 @@
           @locate-task="handleLocateTask"
         />
       </el-tab-pane>
-
-      <!-- 操作日志 -->
-      <el-tab-pane label="操作日志" name="logs">
-        <logs-panel
-          v-if="planDetail"
-          :logs="operationLogs"
-        />
-      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
 
 <script>
-import { fetchSchedulePlanDetail, fetchScheduleConflicts, publishSchedulePlan, cancelSchedulePlan } from '../api'
+import { fetchSchedulePlanDetail, publishSchedulePlan, cancelSchedulePlan } from '../api'
 import BasicInfoPanel from './PlanDetailPanels/BasicInfoPanel.vue'
 import ScheduleItemsPanel from './PlanDetailPanels/ScheduleItemsPanel.vue'
 import ConflictsPanel from './PlanDetailPanels/ConflictsPanel.vue'
-import LogsPanel from './PlanDetailPanels/LogsPanel.vue'
+import { parseTime } from '@/utils'
 
 export default {
   name: 'PlanDetail',
   components: {
     BasicInfoPanel,
     ScheduleItemsPanel,
-    ConflictsPanel,
-    LogsPanel
+    ConflictsPanel
   },
   props: {
     planId: {
@@ -132,7 +123,6 @@ export default {
       planDetail: null,
       scheduleItems: [],
       conflicts: [],
-      operationLogs: [],
       autoRefreshTimer: null,
       highlightedTaskIds: [] // 用于高亮显示的任务ID列表
     }
@@ -185,11 +175,48 @@ export default {
         const response = await fetchSchedulePlanDetail(this.planId)
 
         if (response.success && response.data) {
-          const { plan, items, conflicts, logs } = response.data
-          this.planDetail = plan
-          this.scheduleItems = items || []
-          this.conflicts = conflicts || []
-          this.operationLogs = logs || []
+          // 根据2025-10-25接口文档更新：响应结构已扁平化
+          // 所有字段直接在 data 下，无需从 data.plan 解构
+          // logs 改名为 changeLogs
+          const data = response.data
+
+          // 将主要方案信息赋值给 planDetail
+          this.planDetail = {
+            id: data.id,
+            planCode: data.planCode,
+            planName: data.planName,
+            status: data.status,
+            statusLabel: data.statusLabel,
+            statusUpdatedAt: data.statusUpdatedAt,
+            scheduleStartTime: data.scheduleStartTime,
+            scheduleEndTime: data.scheduleEndTime,
+            algorithmType: data.algorithmType,
+            algorithmTypeLabel: data.algorithmTypeLabel,
+            optimizationGoals: data.optimizationGoals,
+            constraintRules: data.constraintRules,
+            computationDurationSeconds: data.computationDurationSeconds,
+            utilizationRate: data.utilizationRate,
+            loadRate: data.loadRate,
+            deliveryAchievementRate: data.deliveryAchievementRate,
+            overallScore: data.overallScore,
+            taskCount: data.taskCount,
+            conflictCount: data.conflictCount,
+            publishedAt: data.publishedAt,
+            cancelledAt: data.cancelledAt,
+            cancelReason: data.cancelReason,
+            remarks: data.remarks,
+            createdBy: data.createdBy,
+            updatedBy: data.updatedBy,
+            deletedBy: data.deletedBy,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            creator: data.creator,
+            updater: data.updater,
+            deleter: data.deleter
+          }
+
+          this.scheduleItems = data.items || []
+          this.conflicts = data.conflicts || []
         } else {
           this.$message.error(response.message || '获取排程方案详情失败')
         }
@@ -233,7 +260,8 @@ export default {
     async handlePublish() {
       try {
         // 先检查冲突
-        const criticalConflicts = this.conflicts.filter(c => c.severityLevel === 'critical')
+        // 注意：接口文档中冲突记录使用 severity 字段
+        const criticalConflicts = this.conflicts.filter(c => c.severity === 'critical')
 
         if (criticalConflicts.length > 0) {
           this.$alert(
@@ -250,7 +278,7 @@ export default {
         }
 
         // 检查非致命冲突
-        const nonCriticalConflicts = this.conflicts.filter(c => c.severityLevel !== 'critical')
+        const nonCriticalConflicts = this.conflicts.filter(c => c.severity !== 'critical')
         let forcePublish = false
 
         if (nonCriticalConflicts.length > 0) {
@@ -286,6 +314,12 @@ export default {
 
         if (response.success) {
           this.$message.success(response.message || '发布排程方案成功')
+
+          // 展示同步结果统计（基于新的响应结构）
+          if (response.data) {
+            this.showSyncResultsNotification(response.data)
+          }
+
           await this.loadPlanDetail()
         } else {
           this.$message.error(response.message || '发布排程方案失败')
@@ -383,6 +417,57 @@ export default {
     handleLocateTask(taskIds) {
       this.highlightedTaskIds = taskIds
       this.activeTab = 'items'
+    },
+
+    /**
+     * 展示任务同步结果通知
+     */
+    showSyncResultsNotification(data) {
+      if (!data || !data.syncResults) {
+        return
+      }
+
+      const { syncResults, plan } = data
+      const successCount = syncResults.success?.length || 0
+      const failedCount = syncResults.failed?.length || 0
+      const totalCount = successCount + failedCount
+
+      // 构建通知内容
+      let message = `<div style="line-height: 1.8;">
+        <div><strong>方案编号：</strong>${plan?.planCode || '-'}</div>
+        <div><strong>发布时间：</strong>${plan?.publishedAt ? this.formatDateTime(plan.publishedAt) : '-'}</div>
+        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ebeef5;">
+          <div><strong>任务同步结果：</strong></div>
+          <div style="color: #67c23a;">✓ 成功同步：${successCount} 个任务</div>`
+
+      if (failedCount > 0) {
+        message += `<div style="color: #f56c6c;">✗ 同步失败：${failedCount} 个任务</div>`
+      }
+
+      message += `<div style="color: #909399;">总计：${totalCount} 个任务</div>
+        </div>
+      </div>`
+
+      // 根据结果选择通知类型
+      const notificationType = failedCount > 0 ? 'warning' : 'success'
+      const notificationTitle = failedCount > 0 ? '发布完成（部分任务同步失败）' : '发布完成'
+
+      this.$notify({
+        title: notificationTitle,
+        dangerouslyUseHTMLString: true,
+        message: message,
+        type: notificationType,
+        duration: 8000,
+        position: 'bottom-right'
+      })
+    },
+
+    /**
+     * 格式化日期时间
+     */
+    formatDateTime(dateTime) {
+      if (!dateTime) return '-'
+      return parseTime(dateTime, '{y}-{m}-{d} {h}:{i}:{s}')
     }
   }
 }

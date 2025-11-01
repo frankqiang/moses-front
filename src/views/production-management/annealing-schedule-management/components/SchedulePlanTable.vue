@@ -4,6 +4,7 @@
  * 创建日期：2025-10-23
  * 修改记录：
  *   - 2025-10-23: 初始创建，实现P0和P1阶段功能
+ *   - 2025-11-01: 更新用户信息显示，使用新的结构化用户对象（creator/updater），显示name字段
  */
 <template>
   <div class="schedule-plan-table">
@@ -285,12 +286,14 @@ export default {
       return this.columnOptions
         .filter((column) => visibleProps.includes(column.prop))
         .map((column) => {
-          if (column.prop === 'createdAt' || column.prop === 'publishedAt') {
+          // 格式化时间字段
+          if (column.prop === 'createdAt' || column.prop === 'publishedAt' || column.prop === 'updatedAt') {
             return {
               ...column,
               formatter: (row) => this.formatDateTime(row[column.prop])
             }
           }
+          // 格式化数量字段
           if (column.prop === 'taskCount' || column.prop === 'conflictCount') {
             return {
               ...column,

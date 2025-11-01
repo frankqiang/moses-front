@@ -4,6 +4,7 @@
   创建日期：2025-10-23
   修改记录：
     - 2025-10-23: 初始创建
+    - 2025-10-28: 重构以适配后端接口更新，优先使用后端返回的 label 字段
 -->
 
 <template>
@@ -25,11 +26,11 @@
             <span class="separator">|</span>
             <span class="plan-name">{{ planInfo.planName || '未命名方案' }}</span>
             <el-tag
-              :type="getStatusTagType(planInfo.status)"
+              :type="getStatusTagType(planInfo.planStatus || planInfo.status)"
               size="small"
               style="margin-left: 8px"
             >
-              {{ planInfo.statusLabel || getStatusText(planInfo.status) }}
+              {{ planInfo.planStatusLabel || planInfo.statusLabel || getStatusText(planInfo.planStatus || planInfo.status) }}
             </el-tag>
           </div>
         </div>
@@ -95,8 +96,6 @@
       <schedule-gantt-chart
         v-if="planId"
         :plan-id="planId"
-        :can-adjust="canAdjust"
-        @adjust-task="handleAdjustTask"
       />
     </div>
   </div>
@@ -124,17 +123,14 @@ export default {
   computed: {
     // 是否可以发布
     canPublish() {
-      return this.planInfo && this.planInfo.status === 'generated'
+      const status = this.planInfo?.planStatus || this.planInfo?.status
+      return this.planInfo && status === 'generated'
     },
 
     // 是否可以取消
     canCancel() {
-      return this.planInfo && ['draft', 'generated'].includes(this.planInfo.status)
-    },
-
-    // 是否可以调整
-    canAdjust() {
-      return this.planInfo && this.planInfo.status === 'generated'
+      const status = this.planInfo?.planStatus || this.planInfo?.status
+      return this.planInfo && ['draft', 'generated'].includes(status)
     }
   },
 
@@ -153,9 +149,9 @@ export default {
     async loadPlanInfo() {
       try {
         const response = await fetchSchedulePlanDetail(this.planId)
-        // 接口返回的data对象包含plan、items、conflicts、logs
-        // 这里只需要plan对象
-        this.planInfo = response.data?.plan || response.data
+        // 注意：2025-10-27接口更新，响应结构已扁平化
+        // 所有方案字段直接在 data 下，不再嵌套在 data.plan 中
+        this.planInfo = response.data
       } catch (error) {
         console.error('加载排程方案信息失败:', error)
         const message = error.response?.data?.error?.message || '加载排程方案信息失败'
@@ -228,21 +224,19 @@ export default {
       }
     },
 
-    // 手动调整任务
-    handleAdjustTask(task) {
-      this.$router.push({
-        name: 'SchedulePlanDetail',
-        params: { id: this.planId },
-        query: { action: 'adjust', taskId: task.taskId }
-      })
-    },
-
-    // 获取状态文本
+    /**
+     * 获取状态文本（备用方案）
+     * ✅ 优先使用后端返回的 planStatusLabel 字段
+     * 此方法仅在后端未返回 label 时作为备用
+     */
     getStatusText(status) {
       return STATUS_CONFIG.textMap[status] || status
     },
 
-    // 获取状态标签类型
+    /**
+     * 获取状态标签类型
+     * 用于 el-tag 的 type 属性，控制颜色
+     */
     getStatusTagType(status) {
       return STATUS_CONFIG.typeMap[status] || ''
     },

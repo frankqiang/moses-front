@@ -5,6 +5,7 @@
  * 修改记录：
  *   - 2025-10-23: 初始创建，定义表格列配置
  *   - 2025-10-24: 更新字段名称以匹配后端接口（planNumber→planCode，scheduleItemCount→taskCount）
+ *   - 2025-11-01: 更新用户信息字段，使用新的结构化用户对象（creator/updater），显示name字段
  */
 
 // 表格列配置
@@ -83,8 +84,20 @@ export const TABLE_COLUMNS = [
     sortable: true
   },
   {
-    prop: 'createdBy',
+    prop: 'creatorName',
     label: '创建人',
+    width: 100,
+    sortable: false
+  },
+  {
+    prop: 'updatedAt',
+    label: '更新时间',
+    width: 160,
+    sortable: true
+  },
+  {
+    prop: 'updaterName',
+    label: '更新人',
     width: 100,
     sortable: false
   },
@@ -116,6 +129,7 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   'deliveryAchievementRate',
   'conflictCount',
   'createdAt',
+  'creatorName',
   'actions'
 ]
 

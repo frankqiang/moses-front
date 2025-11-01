@@ -9,30 +9,35 @@
 import { ALGORITHM_TYPE } from './schedule-management'
 
 // 算法类型选项（用于创建表单）
+// ⚠️ P0阶段说明：当前只有 rule-based 算法已实现，其他算法计划在后续版本实现
 export const ALGORITHM_TYPE_SELECT_OPTIONS = [
   {
     label: '基于规则的启发式算法',
     value: ALGORITHM_TYPE.RULE_BASED,
-    description: '快速、可解释性强，适合日常排程',
-    recommended: 5 // ⭐⭐⭐⭐⭐
+    description: '快速、可解释性强，适合日常排程【当前唯一可用算法】',
+    recommended: 5, // ⭐⭐⭐⭐⭐
+    disabled: false // P0阶段：已实现 ✅
   },
   {
     label: '约束规划算法',
     value: ALGORITHM_TYPE.CONSTRAINT_PROGRAMMING,
-    description: '精确、保证最优解，适合复杂约束场景',
-    recommended: 4 // ⭐⭐⭐⭐
+    description: '精确、保证最优解，适合复杂约束场景【P1阶段实现】',
+    recommended: 4, // ⭐⭐⭐⭐
+    disabled: true // P0阶段：未实现 ❌
   },
   {
     label: '模拟退火算法',
     value: ALGORITHM_TYPE.SIMULATED_ANNEALING,
-    description: '全局优化、避免局部最优，适合大规模排程',
-    recommended: 3 // ⭐⭐⭐
+    description: '全局优化、避免局部最优，适合大规模排程【P2阶段实现】',
+    recommended: 3, // ⭐⭐⭐
+    disabled: true // P0阶段：未实现 ❌
   },
   {
     label: '遗传算法',
     value: ALGORITHM_TYPE.GENETIC_ALGORITHM,
-    description: '多目标优化，适合科研优化',
-    recommended: 2 // ⭐⭐
+    description: '多目标优化，适合科研优化【P2阶段实现】',
+    recommended: 2, // ⭐⭐
+    disabled: true // P0阶段：未实现 ❌
   }
 ]
 
@@ -46,81 +51,12 @@ export const PRIORITY_OPTIONS = [
   { label: '低', value: 'low' }
 ]
 
-// 预设配置模板
-export const OPTIMIZATION_PRESETS = {
-  DEADLINE_SENSITIVE: {
-    name: '交期敏感型',
-    description: '优先保证按时交付，适合订单生产模式',
-    goals: {
-      meetDeadlineWeight: 0.5,
-      utilizationWeight: 0.2,
-      loadRateWeight: 0.2,
-      energySavingWeight: 0.1
-    }
-  },
-  EFFICIENCY_FIRST: {
-    name: '效率优先型',
-    description: '优先提高设备利用率和装载率',
-    goals: {
-      meetDeadlineWeight: 0.2,
-      utilizationWeight: 0.4,
-      loadRateWeight: 0.3,
-      energySavingWeight: 0.1
-    }
-  },
-  BALANCED: {
-    name: '平衡型',
-    description: '各项目标均衡，适合常规生产',
-    goals: {
-      meetDeadlineWeight: 0.4,
-      utilizationWeight: 0.3,
-      loadRateWeight: 0.2,
-      energySavingWeight: 0.1
-    }
-  },
-  ENERGY_SAVING: {
-    name: '节能型',
-    description: '注重能源节约，适合低峰期生产',
-    goals: {
-      meetDeadlineWeight: 0.3,
-      utilizationWeight: 0.3,
-      loadRateWeight: 0.2,
-      energySavingWeight: 0.2
-    }
-  }
-}
-
-// 优化目标默认配置
-export const DEFAULT_OPTIMIZATION_GOALS = {
-  meetDeadlineWeight: 0.4,
-  utilizationWeight: 0.3,
-  loadRateWeight: 0.2,
-  energySavingWeight: 0.1
-}
-
-// 约束规则默认配置
-export const DEFAULT_CONSTRAINT_RULES = {
-  minCapacity: 35,
-  maxCapacity: 42,
-  allowMixing: true
-}
-
-// 混炉规则配置选项
-export const MIXING_RULES_CONFIG = {
-  sameProductOnly: {
-    label: '仅相同产品',
-    description: '只允许相同产品编码的任务混炉'
-  },
-  sameAlloyGradeRequired: {
-    label: '要求相同合金牌号',
-    description: '混炉任务必须具有相同的合金牌号'
-  },
-  maxTemperatureDiff: {
-    label: '最大温度差',
-    description: '混炉任务的工艺温度差不超过指定值',
-    unit: '℃'
-  }
-}
+// ⚠️ P0阶段说明：优化目标配置和约束规则配置已移除
+// - optimizationGoals: 该参数仅用于计算综合评分，不影响排程算法的执行和结果
+//   当前版本使用后端默认权重：40%交期 + 30%利用率 + 30%装载率
+// - constraintRules: 容量和混炉规则由后端算法自动决定
+//   当前版本混炉规则：按 mixingGroupCode → productCode → alloyGrade 分组
+// P1阶段如需自定义这些配置，可重新启用
 
 // 配置表单验证规则
 export const CREATE_PLAN_VALIDATION_RULES = {

@@ -4,6 +4,7 @@
  * 创建日期：2025-10-23
  * 修改记录：
  *   - 2025-10-23: 初始创建，定义方案状态、算法类型等枚举
+ *   - 2025-10-28: 标记枚举映射为备用方案，后端甘特图接口已返回 label 字段
  */
 
 // 默认分页配置
@@ -24,7 +25,14 @@ export const PLAN_STATUS = {
   CANCELLED: 'cancelled'
 }
 
-// 方案状态配置
+/**
+ * 方案状态配置（备用方案）
+ * ✅ 2025-10-28更新：甘特图接口已返回 planStatusLabel 字段
+ * 此配置仅在后端未返回 label 时作为备用
+ * 前端优先使用：planInfo.planStatusLabel || STATUS_CONFIG.textMap[planInfo.planStatus]
+ *
+ * 注：typeMap 用于控制标签颜色，继续保留使用
+ */
 export const PLAN_STATUS_CONFIG = {
   textMap: {
     [PLAN_STATUS.DRAFT]: '草稿',
@@ -131,7 +139,12 @@ export const CONFLICT_TYPE = {
   MAINTENANCE_CONFLICT: 'maintenance-conflict'
 }
 
-// 冲突类型映射
+/**
+ * 冲突类型映射（备用方案）
+ * ✅ 2025-10-28更新：甘特图接口已返回 typeLabel 字段
+ * 此映射仅在后端未返回 label 时作为备用
+ * 前端优先使用：conflict.typeLabel || CONFLICT_TYPE_MAP[conflict.type].text
+ */
 export const CONFLICT_TYPE_MAP = {
   [CONFLICT_TYPE.TIME_CONFLICT]: { text: '时间冲突' },
   [CONFLICT_TYPE.CAPACITY_EXCEEDED]: { text: '容量超限' },
@@ -148,7 +161,12 @@ export const SEVERITY_LEVEL = {
   CRITICAL: 'critical'
 }
 
-// 严重程度映射
+/**
+ * 严重程度映射（备用方案）
+ * ✅ 2025-10-28更新：甘特图接口已返回 severityLabel 字段
+ * 此映射仅在后端未返回 label 时作为备用
+ * 前端优先使用：conflict.severityLabel || SEVERITY_LEVEL_MAP[conflict.severity].text
+ */
 export const SEVERITY_LEVEL_MAP = {
   [SEVERITY_LEVEL.LOW]: { text: '低' },
   [SEVERITY_LEVEL.MEDIUM]: { text: '中' },

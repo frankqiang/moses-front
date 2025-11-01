@@ -1,3 +1,10 @@
+<!--
+  文件名称：ConflictsPanel.vue
+  文件描述：排程冲突列表面板，展示排程方案中检测到的所有冲突
+  修改记录：
+    - 2025-10-28: 重构以适配后端接口更新，优先使用后端返回的 label 字段
+-->
+
 <template>
   <div class="conflicts-panel">
     <!-- 冲突统计 -->
@@ -39,6 +46,7 @@
             v-model="filterForm.severityLevel"
             placeholder="全部"
             clearable
+            style="width: 120px"
             @change="handleFilter"
           >
             <el-option label="致命" value="critical" />
@@ -52,19 +60,38 @@
             v-model="filterForm.conflictType"
             placeholder="全部"
             clearable
+            style="width: 160px"
             @change="handleFilter"
           >
-            <el-option
-              v-for="(text, key) in conflictTypeMap"
-              :key="key"
-              :label="text"
-              :value="key"
-            />
+            <el-option label="时间冲突" value="time-conflict" />
+            <el-option label="容量超限" value="capacity-exceeded" />
+            <el-option label="工艺不兼容" value="process-incompatible" />
+            <el-option label="物料未就绪" value="material-not-ready" />
+            <el-option label="维护冲突" value="maintenance-conflict" />
+            <el-option label="设备状态异常" value="equipment-abnormal" />
+            <el-option label="交期风险" value="deadline-risk" />
+            <el-option label="能耗过高" value="high-energy-consumption" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="解决状态">
+          <el-select
+            v-model="filterForm.isResolved"
+            placeholder="全部"
+            clearable
+            style="width: 120px"
+            @change="handleFilter"
+          >
+            <el-option label="已解决" :value="true" />
+            <el-option label="未解决" :value="false" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleFilter">查询</el-button>
-          <el-button @click="handleResetFilter">重置</el-button>
+          <el-button type="primary" icon="el-icon-search" @click="handleFilter">
+            查询
+          </el-button>
+          <el-button icon="el-icon-refresh-left" @click="handleResetFilter">
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -74,58 +101,67 @@
       :data="filteredConflicts"
       :columns="tableColumns"
       :loading="loading"
-      :pagination="false"
+      :pagination="null"
     >
       <!-- 冲突类型列 -->
       <template #conflictType="{ row }">
         <el-tag type="warning" size="small">
-          {{ conflictTypeMap[row.conflictType] || row.conflictType }}
+          {{ row.typeLabel || conflictTypeMap[row.type || row.conflictType] || row.type || row.conflictType }}
         </el-tag>
       </template>
 
       <!-- 严重程度列 -->
-      <template #severityLevel="{ row }">
+      <template #severity="{ row }">
         <el-tag
-          :type="getSeverityType(row.severityLevel)"
+          :type="getSeverityType(row.severity)"
           size="small"
         >
-          {{ severityLevelMap[row.severityLevel] || row.severityLevel }}
+          {{ row.severityLabel || severityLevelMap[row.severity] || row.severity }}
         </el-tag>
       </template>
 
       <!-- 冲突描述列 -->
-      <template #description="{ row }">
-        <div class="description-text">{{ row.description }}</div>
+      <template #conflictDescription="{ row }">
+        <div class="description-text">{{ row.conflictDescription }}</div>
+      </template>
+
+      <!-- 炉号列 -->
+      <template #furnaceCode="{ row }">
+        <span v-if="row.furnaceCode" class="furnace-code">
+          {{ row.furnaceCode }}
+        </span>
+        <span v-else class="no-furnace">-</span>
       </template>
 
       <!-- 涉及任务列 -->
-      <template #affectedTaskIds="{ row }">
+      <template #involvedTaskCodes="{ row }">
         <div class="affected-tasks">
           <el-tag
-            v-for="(taskId, index) in row.affectedTaskIds.slice(0, 3)"
-            :key="taskId"
+            v-for="(taskCode, index) in (row.involvedTaskCodes || []).slice(0, 2)"
+            :key="index"
             type="info"
             size="mini"
             class="task-tag"
-            @click="handleLocateTask(row.affectedTaskIds)"
+            @click="handleLocateTask(row.involvedTaskIds)"
           >
-            任务{{ index + 1 }}
+            {{ taskCode }}
           </el-tag>
           <el-popover
-            v-if="row.affectedTaskIds.length > 3"
+            v-if="(row.involvedTaskCodes || []).length > 2"
             placement="top"
-            width="300"
+            width="400"
             trigger="hover"
           >
             <div class="task-list">
               <el-tag
-                v-for="(taskId, index) in row.affectedTaskIds"
-                :key="taskId"
+                v-for="(taskCode, index) in row.involvedTaskCodes"
+                :key="index"
                 type="info"
                 size="mini"
                 class="task-tag"
+                @click="handleLocateTask(row.involvedTaskIds)"
               >
-                任务{{ index + 1 }}
+                {{ taskCode }}
               </el-tag>
             </div>
             <el-tag
@@ -134,14 +170,24 @@
               size="mini"
               class="task-tag"
             >
-              +{{ row.affectedTaskIds.length - 3 }}
+              +{{ row.involvedTaskCodes.length - 2 }}
             </el-tag>
           </el-popover>
         </div>
       </template>
 
+      <!-- 状态列 -->
+      <template #isResolved="{ row }">
+        <el-tag
+          :type="row.isResolved ? 'success' : 'warning'"
+          size="small"
+        >
+          {{ row.isResolved ? '已解决' : '未解决' }}
+        </el-tag>
+      </template>
+
       <!-- 解决建议列 -->
-      <template #suggestion="{ row }">
+      <template #resolutionSuggestion="{ row }">
         <el-popover
           placement="top"
           width="400"
@@ -152,7 +198,7 @@
               <i class="el-icon-info" />
               解决建议
             </div>
-            <div class="suggestion-text">{{ row.suggestion }}</div>
+            <div class="suggestion-text">{{ row.resolutionSuggestion }}</div>
           </div>
           <el-button
             slot="reference"
@@ -166,8 +212,8 @@
       </template>
 
       <!-- 检测时间列 -->
-      <template #detectedAt="{ row }">
-        {{ formatDate(row.detectedAt) }}
+      <template #createdAt="{ row }">
+        {{ formatDate(row.createdAt) }}
       </template>
     </base-table>
 
@@ -188,7 +234,7 @@ import {
   CONFLICT_TYPE_MAP,
   SEVERITY_LEVEL_MAP,
   SEVERITY_TYPE_MAP
-} from '../../constants'
+} from '../../constants/detail-config'
 
 export default {
   name: 'ConflictsPanel',
@@ -210,8 +256,11 @@ export default {
       loading: false,
       filterForm: {
         severityLevel: '',
-        conflictType: ''
+        conflictType: '',
+        isResolved: null // null表示全部，true表示已解决，false表示未解决
       },
+      // ✅ 备用映射：优先使用后端返回的 typeLabel 和 severityLabel
+      // 这些映射仅在后端未返回 label 时作为备用
       conflictTypeMap: CONFLICT_TYPE_MAP,
       severityLevelMap: SEVERITY_LEVEL_MAP
     }
@@ -224,10 +273,10 @@ export default {
       if (this.conflicts.length === 0) return null
 
       return {
-        critical: this.conflicts.filter(c => c.severityLevel === 'critical').length,
-        high: this.conflicts.filter(c => c.severityLevel === 'high').length,
-        medium: this.conflicts.filter(c => c.severityLevel === 'medium').length,
-        low: this.conflicts.filter(c => c.severityLevel === 'low').length
+        critical: this.conflicts.filter(c => c.severity === 'critical').length,
+        high: this.conflicts.filter(c => c.severity === 'high').length,
+        medium: this.conflicts.filter(c => c.severity === 'medium').length,
+        low: this.conflicts.filter(c => c.severity === 'low').length
       }
     },
     filteredConflicts() {
@@ -235,23 +284,33 @@ export default {
 
       // 筛选
       if (this.filterForm.severityLevel) {
-        result = result.filter(c => c.severityLevel === this.filterForm.severityLevel)
+        result = result.filter(c => c.severity === this.filterForm.severityLevel)
       }
       if (this.filterForm.conflictType) {
         result = result.filter(c => c.conflictType === this.filterForm.conflictType)
       }
+      if (this.filterForm.isResolved !== null && this.filterForm.isResolved !== '') {
+        result = result.filter(c => c.isResolved === this.filterForm.isResolved)
+      }
 
-      // 按严重程度和检测时间排序
+      // 排序：未解决优先，然后按严重程度，最后按检测时间
       result.sort((a, b) => {
+        // 1. 未解决的排在前面
+        if (a.isResolved !== b.isResolved) {
+          return a.isResolved ? 1 : -1
+        }
+
+        // 2. 按严重程度排序
         const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 }
-        const aSeverity = severityOrder[a.severityLevel] || 0
-        const bSeverity = severityOrder[b.severityLevel] || 0
+        const aSeverity = severityOrder[a.severity] || 0
+        const bSeverity = severityOrder[b.severity] || 0
 
         if (aSeverity !== bSeverity) {
           return bSeverity - aSeverity
         }
 
-        return new Date(b.detectedAt) - new Date(a.detectedAt)
+        // 3. 按检测时间排序（最新的在前）
+        return new Date(b.createdAt) - new Date(a.createdAt)
       })
 
       return result
@@ -268,6 +327,8 @@ export default {
 
     /**
      * 获取严重程度类型
+     * 用于 el-tag 的 type 属性，控制颜色
+     * ✅ 后端已返回 severityLabel，此方法用于控制标签颜色
      */
     getSeverityType(severity) {
       return SEVERITY_TYPE_MAP[severity] || 'info'
@@ -286,7 +347,8 @@ export default {
     handleResetFilter() {
       this.filterForm = {
         severityLevel: '',
-        conflictType: ''
+        conflictType: '',
+        isResolved: null
       }
     },
 
@@ -341,8 +403,7 @@ export default {
   }
 
   .filter-toolbar {
-    margin-bottom: 16px;
-    padding: 16px;
+    padding: 16px 16px 0px 16px;
     background: #f5f7fa;
     border-radius: 4px;
 
@@ -356,14 +417,27 @@ export default {
     color: #606266;
   }
 
+  .furnace-code {
+    font-weight: 500;
+    color: #409eff;
+  }
+
+  .no-furnace {
+    color: #c0c4cc;
+  }
+
   .affected-tasks {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
 
     .task-tag {
       cursor: pointer;
       transition: all 0.3s;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
 
       &:hover {
         opacity: 0.8;

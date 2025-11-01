@@ -4,6 +4,7 @@
  * 创建日期：2025-10-23
  * 修改记录：
  *   - 2025-10-23: 初始创建，完成P0阶段功能和P1部分功能
+ *   - 2025-11-01: 添加数据转换逻辑，提取用户信息的name字段（creatorName/updaterName）用于表格显示
  */
 
 <template>
@@ -241,7 +242,12 @@ export default {
 
         // 根据接口文档处理响应数据（2025-10-24更新）
         if (response.success && response.data) {
-          this.tableData = response.data.results || []
+          // 转换数据，提取用户信息的 name 字段用于表格显示
+          this.tableData = (response.data.results || []).map(item => ({
+            ...item,
+            creatorName: item.creator?.name || '-',
+            updaterName: item.updater?.name || '-'
+          }))
           this.pagination = {
             page: response.data.page || 1,
             limit: response.data.limit || 20,
@@ -405,7 +411,7 @@ export default {
      */
     handleView(plan) {
       this.$router.push({
-        name: 'AnnealingScheduleDetail',
+        name: 'SchedulePlanDetail',
         params: { id: plan.id }
       })
     },

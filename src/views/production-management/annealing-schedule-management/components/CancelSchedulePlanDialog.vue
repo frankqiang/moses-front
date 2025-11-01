@@ -93,9 +93,11 @@
 <script>
 import { cancelSchedulePlan } from '../api'
 import { PLAN_STATUS_MAP } from '../constants'
+import errorMixin from '@/mixins/errorMixin'
 
 export default {
   name: 'CancelSchedulePlanDialog',
+  mixins: [errorMixin],
   props: {
     visible: {
       type: Boolean,
@@ -187,23 +189,13 @@ export default {
           reason: this.cancelForm.reason.trim()
         })
 
-        if (response.success && response.data) {
-          // 显示成功消息
-          const cancelledAt = response.data.cancelledAt ? this.formatDateTime(response.data.cancelledAt) : ''
-          const successMessage = `${response.message || '取消排程方案成功'}${cancelledAt ? '，取消时间：' + cancelledAt : ''}`
-
-          this.$message.success(successMessage)
-          this.$emit('success', response.data)
-          this.handleClose()
-        } else {
-          // 根据错误码显示不同的错误消息
-          const errorMessage = this.getErrorCodeMessage(response.error?.code) || response.message || '取消排程方案失败'
-          this.$message.error(errorMessage)
-        }
+        // 直接使用后端返回的消息
+        this.$message.success(response.message || '取消排程方案成功')
+        this.$emit('success', response.data)
+        this.handleClose()
       } catch (error) {
-        console.error('取消排程方案失败:', error)
-        const errorMessage = this.getErrorMessage(error)
-        this.$message.error(errorMessage)
+        // 使用 errorMixin 统一处理错误
+        this.handleError(error)
       } finally {
         this.cancelling = false
       }
@@ -251,36 +243,6 @@ export default {
       const minutes = String(date.getMinutes()).padStart(2, '0')
       const seconds = String(date.getSeconds()).padStart(2, '0')
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-    },
-
-    /**
-     * 获取错误消息
-     */
-    getErrorMessage(error) {
-      if (error.response) {
-        const { status, data } = error.response
-        if (status === 401) {
-          return '请先登录'
-        } else if (status === 403) {
-          return '权限不足，请联系管理员'
-        } else if (data && data.error) {
-          return this.getErrorCodeMessage(data.error.code) || data.error.message || '操作失败'
-        }
-      }
-      return error.message || '操作失败'
-    },
-
-    /**
-     * 根据错误码获取错误消息
-     */
-    getErrorCodeMessage(code) {
-      const errorMap = {
-        'PARAM_ERROR': '参数错误，请检查输入',
-        'INVALID_STATUS': '排程方案状态无效',
-        'RESOURCE_NOT_FOUND': '排程方案不存在',
-        'SPM_009': '取消排程方案失败，请稍后重试'
-      }
-      return errorMap[code] || ''
     }
   }
 }

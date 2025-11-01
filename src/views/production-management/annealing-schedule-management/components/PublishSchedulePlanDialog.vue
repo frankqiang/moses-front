@@ -78,24 +78,24 @@
             </template>
           </el-table-column>
           <el-table-column
-            prop="severityLevel"
+            prop="severity"
             label="严重程度"
             width="100"
           >
             <template slot-scope="{ row }">
-              <el-tag :type="getSeverityTagType(row.severityLevel)" size="small">
-                {{ formatSeverity(row.severityLevel) }}
+              <el-tag :type="getSeverityTagType(row.severity)" size="small">
+                {{ formatSeverity(row.severity) }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column
-            prop="description"
+            prop="conflictDescription"
             label="冲突描述"
             min-width="200"
             show-overflow-tooltip
           />
           <el-table-column
-            prop="suggestion"
+            prop="resolutionSuggestion"
             label="解决建议"
             min-width="180"
             show-overflow-tooltip
@@ -246,7 +246,7 @@ export default {
       return this.conflicts.length > 0
     },
     hasCriticalConflicts() {
-      return this.conflicts.some(c => c.severityLevel === 'critical')
+      return this.conflicts.some(c => c.severity === 'critical')
     },
     hasNonCriticalConflicts() {
       return this.hasConflicts && !this.hasCriticalConflicts
@@ -260,7 +260,7 @@ export default {
         low: 0
       }
       this.conflicts.forEach(conflict => {
-        const level = conflict.severityLevel
+        const level = conflict.severity
         if (stats[level] !== undefined) {
           stats[level]++
         }
@@ -391,12 +391,12 @@ export default {
         })
 
         if (response.success && response.data) {
-          // 显示成功消息，包含影响的任务数量和发布时间
-          const affectedCount = response.data.affectedTasksCount || 0
-          const publishedAt = response.data.publishedAt ? this.formatDateTime(response.data.publishedAt) : ''
-          const successMessage = `${response.message || '发布排程方案成功'}，已同步更新 ${affectedCount} 个退火任务${publishedAt ? '，发布时间：' + publishedAt : ''}`
+          // 使用后端返回的消息，不进行额外拼接
+          this.$message.success(response.message || '发布排程方案成功')
 
-          this.$message.success(successMessage)
+          // 提取并展示同步结果统计（基于新的响应结构）
+          this.showSyncResultsNotification(response.data)
+
           this.$emit('success', response.data)
           this.handleClose()
         } else {
@@ -411,6 +411,49 @@ export default {
       } finally {
         this.publishing = false
       }
+    },
+
+    /**
+     * 展示任务同步结果通知
+     */
+    showSyncResultsNotification(data) {
+      if (!data || !data.syncResults) {
+        return
+      }
+
+      const { syncResults, plan } = data
+      const successCount = syncResults.success?.length || 0
+      const failedCount = syncResults.failed?.length || 0
+      const totalCount = successCount + failedCount
+
+      // 构建通知内容
+      let message = `<div style="line-height: 1.8;">
+        <div><strong>方案编号：</strong>${plan?.planCode || '-'}</div>
+        <div><strong>发布时间：</strong>${plan?.publishedAt ? this.formatDateTime(plan.publishedAt) : '-'}</div>
+        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ebeef5;">
+          <div><strong>任务同步结果：</strong></div>
+          <div style="color: #67c23a;">✓ 成功同步：${successCount} 个任务</div>`
+
+      if (failedCount > 0) {
+        message += `<div style="color: #f56c6c;">✗ 同步失败：${failedCount} 个任务</div>`
+      }
+
+      message += `<div style="color: #909399;">总计：${totalCount} 个任务</div>
+        </div>
+      </div>`
+
+      // 根据结果选择通知类型
+      const notificationType = failedCount > 0 ? 'warning' : 'success'
+      const notificationTitle = failedCount > 0 ? '发布完成（部分任务同步失败）' : '发布完成'
+
+      this.$notify({
+        title: notificationTitle,
+        dangerouslyUseHTMLString: true,
+        message: message,
+        type: notificationType,
+        duration: 8000,
+        position: 'bottom-right'
+      })
     },
 
     /**

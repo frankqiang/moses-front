@@ -4,6 +4,7 @@
   创建日期：2025-10-23
   修改记录：
     - 2025-10-23: 初始创建
+    - 2025-10-28: 重构以适配后端接口更新，优先使用后端返回的 label 字段
 -->
 
 <template>
@@ -61,7 +62,8 @@
       <div class="toolbar-section">
         <el-checkbox-group v-model="visibleLayers" size="small" @change="handleLayerChange">
           <el-checkbox label="tasks">任务块</el-checkbox>
-          <el-checkbox label="maintenance">维护计划</el-checkbox>
+          <!-- 维护计划功能暂未实现，需要集成TPM模块 -->
+          <!-- <el-checkbox label="maintenance">维护计划</el-checkbox> -->
           <el-checkbox label="currentTime">当前时间线</el-checkbox>
         </el-checkbox-group>
       </div>
@@ -90,16 +92,17 @@
       element-loading-text="加载甘特图数据中..."
     >
       <div
-        v-if="!ganttData"
+        v-if="!ganttData && !loading"
         class="empty-state"
       >
         <i class="el-icon-s-data" />
         <p>暂无甘特图数据</p>
       </div>
+      <!-- 甘特图容器始终渲染，确保 ECharts 能正确计算尺寸 -->
       <div
-        v-else
         ref="ganttChart"
         class="gantt-chart"
+        :style="{ visibility: ganttData ? 'visible' : 'hidden' }"
       />
     </div>
 
@@ -119,22 +122,22 @@
             {{ selectedTask.furnaceCode }}
           </el-descriptions-item>
           <el-descriptions-item label="产品编码">
-            {{ selectedTask.task ? selectedTask.task.productCode : selectedTask.productCode || '-' }}
+            {{ selectedTask.productCode || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="合金牌号">
-            {{ selectedTask.task ? selectedTask.task.alloyGrade : selectedTask.alloyGrade || '-' }}
+            {{ selectedTask.alloyGrade || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="重量">
-            {{ selectedTask.weight }} 吨
+            {{ formatWeight(selectedTask.totalWeight) }} 吨
           </el-descriptions-item>
           <el-descriptions-item label="优先级">
             <el-tag :type="getPriorityTagType(selectedTask.priority)">
-              {{ getPriorityText(selectedTask.priority) }}
+              {{ selectedTask.priorityLabel || getPriorityText(selectedTask.priority) }}
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="getStatusTagType(selectedTask.status)">
-              {{ getStatusText(selectedTask.status) }}
+              {{ selectedTask.statusLabel || getStatusText(selectedTask.status) }}
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="计划装炉时间">
@@ -157,13 +160,6 @@
             </el-tag>
           </el-descriptions-item>
         </el-descriptions>
-
-        <!-- 手动调整按钮 -->
-        <div v-if="canAdjust" class="task-actions">
-          <el-button type="primary" @click="handleAdjustTask">
-            手动调整
-          </el-button>
-        </div>
       </div>
     </el-drawer>
   </div>
@@ -172,7 +168,11 @@
 <script>
 import * as echarts from 'echarts'
 import dayjs from 'dayjs'
+import weekOfYear from 'dayjs/plugin/weekOfYear'
 import { fetchScheduleGanttData } from '../api'
+
+// 注册 dayjs 插件
+dayjs.extend(weekOfYear)
 
 export default {
   name: 'ScheduleGanttChart',
@@ -182,11 +182,6 @@ export default {
     planId: {
       type: String,
       required: true
-    },
-    // 是否可以调整任务
-    canAdjust: {
-      type: Boolean,
-      default: false
     },
     // 是否显示全屏按钮
     showFullscreenButton: {
@@ -204,10 +199,13 @@ export default {
       timeScale: 'day',
       selectedFurnaces: [],
       allFurnaces: [],
-      visibleLayers: ['tasks', 'maintenance', 'currentTime'],
+      visibleLayers: ['tasks', 'currentTime'], // 维护计划功能暂未实现
       taskDetailVisible: false,
       selectedTask: null,
       isFullscreen: false,
+      // 存储系列数据供 renderItem 访问
+      currentTaskSeriesData: [],
+      currentMaintenanceSeriesData: [],
       pickerOptions: {
         shortcuts: [{
           text: '今天',
@@ -296,8 +294,13 @@ export default {
   },
 
   mounted() {
-    this.initGanttChart()
-    this.loadGanttData()
+    // 使用 $nextTick 确保 DOM 完全渲染后再初始化
+    this.$nextTick(() => {
+      // 先初始化 ECharts 实例（DOM 现在始终存在）
+      this.initGanttChart()
+      // 然后加载数据
+      this.loadGanttData()
+    })
   },
 
   beforeDestroy() {
@@ -310,8 +313,18 @@ export default {
   methods: {
     // 初始化甘特图
     initGanttChart() {
-      this.chartInstance = echarts.init(this.$refs.ganttChart)
-      window.addEventListener('resize', this.handleResize)
+      // 确保 DOM 元素存在
+      if (!this.$refs.ganttChart) {
+        console.error('甘特图容器 DOM 元素不存在')
+        return
+      }
+
+      try {
+        this.chartInstance = echarts.init(this.$refs.ganttChart)
+        window.addEventListener('resize', this.handleResize)
+      } catch (error) {
+        console.error('初始化甘特图失败:', error)
+      }
     },
 
     // 加载甘特图数据
@@ -345,6 +358,46 @@ export default {
       }
     },
 
+    // 根据任务优先级获取边框颜色（后备方案）
+    // 后端会在 priority='emergency' 或 'high' 时返回 borderColor
+    // 此方法作为后备，处理后端未返回或其他优先级的情况
+    getPriorityBorderColor(task) {
+      // 冲突任务：红色边框
+      if (task.hasConflict) {
+        return '#F44336'
+      }
+      // 紧急任务：深红色边框（后端应该返回此值）
+      if (task.priority === 'emergency') {
+        return '#d32f2f'
+      }
+      // 高优先级：橙色边框（后端应该返回此值）
+      if (task.priority === 'high') {
+        return '#f57c00'
+      }
+      // normal/low 优先级：透明边框（无边框效果）
+      return 'transparent'
+    },
+
+    // 根据任务优先级获取边框宽度（后备方案）
+    // 后端会在 priority='emergency' 或 'high' 时返回 borderWidth
+    // 此方法作为后备，处理后端未返回或其他优先级的情况
+    getPriorityBorderWidth(task) {
+      // 冲突任务：粗边框
+      if (task.hasConflict) {
+        return 3
+      }
+      // 紧急任务：粗边框（后端应该返回 3）
+      if (task.priority === 'emergency') {
+        return 3
+      }
+      // 高优先级：中等边框（后端应该返回 2）
+      if (task.priority === 'high') {
+        return 2
+      }
+      // normal/low 优先级：0 或 1（无边框效果）
+      return 0
+    },
+
     // 渲染甘特图
     renderGanttChart() {
       if (!this.ganttData || !this.chartInstance) {
@@ -353,30 +406,94 @@ export default {
 
       const { timeline } = this.ganttData
 
+      // 🔍 调试：输出关键数据
+      // 🔍 精简调试信息
+      console.log('=== 甘特图渲染 ===')
+      console.log('任务数:', this.ganttData.taskBlocks?.length || 0, '炉子数:', this.ganttData.furnaces?.length || 0)
+
       // 构建 Y 轴数据（炉子列表）
+      // ✅ 优先使用后端返回的 statusLabel
       const yAxisData = this.filteredFurnaces.map(f => ({
         value: f.furnaceCode,
         textStyle: {
           color: this.getFurnaceStatusColor(f.status)
-        }
+        },
+        // 存储完整的炉子信息，供格式化器使用
+        _furnace: f
       }))
 
       // 构建任务块系列数据
       const taskSeriesData = this.filteredTaskBlocks.map(task => {
         const furnaceIndex = this.filteredFurnaces.findIndex(f => f.furnaceCode === task.furnaceCode)
+
+        // ✅ 确保 totalWeight 是数字类型（后端可能返回字符串）
+        const weight = typeof task.totalWeight === 'string'
+          ? parseFloat(task.totalWeight) || 0
+          : (task.totalWeight || 0)
+
         return {
           name: task.taskCode,
           value: [
             furnaceIndex,
             new Date(task.startTime).getTime(),
             new Date(task.endTime).getTime(),
-            task.weight
+            weight
           ],
           itemStyle: {
-            color: task.color
+            color: task.color,
+            // ✅ 优先级边框设置：紧急任务深红色粗边框，高优先级橙色中等边框
+            borderColor: task.borderColor || this.getPriorityBorderColor(task),
+            borderWidth: task.borderWidth || this.getPriorityBorderWidth(task)
           },
           task: task
         }
+      })
+
+      // ✅ 存储系列数据供 renderItem 访问
+      this.currentTaskSeriesData = taskSeriesData
+
+      // 🔍 调试：检查任务样式和后端返回值
+      console.log('=== 任务样式检查 ===')
+      const colorStats = {}
+      const priorityStats = {}
+      const borderStats = { fromBackend: 0, fromFrontend: 0, noBorder: 0 }
+
+      taskSeriesData.forEach((task, index) => {
+        const color = task.itemStyle.color
+        colorStats[color] = (colorStats[color] || 0) + 1
+        priorityStats[task.task.priority] = (priorityStats[task.task.priority] || 0) + 1
+
+        // 统计边框来源
+        if (task.task.borderColor) {
+          borderStats.fromBackend++
+        } else if (task.task.priority === 'emergency' || task.task.priority === 'high') {
+          borderStats.fromFrontend++
+        } else {
+          borderStats.noBorder++
+        }
+
+        if (index < 5) {
+          console.log(`任务 ${index + 1}:`, {
+            code: task.name,
+            priority: task.task.priority,
+            priorityLabel: task.task.priorityLabel,
+            color: task.itemStyle.color,
+            borderColor: task.itemStyle.borderColor,
+            borderWidth: task.itemStyle.borderWidth,
+            borderSource: task.task.borderColor ? '后端返回' : '前端计算',
+            hasConflict: task.task.hasConflict,
+            colorClass: task.task.colorClass
+          })
+        }
+      })
+
+      console.log('颜色统计:', colorStats)
+      console.log('优先级统计:', priorityStats)
+      console.log('边框数据来源:', {
+        '后端返回': borderStats.fromBackend,
+        '前端计算': borderStats.fromFrontend,
+        '无边框': borderStats.noBorder,
+        '总数': taskSeriesData.length
       })
 
       // 构建维护计划系列数据
@@ -399,6 +516,9 @@ export default {
           block: block
         }
       })
+
+      // ✅ 存储维护计划系列数据供 renderItem 访问
+      this.currentMaintenanceSeriesData = maintenanceSeriesData
 
       // 当前时间线标记
       const currentTimeLine = this.visibleLayers.includes('currentTime')
@@ -429,12 +549,24 @@ export default {
         },
         tooltip: {
           formatter: (params) => {
-            if (params.data.task) {
-              return params.data.task.tooltip.replace(/\n/g, '<br/>')
+            // ✅ 从组件实例获取任务数据
+            if (params.seriesIndex === 0 && params.dataIndex != null) {
+              const taskData = this.currentTaskSeriesData[params.dataIndex]
+              if (taskData && taskData.task) {
+                const tooltipContent = taskData.task.tooltipText || taskData.task.tooltip
+                if (Array.isArray(tooltipContent)) {
+                  return tooltipContent.join('<br/>')
+                }
+                return tooltipContent ? tooltipContent.replace(/\n/g, '<br/>') : ''
+              }
             }
-            if (params.data.block) {
-              const block = params.data.block
-              return `${block.maintenanceType}<br/>开始: ${this.formatDateTime(block.startTime)}<br/>结束: ${this.formatDateTime(block.endTime)}<br/>${block.description}`
+            // ✅ 维护计划数据
+            if (params.seriesIndex === 1 && params.dataIndex != null) {
+              const maintenanceData = this.currentMaintenanceSeriesData[params.dataIndex]
+              if (maintenanceData && maintenanceData.block) {
+                const block = maintenanceData.block
+                return `${block.maintenanceType}<br/>开始: ${this.formatDateTime(block.startTime)}<br/>结束: ${this.formatDateTime(block.endTime)}<br/>${block.description}`
+              }
             }
             return ''
           }
@@ -488,7 +620,10 @@ export default {
           axisLabel: {
             formatter: (value) => {
               const furnace = this.filteredFurnaces.find(f => f.furnaceCode === value)
-              return furnace ? `${furnace.furnaceCode}\n${furnace.furnaceName}` : value
+              if (!furnace) return value
+              // ✅ 优先显示 statusLabel（如果存在）
+              const statusText = furnace.statusLabel ? `(${furnace.statusLabel})` : ''
+              return `${furnace.furnaceCode}\n${furnace.furnaceName}${statusText}`
             }
           }
         },
@@ -496,28 +631,30 @@ export default {
           {
             name: '任务块',
             type: 'custom',
-            renderItem: this.renderTaskBlock,
+            renderItem: (params, api) => this.renderTaskBlock(params, api), // ✅ 使用箭头函数确保 this 绑定
             encode: {
               x: [1, 2],
               y: 0
             },
-            data: taskSeriesData
+            data: taskSeriesData,
+            // ✅ 当前时间线标记（markLine必须在series内部）
+            markLine: {
+              silent: true,
+              symbol: 'none',
+              data: currentTimeLine
+            }
           },
           {
             name: '维护计划',
             type: 'custom',
-            renderItem: this.renderMaintenanceBlock,
+            renderItem: (params, api) => this.renderMaintenanceBlock(params, api), // ✅ 使用箭头函数确保 this 绑定
             encode: {
               x: [1, 2],
               y: 0
             },
             data: maintenanceSeriesData
           }
-        ],
-        markLine: {
-          silent: true,
-          data: currentTimeLine
-        }
+        ]
       }
 
       this.chartInstance.setOption(option, true)
@@ -525,86 +662,143 @@ export default {
       // 绑定点击事件
       this.chartInstance.off('click')
       this.chartInstance.on('click', this.handleTaskBlockClick)
+
+      // 确保图表尺寸正确
+      this.$nextTick(() => {
+        if (this.chartInstance) {
+          this.chartInstance.resize()
+        }
+      })
     },
 
     // 自定义渲染任务块
     renderTaskBlock(params, api) {
-      const categoryIndex = api.value(0)
-      const start = api.coord([api.value(1), categoryIndex])
-      const end = api.coord([api.value(2), categoryIndex])
-      const height = api.size([0, 1])[1] * 0.6
-      const rectShape = echarts.graphic.clipRectByRect(
-        {
-          x: start[0],
-          y: start[1] - height / 2,
-          width: end[0] - start[0],
-          height: height
-        },
-        {
-          x: params.coordSys.x,
-          y: params.coordSys.y,
-          width: params.coordSys.width,
-          height: params.coordSys.height
-        }
-      )
-
-      if (!rectShape) {
-        return
+      // ✅ 数据检查
+      if (!params || !params.coordSys || params.dataIndex == null) {
+        return null
       }
 
-      const task = params.data.task
-      const hasConflict = task && task.hasConflict
+      // ✅ 从组件实例获取数据
+      const taskData = this.currentTaskSeriesData[params.dataIndex]
+      if (!taskData || !taskData.task) {
+        return null
+      }
 
-      return {
-        type: 'rect',
-        transition: ['shape'],
-        shape: rectShape,
-        style: {
-          ...api.style(),
-          stroke: hasConflict ? '#F44336' : '#fff',
-          lineWidth: hasConflict ? 3 : 1
+      try {
+        const categoryIndex = api.value(0)
+        const start = api.coord([api.value(1), categoryIndex])
+        const end = api.coord([api.value(2), categoryIndex])
+
+        // 检查坐标是否有效
+        if (!start || !end || start.some(isNaN) || end.some(isNaN)) {
+          return null
         }
+
+        const height = api.size([0, 1])[1] * 0.6
+
+        const rectShape = echarts.graphic.clipRectByRect(
+          {
+            x: start[0],
+            y: start[1] - height / 2,
+            width: end[0] - start[0],
+            height: height
+          },
+          {
+            x: params.coordSys.x,
+            y: params.coordSys.y,
+            width: params.coordSys.width,
+            height: params.coordSys.height
+          }
+        )
+
+        if (!rectShape) {
+          return null
+        }
+
+        // ✅ 使用从组件实例获取的任务数据和样式
+        return {
+          type: 'rect',
+          transition: ['shape'],
+          shape: rectShape,
+          style: {
+            fill: taskData.itemStyle.color,
+            stroke: taskData.itemStyle.borderColor,
+            lineWidth: taskData.itemStyle.borderWidth
+          }
+        }
+      } catch (error) {
+        return null
       }
     },
 
     // 自定义渲染维护计划块
     renderMaintenanceBlock(params, api) {
-      const categoryIndex = api.value(0)
-      const start = api.coord([api.value(1), categoryIndex])
-      const end = api.coord([api.value(2), categoryIndex])
-      const height = api.size([0, 1])[1] * 0.4
-      const rectShape = echarts.graphic.clipRectByRect(
-        {
-          x: start[0],
-          y: start[1] - height / 2,
-          width: end[0] - start[0],
-          height: height
-        },
-        {
-          x: params.coordSys.x,
-          y: params.coordSys.y,
-          width: params.coordSys.width,
-          height: params.coordSys.height
-        }
-      )
-
-      if (!rectShape) {
-        return
+      // ✅ 数据检查
+      if (!params || !params.coordSys || params.dataIndex == null) {
+        return null
       }
 
-      return {
-        type: 'rect',
-        transition: ['shape'],
-        shape: rectShape,
-        style: api.style()
+      // ✅ 从组件实例获取维护计划数据
+      const maintenanceData = this.currentMaintenanceSeriesData[params.dataIndex]
+      if (!maintenanceData || !maintenanceData.block) {
+        return null
+      }
+
+      try {
+        const categoryIndex = api.value(0)
+        const start = api.coord([api.value(1), categoryIndex])
+        const end = api.coord([api.value(2), categoryIndex])
+
+        if (!start || !end || start.some(isNaN) || end.some(isNaN)) {
+          return null
+        }
+
+        const height = api.size([0, 1])[1] * 0.4
+        const rectShape = echarts.graphic.clipRectByRect(
+          {
+            x: start[0],
+            y: start[1] - height / 2,
+            width: end[0] - start[0],
+            height: height
+          },
+          {
+            x: params.coordSys.x,
+            y: params.coordSys.y,
+            width: params.coordSys.width,
+            height: params.coordSys.height
+          }
+        )
+
+        if (!rectShape) {
+          return null
+        }
+
+        // ✅ 使用 itemStyle 中的样式数据
+        return {
+          type: 'rect',
+          transition: ['shape'],
+          shape: rectShape,
+          style: {
+            fill: maintenanceData.itemStyle.color,
+            stroke: maintenanceData.itemStyle.borderColor || '#FFA726',
+            lineWidth: maintenanceData.itemStyle.borderWidth || 2,
+            lineDash: [5, 5] // 虚线效果
+          }
+        }
+      } catch (error) {
+        return null
       }
     },
 
     // 处理任务块点击
     handleTaskBlockClick(params) {
-      if (params.data && params.data.task) {
-        this.selectedTask = params.data.task
-        this.taskDetailVisible = true
+      // ✅ 从组件实例获取任务数据
+      if (params.seriesIndex === 0 && params.dataIndex != null) {
+        const taskData = this.currentTaskSeriesData[params.dataIndex]
+        if (taskData && taskData.task) {
+          this.selectedTask = taskData.task
+          this.taskDetailVisible = true
+        }
       }
     },
 
@@ -672,11 +866,6 @@ export default {
       this.selectedTask = null
     },
 
-    // 手动调整任务
-    handleAdjustTask() {
-      this.$emit('adjust-task', this.selectedTask)
-    },
-
     // 格式化时间标签
     formatTimeLabel(timestamp, scale) {
       const date = dayjs(timestamp)
@@ -686,7 +875,8 @@ export default {
         case 'day':
           return date.format('MM-DD')
         case 'week':
-          return `第${date.week()}周`
+          // 显示年份和周数，避免跨年混淆
+          return `${date.format('YYYY')}年第${date.week()}周`
         default:
           return date.format('MM-DD')
       }
@@ -706,8 +896,18 @@ export default {
       return `${hours}小时${minutes}分钟`
     },
 
-    // 获取优先级文本
-    // 注意：必须严格按照接口文档中的枚举值定义
+    // 格式化重量（处理字符串类型）
+    formatWeight(weight) {
+      const numWeight = typeof weight === 'string' ? parseFloat(weight) : weight
+      return (numWeight || 0).toFixed(2)
+    },
+
+    /**
+     * 获取优先级文本（备用方案）
+     * ✅ 优先使用后端返回的 priorityLabel 字段
+     * 此方法仅在后端未返回 label 时作为备用
+     * 注意：必须严格按照接口文档中的枚举值定义
+     */
     getPriorityText(priority) {
       const map = {
         emergency: '紧急',
@@ -718,8 +918,10 @@ export default {
       return map[priority] || priority
     },
 
-    // 获取优先级标签类型
-    // 注意：必须严格按照接口文档中的枚举值定义
+    /**
+     * 获取优先级标签类型
+     * 用于 el-tag 的 type 属性，控制颜色
+     */
     getPriorityTagType(priority) {
       const map = {
         emergency: 'danger',
@@ -730,10 +932,14 @@ export default {
       return map[priority] || ''
     },
 
-    // 获取状态文本
+    /**
+     * 获取状态文本（备用方案）
+     * ✅ 优先使用后端返回的 statusLabel 字段
+     * 此方法仅在后端未返回 label 时作为备用
+     */
     getStatusText(status) {
       const map = {
-        pending: '待排程',
+        'pending-schedule': '待排程',
         scheduled: '已排程',
         loading: '装炉中',
         heating: '加热中',
@@ -746,10 +952,13 @@ export default {
       return map[status] || status
     },
 
-    // 获取状态标签类型
+    /**
+     * 获取状态标签类型
+     * 用于 el-tag 的 type 属性，控制颜色
+     */
     getStatusTagType(status) {
       const map = {
-        pending: 'info',
+        'pending-schedule': 'info',
         scheduled: '',
         loading: 'warning',
         heating: 'warning',
@@ -762,15 +971,21 @@ export default {
       return map[status] || ''
     },
 
-    // 获取炉子状态颜色
+    /**
+     * 获取炉子状态颜色
+     * ✅ 后端已返回 statusLabel，此方法用于控制 Y 轴炉子名称的颜色显示
+     * 根据炉子状态返回对应的颜色值
+     */
     getFurnaceStatusColor(status) {
       const map = {
-        running: '#4CAF50',
-        idle: '#9E9E9E',
-        maintenance: '#FFC107',
-        fault: '#F44336'
+        running: '#4CAF50', // 运行中 - 绿色
+        idle: '#9E9E9E', // 空闲 - 灰色
+        maintenance: '#FFC107', // 维护中 - 黄色
+        fault: '#F44336', // 故障 - 红色
+        enabled: '#4CAF50', // 启用 - 绿色（兼容后端返回值）
+        disabled: '#9E9E9E' // 禁用 - 灰色（兼容后端返回值）
       }
-      return map[status] || '#000'
+      return map[status] || '#607D8B' // 默认蓝灰色
     }
   }
 }
@@ -853,11 +1068,6 @@ export default {
 
   .task-detail-content {
     padding: 20px;
-
-    .task-actions {
-      margin-top: 20px;
-      text-align: center;
-    }
   }
 }
 </style>

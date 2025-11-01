@@ -44,8 +44,14 @@
           </el-col>
           <el-col :span="12">
             <div class="info-item">
-              <span class="label">计划重量：</span>
-              <span class="value">{{ currentItem.scheduleWeight }}吨</span>
+              <span class="label">任务重量：</span>
+              <span class="value">{{ getTaskWeight(currentItem) }}吨</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="info-item">
+              <span class="label">炉次总重量：</span>
+              <span class="value">{{ (currentItem.scheduleContext && currentItem.scheduleContext.totalWeight) || '-' }}吨</span>
             </div>
           </el-col>
           <el-col :span="12">
@@ -97,7 +103,7 @@
           type="datetime"
           placeholder="选择装炉时间"
           style="width: 100%"
-          value-format="yyyy-MM-dd HH:mm:ss"
+          format="yyyy-MM-dd HH:mm:ss"
           :picker-options="pickerOptions"
         />
         <div class="time-adjust-shortcuts">
@@ -131,7 +137,7 @@
           type="datetime"
           placeholder="选择出炉时间"
           style="width: 100%"
-          value-format="yyyy-MM-dd HH:mm:ss"
+          format="yyyy-MM-dd HH:mm:ss"
           :picker-options="pickerOptions"
         />
         <div class="time-adjust-shortcuts">
@@ -203,23 +209,23 @@
             v-for="(conflict, index) in conflicts"
             :key="index"
             class="conflict-item"
-            :class="`severity-${conflict.severityLevel}`"
+            :class="`severity-${conflict.severity}`"
           >
             <div class="conflict-header">
               <el-tag
-                :type="getSeverityType(conflict.severityLevel)"
+                :type="getSeverityType(conflict.severity)"
                 size="small"
               >
-                {{ getSeverityText(conflict.severityLevel) }}
+                {{ getSeverityText(conflict.severity) }}
               </el-tag>
               <span class="conflict-type">{{ getConflictTypeText(conflict.conflictType) }}</span>
             </div>
             <div class="conflict-description">
-              {{ conflict.description }}
+              {{ conflict.conflictDescription }}
             </div>
-            <div v-if="conflict.suggestion" class="conflict-suggestion">
+            <div v-if="conflict.resolutionSuggestion" class="conflict-suggestion">
               <i class="el-icon-lightbulb" />
-              {{ conflict.suggestion }}
+              {{ conflict.resolutionSuggestion }}
             </div>
           </div>
         </div>
@@ -254,7 +260,7 @@ import {
   CONFLICT_TYPE_MAP,
   SEVERITY_LEVEL_MAP,
   SEVERITY_TYPE_MAP
-} from '../constants'
+} from '../constants/detail-config'
 import { parseTime } from '@/utils'
 
 export default {
@@ -283,7 +289,7 @@ export default {
         return
       }
       const loadTime = this.formData.plannedLoadTime
-      if (loadTime && new Date(value) <= new Date(loadTime)) {
+      if (loadTime && value.getTime() <= loadTime.getTime()) {
         callback(new Error('出炉时间必须晚于装炉时间'))
       } else {
         callback()
@@ -294,8 +300,8 @@ export default {
       dialogVisible: false,
       formData: {
         furnaceCode: '',
-        plannedLoadTime: '',
-        plannedUnloadTime: '',
+        plannedLoadTime: null,
+        plannedUnloadTime: null,
         remarks: ''
       },
       formRules: {
@@ -325,7 +331,7 @@ export default {
       return `手动调整排程结果 - ${this.currentItem.taskCode || ''}`
     },
     hasCriticalConflict() {
-      return this.conflicts.some(c => c.severityLevel === 'critical')
+      return this.conflicts.some(c => c.severity === 'critical')
     }
   },
 
@@ -349,13 +355,34 @@ export default {
 
   methods: {
     /**
+     * 获取任务重量（优先使用实际重量）
+     */
+    getTaskWeight(item) {
+      if (!item || !item.task) return '-'
+
+      // 优先使用实际重量
+      const actualWeight = item.task.actualWeight
+      if (actualWeight !== null && actualWeight !== undefined) {
+        return typeof actualWeight === 'number' ? actualWeight.toFixed(2) : actualWeight
+      }
+
+      // 备用：计划重量
+      const plannedWeight = item.task.plannedWeight
+      if (plannedWeight !== null && plannedWeight !== undefined) {
+        return typeof plannedWeight === 'number' ? plannedWeight.toFixed(2) : plannedWeight
+      }
+
+      return '-'
+    },
+
+    /**
      * 初始化表单数据
      */
     initForm() {
       this.formData = {
         furnaceCode: this.currentItem.furnaceCode || '',
-        plannedLoadTime: this.currentItem.plannedLoadingAt || '',
-        plannedUnloadTime: this.currentItem.plannedUnloadingAt || '',
+        plannedLoadTime: this.currentItem.plannedLoadingAt ? new Date(this.currentItem.plannedLoadingAt) : null,
+        plannedUnloadTime: this.currentItem.plannedUnloadingAt ? new Date(this.currentItem.plannedUnloadingAt) : null,
         remarks: ''
       }
       this.conflicts = []
@@ -434,9 +461,9 @@ export default {
         this.$message.warning('请先选择时间')
         return
       }
-      const date = new Date(currentTime)
+      const date = new Date(currentTime.getTime())
       date.setHours(date.getHours() + hours)
-      this.formData[field] = parseTime(date, '{y}-{m}-{d} {h}:{i}:{s}')
+      this.formData[field] = date
     },
 
     /**
@@ -476,8 +503,8 @@ export default {
           this.$message.success('未检测到冲突，可以安全调整')
         }
       } catch (error) {
-        const errorMessage = error.message || '冲突检测失败，请稍后重试'
-        this.$message.error(errorMessage)
+        // 处理验证错误并显示冲突信息
+        this.handleAdjustmentError(error)
       } finally {
         this.previewLoading = false
       }
@@ -528,21 +555,103 @@ export default {
         this.$emit('success')
         this.handleClose()
       } catch (error) {
-        const errorMessage = error.message || '调整排程结果失败'
-        this.$message.error(errorMessage)
+        // 处理验证错误并显示冲突信息
+        this.handleAdjustmentError(error)
       } finally {
         this.submitLoading = false
       }
     },
 
     /**
+     * 处理调整错误（包含冲突信息）
+     */
+    handleAdjustmentError(error) {
+      // 检查是否有详细的错误信息
+      if (error.details) {
+        const { errors, conflicts } = error.details
+
+        // 转换并显示冲突信息
+        if (conflicts && conflicts.length > 0) {
+          this.conflicts = this.transformConflicts(conflicts)
+        }
+
+        // 显示详细错误消息（如果有）
+        // 注意：验证错误(VAL_开头)已经由axios拦截器显示基础消息，这里只显示详细错误
+        if (errors && errors.length > 0) {
+          this.$message({
+            message: errors.join('\n'),
+            type: 'error',
+            duration: 5000,
+            showClose: true
+          })
+        }
+      } else {
+        // 没有详细信息，显示基础错误（非验证错误）
+        if (!error.code || !error.code.startsWith('VAL_')) {
+          this.$message.error(error.message || '调整排程结果失败')
+        }
+      }
+    },
+
+    /**
+     * 转换后端返回的简化冲突格式为组件期望的完整格式
+     */
+    transformConflicts(backendConflicts) {
+      return backendConflicts.map((conflict, index) => {
+        const conflictType = conflict.type || conflict.conflictType || 'unknown'
+
+        // 根据冲突类型生成描述信息
+        let description = ''
+        let suggestion = ''
+        const severity = 'critical' // 默认为致命冲突
+
+        if (conflictType === 'time-conflict') {
+          const loadTime = this.formatDateTime(conflict.plannedLoadingAt)
+          const unloadTime = this.formatDateTime(conflict.plannedUnloadingAt)
+          description = `时间冲突：与任务 ${conflict.taskCode} 的时间段冲突（${loadTime} ~ ${unloadTime}）`
+          suggestion = '建议调整装炉时间或选择其他炉子'
+        } else if (conflictType === 'capacity-conflict') {
+          description = `容量冲突：与任务 ${conflict.taskCode} 同时排程会超出炉子容量限制`
+          suggestion = '建议调整时间段或分批次排程'
+        } else if (conflictType === 'process-conflict') {
+          description = `工艺冲突：与任务 ${conflict.taskCode} 的工艺参数不兼容`
+          suggestion = '建议选择不同的炉子或调整工艺参数'
+        } else if (conflictType === 'resource-conflict') {
+          description = `资源冲突：与任务 ${conflict.taskCode} 存在资源竞争`
+          suggestion = '建议调整时间段以错开资源使用'
+        } else {
+          description = `与任务 ${conflict.taskCode} 存在冲突`
+          suggestion = '请检查并调整排程参数'
+        }
+
+        // 如果后端提供了完整格式，优先使用后端数据
+        return {
+          id: conflict.id || `conflict-${index}`,
+          conflictType: conflictType,
+          severity: conflict.severityLevel || conflict.severity || severity,
+          conflictDescription: conflict.description || description,
+          resolutionSuggestion: conflict.suggestion || suggestion,
+          affectedTaskIds: conflict.affectedTaskIds || [conflict.taskCode]
+        }
+      })
+    },
+
+    /**
      * 检查是否有字段变更
      */
     hasChanges() {
+      const loadTimeChanged = this.formData.plannedLoadTime
+        ? this.formData.plannedLoadTime.toISOString() !== new Date(this.currentItem.plannedLoadingAt).toISOString()
+        : !!this.currentItem.plannedLoadingAt
+
+      const unloadTimeChanged = this.formData.plannedUnloadTime
+        ? this.formData.plannedUnloadTime.toISOString() !== new Date(this.currentItem.plannedUnloadingAt).toISOString()
+        : !!this.currentItem.plannedUnloadingAt
+
       return (
         this.formData.furnaceCode !== this.currentItem.furnaceCode ||
-        this.formData.plannedLoadTime !== this.currentItem.plannedLoadingAt ||
-        this.formData.plannedUnloadTime !== this.currentItem.plannedUnloadingAt
+        loadTimeChanged ||
+        unloadTimeChanged
       )
     },
 
@@ -554,27 +663,30 @@ export default {
         remarks: this.formData.remarks
       }
 
-      // 只包含变更的字段
+      // 检查炉号是否变更
       if (this.formData.furnaceCode !== this.currentItem.furnaceCode) {
         data.furnaceCode = this.formData.furnaceCode
       }
-      if (this.formData.plannedLoadTime !== this.currentItem.plannedLoadingAt) {
-        data.plannedLoadTime = this.convertToISO8601(this.formData.plannedLoadTime)
+
+      // 检查装炉时间是否变更
+      const loadTimeChanged = this.formData.plannedLoadTime
+        ? this.formData.plannedLoadTime.toISOString() !== new Date(this.currentItem.plannedLoadingAt).toISOString()
+        : false
+
+      if (loadTimeChanged && this.formData.plannedLoadTime) {
+        data.plannedLoadTime = this.formData.plannedLoadTime.toISOString()
       }
-      if (this.formData.plannedUnloadTime !== this.currentItem.plannedUnloadingAt) {
-        data.plannedUnloadTime = this.convertToISO8601(this.formData.plannedUnloadTime)
+
+      // 检查出炉时间是否变更
+      const unloadTimeChanged = this.formData.plannedUnloadTime
+        ? this.formData.plannedUnloadTime.toISOString() !== new Date(this.currentItem.plannedUnloadingAt).toISOString()
+        : false
+
+      if (unloadTimeChanged && this.formData.plannedUnloadTime) {
+        data.plannedUnloadTime = this.formData.plannedUnloadTime.toISOString()
       }
 
       return data
-    },
-
-    /**
-     * 转换时间格式为ISO 8601
-     */
-    convertToISO8601(dateStr) {
-      if (!dateStr) return null
-      const date = new Date(dateStr)
-      return date.toISOString()
     },
 
     /**

@@ -73,7 +73,18 @@ export function createSchedulePlan(data) {
  * @param {Object} data - 发布参数
  * @param {boolean} data.forcePublish - 是否强制发布
  * @param {string} data.remarks - 备注
- * @returns {Promise} 发布响应
+ * @returns {Promise<{
+ *   success: boolean,
+ *   data: {
+ *     plan: Object,           // 完整的排程方案信息
+ *     syncResults: {
+ *       success: Array<{taskId: string, taskCode: string}>, // 成功同步的任务列表
+ *       failed: Array          // 同步失败的任务列表
+ *     }
+ *   },
+ *   message: string,
+ *   meta: Object
+ * }>} 发布响应，包含方案信息和任务同步结果
  */
 export function publishSchedulePlan(id, data) {
   return request({
