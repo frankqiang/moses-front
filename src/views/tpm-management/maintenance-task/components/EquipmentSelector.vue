@@ -118,18 +118,22 @@ export default {
         }
 
         const response = await fetchEquipmentList(params)
-        const { results, totalResults } = response
+        // 从 response.data 中获取结果
+        const { results, totalResults } = response.data || {}
 
         if (append) {
-          this.equipmentList = [...this.equipmentList, ...results]
+          this.equipmentList = [...this.equipmentList, ...(results || [])]
         } else {
-          this.equipmentList = results
+          this.equipmentList = results || []
         }
 
-        this.total = totalResults
+        this.total = totalResults || 0
       } catch (error) {
         console.error('加载设备列表失败:', error)
         this.$message.error(error.message || '加载设备列表失败')
+        // 错误时重置数据
+        this.equipmentList = []
+        this.total = 0
       } finally {
         this.loading = false
       }

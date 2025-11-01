@@ -12,8 +12,8 @@
   <div class="task-search">
     <search-form
       ref="searchForm"
-      :form-items="formItems"
-      :initial-values="searchForm"
+      :items="formItems"
+      :value="searchForm"
       @search="handleSearch"
       @reset="handleReset"
     />
@@ -24,6 +24,7 @@
 import SearchForm from '@/components/SearchForm'
 import tpmDictionaryMixin from '@/views/tpm-management/mixins/dictionary'
 import { getMaintenancePersonnel } from '../api'
+import { fetchEquipmentList } from '@/views/master-data/equipment-management/api/equipment-management'
 
 export default {
   name: 'TaskSearch',
@@ -145,6 +146,8 @@ export default {
   async created() {
     // 加载TPM字典
     await this.loadTPMDictionary()
+    // 加载设备选项
+    await this.loadEquipmentOptions()
     // 加载维护人员选项
     await this.loadPersonnelOptions()
   },
@@ -195,11 +198,26 @@ export default {
 
     /**
      * 加载设备选项
-     * TODO: 调用设备主数据API获取设备列表
+     * 使用设备主数据API获取设备列表
      */
     async loadEquipmentOptions() {
-      // 暂时返回空数组，待设备主数据模块完成后实现
-      this.equipmentOptions = []
+      try {
+        const response = await fetchEquipmentList({
+          page: 1,
+          limit: 100,
+          sortBy: 'equipmentCode:asc'
+        })
+
+        // 从 response.data 中获取结果并转换为下拉选项格式
+        const { results } = response.data || {}
+        this.equipmentOptions = (results || []).map(equipment => ({
+          label: `${equipment.equipmentCode} - ${equipment.name}`,
+          value: equipment.id
+        }))
+      } catch (error) {
+        console.error('加载设备选项失败:', error)
+        this.equipmentOptions = []
+      }
     },
 
     /**

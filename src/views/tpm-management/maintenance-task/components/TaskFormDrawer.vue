@@ -15,10 +15,11 @@
   接口文档：src/views/tpm-management/maintenance-task/docs/接口文档/维护任务管理接口文档.md#1-创建维护任务
 -->
 <template>
-  <drawer
+  <base-drawer
     :visible.sync="drawerVisible"
     :title="drawerTitle"
-    size="720px"
+    width="800px"
+    :wrapper-closable="false"
     @close="handleClose"
   >
     <el-form
@@ -105,7 +106,7 @@
       <el-form-item label="执行人员" prop="assignedTo">
         <personnel-selector
           v-model="formData.assignedTo"
-          :show-workload="true"
+          :show-workload="false"
         />
       </el-form-item>
 
@@ -134,22 +135,22 @@
       </el-form-item>
     </el-form>
 
-    <div slot="footer" class="drawer-footer">
+    <template #footer>
       <el-button @click="handleClose">取 消</el-button>
       <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
         {{ submitLoading ? '提交中...' : '确 定' }}
       </el-button>
-    </div>
-  </drawer>
+    </template>
+  </base-drawer>
 </template>
 
 <script>
-import Drawer from '@/components/Drawer'
+import BaseDrawer from '@/components/Drawer'
 import EquipmentSelector from './EquipmentSelector'
 import MaintenancePlanSelector from './MaintenancePlanSelector'
 import PersonnelSelector from './PersonnelSelector'
 import TaskTypeSelector from './TaskTypeSelector'
-import { createMaintenanceTask } from '@/api/mdm/tpm/maintenanceTask'
+import { createMaintenanceTask } from '../api'
 import { buildCreateTaskData, initFormData, getFormRules } from '../utils/form-utils'
 import { handleApiError } from '../utils/error-handler'
 import { showCreateSuccess } from '../utils/message-handler'
@@ -157,7 +158,7 @@ import { showCreateSuccess } from '../utils/message-handler'
 export default {
   name: 'TaskFormDrawer',
   components: {
-    Drawer,
+    BaseDrawer,
     EquipmentSelector,
     MaintenancePlanSelector,
     PersonnelSelector,
@@ -323,8 +324,6 @@ export default {
 
 <style lang="scss" scoped>
 .task-form {
-  padding: 20px 20px 0;
-
   ::v-deep .el-form-item__label {
     font-weight: 500;
   }
@@ -332,17 +331,6 @@ export default {
   ::v-deep .el-select,
   ::v-deep .el-date-picker {
     width: 100%;
-  }
-}
-
-.drawer-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 16px;
-  border-top: 1px solid #e8e8e8;
-
-  .el-button {
-    min-width: 88px;
   }
 }
 </style>

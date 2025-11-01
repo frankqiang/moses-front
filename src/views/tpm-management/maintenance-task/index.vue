@@ -87,6 +87,12 @@
       :task-info="currentTask"
       @success="handleCancelSuccess"
     />
+
+    <!-- 任务表单抽屉 -->
+    <task-form-drawer
+      :visible.sync="formDrawerVisible"
+      @success="handleFormSuccess"
+    />
   </div>
 </template>
 
@@ -105,7 +111,8 @@ export default {
     TaskSearch,
     TaskTable,
     AssignTaskDialog,
-    CancelTaskDialog
+    CancelTaskDialog,
+    TaskFormDrawer: () => import('./components/TaskFormDrawer')
   },
 
   data() {
@@ -135,7 +142,9 @@ export default {
       // 取消任务对话框
       cancelDialogVisible: false,
       // 当前操作的任务
-      currentTask: null
+      currentTask: null,
+      // 表单抽屉
+      formDrawerVisible: false
     }
   },
 
@@ -300,20 +309,27 @@ export default {
      * 创建任务
      */
     handleCreate() {
-      this.$router.push({
-        name: 'MaintenanceTaskCreate',
-        params: { mode: 'create' }
-      })
+      this.formDrawerVisible = true
     },
 
     /**
      * 查看详情
      */
     handleView(row) {
+      // 跳转到详情页面
       this.$router.push({
         name: 'MaintenanceTaskDetail',
         params: { id: row.id }
       })
+    },
+
+    /**
+     * 表单操作成功回调
+     */
+    handleFormSuccess() {
+      this.formDrawerVisible = false
+      // 刷新列表
+      this.handleRefresh()
     },
 
     /**

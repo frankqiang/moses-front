@@ -84,7 +84,8 @@ export const TABLE_COLUMNS = [
     label: '操作',
     width: 200,
     fixed: 'right',
-    slotName: 'actions'
+    slotName: 'actions',
+    showOverflowTooltip: false
   }
 ]
 
@@ -100,5 +101,34 @@ export const STATUS_CONFIG = {
  */
 export const TASK_TYPE_CONFIG = {
   typeMap: TASK_TYPE_TAG_TYPE_MAP
+}
+
+/**
+ * 默认可见列配置
+ * 定义表格初始加载时显示的列
+ */
+export const DEFAULT_VISIBLE_COLUMNS = [
+  'taskCode',
+  'taskTitle',
+  'equipment',
+  'taskType',
+  'plannedStartTime',
+  'assignee',
+  'status',
+  'createdAt',
+  'actions'
+]
+
+/**
+ * 表格工具栏配置
+ * 定义工具栏各功能的启用状态
+ */
+export const TABLE_TOOLBAR_CONFIG = {
+  enableColumnSettings: true, // 启用列设置
+  enableBatchActions: false,
+  enableExport: false,
+  enableImport: false,
+  enableRefresh: true,
+  refreshFeedbackMode: 'all'
 }
 

@@ -6,52 +6,34 @@
     - 2024-01-20: 初始创建
     - 2024-01-20: 实现完整日历视图功能（P0阶段）
     - 2024-01-20: 重构以适配后端新接口（标准日历格式响应）
+    - 2025-10-31: 重构使用全局组件，优化UI设计
+    - 2025-10-31: 优化padding层级，添加返回按钮
 -->
 <template>
   <div class="task-calendar-container">
-    <!-- 筛选区域 -->
-    <el-card class="filter-card" shadow="never">
-      <el-form :inline="true" :model="filters" class="filter-form">
-        <el-form-item label="设备">
-          <el-select
-            v-model="filters.equipmentId"
-            placeholder="请选择设备"
-            clearable
-            filterable
-            style="width: 200px"
-            @change="handleFilterChange"
-          >
-            <el-option
-              v-for="item in equipmentOptions"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
+    <!-- 顶部操作栏 -->
+    <div class="page-header">
+      <el-button
+        icon="el-icon-arrow-left"
+        size="medium"
+        @click="handleBack"
+      >
+        返回列表
+      </el-button>
+      <h2 class="page-title">任务日历视图</h2>
+    </div>
 
-        <el-form-item label="执行人">
-          <el-select
-            v-model="filters.assignedTo"
-            placeholder="请选择执行人"
-            clearable
-            filterable
-            style="width: 200px"
-            @change="handleFilterChange"
-          >
-            <el-option
-              v-for="item in personnelOptions"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" icon="el-icon-refresh" @click="handleRefresh">刷新</el-button>
-        </el-form-item>
-      </el-form>
+    <!-- 搜索区域 -->
+    <el-card class="search-card" shadow="never">
+      <CalendarSearch
+        v-model="filters"
+        :loading="loading"
+        :equipment-options="equipmentOptions"
+        :personnel-options="personnelOptions"
+        @search="handleSearch"
+        @reset="handleReset"
+        @refresh="handleRefresh"
+      />
     </el-card>
 
     <!-- 日历区域 -->
@@ -69,6 +51,17 @@
       :close-on-click-modal="false"
     >
       <div v-if="selectedTask" class="task-detail">
+        <!-- 逾期警告 -->
+        <el-alert
+          v-if="isOverdue(selectedTask)"
+          type="error"
+          title="任务已逾期"
+          :description="getOverdueMessage(selectedTask)"
+          :closable="false"
+          show-icon
+          class="task-detail__overdue-alert"
+        />
+
         <el-descriptions :column="2" border>
           <el-descriptions-item label="任务编码">
             {{ selectedTask.taskCode || '-' }}
@@ -121,6 +114,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import zhCnLocale from '@fullcalendar/core/locales/zh-cn'
+import CalendarSearch from './components/CalendarSearch'
 import { getCalendarTasks, getMaintenanceTaskById, getMaintenancePersonnel } from './api'
 import { fetchEquipmentList } from '@/views/master-data/equipment-management/api/equipment-management'
 import { parseTime } from '@/utils'
@@ -129,7 +123,8 @@ import { STATUS_TAG_TYPE_MAP, TASK_TYPE_TAG_TYPE_MAP } from './constants'
 export default {
   name: 'MaintenanceTaskCalendar',
   components: {
-    FullCalendar
+    FullCalendar,
+    CalendarSearch
   },
   data() {
     return {
@@ -230,32 +225,38 @@ export default {
     /**
      * 转换任务数据为日历事件格式
      * 后端已返回标准日历格式（id, title, start, end, status, taskType, equipment, assignee）
-     * 前端只需要添加颜色配置
+     * 前端添加颜色配置和逾期判断
      */
     transformToEvents(tasks) {
       if (!Array.isArray(tasks)) {
         return []
       }
 
-      return tasks.map(task => ({
-        // 后端已经提供的标准字段
-        id: task.id,
-        title: this.getEventTitle(task),
-        start: task.start,
-        end: task.end,
-        // 扩展属性，用于事件点击和详情展示
-        extendedProps: {
-          task: task,
-          status: task.status,
-          taskType: task.taskType,
-          equipment: task.equipment,
-          assignee: task.assignee
-        },
-        // 根据状态设置颜色
-        backgroundColor: this.getEventColor(task.status),
-        borderColor: this.getEventBorderColor(task.status),
-        textColor: '#ffffff'
-      }))
+      return tasks.map(task => {
+        // 判断任务是否逾期
+        const isOverdue = this.isOverdue(task)
+
+        return {
+          // 后端已经提供的标准字段
+          id: task.id,
+          title: this.getEventTitle(task),
+          start: task.start,
+          end: task.end,
+          // 扩展属性，用于事件点击和详情展示
+          extendedProps: {
+            task: task,
+            status: task.status,
+            taskType: task.taskType,
+            equipment: task.equipment,
+            assignee: task.assignee,
+            isOverdue: isOverdue
+          },
+          // 根据逾期状态和任务状态设置颜色
+          backgroundColor: isOverdue ? '#C45656' : this.getEventColor(task.status),
+          borderColor: isOverdue ? '#A03C3C' : this.getEventBorderColor(task.status),
+          textColor: '#ffffff'
+        }
+      })
     },
 
     /**
@@ -353,9 +354,21 @@ export default {
     },
 
     /**
-     * 处理筛选条件变化
+     * 处理搜索
      */
-    handleFilterChange() {
+    handleSearch(filters) {
+      this.filters = { ...filters }
+      this.refreshCalendar()
+    },
+
+    /**
+     * 处理重置
+     */
+    handleReset() {
+      this.filters = {
+        equipmentId: '',
+        assignedTo: ''
+      }
       this.refreshCalendar()
     },
 
@@ -379,26 +392,110 @@ export default {
 
     /**
      * 加载设备选项
+     * 使用与列表视图相同的格式：设备编码 - 设备名称
      */
     async loadEquipmentOptions() {
       try {
-        const response = await fetchEquipmentList({ limit: 1000 })
-        this.equipmentOptions = response.data.results || []
+        const response = await fetchEquipmentList({
+          page: 1,
+          limit: 100,
+          sortBy: 'equipmentCode:asc'
+        })
+
+        // 从 response.data 中获取结果并转换为下拉选项格式
+        const { results } = response.data || {}
+        this.equipmentOptions = (results || []).map(equipment => ({
+          label: `${equipment.equipmentCode} - ${equipment.name}`,
+          value: equipment.id
+        }))
       } catch (error) {
-        console.error('加载设备列表失败:', error)
+        console.error('加载设备选项失败:', error)
+        this.equipmentOptions = []
       }
     },
 
     /**
-     * 加载人员选项
+     * 加载维护人员选项
+     * 使用与列表视图相同的格式：人员名称 (部门)
      */
     async loadPersonnelOptions() {
       try {
-        const response = await getMaintenancePersonnel({ limit: 1000 })
-        this.personnelOptions = response.data || []
+        const response = await getMaintenancePersonnel({
+          limit: 100,
+          sortBy: 'name:asc'
+        })
+
+        // 转换为下拉选项格式
+        this.personnelOptions = (response.data || []).map(user => ({
+          label: `${user.name} (${user.profile?.department?.name || '未分配部门'})`,
+          value: user.id
+        }))
       } catch (error) {
-        console.error('加载人员列表失败:', error)
+        console.error('加载维护人员选项失败:', error)
+        this.personnelOptions = []
       }
+    },
+
+    /**
+     * 判断任务是否逾期
+     * 与列表视图保持一致的判断逻辑
+     * @param {Object} task - 任务对象
+     * @returns {Boolean} - 是否逾期
+     */
+    isOverdue(task) {
+      // 防护性检查：确保 task 存在
+      if (!task) return false
+
+      // 支持两种数据结构：
+      // 1. 日历事件数据：使用 task.start
+      // 2. 详情数据：使用 task.plannedStartTime
+      const startTime = task.start || task.plannedStartTime
+      if (!startTime) return false
+
+      const now = new Date()
+      const plannedTime = new Date(startTime)
+      return (
+        plannedTime < now &&
+        (task.status === '待执行' || task.status === '执行中')
+      )
+    },
+
+    /**
+     * 获取逾期消息
+     * @param {Object} task - 任务对象
+     * @returns {String} - 逾期消息
+     */
+    getOverdueMessage(task) {
+      if (!task) return ''
+
+      // 支持两种数据结构：日历事件数据（start）和详情数据（plannedStartTime）
+      const startTime = task.start || task.plannedStartTime
+      if (!startTime) return ''
+
+      const now = new Date()
+      const plannedTime = new Date(startTime)
+      const diffMs = now - plannedTime
+
+      // 转换为小时和天
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+      const diffDays = Math.floor(diffHours / 24)
+
+      if (diffDays > 0) {
+        return `该任务已逾期 ${diffDays} 天，请尽快处理`
+      } else if (diffHours > 0) {
+        return `该任务已逾期 ${diffHours} 小时，请尽快处理`
+      } else {
+        return '该任务已逾期，请尽快处理'
+      }
+    },
+
+    /**
+     * 返回列表页面
+     */
+    handleBack() {
+      this.$router.push({
+        path: '/equipment-tpm/maintenance-tasks'
+      })
     },
 
     /**
@@ -407,7 +504,7 @@ export default {
     handleViewDetail() {
       if (this.selectedTask && this.selectedTask.id) {
         this.$router.push({
-          path: `/tpm-management/maintenance-task/detail/${this.selectedTask.id}`
+          path: `/equipment-tpm/maintenance-tasks/${this.selectedTask.id}`
         })
       }
     },
@@ -439,36 +536,86 @@ export default {
 <style lang="scss" scoped>
 .task-calendar-container {
   padding: 20px;
+  background: #f0f2f5;
+  min-height: calc(100vh - 84px);
 
-  .filter-card {
-    margin-bottom: 20px;
+  // 顶部操作栏
+  .page-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 16px;
 
-    .filter-form {
-      margin-bottom: 0;
+    .page-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #303133;
+    }
+  }
 
-      ::v-deep .el-form-item {
-        margin-bottom: 0;
+  // 搜索卡片 - 简化padding，避免嵌套过多
+  .search-card {
+    margin-bottom: 16px;
+    border-radius: 8px;
+    border: none;
+
+    ::v-deep .el-card__body {
+      padding: 0; // 移除卡片内边距，让SearchForm组件自己控制
+    }
+  }
+
+  // 日历卡片
+  .calendar-card {
+    border-radius: 8px;
+    border: none;
+
+    ::v-deep .el-card__body {
+      padding: 20px;
+    }
+
+    .calendar-wrapper {
+      min-height: 700px;
+      background: #ffffff;
+    }
+  }
+
+  // 任务详情
+  .task-detail {
+    // 逾期警告样式
+    &__overdue-alert {
+      margin-bottom: 20px;
+
+      ::v-deep .el-alert__title {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      ::v-deep .el-alert__description {
+        font-size: 14px;
+        margin-top: 8px;
       }
     }
-  }
 
-  .calendar-card {
-    .calendar-wrapper {
-      min-height: 600px;
-    }
-  }
-
-  .task-detail {
     ::v-deep .el-descriptions {
       .el-descriptions-item__label {
-        width: 120px;
-        font-weight: 500;
+        width: 140px;
+        font-weight: 600;
+        color: #606266;
+        background: #f5f7fa;
+      }
+
+      .el-descriptions-item__content {
+        color: #303133;
       }
     }
   }
 
+  // 对话框底部
   .dialog-footer {
     text-align: right;
+    padding-top: 20px;
+    border-top: 1px solid #ebeef5;
   }
 }
 
@@ -476,176 +623,244 @@ export default {
 ::v-deep .fc {
   // 工具栏样式
   .fc-toolbar {
-    margin-bottom: 20px;
-    padding: 10px;
-    background: #f5f7fa;
-    border-radius: 4px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    box-shadow: 0 2px 12px 0 rgba(102, 126, 234, 0.15);
 
     .fc-toolbar-title {
-      font-size: 20px;
-      font-weight: 600;
-      color: #303133;
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .fc-button {
-      background-color: #409eff;
-      border-color: #409eff;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
       color: #ffffff;
-      padding: 6px 12px;
-      border-radius: 4px;
+      padding: 8px 16px;
+      border-radius: 6px;
       font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
 
       &:hover {
-        background-color: #66b1ff;
-        border-color: #66b1ff;
+        background-color: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
       }
 
       &:active,
       &.fc-button-active {
-        background-color: #3a8ee6;
-        border-color: #3a8ee6;
+        background-color: rgba(255, 255, 255, 0.4);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(0);
       }
 
       &:disabled {
-        background-color: #a0cfff;
-        border-color: #a0cfff;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.15);
         cursor: not-allowed;
+        opacity: 0.6;
       }
     }
 
     .fc-today-button {
-      background-color: #67c23a;
-      border-color: #67c23a;
+      background-color: rgba(103, 194, 58, 0.9);
+      border-color: rgba(103, 194, 58, 1);
 
       &:hover {
-        background-color: #85ce61;
-        border-color: #85ce61;
+        background-color: rgba(133, 206, 97, 0.9);
+        border-color: rgba(133, 206, 97, 1);
       }
 
       &:disabled {
-        background-color: #b3e19d;
-        border-color: #b3e19d;
+        background-color: rgba(103, 194, 58, 0.4);
+        border-color: rgba(103, 194, 58, 0.5);
       }
     }
   }
 
   // 表头样式
   .fc-col-header {
-    background: #f5f7fa;
+    background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
 
     th {
-      padding: 12px 0;
-      font-weight: 600;
-      color: #606266;
-      border-color: #ebeef5;
+      padding: 14px 0;
+      font-weight: 700;
+      font-size: 13px;
+      color: #495057;
+      border-color: #e9ecef;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
   }
 
   // 日期单元格样式
   .fc-daygrid-day {
     cursor: pointer;
+    transition: all 0.2s ease;
 
     &:hover {
-      background-color: #f5f7fa;
+      background-color: #f8f9fa;
     }
 
     .fc-daygrid-day-number {
-      padding: 8px;
-      color: #606266;
+      padding: 10px;
+      color: #495057;
       font-size: 14px;
+      font-weight: 500;
     }
 
     &.fc-day-today {
-      background-color: #ecf5ff !important;
+      background-color: rgba(102, 126, 234, 0.05) !important;
+      border: 2px solid #667eea;
 
       .fc-daygrid-day-number {
-        color: #409eff;
-        font-weight: 600;
+        color: #667eea;
+        font-weight: 700;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
     }
 
     &.fc-day-other {
       .fc-daygrid-day-number {
-        color: #c0c4cc;
+        color: #adb5bd;
       }
     }
   }
 
   // 事件样式
   .fc-event {
-    border-radius: 4px;
-    padding: 2px 6px;
-    margin: 2px 0;
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin: 2px 4px;
     cursor: pointer;
     font-size: 12px;
-    line-height: 1.4;
-    transition: all 0.3s;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
     &:hover {
-      opacity: 0.9;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      opacity: 0.95;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .fc-event-main-frame {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
     }
 
     .fc-event-time {
-      font-weight: 500;
+      font-weight: 600;
       font-size: 11px;
+      opacity: 0.9;
     }
 
     .fc-event-title {
-      font-weight: 400;
+      font-weight: 500;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      flex: 1;
+    }
+  }
+
+  // 逾期任务样式增强
+  .fc-event[style*="rgb(196, 86, 86)"] {
+    border: 2px solid #A03C3C;
+    box-shadow: 0 2px 8px rgba(196, 86, 86, 0.4);
+    animation: overdue-pulse 2s ease-in-out infinite;
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(196, 86, 86, 0.6);
+      transform: translateY(-2px) scale(1.02);
+    }
+
+    .fc-event-title {
+      font-weight: 600;
+    }
+  }
+
+  // 逾期任务脉冲动画
+  @keyframes overdue-pulse {
+    0%, 100% {
+      box-shadow: 0 2px 8px rgba(196, 86, 86, 0.4);
+    }
+    50% {
+      box-shadow: 0 2px 12px rgba(196, 86, 86, 0.6);
     }
   }
 
   // 时间网格视图样式
   .fc-timegrid {
     .fc-timegrid-slot {
-      height: 40px;
+      height: 42px;
+      border-color: #e9ecef;
     }
 
     .fc-timegrid-event {
-      border-radius: 4px;
-      padding: 4px 6px;
+      border-radius: 6px;
+      padding: 6px 8px;
+      border: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
       .fc-event-time {
-        font-weight: 600;
+        font-weight: 700;
+      }
+
+      .fc-event-title {
+        font-weight: 500;
       }
     }
   }
 
   // 列表视图样式
   .fc-list {
-    border-color: #ebeef5;
+    border-color: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
 
     .fc-list-day {
-      background-color: #f5f7fa;
+      background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
 
       th {
-        padding: 10px;
-        font-weight: 600;
-        color: #303133;
+        padding: 12px 16px;
+        font-weight: 700;
+        font-size: 14px;
+        color: #495057;
       }
     }
 
     .fc-list-event {
       cursor: pointer;
+      transition: all 0.2s ease;
 
       &:hover {
-        background-color: #ecf5ff;
+        background-color: rgba(102, 126, 234, 0.05);
       }
 
       td {
-        padding: 10px;
-        border-color: #ebeef5;
+        padding: 12px 16px;
+        border-color: #e9ecef;
+      }
+
+      .fc-list-event-dot {
+        border-width: 4px;
       }
     }
   }
@@ -653,57 +868,102 @@ export default {
   // 边框颜色
   td,
   th {
-    border-color: #ebeef5;
+    border-color: #e9ecef;
   }
 
   // 滚动条样式
   .fc-scroller {
     &::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
     }
 
     &::-webkit-scrollbar-thumb {
-      background-color: #dcdfe6;
-      border-radius: 3px;
+      background: linear-gradient(180deg, #cbd5e0 0%, #a0aec0 100%);
+      border-radius: 4px;
 
       &:hover {
-        background-color: #c0c4cc;
+        background: linear-gradient(180deg, #a0aec0 0%, #718096 100%);
       }
     }
 
     &::-webkit-scrollbar-track {
-      background-color: #f5f7fa;
+      background-color: #f7fafc;
+      border-radius: 4px;
     }
   }
 
   // 更多链接样式
   .fc-daygrid-more-link {
-    color: #409eff;
+    color: #667eea;
     font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
 
     &:hover {
-      color: #66b1ff;
-      text-decoration: underline;
+      color: #764ba2;
+      background-color: rgba(102, 126, 234, 0.1);
+      text-decoration: none;
     }
   }
 
   // Popover 样式
   .fc-more-popover {
-    border-radius: 4px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-    border-color: #ebeef5;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
+    border: 1px solid #e9ecef;
 
     .fc-popover-header {
-      background-color: #f5f7fa;
-      padding: 10px;
-      font-weight: 600;
-      color: #303133;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 12px 16px;
+      font-weight: 700;
+      color: #ffffff;
+      border-radius: 8px 8px 0 0;
     }
 
     .fc-popover-body {
-      padding: 10px;
+      padding: 12px;
     }
   }
 }
+
+// 对话框样式优化
+::v-deep .el-dialog {
+  border-radius: 8px;
+
+  .el-dialog__header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 24px;
+    border-radius: 8px 8px 0 0;
+
+    .el-dialog__title {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .el-dialog__headerbtn {
+      .el-dialog__close {
+        color: #ffffff;
+        font-size: 20px;
+
+        &:hover {
+          color: rgba(255, 255, 255, 0.8);
+        }
+      }
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px;
+  }
+
+  .el-dialog__footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e9ecef;
+  }
+}
+
 </style>

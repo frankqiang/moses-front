@@ -13,8 +13,64 @@
         <el-page-header :content="pageTitle" @back="goBack" />
       </div>
       <div class="header-right">
-        <el-button icon="el-icon-refresh" @click="fetchTaskDetail">刷新</el-button>
-        <el-button type="primary" icon="el-icon-back" @click="goBack">返回列表</el-button>
+        <!-- 任务操作按钮 -->
+        <el-button
+          v-if="canAssign"
+          size="mini"
+          type="primary"
+          icon="el-icon-s-custom"
+          @click="handleAssign"
+        >
+          派工
+        </el-button>
+        <el-button
+          v-if="canAccept"
+          size="mini"
+          type="success"
+          icon="el-icon-check"
+          @click="handleAccept"
+        >
+          接单
+        </el-button>
+        <el-button
+          v-if="canStart"
+          size="mini"
+          type="primary"
+          icon="el-icon-video-play"
+          @click="handleStart"
+        >
+          开始执行
+        </el-button>
+        <el-button
+          v-if="canComplete"
+          size="mini"
+          type="success"
+          icon="el-icon-circle-check"
+          @click="handleComplete"
+        >
+          完成任务
+        </el-button>
+        <el-button
+          v-if="canPostpone"
+          size="mini"
+          type="warning"
+          icon="el-icon-time"
+          @click="handlePostpone"
+        >
+          申请延期
+        </el-button>
+        <el-button
+          v-if="canCancel"
+          size="mini"
+          type="danger"
+          icon="el-icon-close"
+          @click="handleCancel"
+        >
+          取消任务
+        </el-button>
+        <!-- 通用操作按钮 -->
+        <el-button size="mini" icon="el-icon-refresh" @click="fetchTaskDetail">刷新</el-button>
+        <el-button size="mini" type="primary" icon="el-icon-back" @click="goBack">返回列表</el-button>
       </div>
     </div>
 
@@ -31,7 +87,7 @@
             </el-tag>
           </div>
 
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="3" border size="small">
             <el-descriptions-item label="任务编码">
               <span class="code-text">{{ taskDetail.taskCode || '-' }}</span>
             </el-descriptions-item>
@@ -45,15 +101,15 @@
               </el-tag>
               <span v-else class="empty-text">-</span>
             </el-descriptions-item>
-            <el-descriptions-item label="任务标题" :span="2">
+            <el-descriptions-item label="任务标题">
               {{ taskDetail.taskTitle || '-' }}
             </el-descriptions-item>
-            <el-descriptions-item label="任务描述" :span="2">
+            <el-descriptions-item label="任务描述" :span="3">
               <div class="description-text">
                 {{ taskDetail.taskDescription || '无' }}
               </div>
             </el-descriptions-item>
-            <el-descriptions-item label="备注" :span="2">
+            <el-descriptions-item label="备注" :span="3">
               {{ taskDetail.remark || '无' }}
             </el-descriptions-item>
           </el-descriptions>
@@ -66,7 +122,7 @@
             <span class="card-title">设备信息</span>
           </div>
 
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="4" border size="small">
             <el-descriptions-item label="设备编码">
               <span class="code-text">{{ taskDetail.equipment && taskDetail.equipment.equipmentCode || '-' }}</span>
             </el-descriptions-item>
@@ -74,16 +130,12 @@
               {{ taskDetail.equipment && taskDetail.equipment.name || '-' }}
             </el-descriptions-item>
             <el-descriptions-item label="设备类型">
-              {{ taskDetail.equipment && taskDetail.equipment.equipmentType || '-' }}
+              {{ taskDetail.equipment && taskDetail.equipment.equipmentTypeLabel || '-' }}
             </el-descriptions-item>
             <el-descriptions-item label="设备状态">
-              <el-tag
-                v-if="taskDetail.equipment && taskDetail.equipment.status"
-                :type="getEquipmentStatusTagType(taskDetail.equipment.status)"
-                size="small"
-              >
-                {{ taskDetail.equipment.status }}
-              </el-tag>
+              <template v-if="taskDetail.equipment && taskDetail.equipment.statusLabel">
+                {{ taskDetail.equipment.statusLabel }}
+              </template>
               <span v-else class="empty-text">-</span>
             </el-descriptions-item>
           </el-descriptions>
@@ -96,7 +148,7 @@
             <span class="card-title">关联维护计划</span>
           </div>
 
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="3" border size="small">
             <el-descriptions-item label="计划编码">
               <span class="code-text">{{ taskDetail.maintenancePlan.planCode || '-' }}</span>
             </el-descriptions-item>
@@ -119,7 +171,7 @@
             </el-tag>
           </div>
 
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="2" border size="small">
             <el-descriptions-item label="计划开始时间">
               {{ formatDateTime(taskDetail.plannedStartTime) || '-' }}
             </el-descriptions-item>
@@ -156,7 +208,7 @@
             <span class="card-title">人员信息</span>
           </div>
 
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="3" border size="small">
             <el-descriptions-item label="执行人员">
               <div v-if="taskDetail.assignee" class="user-info">
                 <i class="el-icon-user" />
@@ -172,6 +224,9 @@
                 <span v-if="taskDetail.confirmer.email" class="email-text">（{{ taskDetail.confirmer.email }}）</span>
               </div>
               <span v-else class="empty-text">未确认</span>
+            </el-descriptions-item>
+            <el-descriptions-item v-if="taskDetail.confirmedAt" label="确认时间">
+              {{ formatDateTime(taskDetail.confirmedAt) }}
             </el-descriptions-item>
             <el-descriptions-item label="创建人员">
               <div v-if="taskDetail.creator" class="user-info">
@@ -192,11 +247,8 @@
               </div>
               <span v-else class="empty-text">-</span>
             </el-descriptions-item>
-            <el-descriptions-item label="最后更新时间">
+            <el-descriptions-item label="最后更新时间" :span="2">
               {{ formatDateTime(taskDetail.updatedAt) || '-' }}
-            </el-descriptions-item>
-            <el-descriptions-item v-if="taskDetail.confirmedAt" label="确认时间" :span="2">
-              {{ formatDateTime(taskDetail.confirmedAt) }}
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
@@ -207,60 +259,6 @@
             <span class="card-title">任务时间线</span>
           </div>
           <task-timeline :task="taskDetail" />
-        </el-card>
-
-        <!-- 操作按钮区域 -->
-        <el-card class="detail-card action-card" shadow="never">
-          <div class="action-buttons">
-            <el-button
-              v-if="canAssign"
-              type="primary"
-              icon="el-icon-s-custom"
-              @click="handleAssign"
-            >
-              派工
-            </el-button>
-            <el-button
-              v-if="canAccept"
-              type="success"
-              icon="el-icon-check"
-              @click="handleAccept"
-            >
-              接单
-            </el-button>
-            <el-button
-              v-if="canStart"
-              type="primary"
-              icon="el-icon-video-play"
-              @click="handleStart"
-            >
-              开始执行
-            </el-button>
-            <el-button
-              v-if="canComplete"
-              type="success"
-              icon="el-icon-circle-check"
-              @click="handleComplete"
-            >
-              完成任务
-            </el-button>
-            <el-button
-              v-if="canPostpone"
-              type="warning"
-              icon="el-icon-time"
-              @click="handlePostpone"
-            >
-              申请延期
-            </el-button>
-            <el-button
-              v-if="canCancel"
-              type="danger"
-              icon="el-icon-close"
-              @click="handleCancel"
-            >
-              取消任务
-            </el-button>
-          </div>
         </el-card>
       </template>
 
@@ -310,8 +308,7 @@ import PostponeTaskDialog from './components/PostponeTaskDialog'
 import CancelTaskDialog from './components/CancelTaskDialog'
 import {
   STATUS_TAG_TYPE_MAP,
-  TASK_TYPE_TAG_TYPE_MAP,
-  EQUIPMENT_STATUS_TAG_TYPE_MAP
+  TASK_TYPE_TAG_TYPE_MAP
 } from './constants/maintenance-task'
 
 export default {
@@ -503,16 +500,6 @@ export default {
     getTaskTypeTagType(taskType) {
       // 使用统一的任务类型标签类型映射常量
       return TASK_TYPE_TAG_TYPE_MAP[taskType] || 'info'
-    },
-
-    /**
-     * 获取设备状态标签类型
-     * @param {string} status - 设备状态
-     * @returns {string} Element UI标签类型
-     */
-    getEquipmentStatusTagType(status) {
-      // 使用统一的设备状态标签类型映射常量
-      return EQUIPMENT_STATUS_TAG_TYPE_MAP[status] || 'info'
     },
 
     /**
@@ -910,14 +897,14 @@ export default {
 
 <style lang="scss" scoped>
 .maintenance-task-detail {
-  padding: 20px;
+  padding: 16px;
 
   .detail-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding: 16px 20px;
+    margin-bottom: 12px;
+    padding: 12px 16px;
     background: #fff;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -936,7 +923,7 @@ export default {
     min-height: 400px;
 
     .detail-card {
-      margin-bottom: 20px;
+      margin-bottom: 12px;
 
       &:last-child {
         margin-bottom: 0;
@@ -1014,21 +1001,6 @@ export default {
         }
       }
     }
-
-    // 操作按钮卡片
-    .action-card {
-      .action-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        justify-content: center;
-        padding: 10px 0;
-
-        .el-button {
-          min-width: 120px;
-        }
-      }
-    }
   }
 }
 
@@ -1044,18 +1016,7 @@ export default {
 
       .header-right {
         justify-content: flex-end;
-      }
-    }
-
-    .detail-content {
-      .action-card {
-        .action-buttons {
-          flex-direction: column;
-
-          .el-button {
-            width: 100%;
-          }
-        }
+        flex-wrap: wrap;
       }
     }
   }

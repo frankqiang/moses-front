@@ -5,6 +5,14 @@
   修改记录：
     - 2024-01-20: 初始创建
     - 2024-01-20: 重构，使用按组织架构筛选维护人员接口
+    - 2024-01-20: 修复数据解析问题 - 接口返回的 data 字段直接是数组
+    - 2024-01-20: 修复接口重复调用问题 - 改用mounted钩子
+    - 2024-01-20: 修复显示异常 - 改用float布局替代flex
+
+  注意事项：
+    - 该接口返回格式特殊：response.data 直接是数组，而非常见的 response.data.results
+    - 接口文档：docs/接口文档/单独接口文档/按组织架构筛选维护人员接口详细说明_已重构.md
+    - showWorkload功能依赖任务负载分析接口，如接口未实现建议设为false
 -->
 <template>
   <el-select
@@ -24,17 +32,11 @@
       :label="getPersonnelLabel(item)"
       :value="item.id"
     >
-      <div class="personnel-option">
-        <div class="personnel-option__info">
-          <span class="personnel-option__name">{{ item.name }}</span>
-          <span v-if="item.profile" class="personnel-option__department">
-            {{ item.profile.department ? item.profile.department.name : '未分配部门' }}
-          </span>
-        </div>
-        <span v-if="showWorkload" class="personnel-option__workload">
-          当前: {{ item.currentTaskCount || 0 }}
-        </span>
-      </div>
+      <span style="float: left">{{ item.name }}</span>
+      <span style="float: right; color: #8492a6; font-size: 13px">
+        {{ (item.profile && item.profile.department) ? item.profile.department.name : '未分配部门' }}
+        <span v-if="showWorkload"> | 任务: {{ item.currentTaskCount || 0 }}</span>
+      </span>
     </el-option>
   </el-select>
 </template>
@@ -108,7 +110,8 @@ export default {
     }
   },
 
-  created() {
+  mounted() {
+    // 只在mounted时加载一次
     this.loadPersonnelList()
   },
 
@@ -137,6 +140,8 @@ export default {
         }
 
         const response = await getMaintenancePersonnel(params)
+
+        // 接口返回的 data 字段直接是数组（不是 data.results 或 data.data）
         this.personnelList = response.data || []
 
         // 如果需要显示负载，加载负载信息
@@ -145,6 +150,7 @@ export default {
         }
       } catch (error) {
         console.error('加载维护人员列表失败:', error)
+        this.$message.error(error.message || '加载维护人员列表失败')
         this.personnelList = []
       } finally {
         this.loading = false
@@ -213,35 +219,4 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-.personnel-option {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-
-  &__info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  &__name {
-    font-size: 14px;
-    color: #303133;
-  }
-
-  &__department {
-    font-size: 12px;
-    color: #909399;
-  }
-
-  &__workload {
-    font-size: 12px;
-    color: #8492a6;
-    margin-left: 12px;
-  }
-}
-</style>
 

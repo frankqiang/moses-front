@@ -12,13 +12,18 @@
     <table-toolbar
       ref="toolbar"
       class="task-table__toolbar"
-      :enable-column-settings="false"
-      :enable-batch-actions="false"
-      :enable-export="false"
-      :enable-import="false"
-      :enable-refresh="true"
-      :refresh-feedback-mode="'notification'"
+      :enable-column-settings="toolbarProps.enableColumnSettings"
+      :enable-batch-actions="toolbarProps.enableBatchActions"
+      :enable-export="toolbarProps.enableExport"
+      :enable-import="toolbarProps.enableImport"
+      :enable-refresh="toolbarProps.enableRefresh"
+      :refresh-feedback-mode="toolbarProps.refreshFeedbackMode"
+      :column-options="columnOptions"
+      :storage-key="columnSettingsKey"
+      :default-visible-columns="defaultVisibleColumns"
+      :visible-columns="internalVisibleColumns"
       @refresh="handleToolbarRefresh"
+      @column-change="handleToolbarColumnChange"
     >
       <template #toolbar-left>
         <action-buttons :buttons="toolbarButtons" mode="normal" @click="handleToolbarAction" />
@@ -30,7 +35,7 @@
       ref="baseTable"
       class="task-table__main"
       :data="data"
-      :columns="tableColumns"
+      :columns="visibleTableColumns"
       :loading="loading"
       :pagination="pagination"
       :row-class-name="getRowClassName"
@@ -136,7 +141,14 @@ import BaseTable from '@/components/BaseTable'
 import TableToolbar from '@/components/TableToolbar'
 import StatusTag from '@/components/StatusTag'
 import ActionButtons from '@/components/ActionButtons'
-import { TABLE_COLUMNS, STATUS_CONFIG, TASK_TYPE_CONFIG } from '../constants'
+import columnSettingsMixin from '@/components/TableToolbar/columnSettingsMixin'
+import {
+  TABLE_COLUMNS,
+  STATUS_CONFIG,
+  TASK_TYPE_CONFIG,
+  DEFAULT_VISIBLE_COLUMNS,
+  TABLE_TOOLBAR_CONFIG
+} from '../constants'
 import { parseTime } from '@/utils'
 
 export default {
@@ -148,6 +160,8 @@ export default {
     StatusTag,
     ActionButtons
   },
+
+  mixins: [columnSettingsMixin],
 
   props: {
     data: {
@@ -170,24 +184,50 @@ export default {
 
   data() {
     return {
-      tableColumns: TABLE_COLUMNS,
       statusConfig: STATUS_CONFIG,
       taskTypeConfig: TASK_TYPE_CONFIG,
       copyTooltip: '点击复制任务编码',
       toolbarButtons: [
         {
-          label: '创建任务',
+          text: '创建任务',
           icon: 'el-icon-plus',
           type: 'primary',
-          id: 'create'
+          action: 'create'
         },
         {
-          label: '日历视图',
+          text: '日历视图',
           icon: 'el-icon-date',
           type: 'default',
-          id: 'calendar'
+          action: 'calendar'
         }
-      ]
+      ],
+      // 列设置相关配置
+      columnSettingsKeyPrefix: 'maintenanceTaskColumns'
+    }
+  },
+
+  computed: {
+    // 所有列选项
+    columnOptions() {
+      return TABLE_COLUMNS
+    },
+    // 默认可见列
+    defaultVisibleColumns() {
+      return DEFAULT_VISIBLE_COLUMNS
+    },
+    // 工具栏配置
+    toolbarProps() {
+      return TABLE_TOOLBAR_CONFIG
+    },
+    // 可见的表格列
+    visibleTableColumns() {
+      const visibleProps = this.internalVisibleColumns.length
+        ? this.internalVisibleColumns
+        : this.defaultVisibleColumns
+
+      return this.columnOptions.filter((column) =>
+        visibleProps.includes(column.prop)
+      )
     }
   },
 
@@ -200,7 +240,8 @@ export default {
 
     // 判断任务是否逾期
     isOverdue(row) {
-      if (!row.plannedStartTime) return false
+      // 防护性检查：确保 row 存在
+      if (!row || !row.plannedStartTime) return false
       const now = new Date()
       const plannedTime = new Date(row.plannedStartTime)
       return (
@@ -211,6 +252,8 @@ export default {
 
     // 获取行样式类名
     getRowClassName({ row }) {
+      // 防护性检查：确保 row 存在
+      if (!row) return ''
       if (this.isOverdue(row)) {
         return 'task-table__row--overdue'
       }
@@ -238,10 +281,16 @@ export default {
 
     // 获取操作按钮
     getActionButtons(row) {
+      // 防护性检查：确保 row 存在
+      if (!row) {
+        return []
+      }
+
       const buttons = [
         {
-          label: '查看',
-          type: 'primary',
+          text: '查看',
+          action: 'view',
+          type: 'text',
           onClick: () => this.handleView(row)
         }
       ]
@@ -249,8 +298,9 @@ export default {
       // 根据状态显示不同操作
       if (row.status === '待执行') {
         buttons.push({
-          label: '派工',
-          type: 'warning',
+          text: '派工',
+          action: 'assign',
+          type: 'text',
           onClick: () => this.handleAssign(row)
         })
       }
@@ -258,8 +308,9 @@ export default {
       // 待执行、执行中、已延期状态可以取消
       if (['待执行', '执行中', '已延期'].includes(row.status)) {
         buttons.push({
-          label: '取消',
-          type: 'danger',
+          text: '取消',
+          action: 'cancel',
+          type: 'text',
           onClick: () => this.handleCancel(row)
         })
       }
@@ -274,7 +325,7 @@ export default {
         calendar: this.handleViewCalendar
       }
 
-      const action = actionMap[button.id]
+      const action = actionMap[button.action]
       if (action) {
         action()
       }
@@ -283,6 +334,11 @@ export default {
     // 工具栏刷新
     handleToolbarRefresh() {
       this.$emit('refresh')
+    },
+
+    // 处理列设置变更
+    handleToolbarColumnChange(columns) {
+      this.handleColumnChange(columns)
     },
 
     // 创建任务

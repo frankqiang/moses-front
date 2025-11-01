@@ -19,3 +19,6 @@ export * from './form-config'
 // 消息配置
 export * from './messages-config'
 
+// 日历搜索配置
+export * from './calendar-search-config'
+

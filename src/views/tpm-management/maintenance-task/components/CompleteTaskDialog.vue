@@ -22,9 +22,9 @@
       class="complete-task-form"
     >
       <!-- 任务基础信息展示 -->
-      <div class="task-info-section">
+      <div v-if="taskInfo" class="task-info-section">
         <el-alert
-          :title="`任务编码：${taskInfo.taskCode} | 任务标题：${taskInfo.taskTitle}`"
+          :title="`任务编码：${taskInfo.taskCode || '-'} | 任务标题：${taskInfo.taskTitle || '未命名'}`"
           type="info"
           :closable="false"
           show-icon

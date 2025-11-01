@@ -4,9 +4,13 @@
  * 创建日期：2024-01-20
  * 修改记录：
  *   - 2024-01-20: 初始创建
+ *   - 2025-01-20: 重构API路径，使用BASE_URL常量，移除硬编码的/v1前缀
  */
 
 import service from '@/utils/request'
+
+// API基础路径（/v1已在环境配置VUE_APP_BASE_API中统一配置）
+const BASE_URL = '/mdm/tpm/maintenance-tasks'
 
 /**
  * 查询维护任务列表
@@ -26,7 +30,7 @@ import service from '@/utils/request'
  */
 export function getMaintenanceTasks(params) {
   return service({
-    url: '/v1/mdm/tpm/maintenance-tasks',
+    url: BASE_URL,
     method: 'get',
     params
   })
@@ -39,7 +43,7 @@ export function getMaintenanceTasks(params) {
  */
 export function getMaintenanceTaskById(taskId) {
   return service({
-    url: `/v1/mdm/tpm/maintenance-tasks/${taskId}`,
+    url: `${BASE_URL}/${taskId}`,
     method: 'get'
   })
 }
@@ -51,7 +55,7 @@ export function getMaintenanceTaskById(taskId) {
  */
 export function getMyTasks(params) {
   return service({
-    url: '/v1/mdm/tpm/maintenance-tasks/my-tasks',
+    url: `${BASE_URL}/my-tasks`,
     method: 'get',
     params
   })
@@ -64,7 +68,7 @@ export function getMyTasks(params) {
  */
 export function getOverdueTasks(params) {
   return service({
-    url: '/v1/mdm/tpm/maintenance-tasks/overdue',
+    url: `${BASE_URL}/overdue`,
     method: 'get',
     params
   })
@@ -77,7 +81,7 @@ export function getOverdueTasks(params) {
  */
 export function createMaintenanceTask(data) {
   return service({
-    url: '/v1/mdm/tpm/maintenance-tasks',
+    url: BASE_URL,
     method: 'post',
     data
   })
@@ -91,7 +95,7 @@ export function createMaintenanceTask(data) {
  */
 export function assignTask(taskId, data) {
   return service({
-    url: `/v1/mdm/tpm/maintenance-tasks/${taskId}/assign`,
+    url: `${BASE_URL}/${taskId}/assign`,
     method: 'post',
     data
   })
@@ -122,7 +126,7 @@ export function assignTask(taskId, data) {
  */
 export function acceptTask(taskId) {
   return service({
-    url: `/v1/mdm/tpm/maintenance-tasks/${taskId}/accept`,
+    url: `${BASE_URL}/${taskId}/accept`,
     method: 'post'
   })
 }
@@ -191,7 +195,7 @@ export function acceptTask(taskId) {
  */
 export function startTask(taskId) {
   return service({
-    url: `/v1/mdm/tpm/maintenance-tasks/${taskId}/start`,
+    url: `${BASE_URL}/${taskId}/start`,
     method: 'post'
   })
 }
@@ -204,7 +208,7 @@ export function startTask(taskId) {
  */
 export function completeTask(taskId, data) {
   return service({
-    url: `/v1/mdm/tpm/maintenance-tasks/${taskId}/complete`,
+    url: `${BASE_URL}/${taskId}/complete`,
     method: 'post',
     data
   })
@@ -273,7 +277,7 @@ export function completeTask(taskId, data) {
  */
 export function postponeTask(taskId, data) {
   return service({
-    url: `/v1/mdm/tpm/maintenance-tasks/${taskId}/postpone`,
+    url: `${BASE_URL}/${taskId}/postpone`,
     method: 'post',
     data
   })
@@ -342,7 +346,7 @@ export function postponeTask(taskId, data) {
  */
 export function cancelTask(taskId, data) {
   return service({
-    url: `/v1/mdm/tpm/maintenance-tasks/${taskId}/cancel`,
+    url: `${BASE_URL}/${taskId}/cancel`,
     method: 'post',
     data
   })
@@ -439,7 +443,7 @@ export function cancelTask(taskId, data) {
  */
 export function getCalendarTasks(params) {
   return service({
-    url: '/v1/mdm/tpm/maintenance-tasks/calendar',
+    url: `${BASE_URL}/calendar`,
     method: 'get',
     params
   })
@@ -530,7 +534,7 @@ export function getCalendarTasks(params) {
  */
 export function getWorkloadAnalysis(params) {
   return service({
-    url: '/v1/mdm/tpm/maintenance-tasks/workload',
+    url: `${BASE_URL}/workload`,
     method: 'get',
     params
   })
@@ -627,7 +631,7 @@ export function getWorkloadAnalysis(params) {
  */
 export function getMaintenancePersonnel(params) {
   return service({
-    url: '/v1/mdm/tpm/maintenance-tasks/personnel',
+    url: `${BASE_URL}/personnel`,
     method: 'get',
     params
   })
